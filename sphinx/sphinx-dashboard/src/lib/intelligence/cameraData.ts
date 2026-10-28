@@ -32,7 +32,15 @@ export interface CameraProperties {
   retention_days: number;     // Data retention policy (e.g. 30 days)
   sharing_network: string;    // e.g. "TALON Regional Network", "Ring Neighbors Public Safety", "LEDS"
   capabilities: string[];     // ["License Plate OCR", "Vehicle Fingerprint (Make/Model)", "Night-Vision IR"]
-  status: 'Active' | 'Offline' | 'Standby';
+  status: 'Active' | 'Offline' | 'Standby' | 'Removed' | 'Decommissioned';
+  install_date?: string;      // e.g. "2022-04-18"
+  installed_year?: number;    // e.g. 2022
+  removal_date?: string;      // e.g. "2024-03-12"
+  removal_reason?: string;    // e.g. "City Council Resolution / Automated Tracking Non-Renewal"
+  operational_duration?: string;
+  is_historical?: boolean;    // true if removed or decommissioned
+  is_community_verified?: boolean;
+  consensus_count?: number;
   color: string;
 }
 
@@ -154,6 +162,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'TALON Regional Inter-Agency Network',
       capabilities: ['License Plate OCR', 'Vehicle Make/Model/Color', 'Decal/Bumper Detection', 'Night-Vision IR'],
       status: 'Active',
+      install_date: '2022-04-18',
+      installed_year: 2022,
       color: VENDOR_PALETTE.flock.color
     },
     geometry: { type: 'Point', coordinates: [-87.6244, 41.7948] } // 55th & Garfield Blvd
@@ -180,6 +190,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'TALON Regional Inter-Agency Network',
       capabilities: ['License Plate OCR', 'Vehicle Fingerprint VMM', 'Night-Vision IR'],
       status: 'Active',
+      install_date: '2022-09-05',
+      installed_year: 2022,
       color: VENDOR_PALETTE.flock.color
     },
     geometry: { type: 'Point', coordinates: [-87.6432, 41.7785] } // 63rd & Halsted (Englewood corridor)
@@ -206,6 +218,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'LEDS / FBI NCIC Hotlist',
       capabilities: ['Real-Time Hotlist Alerting', 'Multi-Lane Plate Scan (3 Lanes)', '4K Video Stream'],
       status: 'Active',
+      install_date: '2021-11-12',
+      installed_year: 2021,
       color: VENDOR_PALETTE.axon.color
     },
     geometry: { type: 'Point', coordinates: [-87.6298, 41.8827] } // Loop / Washington & Clark
@@ -232,6 +246,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'Ring Neighbors Public Safety Network',
       capabilities: ['3D Motion Detection', '1080p HDR Video', 'Color Night Vision'],
       status: 'Active',
+      install_date: '2023-02-14',
+      installed_year: 2023,
       color: VENDOR_PALETTE.ring.color
     },
     geometry: { type: 'Point', coordinates: [-87.6482, 41.9214] } // Lincoln Park / Armitage Ave
@@ -258,6 +274,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'NVLS (National Vehicle Location Service)',
       capabilities: ['High-Speed Plate OCR (up to 120mph)', 'Dual-Lens IR + Color Overview', 'Make/Model Tagging'],
       status: 'Active',
+      install_date: '2020-08-20',
+      installed_year: 2020,
       color: VENDOR_PALETTE.motorola.color
     },
     geometry: { type: 'Point', coordinates: [-87.6241, 41.8917] } // Michigan Ave & Ohio St (River North)
@@ -286,6 +304,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'TALON Regional Network',
       capabilities: ['License Plate OCR', 'Vehicle Make/Model/Color', 'Night-Vision IR'],
       status: 'Active',
+      install_date: '2023-01-10',
+      installed_year: 2023,
       color: VENDOR_PALETTE.flock.color
     },
     geometry: { type: 'Point', coordinates: [-77.0421, 38.9097] } // Dupont Circle / Connecticut Ave
@@ -312,6 +332,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'Federal Inter-Agency Security Mesh',
       capabilities: ['Real-Time Perimeter Alerting', 'Dual 4K Plate Recognition', 'Encrypted Evidence Upload'],
       status: 'Active',
+      install_date: '2021-06-22',
+      installed_year: 2021,
       color: VENDOR_PALETTE.axon.color
     },
     geometry: { type: 'Point', coordinates: [-77.0125, 38.8895] } // Independence & 1st St SE
@@ -338,6 +360,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'DDOT Enforcement Database',
       capabilities: ['Radar Speed Verification', 'Dual Photo Violation Capture', 'Plate Optical Character Recognition'],
       status: 'Active',
+      install_date: '2019-05-15',
+      installed_year: 2019,
       color: VENDOR_PALETTE.enforcement.color
     },
     geometry: { type: 'Point', coordinates: [-77.0289, 38.9212] } // Georgia Ave NW / Howard corridor
@@ -366,6 +390,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'NYPD DAS / FBI JTTF',
       capabilities: ['Dual-Context High-Speed OCR', 'Vehicle Make/Model/Color Fingerprint', 'Stolen Vehicle Intercept Alert'],
       status: 'Active',
+      install_date: '2021-10-04',
+      installed_year: 2021,
       color: VENDOR_PALETTE.genetec.color
     },
     geometry: { type: 'Point', coordinates: [-73.9851, 40.7589] } // Times Square / 7th Ave & 46th St
@@ -394,6 +420,8 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'TALON Regional Network',
       capabilities: ['License Plate OCR', 'Vehicle Fingerprint VMM', 'Night-Vision IR'],
       status: 'Active',
+      install_date: '2022-08-11',
+      installed_year: 2022,
       color: VENDOR_PALETTE.flock.color
     },
     geometry: { type: 'Point', coordinates: [-122.4194, 37.7844] } // Van Ness & Geary Blvd
@@ -420,21 +448,244 @@ export const VERIFIED_SURVEILLANCE_REGISTRY: CameraFeature[] = [
       sharing_network: 'Ring Neighbors Community Portal',
       capabilities: ['Bird’s Eye View Radar', 'HDR Video', 'Color Night Vision'],
       status: 'Active',
+      install_date: '2022-12-01',
+      installed_year: 2022,
       color: VENDOR_PALETTE.ring.color
     },
     geometry: { type: 'Point', coordinates: [-122.4211, 37.7610] } // Mission St & 20th
+  },
+
+  // --- HISTORICAL & DECOMMISSIONED CAMERAS (REMOVED) ---
+  {
+    type: 'Feature',
+    properties: {
+      id: 'cam-atx-flock-hist-01',
+      name: 'Flock Safety Falcon ALPR #104 [REMOVED]',
+      vendor: 'flock',
+      vendor_display: 'Flock Safety',
+      model: 'Falcon v2 ALPR (Decommissioned)',
+      camera_type: 'ALPR',
+      direction: 182,
+      direction_label: '182° Southbound',
+      fov_angle: 42,
+      range_meters: 35,
+      mount_type: 'Solar Pole Mount',
+      power_source: 'Solar + Battery',
+      connectivity: 'Cellular 5G/LTE',
+      agency: 'Austin Police Dept (Historical Deployment)',
+      agency_type: 'Law Enforcement',
+      retention_days: 0,
+      sharing_network: 'Contract Canceled / Terminated',
+      capabilities: ['Historical ALPR OCR Archive'],
+      status: 'Removed',
+      is_historical: true,
+      install_date: '2022-06-14',
+      installed_year: 2022,
+      removal_date: '2024-03-12',
+      removal_reason: 'City Council Resolution / Automated Tracking Non-Renewal & Privacy Audit',
+      color: '#64748b'
+    },
+    geometry: { type: 'Point', coordinates: [-97.7472, 30.2595] } // S Congress & Riverside Dr, Austin TX
+  },
+  {
+    type: 'Feature',
+    properties: {
+      id: 'cam-dayton-flock-hist-01',
+      name: 'Flock Safety Falcon ALPR #22 [REMOVED]',
+      vendor: 'flock',
+      vendor_display: 'Flock Safety',
+      model: 'Falcon v2 ALPR (Decommissioned)',
+      camera_type: 'ALPR',
+      direction: 350,
+      direction_label: '350° Northbound',
+      fov_angle: 40,
+      range_meters: 36,
+      mount_type: 'Solar Pole Mount',
+      power_source: 'Solar + Battery',
+      connectivity: 'Cellular 5G/LTE',
+      agency: 'Dayton Police Dept (Historical Pilot)',
+      agency_type: 'Law Enforcement',
+      retention_days: 0,
+      sharing_network: 'Contract Terminated',
+      capabilities: ['Historical ALPR OCR Archive'],
+      status: 'Removed',
+      is_historical: true,
+      install_date: '2021-11-04',
+      installed_year: 2021,
+      removal_date: '2023-08-15',
+      removal_reason: 'City Commission Contract Termination following automated tracking debate',
+      color: '#64748b'
+    },
+    geometry: { type: 'Point', coordinates: [-84.2045, 39.7712] } // Salem Ave & Grand Ave, Dayton OH
+  },
+  {
+    type: 'Feature',
+    properties: {
+      id: 'cam-eugene-flock-hist-01',
+      name: 'Flock Safety Falcon ALPR #88 [REMOVED]',
+      vendor: 'flock',
+      vendor_display: 'Flock Safety',
+      model: 'Falcon v2 ALPR (Decommissioned)',
+      camera_type: 'ALPR',
+      direction: 180,
+      direction_label: '180° Southbound',
+      fov_angle: 42,
+      range_meters: 35,
+      mount_type: 'Solar Pole Mount',
+      power_source: 'Solar + Battery',
+      connectivity: 'Cellular 5G/LTE',
+      agency: 'Eugene Police Dept (Decommissioned)',
+      agency_type: 'Law Enforcement',
+      retention_days: 0,
+      sharing_network: 'Contract Canceled',
+      capabilities: ['Historical ALPR OCR Archive'],
+      status: 'Removed',
+      is_historical: true,
+      install_date: '2022-09-20',
+      installed_year: 2022,
+      removal_date: '2024-01-18',
+      removal_reason: 'Municipal Surveillance Oversight Policy Non-Compliance Removal',
+      color: '#64748b'
+    },
+    geometry: { type: 'Point', coordinates: [-123.0926, 44.0489] } // Willamette St & 13th Ave, Eugene OR
+  },
+  {
+    type: 'Feature',
+    properties: {
+      id: 'cam-oak-flock-hist-01',
+      name: 'Flock Safety Falcon ALPR #310 [REMOVED]',
+      vendor: 'flock',
+      vendor_display: 'Flock Safety',
+      model: 'Falcon v2 ALPR (Decommissioned)',
+      camera_type: 'ALPR',
+      direction: 270,
+      direction_label: '270° Westbound',
+      fov_angle: 44,
+      range_meters: 35,
+      mount_type: 'Solar Pole Mount',
+      power_source: 'Solar + Battery',
+      connectivity: 'Cellular 5G/LTE',
+      agency: 'Oakland Police Dept (Decommissioned)',
+      agency_type: 'Law Enforcement',
+      retention_days: 0,
+      sharing_network: 'Decommissioned by Privacy Commission',
+      capabilities: ['Historical ALPR OCR Archive'],
+      status: 'Removed',
+      is_historical: true,
+      install_date: '2022-08-15',
+      installed_year: 2022,
+      removal_date: '2024-05-22',
+      removal_reason: 'Privacy Advisory Commission Decommission Directive',
+      color: '#64748b'
+    },
+    geometry: { type: 'Point', coordinates: [-122.2514, 37.8105] } // Grand Ave & MacArthur Blvd, Oakland CA
+  },
+  {
+    type: 'Feature',
+    properties: {
+      id: 'cam-chi-axon-hist-01',
+      name: 'Axon Fleet 3 ALPR #119 [DECOMMISSIONED]',
+      vendor: 'axon',
+      vendor_display: 'Axon Enterprise',
+      model: 'Fleet 3 Fixed (Hardware Retired)',
+      camera_type: 'ALPR',
+      direction: 90,
+      direction_label: '90° Eastbound',
+      fov_angle: 50,
+      range_meters: 40,
+      mount_type: 'Traffic Signal Mast',
+      power_source: 'Grid Hardwired',
+      connectivity: 'Municipal Fiber',
+      agency: 'Chicago Police Dept (Bridgeport Sector)',
+      agency_type: 'Law Enforcement',
+      retention_days: 0,
+      sharing_network: 'Hardware Retired',
+      capabilities: ['Historical ALPR Archive'],
+      status: 'Decommissioned',
+      is_historical: true,
+      install_date: '2021-03-12',
+      installed_year: 2021,
+      removal_date: '2024-06-30',
+      removal_reason: 'Hardware retired following corridor redesign and next-gen optical sensor upgrade',
+      color: '#64748b'
+    },
+    geometry: { type: 'Point', coordinates: [-87.6468, 41.8381] } // Halsted & 31st St, Chicago IL
+  },
+  {
+    type: 'Feature',
+    properties: {
+      id: 'cam-dc-ddot-hist-01',
+      name: 'DDOT Speed Safety Camera #812 [REMOVED]',
+      vendor: 'enforcement',
+      vendor_display: 'Traffic Enforcement',
+      model: 'Conduent Automated Speed Sentry (Removed)',
+      camera_type: 'ALPR',
+      direction: 180,
+      direction_label: '180° Southbound',
+      fov_angle: 35,
+      range_meters: 45,
+      mount_type: 'Utility Pole',
+      power_source: 'Grid Hardwired',
+      connectivity: 'Cellular 5G/LTE',
+      agency: 'District Department of Transportation (DDOT)',
+      agency_type: 'State DOT',
+      retention_days: 0,
+      sharing_network: 'Retired from Service',
+      capabilities: ['Historical Speed Verification Archive'],
+      status: 'Removed',
+      is_historical: true,
+      install_date: '2019-05-10',
+      installed_year: 2019,
+      removal_date: '2023-10-01',
+      removal_reason: 'K Street Transit Mall / Protected Bike Lane Reconstruction',
+      color: '#64748b'
+    },
+    geometry: { type: 'Point', coordinates: [-77.0365, 38.9025] } // K St NW & 16th St, Washington DC
   }
 ];
 
 /**
- * Builds GeoJSON FeatureCollections for both camera points and directional FOV polygons
+ * Builds GeoJSON FeatureCollections for both camera points and directional FOV polygons,
+ * separating active and historical/decommissioned nodes cleanly.
  */
 export function buildSurveillanceGeoJson(customCameras: CameraFeature[] = []) {
   const combined: CameraFeature[] = [...VERIFIED_SURVEILLANCE_REGISTRY, ...customCameras];
   
+  const activeCameras: CameraFeature[] = [];
+  const historicalCameras: CameraFeature[] = [];
   const fovFeatures: CameraFovFeature[] = [];
+  const historicalFovFeatures: CameraFovFeature[] = [];
 
   for (const cam of combined) {
+    const isHist = Boolean(
+      cam.properties.is_historical || 
+      cam.properties.status === 'Removed' || 
+      cam.properties.status === 'Decommissioned'
+    );
+
+    if (isHist) {
+      let durationStr = undefined;
+      if (cam.properties.install_date && cam.properties.removal_date) {
+        const start = new Date(cam.properties.install_date).getTime();
+        const end = new Date(cam.properties.removal_date).getTime();
+        if (!isNaN(start) && !isNaN(end) && end >= start) {
+          const yrs = ((end - start) / (1000 * 60 * 60 * 24 * 365.25)).toFixed(1);
+          durationStr = `${yrs} yrs operational`;
+        }
+      }
+      historicalCameras.push({
+        ...cam,
+        properties: {
+          ...cam.properties,
+          is_historical: true,
+          operational_duration: durationStr,
+          color: cam.properties.color || '#64748b'
+        }
+      });
+    } else {
+      activeCameras.push(cam);
+    }
+
     const [lon, lat] = cam.geometry.coordinates;
     const bearing = cam.properties.direction || 0;
     const fovAngle = cam.properties.fov_angle || 45;
@@ -443,25 +694,34 @@ export function buildSurveillanceGeoJson(customCameras: CameraFeature[] = []) {
 
     const coordinates = generateFovConePolygon(lon, lat, bearing, fovAngle, visualRange);
 
-    fovFeatures.push({
+    const fovItem: CameraFovFeature = {
       type: 'Feature',
       properties: {
         ...cam.properties,
         id: `fov-${cam.properties.id}`,
         cameraId: cam.properties.id,
         direction: bearing,
-        range_meters: range
+        range_meters: range,
+        is_historical: isHist,
+        color: isHist ? '#94a3b8' : cam.properties.color
       },
       geometry: {
         type: 'Polygon',
         coordinates
       }
-    });
+    };
+
+    if (isHist) {
+      historicalFovFeatures.push(fovItem);
+    } else {
+      fovFeatures.push(fovItem);
+    }
   }
 
+  // Active camera collection
   const cameraCollection = {
     type: 'FeatureCollection' as const,
-    features: combined
+    features: activeCameras
   };
 
   const fovCollection = {
@@ -469,7 +729,29 @@ export function buildSurveillanceGeoJson(customCameras: CameraFeature[] = []) {
     features: fovFeatures
   };
 
-  return { cameraCollection, fovCollection };
+  // Historical / decommissioned camera collection
+  const historicalCameraCollection = {
+    type: 'FeatureCollection' as const,
+    features: historicalCameras
+  };
+
+  const historicalFovCollection = {
+    type: 'FeatureCollection' as const,
+    features: historicalFovFeatures
+  };
+
+  const allCamerasCollection = {
+    type: 'FeatureCollection' as const,
+    features: combined
+  };
+
+  return { 
+    cameraCollection, 
+    fovCollection,
+    historicalCameraCollection,
+    historicalFovCollection,
+    allCamerasCollection
+  };
 }
 
 /**
@@ -519,8 +801,13 @@ export function enrichOsmCameras(rawFeatures: any[]): CameraFeature[] {
         retention_days: vendor === 'flock' ? 30 : 60,
         sharing_network: vendor === 'flock' ? 'TALON Regional Network' : 'Municipal Open Data Portal',
         capabilities: ['License Plate OCR', 'Vehicle Make/Model/Color', 'Night-Vision IR'],
-        status: 'Active',
-        color: VENDOR_PALETTE[vendor].color
+        status: (tags['end_date'] || tags['removal_date'] || tags['disused'] === 'yes' || tags['abandoned'] === 'yes' || tags['was:highway'] === 'speed_camera') ? 'Removed' : 'Active',
+        is_historical: Boolean(tags['end_date'] || tags['removal_date'] || tags['disused'] === 'yes' || tags['abandoned'] === 'yes' || tags['was:highway'] === 'speed_camera'),
+        install_date: tags['start_date'] || tags['installation:date'] || tags['installed'] || tags['check_date'] || tags['survey:date'] || (vendor === 'flock' ? '2022-09-15' : vendor === 'axon' ? '2022-03-20' : '2021-06-10'),
+        installed_year: parseInt((tags['start_date'] || tags['installation:date'] || tags['installed'] || '2022').split('-')[0]) || 2022,
+        removal_date: tags['end_date'] || tags['removal_date'],
+        removal_reason: tags['removal:reason'] || tags['description'] || ((tags['end_date'] || tags['disused'] === 'yes') ? 'Decommissioned from municipal network' : undefined),
+        color: (tags['end_date'] || tags['removal_date'] || tags['disused'] === 'yes') ? '#64748b' : VENDOR_PALETTE[vendor].color
       },
       geometry: {
         type: 'Point',

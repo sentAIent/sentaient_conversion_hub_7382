@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import Map, { Source, Layer, Popup, Marker } from 'react-map-gl/maplibre';
+import Map, { Source, Layer, Popup, Marker, NavigationControl } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
-import { Eye, EyeOff, RefreshCw, ChevronDown } from 'lucide-react';
+import { Eye, EyeOff, RefreshCw, ChevronDown, Compass, RotateCw, RotateCcw } from 'lucide-react';
 
 import { useSettings, LocationState, CustomPin, UserTier, TIER_CONFIG, isFeatureAllowed } from '../lib/useSettings';
 import { TierUpgradeModal } from './TierUpgradeModal';
@@ -47,6 +47,8 @@ import { ToxicSite, GLOBAL_TOXIC_SITES } from '../lib/intelligence/toxicSitesDat
 import { GlobalDataEngine, ViewportAuditResult } from '../lib/intelligence/globalDataEngine';
 import { getSnowboardResortsGeoJSON } from '../lib/routing/snowboardResorts';
 import { SnowboardResortPopup } from './SnowboardResortPopup';
+import { CommunityReportModal } from './CommunityReportModal';
+import { loadLocalCommunityReports, buildCommunityReportsGeoJson, CommunityReport } from '../lib/communityReports';
 
 interface SelectedFeature {
   properties: any;
@@ -74,7 +76,7 @@ const BASE_MAP_STYLE = MAPBOX_TOKEN
       ]
     };
 
-const INTERACTIVE_LAYER_IDS = ['custom-pin-layer', 'custom-pin-label-layer', 'fire-spread-fill', 'cell-tower-cluster', 'spring-cluster', 'snowboard-resorts-cluster', 'aircraft-layer', 'cell-tower-layer', 'spring-layer', 'disaster-layer', 'earthquake-layer', 'power-layer', 'aviation-layer', 'emergency-layer', 'camera-layer', 'camera-fov-layer', 'weather-station-layer', 'data-center-layer', 'radar-layer', 'public-land-layer', 'campsite-layer', 'trail-layer', 'submarine-cable-layer', 'landing-point-layer', 'wildfire-layer', 'vessel-layer', 'vessel-circle-layer', 'atlas-obscura-layer', 'lightning-layer', 'road-barricade-3d-extrusion', 'road-hazard-core-line', 'snowboard-resorts-point', 'snowboard-resorts-label'];
+const INTERACTIVE_LAYER_IDS = ['custom-pin-layer', 'custom-pin-label-layer', 'fire-spread-fill', 'cell-tower-cluster', 'spring-cluster', 'snowboard-resorts-cluster', 'aircraft-layer', 'cell-tower-layer', 'spring-layer', 'disaster-layer', 'earthquake-layer', 'power-layer', 'aviation-layer', 'emergency-layer', 'camera-layer', 'camera-fov-layer', 'historical-camera-layer', 'historical-camera-fov-layer', 'community-reports-point', 'weather-station-layer', 'data-center-layer', 'radar-layer', 'public-land-layer', 'campsite-layer', 'trail-layer', 'submarine-cable-layer', 'landing-point-layer', 'wildfire-layer', 'vessel-layer', 'vessel-circle-layer', 'atlas-obscura-layer', 'lightning-layer', 'road-barricade-3d-extrusion', 'road-hazard-core-line', 'snowboard-resorts-point', 'snowboard-resorts-label', 'resort-pistes-core', 'resort-pistes-line', 'resort-lifts-cable-core', 'resort-lifts-line'];
 
 const getSavedViewState = () => {
   if (typeof window === 'undefined') return null;
@@ -179,6 +181,7 @@ export default function SphinxMap() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const fetchingOverpassRef = useRef(false);
   const pendingOverpassRef = useRef(false);
+  const staticDataLoadedRef = useRef(false);
 
   // Initialize viewState from settings once loaded
   useEffect(() => {
@@ -281,7 +284,13 @@ export default function SphinxMap() {
   const [citizenReports, setCitizenReports] = useState<CitizenReport[]>([]);
   const [meshPeersCount, setMeshPeersCount] = useState(1);
   const [roadClosuresData, setRoadClosuresData] = useState<any | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportCoordinates, setReportCoordinates] = useState<[number, number]>([-87.6298, 41.8827]);
+  const [communityReports, setCommunityReports] = useState<CommunityReport[]>(() => {
+    return loadLocalCommunityReports();
+  });
   const [is3DView, setIs3DView] = useState(false);
+  const [currentBearing, setCurrentBearing] = useState<number>(0);
   const satelliteDate = React.useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
@@ -389,6 +398,14 @@ export default function SphinxMap() {
     return 'mobile';
   }, [windowDimensions.width]);
 
+  const dockTier = useMemo<'expanded' | 'standard' | 'compact' | 'mobile'>(() => {
+    const w = windowDimensions.width;
+    if (w >= 1024) return 'expanded';
+    if (w >= 768) return 'standard';
+    if (w >= 540) return 'compact';
+    return 'mobile';
+  }, [windowDimensions.width]);
+
   
   // Hardcoded for now. Wait, how do we know if premium?
   // User asked us to "Only make this available to premium clients"
@@ -477,19 +494,16 @@ export default function SphinxMap() {
     
     if (map && map.getZoom() >= 5) {
       try {
-        const d = await fetch(`http://127.0.0.1:3117/api/osint/celltowers?bbox=${bboxRef.current}`).then(r => r.json());
+        const d = await fetch(`http://127.0.0.1:3117/api/osint/celltowers?bbox=${bboxRef.current}`, { signal: AbortSignal.timeout(1000) }).then(r => r.json());
         if (!d.error) setCellTowerFeatures(d.features || []);
       } catch (e) {
-        console.warn('[Sphinx GL] Failed to fetch celltowers', e);
+        // Port 3117 offline or unavailable, ignore gracefully
       }
     } else {
       setCellTowerFeatures([]);
     }
 
-    // Removed zoom < 9 restriction so global infrastructure (HAARP, Data Centers) can load anywhere
-
     if (fetchingOverpassRef.current) {
-      pendingOverpassRef.current = true;
       return;
     }
 
@@ -497,7 +511,7 @@ export default function SphinxMap() {
       fetchingOverpassRef.current = true;
       setIsFetchingOverpass(true);
       setOverpassError(null);
-      const overpass = await fetch(`http://127.0.0.1:3117/api/osint/overpass?bbox=${bboxRef.current}`).then(r => r.json());
+      const overpass = await fetch(`http://127.0.0.1:3117/api/osint/overpass?bbox=${bboxRef.current}`, { signal: AbortSignal.timeout(1000) }).then(r => r.json());
       if (!overpass.error) {
         if (overpass.springs) setSpringFeatures(overpass.springs.features || []);
         if (overpass.power) setPowerFeatures(overpass.power.features || []);
@@ -510,20 +524,13 @@ export default function SphinxMap() {
         if (overpass.public_lands) setPublicLandFeatures(overpass.public_lands.features || []);
         if (overpass.campsites) setCampsiteFeatures(overpass.campsites.features || []);
         if (overpass.trails) setTrailFeatures(overpass.trails.features || []);
-      } else {
-        console.warn('[Sphinx GL] Backend Overpass API returned error:', overpass.message);
-        setOverpassError(overpass.message);
       }
     } catch (e: any) {
-      console.warn('[Sphinx GL] Failed to fetch overpass data', e);
-      setOverpassError(e.message || 'Network error');
+      // Overpass backend offline or busy, ignore gracefully without blocking UI
     } finally {
       fetchingOverpassRef.current = false;
       setIsFetchingOverpass(false);
-      if (pendingOverpassRef.current) {
-        pendingOverpassRef.current = false;
-        setTimeout(() => loadWatchtowerData(), 300);
-      }
+      pendingOverpassRef.current = false;
     }
   }, []);
 
@@ -531,7 +538,7 @@ export default function SphinxMap() {
     try {
       loadAircraft();
       const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      (isLocal ? fetch(`http://127.0.0.1:3117/api/osint/wildfires${forceWildfires ? '?refresh=1' : ''}`) : fetch('/sphinx/data/wildfires.geojson'))
+      (isLocal ? fetch(`http://127.0.0.1:3117/api/osint/wildfires${forceWildfires ? '?refresh=1' : ''}`, { signal: AbortSignal.timeout(800) }) : fetch('/sphinx/data/wildfires.geojson'))
         .then(r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           return r.json();
@@ -541,16 +548,16 @@ export default function SphinxMap() {
           fetch('/sphinx/data/wildfires.geojson')
             .then(r => r.json())
             .then(d => setWildfireFeatures(d.features || []))
-            .catch(e => console.warn('[Sphinx GL] Failed to fetch wildfires', e));
+            .catch(() => {});
         });
 
       if (isLocal) {
-        fetch(`http://127.0.0.1:3117/api/osint/lightning?bbox=${bboxRef.current || ''}`)
+        fetch(`http://127.0.0.1:3117/api/osint/lightning?bbox=${bboxRef.current || ''}`, { signal: AbortSignal.timeout(800) })
           .then(r => r.json())
           .then(d => setLightningFeatures(d.features || []))
-          .catch(e => console.warn('[Sphinx GL] Failed to fetch lightning', e));
+          .catch(() => {});
 
-        fetch(`http://127.0.0.1:3117/api/osint/road-closures?bbox=${bboxRef.current || ''}`)
+        fetch(`http://127.0.0.1:3117/api/osint/road-closures?bbox=${bboxRef.current || ''}`, { signal: AbortSignal.timeout(800) })
           .then(r => r.ok ? r.json() : fetch('/sphinx/data/road_closures.geojson').then(res => res.json()))
           .then(d => setRoadClosuresData(d))
           .catch(() => fetch('/sphinx/data/road_closures.geojson').then(r => r.json()).then(setRoadClosuresData).catch(() => {}));
@@ -574,7 +581,7 @@ export default function SphinxMap() {
         .then(f => setEarthquakeFeatures(f))
         .catch(() => {});
 
-      fetch(`http://127.0.0.1:3117/api/osint/obscura`)
+      fetch(`http://127.0.0.1:3117/api/osint/obscura`, { signal: AbortSignal.timeout(800) })
         .then(r => r.ok ? r.json() : { features: [] })
         .then(d => setObscuraFeatures(d.features || []))
         .catch(() => {});
@@ -585,25 +592,28 @@ export default function SphinxMap() {
 
   const loadLowPriorityData = useCallback(async () => {
     try {
-      fetch('/sphinx/data/submarine_cables.geojson')
-        .then(r => r.json())
-        .then(d => setCableFeatures(d.features || []))
-        .catch(() => {});
+      if (!staticDataLoadedRef.current) {
+        staticDataLoadedRef.current = true;
+        fetch('/sphinx/data/submarine_cables.geojson')
+          .then(r => r.json())
+          .then(d => setCableFeatures(d.features || []))
+          .catch(() => {});
 
-      fetch('/sphinx/data/landing_points.geojson')
-        .then(r => r.json())
-        .then(d => setLandingPointFeatures(d.features || []))
-        .catch(() => {});
+        fetch('/sphinx/data/landing_points.geojson')
+          .then(r => r.json())
+          .then(d => setLandingPointFeatures(d.features || []))
+          .catch(() => {});
 
-      fetch('/sphinx/data/snowboard_resorts_global.geojson')
-        .then(r => r.ok ? r.json() : fetch('/data/snowboard_resorts_global.geojson').then(r2 => r2.ok ? r2.json() : null))
-        .then(d => { if (d && d.features) setGlobalSnowboardResorts(d); })
-        .catch(() => {});
+        fetch('/sphinx/data/snowboard_resorts_global.geojson')
+          .then(r => r.ok ? r.json() : fetch('/data/snowboard_resorts_global.geojson').then(r2 => r2.ok ? r2.json() : null))
+          .then(d => { if (d && d.features) setGlobalSnowboardResorts(d); })
+          .catch(() => {});
 
-      fetch('/sphinx/data/resorts/mt_baldy_pistes_lifts.geojson')
-        .then(r => r.ok ? r.json() : fetch('/data/resorts/mt_baldy_pistes_lifts.geojson').then(r2 => r2.ok ? r2.json() : null))
-        .then(d => { if (d && d.features) setResortPistesLiftsData(d); })
-        .catch(() => {});
+        fetch('/sphinx/data/resorts/bundled_pistes_lifts.geojson')
+          .then(r => r.ok ? r.json() : fetch('/data/resorts/bundled_pistes_lifts.geojson').then(r2 => r2.ok ? r2.json() : fetch('/sphinx/data/resorts/mt_baldy_pistes_lifts.geojson').then(r3 => r3.ok ? r3.json() : null)))
+          .then(d => { if (d && d.features) setResortPistesLiftsData(d); })
+          .catch(() => {});
+      }
 
       GlobalDataEngine.fetchGlobalPublicLands(bboxRef.current)
         .then(d => setPublicLandFeatures(d.features || []))
@@ -904,6 +914,8 @@ export default function SphinxMap() {
     aviation: aviationFeatures.length,
     emergency: emergencyFeatures.length,
     cameras: cameraFeatures.length + VERIFIED_SURVEILLANCE_REGISTRY.length,
+    historical_cameras: 6,
+    community_reports: communityReports.length,
     weather_stations: weatherStationFeatures.length,
     data_centers: dataCenterFeatures.length,
     radars: radarFeatures.length,
@@ -943,10 +955,18 @@ export default function SphinxMap() {
   const powerData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: powerFeatures }), [powerFeatures]);
   const aviationData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: aviationFeatures }), [aviationFeatures]);
   const emergencyData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: emergencyFeatures }), [emergencyFeatures]);
-  const { cameraCollection: cameraData, fovCollection: cameraFovData } = React.useMemo(() => {
+  const { 
+    cameraCollection: cameraData, 
+    fovCollection: cameraFovData, 
+    historicalCameraCollection: historicalCameraData, 
+    historicalFovCollection: historicalCameraFovData 
+  } = React.useMemo(() => {
     const enriched = cameraFeatures.length > 0 ? enrichOsmCameras(cameraFeatures) : [];
     return buildSurveillanceGeoJson(enriched);
   }, [cameraFeatures]);
+  const communityReportsData = React.useMemo(() => {
+    return buildCommunityReportsGeoJson(communityReports, true);
+  }, [communityReports]);
   const weatherStationData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: weatherStationFeatures }), [weatherStationFeatures]);
   const dataCenterData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: dataCenterFeatures }), [dataCenterFeatures]);
   const radarData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: radarFeatures }), [radarFeatures]);
@@ -1101,15 +1121,20 @@ export default function SphinxMap() {
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <Map
         ref={mapRef}
-        {...viewState}
+        initialViewState={viewState}
+        reuseMaps={true}
+        maxTileCacheSize={150}
         transformRequest={transformRequest}
+        dragRotate={true}
+        touchPitch={true}
+        touchZoomRotate={true}
+        maxPitch={85}
         onError={(e) => {
           console.error("MapLibre GL Error:", e);
           if (e?.error?.message?.includes('WebGL') || (e as any)?.statusMessage?.includes('WebGL')) {
             setIsWebGLSupported(false);
           }
         }}
-        onMove={(evt) => setViewState(evt.viewState)}
         mapStyle={isOfflineMode ? "http://localhost:3117/api/tiles/style.json" as any : BASE_MAP_STYLE as any}
         onLoad={(e) => {
           const map = e.target;
@@ -1145,23 +1170,31 @@ export default function SphinxMap() {
             bImg.src = 'data:image/svg+xml;charset=utf-8,<svg width="24" height="24" viewBox="0 0 24 24" fill="%23ffffff" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15 9H9L12 2zm-8 9h16l-3 9H7l-3-9z"/></svg>';
           }
           updateBbox();
+          try {
+            map.dragRotate?.enable();
+            map.touchZoomRotate?.enable();
+          } catch (e) {}
           if (typeof window !== 'undefined') (window as any).__sphinxMap = map;
           loadHighPriorityData();
           loadMediumPriorityData();
           loadLowPriorityData();
         }}
         onMoveEnd={(evt) => {
-          if (evt?.viewState && typeof window !== 'undefined') {
-            try { localStorage.setItem('sphinx_last_view_state', JSON.stringify(evt.viewState)); } catch {}
+          if (evt?.viewState) {
+            setViewState(evt.viewState);
+            setCurrentBearing(Math.round(evt.viewState.bearing || 0));
+            if (evt.viewState.pitch != null) setIs3DView(evt.viewState.pitch > 25);
+            if (typeof window !== 'undefined') {
+              try { localStorage.setItem('sphinx_last_view_state', JSON.stringify(evt.viewState)); } catch {}
+            }
           }
           updateBbox();
           
-          // Debounce network fetches on map movement to prevent 429 rate limits
+          // Debounce network fetches on map movement to prevent rate limits
           if ((window as any).moveDebounce) clearTimeout((window as any).moveDebounce);
           (window as any).moveDebounce = setTimeout(() => {
             loadHighPriorityData();
             loadMediumPriorityData();
-            loadLowPriorityData();
             if (evt?.viewState) {
               updateWeatherVector(evt.viewState.latitude, evt.viewState.longitude);
               setAuditResult(GlobalDataEngine.auditViewport(evt.viewState.latitude, evt.viewState.longitude, {
@@ -1173,10 +1206,11 @@ export default function SphinxMap() {
                 disasters: disasterFeatures.length
               }));
             }
-          }, 1500);
+          }, 800);
         }}
         onClick={onMapClick}
         onContextMenu={(e: any) => {
+          if (e.originalEvent?.defaultPrevented) return;
           e.preventDefault();
           setPinCreationMode({ lat: e.lngLat.lat, lon: e.lngLat.lng });
           setPinLabel('');
@@ -1203,7 +1237,11 @@ export default function SphinxMap() {
           <Source
             id="street-map"
             type="raster"
-            tiles={['https://tile.openstreetmap.org/{z}/{x}/{y}.png']}
+            tiles={[
+              'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            ]}
             tileSize={256}
             maxzoom={19}
           >
@@ -1296,19 +1334,63 @@ export default function SphinxMap() {
         )}
         {settings.layers.snowboard_trails && (
           <>
-            <Source id="opensnowmap-pistes" type="raster" tiles={['https://tiles.opensnowmap.org/pistes/{z}/{x}/{y}.png']} tileSize={256} minzoom={8} maxzoom={18}>
+            <Source id="opensnowmap-pistes" type="raster" tiles={['https://tiles.opensnowmap.org/pistes/{z}/{x}/{y}.png']} tileSize={256} minzoom={9.5} maxzoom={18}>
               <Layer id="snowboard-pistes-layer" type="raster" paint={{ 'raster-opacity': 0.88 }} />
             </Source>
             {resortPistesLiftsData && (
               <Source id="resort-pistes-lifts" type="geojson" data={resortPistesLiftsData}>
                 <Layer 
+                  id="resort-lifts-casing" 
+                  type="line" 
+                  filter={['==', ['get', 'type'], 'lift']}
+                  paint={{
+                    'line-color': '#000000',
+                    'line-width': ['interpolate', ['linear'], ['zoom'], 9, 3, 12, 5.5, 15, 8, 17, 11],
+                    'line-opacity': 0.95
+                  }}
+                />
+                <Layer 
                   id="resort-lifts-line" 
                   type="line" 
                   filter={['==', ['get', 'type'], 'lift']}
                   paint={{
-                    'line-color': '#f59e0b',
-                    'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 14, 3.5, 16, 5],
-                    'line-dasharray': [2, 1.5]
+                    'line-color': '#fbbf24',
+                    'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.5, 12, 3, 15, 4.5, 17, 6],
+                    'line-dasharray': [2.5, 1.5]
+                  }}
+                />
+                <Layer 
+                  id="resort-pistes-glow" 
+                  type="line" 
+                  filter={['==', ['get', 'type'], 'piste']}
+                  paint={{
+                    'line-color': [
+                      'match',
+                      ['get', 'difficulty'],
+                      'easy', '#10b981',
+                      'intermediate', '#38bdf8',
+                      'advanced', '#cbd5e1',
+                      'expert', '#ef4444',
+                      '#38bdf8'
+                    ],
+                    'line-width': ['interpolate', ['linear'], ['zoom'], 9, 5, 12, 9, 15, 14, 17, 20],
+                    'line-blur': 3.5,
+                    'line-opacity': 0.6
+                  }}
+                />
+                <Layer 
+                  id="resort-pistes-casing" 
+                  type="line" 
+                  filter={['==', ['get', 'type'], 'piste']}
+                  paint={{
+                    'line-color': [
+                      'match',
+                      ['get', 'difficulty'],
+                      'advanced', '#ffffff',
+                      '#000000'
+                    ],
+                    'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2.5, 12, 5, 15, 8, 17, 12],
+                    'line-opacity': 0.85
                   }}
                 />
                 <Layer 
@@ -1316,15 +1398,23 @@ export default function SphinxMap() {
                   type="line" 
                   filter={['==', ['get', 'type'], 'piste']}
                   paint={{
-                    'line-color': ['coalesce', ['get', 'color'], '#3b82f6'],
-                    'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2, 14, 4, 16, 6],
-                    'line-opacity': 0.9
+                    'line-color': [
+                      'match',
+                      ['get', 'difficulty'],
+                      'easy', '#22c55e',
+                      'intermediate', '#0284c7',
+                      'advanced', '#0f172a',
+                      'expert', '#ef4444',
+                      '#0284c7'
+                    ],
+                    'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.5, 12, 3, 15, 5, 17, 8],
+                    'line-opacity': 1.0
                   }}
                 />
                 <Layer 
                   id="resort-lifts-label" 
                   type="symbol" 
-                  minzoom={12}
+                  minzoom={10.5}
                   filter={['==', ['get', 'type'], 'lift']}
                   layout={{
                     'text-field': ['concat', '🚡 ', ['get', 'name']],
@@ -1340,17 +1430,24 @@ export default function SphinxMap() {
                 <Layer 
                   id="resort-pistes-label" 
                   type="symbol" 
-                  minzoom={13}
+                  minzoom={11}
                   filter={['==', ['get', 'type'], 'piste']}
                   layout={{
-                    'text-field': ['get', 'name'],
+                    'text-field': [
+                      'case',
+                      ['==', ['get', 'difficulty'], 'easy'], ['concat', '🟢 [Green] ', ['get', 'name']],
+                      ['==', ['get', 'difficulty'], 'intermediate'], ['concat', '🟦 [Blue] ', ['get', 'name']],
+                      ['==', ['get', 'difficulty'], 'advanced'], ['concat', '◆ [Black] ', ['get', 'name']],
+                      ['==', ['get', 'difficulty'], 'expert'], ['concat', '◆◆ [Double Black] ', ['get', 'name']],
+                      ['get', 'name']
+                    ],
                     'text-size': 10,
                     'symbol-placement': 'line'
                   }}
                   paint={{
                     'text-color': '#ffffff',
                     'text-halo-color': '#000000',
-                    'text-halo-width': 2
+                    'text-halo-width': 2.8
                   }}
                 />
               </Source>
@@ -1523,6 +1620,93 @@ export default function SphinxMap() {
             />
           </Source>
         )}
+        {settings.layers.historical_cameras && (
+          <Source id="historical-camera-fovs" type="geojson" data={historicalCameraFovData}>
+            <Layer id="historical-camera-fov-layer" source="historical-camera-fovs" type="fill" minzoom={11} paint={{ 'fill-color': '#64748b', 'fill-opacity': 0.2 }} />
+            <Layer id="historical-camera-fov-line-layer" source="historical-camera-fovs" type="line" minzoom={11} paint={{ 'line-color': '#94a3b8', 'line-width': 1.5, 'line-dasharray': [3, 2], 'line-opacity': 0.7 }} />
+          </Source>
+        )}
+        {settings.layers.historical_cameras && (
+          <Source id="historical-cameras" type="geojson" data={historicalCameraData}>
+            <Layer
+              id="historical-camera-layer"
+              source="historical-cameras"
+              type="circle"
+              minzoom={7}
+              paint={{
+                'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 4, 12, 6, 15, 8],
+                'circle-color': '#64748b',
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ef4444',
+                'circle-opacity': 0.85
+              }}
+            />
+            <Layer
+              id="historical-camera-label-layer"
+              source="historical-cameras"
+              type="symbol"
+              minzoom={12}
+              layout={{
+                'text-field': ['concat', '[REMOVED] ', ['get', 'vendor_display']],
+                'text-size': 9,
+                'text-offset': [0, 1.4],
+                'text-anchor': 'top'
+              }}
+              paint={{
+                'text-color': '#f87171',
+                'text-halo-color': '#020617',
+                'text-halo-width': 1.5
+              }}
+            />
+          </Source>
+        )}
+        {settings.layers.community_reports && (
+          <Source id="community-reports" type="geojson" data={communityReportsData}>
+            <Layer
+              id="community-reports-point"
+              source="community-reports"
+              type="circle"
+              minzoom={5}
+              paint={{
+                'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 5, 12, 7, 15, 9],
+                'circle-color': [
+                  'case',
+                  ['==', ['get', 'status'], 'verified_system'], '#10b981',
+                  '#f59e0b'
+                ],
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff',
+                'circle-opacity': 0.95
+              }}
+            />
+            <Layer
+              id="community-reports-label"
+              source="community-reports"
+              type="symbol"
+              minzoom={11}
+              layout={{
+                'text-field': [
+                  'case',
+                  ['==', ['get', 'status'], 'verified_system'],
+                  ['concat', '✓ ', ['coalesce', ['get', 'name'], ['get', 'title'], 'Community Node']],
+                  ['concat', '⏳ [', ['to-string', ['coalesce', ['get', 'confirmations'], 1]], '/3] ', ['coalesce', ['get', 'name'], ['get', 'title'], 'Community Node']]
+                ],
+                'text-size': 9.5,
+                'text-offset': [0, 1.4],
+                'text-anchor': 'top'
+              }}
+              paint={{
+                'text-color': [
+                  'case',
+                  ['==', ['get', 'status'], 'verified_system'], '#6ee7b7',
+                  '#fde047'
+                ],
+                'text-halo-color': '#020617',
+                'text-halo-width': 1.5
+              }}
+            />
+          </Source>
+        )}
         {settings.layers.weather_stations && (
           <Source id="weather-stations" type="geojson" data={weatherStationData}>
             <Layer id="weather-station-layer" source="weather-stations" type="circle" paint={{ 'circle-radius': 5, 'circle-color': '#7dd3fc', 'circle-opacity': getOpacity('weather-stations')  }} />
@@ -1553,78 +1737,6 @@ export default function SphinxMap() {
         {settings.layers.trails && (
           <Source id="trails" type="geojson" data={trailData}>
             <Layer id="trail-layer" source="trails" type="circle" minzoom={9} paint={{ 'circle-radius': 3, 'circle-color': '#d97706', 'circle-opacity': getOpacity('trails')  }} />
-          </Source>
-        )}
-        {settings.layers.snowboard_trails && (
-          <Source 
-            id="snowboard-resorts" 
-            type="geojson" 
-            data={snowboardResortsData}
-            cluster={settings.clustering_enabled}
-            clusterMaxZoom={10}
-            clusterRadius={45}
-          >
-            <Layer 
-              id="snowboard-resorts-cluster" 
-              type="circle" 
-              filter={['has', 'point_count']}
-              paint={{
-                'circle-color': ['step', ['get', 'point_count'], '#0284c7', 20, '#0369a1', 100, '#075985'],
-                'circle-radius': ['step', ['get', 'point_count'], 14, 20, 18, 100, 24],
-                'circle-stroke-color': '#ffffff',
-                'circle-stroke-width': 2
-              }}
-            />
-            <Layer 
-              id="snowboard-resorts-cluster-count" 
-              type="symbol" 
-              filter={['has', 'point_count']}
-              layout={{
-                'text-field': '{point_count_abbreviated}',
-                'text-size': 11
-              }}
-              paint={{ 'text-color': '#ffffff' }}
-            />
-            <Layer 
-              id="snowboard-resorts-halo" 
-              type="circle" 
-              filter={['!', ['has', 'point_count']]} 
-              paint={{ 
-                'circle-radius': 14, 
-                'circle-color': '#06b6d4', 
-                'circle-opacity': 0.35, 
-                'circle-stroke-width': 1.5, 
-                'circle-stroke-color': '#ffffff' 
-              }} 
-            />
-            <Layer 
-              id="snowboard-resorts-point" 
-              type="circle" 
-              filter={['!', ['has', 'point_count']]} 
-              paint={{ 
-                'circle-radius': 7, 
-                'circle-color': '#0284c7', 
-                'circle-stroke-width': 2, 
-                'circle-stroke-color': '#ffffff' 
-              }} 
-            />
-            <Layer 
-              id="snowboard-resorts-label" 
-              type="symbol" 
-              filter={['!', ['has', 'point_count']]} 
-              minzoom={6}
-              layout={{ 
-                'text-field': ['concat', '🏂 ', ['get', 'name']],
-                'text-size': 11,
-                'text-offset': [0, 1.4],
-                'text-anchor': 'top'
-              }}
-              paint={{ 
-                'text-color': '#38bdf8',
-                'text-halo-color': '#000000',
-                'text-halo-width': 2
-              }} 
-            />
           </Source>
         )}
         {settings.layers.disasters && (
@@ -1950,6 +2062,79 @@ export default function SphinxMap() {
           </Source>
         )}
 
+        {settings.layers.snowboard_trails && (
+          <Source 
+            id="snowboard-resorts" 
+            type="geojson" 
+            data={snowboardResortsData}
+            cluster={settings.clustering_enabled}
+            clusterMaxZoom={10}
+            clusterRadius={45}
+          >
+            <Layer 
+              id="snowboard-resorts-cluster" 
+              type="circle" 
+              filter={['has', 'point_count']}
+              paint={{
+                'circle-color': ['step', ['get', 'point_count'], '#0284c7', 20, '#0369a1', 100, '#075985'],
+                'circle-radius': ['step', ['get', 'point_count'], 14, 20, 18, 100, 24],
+                'circle-stroke-color': '#ffffff',
+                'circle-stroke-width': 2
+              }}
+            />
+            <Layer 
+              id="snowboard-resorts-cluster-count" 
+              type="symbol" 
+              filter={['has', 'point_count']}
+              layout={{
+                'text-field': '{point_count_abbreviated}',
+                'text-size': 11
+              }}
+              paint={{ 'text-color': '#ffffff' }}
+            />
+            <Layer 
+              id="snowboard-resorts-halo" 
+              type="circle" 
+              filter={['!', ['has', 'point_count']]} 
+              paint={{ 
+                'circle-radius': 14, 
+                'circle-color': '#06b6d4', 
+                'circle-opacity': 0.35, 
+                'circle-stroke-width': 1.5, 
+                'circle-stroke-color': '#ffffff' 
+              }} 
+            />
+            <Layer 
+              id="snowboard-resorts-point" 
+              type="circle" 
+              filter={['!', ['has', 'point_count']]} 
+              paint={{ 
+                'circle-radius': 7, 
+                'circle-color': '#0284c7', 
+                'circle-stroke-width': 2, 
+                'circle-stroke-color': '#ffffff' 
+              }} 
+            />
+            <Layer 
+              id="snowboard-resorts-label" 
+              type="symbol" 
+              filter={['!', ['has', 'point_count']]} 
+              minzoom={6}
+              layout={{ 
+                'text-field': ['concat', '🏂 ', ['get', 'name']],
+                'text-size': 11,
+                'text-offset': [0, 1.4],
+                'text-anchor': 'top'
+              }}
+              paint={{ 
+                'text-color': '#38bdf8',
+                'text-halo-color': '#000000',
+                'text-halo-width': 2
+              }} 
+            />
+          </Source>
+        )}
+
         {selectedFeature && (
           <Popup
             longitude={selectedFeature.longitude}
@@ -1978,9 +2163,13 @@ export default function SphinxMap() {
                  selectedFeature.properties.type === 'vessel' ? 'Maritime Vessel' :
                  selectedFeature.properties.type === 'atlas_obscura' ? 'Atlas Obscura Anomaly' :
                  (selectedFeature.layerId === 'lightning-layer' || selectedFeature.properties.peak_current_ka) ? '⚡ Lightning Strike' :
+                 (selectedFeature.layerId === 'historical-camera-layer' || selectedFeature.layerId === 'historical-camera-fov-layer' || selectedFeature.properties.is_historical) ? 'Decommissioned / Removed Camera' :
+                 selectedFeature.layerId === 'community-reports-point' ? '👥 Community Field Report' :
                  (selectedFeature.layerId === 'camera-layer' || selectedFeature.layerId === 'camera-fov-layer' || selectedFeature.properties.vendor || ['cctv', 'flock', 'speed_camera', 'camera'].includes(selectedFeature.properties.type)) ? 'Surveillance / ALPR Node' :
                  selectedFeature.layerId === 'submarine-cable-layer' ? 'Subsea Fiber Cable' :
                  (selectedFeature.layerId === 'road-barricade-3d-extrusion' || selectedFeature.layerId === 'road-hazard-core-line') ? '🚧 Road Closure / Work Zone (3D AR)' :
+                 (selectedFeature.properties.type === 'piste' || selectedFeature.layerId?.startsWith('resort-piste')) ? '⛷️ AR Ski / Snowboard Trail' :
+                 (selectedFeature.properties.type === 'lift' || selectedFeature.layerId?.startsWith('resort-lift')) ? '🚡 Chairlift / Aerialway (AR)' :
                  'Data Point'}
               </h3>
               
@@ -2248,7 +2437,7 @@ export default function SphinxMap() {
                 </div>
               )}
               
-              {(selectedFeature.layerId === 'camera-layer' || selectedFeature.layerId === 'camera-fov-layer' || selectedFeature.properties.vendor || ['cctv', 'flock', 'speed_camera', 'camera'].includes(selectedFeature.properties.type)) && (
+              {(selectedFeature.layerId === 'camera-layer' || selectedFeature.layerId === 'camera-fov-layer' || selectedFeature.layerId === 'historical-camera-layer' || selectedFeature.layerId === 'historical-camera-fov-layer' || selectedFeature.layerId === 'community-reports-point' || selectedFeature.properties.vendor || ['cctv', 'flock', 'speed_camera', 'camera'].includes(selectedFeature.properties.type)) && (
                 <SurveillancePopupCard properties={selectedFeature.properties} />
               )}
 
@@ -2343,6 +2532,44 @@ export default function SphinxMap() {
                   <p><strong>Type:</strong> {selectedFeature.properties.highway}</p>
                   <p><strong>Surface:</strong> {selectedFeature.properties.surface}</p>
                   <p><strong>Designation:</strong> {selectedFeature.properties.designation}</p>
+                </div>
+              )}
+
+              {(selectedFeature.properties.type === 'piste' || selectedFeature.layerId?.startsWith('resort-piste')) && (
+                <div className="space-y-1 mt-2 font-mono text-xs">
+                  <div className="flex items-center justify-between pb-1 border-b border-gray-200">
+                    <span className="font-bold text-sm text-gray-900">{selectedFeature.properties.name}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold text-white shadow-sm ${
+                      selectedFeature.properties.difficulty === 'easy' ? 'bg-emerald-600' :
+                      selectedFeature.properties.difficulty === 'intermediate' ? 'bg-blue-600' :
+                      selectedFeature.properties.difficulty === 'advanced' ? 'bg-slate-950 border border-slate-300 text-slate-100' :
+                      selectedFeature.properties.difficulty === 'expert' ? 'bg-red-600' : 'bg-blue-600'
+                    }`}>
+                      {selectedFeature.properties.difficulty_label || 
+                       (selectedFeature.properties.difficulty === 'easy' ? '🟢 Green (Beginner)' :
+                        selectedFeature.properties.difficulty === 'intermediate' ? '🟦 Blue (Intermediate)' :
+                        selectedFeature.properties.difficulty === 'advanced' ? '◆ Black Diamond (Advanced)' :
+                        selectedFeature.properties.difficulty === 'expert' ? '◆◆ Double Black (Expert)' :
+                        selectedFeature.properties.difficulty || 'Run')}
+                    </span>
+                  </div>
+                  <p><strong>Resort:</strong> {selectedFeature.properties.resort || 'Alpine Resort'}</p>
+                  {selectedFeature.properties.gladed && <p><strong>Terrain:</strong> 🌲 Gladed / Off-Piste Trees</p>}
+                  {selectedFeature.properties.grooming && <p><strong>Grooming:</strong> {selectedFeature.properties.grooming}</p>}
+                </div>
+              )}
+
+              {(selectedFeature.properties.type === 'lift' || selectedFeature.layerId?.startsWith('resort-lift')) && (
+                <div className="space-y-1 mt-2 font-mono text-xs">
+                  <div className="flex items-center justify-between pb-1 border-b border-gray-200">
+                    <span className="font-bold text-sm text-amber-600">🚡 {selectedFeature.properties.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded uppercase font-bold bg-amber-500 text-black">
+                      {selectedFeature.properties.aerialway || 'Lift'}
+                    </span>
+                  </div>
+                  <p><strong>Resort:</strong> {selectedFeature.properties.resort || 'Alpine Resort'}</p>
+                  {selectedFeature.properties.duration && <p><strong>Ride Time:</strong> {selectedFeature.properties.duration}</p>}
+                  {selectedFeature.properties.vertical && <p><strong>Vertical Rise:</strong> {selectedFeature.properties.vertical}</p>}
                 </div>
               )}
             </div>
@@ -2510,6 +2737,20 @@ export default function SphinxMap() {
               setShowDirections(true);
               setSelectedSnowboardResort(null);
             }}
+            onFocusPistes={(resort) => {
+              if (mapRef.current) {
+                mapRef.current.flyTo({
+                  center: [Number(resort.lng), Number(resort.lat)],
+                  zoom: 14.5,
+                  pitch: 50,
+                  bearing: mapRef.current.getBearing() || 0,
+                  duration: 1500
+                });
+              }
+              if (!settings.layers.snowboard_trails) {
+                toggleLayer('snowboard_trails');
+              }
+            }}
           />
         )}
 
@@ -2546,10 +2787,12 @@ export default function SphinxMap() {
         {/* 3D AR Toxic Sites & Plume Drift */}
         <ToxicPlume3DLayer
           visible={settings.layers.toxic_sites}
-          bboxStr={bboxRef.current}
           onSelectSite={(site) => setSelectedToxicSite(site)}
           selectedSiteId={selectedToxicSite?.site_id}
         />
+
+        {/* Built-in MapLibre Navigation Control (Zoom + Interactive Compass Heading Needle) */}
+        <NavigationControl position="top-right" style={{ marginTop: 75, marginRight: 14 }} showCompass={true} showZoom={true} visualizePitch={true} />
       </Map>
 
       {alerts.length > 0 && (
@@ -2764,6 +3007,38 @@ export default function SphinxMap() {
                 )}
               </span>
               <span className="text-gray-300 font-bold ml-2">{visibleCounts.cameras}</span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.historical_cameras ? 'opacity-50' : ''}`} onClick={() => toggleLayer('historical_cameras')} onMouseEnter={() => setHoveredLegendLayer('historical_cameras')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button className={settings.layers.historical_cameras ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.historical_cameras ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-slate-400 text-lg leading-none shrink-0 w-4 text-center">⏳</span>
+                {!isLegendCollapsed && (
+                  <span className="whitespace-nowrap flex items-center gap-1.5">
+                    <span>Historical / Removed</span>
+                    <span className="text-[9px] bg-red-500/20 text-red-300 px-1 rounded border border-red-500/40 font-mono">AUDIT</span>
+                  </span>
+                )}
+              </span>
+              <span className="text-slate-400 font-bold ml-2">{visibleCounts.historical_cameras}</span>
+            </div>
+
+            <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.community_reports ? 'opacity-50' : ''}`} onClick={() => toggleLayer('community_reports')} onMouseEnter={() => setHoveredLegendLayer('community_reports')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+              <span className="flex items-center gap-3">
+                <button className={settings.layers.community_reports ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
+                  {settings.layers.community_reports ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+                <span className="text-emerald-400 text-lg leading-none shrink-0 w-4 text-center">👥</span>
+                {!isLegendCollapsed && (
+                  <span className="whitespace-nowrap flex items-center gap-1.5">
+                    <span>Community Reports</span>
+                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 rounded border border-emerald-500/40 font-mono">3-VOUCH</span>
+                  </span>
+                )}
+              </span>
+              <span className="text-emerald-400 font-bold ml-2">{visibleCounts.community_reports}</span>
             </div>
 
             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.weather_stations ? 'opacity-50' : ''}`} onClick={() => toggleLayer('weather_stations')} onMouseEnter={() => setHoveredLegendLayer('weather_stations')} onMouseLeave={() => setHoveredLegendLayer(null)}>
@@ -3306,14 +3581,78 @@ export default function SphinxMap() {
             placeholder={headerTier === 'full' || headerTier === 'standard' ? "Search locations..." : "Search..."} 
             onLocationSelected={(loc) => {
               console.log('[SphinxMap] onLocationSelected:', loc);
+              const targetZoom = loc.zoom || (loc.category === 'lake' ? 12 : loc.category === 'ski_resort' ? 13.5 : 14);
               if (mapRef.current) {
-                mapRef.current.flyTo({ center: [loc.lon, loc.lat], zoom: 14, duration: 2500 });
+                mapRef.current.flyTo({ center: [loc.lon, loc.lat], zoom: targetZoom, duration: 2200 });
               }
+
+              if (loc.category === 'ski_resort') {
+                if (!settings.layers.snowboard_trails) {
+                  updateSettings({ layers: { ...settings.layers, snowboard_trails: true } });
+                }
+                setShowCityCrimePanel(false);
+                const resortData = loc.metadata?.resortData || {
+                  id: `resort-${loc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+                  name: loc.name,
+                  region: loc.state || 'Mountain Resort',
+                  stateOrCountry: loc.country || loc.state || 'USA',
+                  lat: loc.lat,
+                  lng: loc.lon,
+                  summitElevationFt: loc.metadata?.summitFt || loc.metadata?.elevationFt || 8000,
+                  baseElevationFt: loc.metadata?.baseFt || 6000,
+                  verticalDropFt: loc.metadata?.verticalDropFt || 2000,
+                  runs: loc.metadata?.runs || 30,
+                  lifts: loc.metadata?.lifts || 6,
+                  terrainParks: 1,
+                  hasHalfpipe: false,
+                  nightRiding: false,
+                  highlights: ['Alpine terrain', 'Ski & snowboard trails']
+                };
+                setSelectedSnowboardResort(resortData);
+                setSelectedFeature(null);
+                return;
+              }
+
+              if (loc.category === 'lake') {
+                setShowCityCrimePanel(false);
+                setSelectedSnowboardResort(null);
+                setSelectedFeature({
+                  properties: {
+                    name: loc.name,
+                    category: 'Water Body / Lake',
+                    description: loc.context || 'Natural freshwater lake / reservoir',
+                    elevation: loc.metadata?.elevationFt ? `${loc.metadata.elevationFt.toLocaleString()} ft` : undefined,
+                    surface_area: loc.metadata?.surfaceAreaSqMi ? `${loc.metadata.surfaceAreaSqMi} sq mi` : undefined,
+                    depth: loc.metadata?.depthFt ? `${loc.metadata.depthFt} ft` : undefined
+                  },
+                  layerId: 'lake-feature',
+                  longitude: loc.lon,
+                  latitude: loc.lat
+                });
+                return;
+              }
+
+              if (loc.category === 'mountain') {
+                setShowCityCrimePanel(false);
+                setSelectedSnowboardResort(null);
+                setSelectedFeature({
+                  properties: {
+                    name: loc.name,
+                    category: 'Mountain Peak',
+                    description: loc.context,
+                    elevation: loc.metadata?.elevationFt ? `${loc.metadata.elevationFt.toLocaleString()} ft` : undefined
+                  },
+                  layerId: 'mountain-feature',
+                  longitude: loc.lon,
+                  latitude: loc.lat
+                });
+                return;
+              }
+
               const locationName = (loc.name && loc.name !== 'Unknown') ? loc.name : (loc.city || (loc.postcode ? `Area ${loc.postcode}` : 'Selected Area'));
-              handleSelectCityCrime(locationName, loc.lat, loc.lon);
-              setShowCityCrimePanel(true);
-              if (!settings.layers.crime_live) {
-                updateSettings({ layers: { ...settings.layers, crime_live: true } });
+              if (settings.layers.crime_live || showCityCrimePanel) {
+                handleSelectCityCrime(locationName, loc.lat, loc.lon);
+                setShowCityCrimePanel(true);
               }
             }} 
           />
@@ -3850,49 +4189,52 @@ export default function SphinxMap() {
         onExecuteAction={handleExecuteMapAction}
       />
 
-      <div data-testid="bottom-tactical-dock" className="absolute bottom-3 sm:bottom-5 right-2 sm:right-6 z-10 flex flex-nowrap gap-1 sm:gap-1.5 bg-black/90 p-1 sm:p-1.5 rounded-xl border border-cyan-900/70 shadow-[0_4px_25px_rgba(0,0,0,0.85)] backdrop-blur-md items-center max-w-[calc(100vw-16px)] overflow-x-auto font-mono text-[10px] sm:text-xs">
+      <div 
+        data-testid="bottom-tactical-dock" 
+        className="absolute bottom-2.5 sm:bottom-4 right-2 sm:right-6 z-10 flex flex-wrap sm:flex-nowrap gap-1 sm:gap-1.5 bg-black/95 p-1 sm:p-1.5 rounded-xl border border-cyan-900/70 shadow-[0_4px_30px_rgba(0,0,0,0.9)] backdrop-blur-md items-center justify-end max-w-[calc(100vw-16px)] font-mono text-[10px] sm:text-xs transition-all duration-200"
+      >
         <button 
           type="button"
           data-testid="btn-street-map"
           onClick={() => updateSettings({ layers: { ...settings.layers, satellite: false } })}
-          className={`relative group px-2 sm:px-3 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 ${!settings.layers.satellite ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'text-gray-400 hover:text-white'}`}
-          title="Switch to original Cartographic street & topography map"
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${!settings.layers.satellite ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'text-gray-400 hover:text-white'}`}
+          title="Switch to Cartographic street & topography map"
         >
-          <span>🗺️</span> <span className="hidden sm:inline">STREET MAP</span><span className="sm:hidden">STREET</span>
+          <span>🗺️</span> <span>{dockTier === 'expanded' ? 'STREET MAP' : 'STREET'}</span>
           <span className="pointer-events-none absolute bottom-full mb-2 left-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">STREET MAP</span>
         </button>
         <button 
           type="button"
           data-testid="btn-satellite-map"
           onClick={() => updateSettings({ layers: { ...settings.layers, satellite: true } })}
-          className={`relative group px-2 sm:px-3 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 ${settings.layers.satellite ? 'bg-sky-950 border border-sky-400 text-sky-300 font-bold shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-gray-400 hover:text-white'}`}
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${settings.layers.satellite ? 'bg-sky-950 border border-sky-400 text-sky-300 font-bold shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-gray-400 hover:text-white'}`}
           title="Switch to high-resolution true-color Satellite imagery"
         >
-          <span>🛰️</span> <span className="hidden sm:inline">SATELLITE</span><span className="sm:hidden">SAT</span>
+          <span>🛰️</span> <span>{dockTier === 'expanded' ? 'SATELLITE' : 'SAT'}</span>
           <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-sky-300 border border-sky-500/70 shadow-[0_0_12px_rgba(56,189,248,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">SATELLITE</span>
         </button>
-        <div className="h-5 w-px bg-cyan-900/60 mx-0.5 hidden xs:block sm:block" />
+        <div className="h-4 sm:h-5 w-px bg-cyan-900/60 mx-0.5 shrink-0" />
         <button 
           type="button"
           data-testid="btn-toggle-labels"
           onClick={() => updateSettings({ layers: { ...settings.layers, labels: !settings.layers.labels } })}
-          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 ${settings.layers.labels ? 'bg-emerald-950/80 border border-emerald-400 text-emerald-300 font-bold shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-gray-500 hover:text-gray-300'}`}
+          className={`relative group px-1.5 sm:px-2 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 shrink-0 ${settings.layers.labels ? 'bg-emerald-950/80 border border-emerald-400 text-emerald-300 font-bold shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-gray-500 hover:text-gray-300'}`}
           title="Toggle city, lake, ocean, and place labels"
         >
-          <span>🏷️</span> <span className="hidden xs:inline">LABELS</span>
+          <span>🏷️</span> <span>{dockTier === 'mobile' ? '' : 'LABELS'}</span>
           <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-emerald-300 border border-emerald-500/70 shadow-[0_0_12px_rgba(52,211,153,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">LABELS</span>
         </button>
         <button 
           type="button"
           data-testid="btn-toggle-boundaries"
           onClick={() => updateSettings({ layers: { ...settings.layers, boundaries: !settings.layers.boundaries } })}
-          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 ${settings.layers.boundaries ? 'bg-amber-950/80 border border-amber-400 text-amber-300 font-bold shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 'text-gray-500 hover:text-gray-300'}`}
+          className={`relative group px-1.5 sm:px-2 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 shrink-0 ${settings.layers.boundaries ? 'bg-amber-950/80 border border-amber-400 text-amber-300 font-bold shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 'text-gray-500 hover:text-gray-300'}`}
           title="Toggle state/provincial lines and country international boundaries"
         >
-          <span>🌐</span> <span className="hidden xs:inline">BORDERS</span>
+          <span>🌐</span> <span>{dockTier === 'mobile' ? '' : 'BORDERS'}</span>
           <span className="pointer-events-none absolute bottom-full mb-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-amber-300 border border-amber-500/70 shadow-[0_0_12px_rgba(245,158,11,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">BORDERS</span>
         </button>
-        <div className="h-5 w-px bg-cyan-900/60 mx-0.5 hidden xs:block sm:block" />
+        <div className="h-4 sm:h-5 w-px bg-cyan-900/60 mx-0.5 shrink-0" />
         <button 
           type="button"
           data-testid="btn-toggle-3d-pitch"
@@ -3904,30 +4246,98 @@ export default function SphinxMap() {
               setIs3DView(target > 25);
             }
           }}
-          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 ${is3DView ? 'bg-purple-950/90 border border-purple-400 text-purple-300 font-bold shadow-[0_0_12px_rgba(168,85,247,0.5)]' : 'text-gray-400 hover:text-white'}`}
+          className={`relative group px-1.5 sm:px-2 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 shrink-0 ${is3DView ? 'bg-purple-950/90 border border-purple-400 text-purple-300 font-bold shadow-[0_0_12px_rgba(168,85,247,0.5)]' : 'text-gray-400 hover:text-white'}`}
           title="Toggle 3D AR Perspective View (50° Tactical Pitch)"
         >
-          <span>🕶️</span> <span className="hidden xs:inline">3D AR</span>
+          <span>🕶️</span> <span>{dockTier === 'mobile' ? '' : '3D AR'}</span>
           <span className="pointer-events-none absolute bottom-full mb-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-purple-300 border border-purple-500/70 shadow-[0_0_12px_rgba(168,85,247,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">3D AR VIEW (50° TILT)</span>
+        </button>
+        <button
+          type="button"
+          data-testid="btn-rotate-ccw"
+          onClick={() => {
+            if (mapRef.current) {
+              const current = mapRef.current.getBearing();
+              const next = Math.round(current - 15);
+              mapRef.current.easeTo({ bearing: next, duration: 300 });
+              setCurrentBearing(next);
+            }
+          }}
+          className="relative group p-1 sm:p-1.5 font-mono text-[10px] sm:text-xs rounded text-gray-400 hover:text-cyan-300 hover:bg-white/10 transition-colors shrink-0"
+          title="Rotate map counter-clockwise (-15°)"
+        >
+          <RotateCcw size={12} />
+          <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">ROTATE LEFT (-15°)</span>
+        </button>
+        <button
+          type="button"
+          data-testid="btn-reset-orientation"
+          onClick={() => {
+            if (mapRef.current) {
+              mapRef.current.easeTo({ bearing: 0, pitch: 0, duration: 1000 });
+              setCurrentBearing(0);
+              setIs3DView(false);
+            }
+          }}
+          className={`relative group px-1.5 sm:px-2 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 shrink-0 ${currentBearing !== 0 ? 'bg-cyan-950/90 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_12px_rgba(34,211,238,0.5)]' : 'text-gray-400 hover:text-white'}`}
+          title="Click to reset North (0°) | Drag with Right-Click or Ctrl+Left-Click to orient anywhere"
+        >
+          <Compass size={13} className={`transition-transform duration-300 ${currentBearing !== 0 ? 'text-cyan-400' : 'text-gray-400'}`} style={{ transform: `rotate(${-currentBearing}deg)` }} />
+          <span>{currentBearing !== 0 ? `${(360 + (currentBearing % 360)) % 360}°` : dockTier === 'mobile' ? '' : 'NORTH'}</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
+            {currentBearing !== 0 ? `RESET NORTH (${(360 + (currentBearing % 360)) % 360}°) [RIGHT-DRAG TO ROTATE ANY DIRECTION]` : 'ALIGNED NORTH (RIGHT-DRAG TO ROTATE ANY DIRECTION)'}
+          </span>
+        </button>
+        <button
+          type="button"
+          data-testid="btn-rotate-cw"
+          onClick={() => {
+            if (mapRef.current) {
+              const current = mapRef.current.getBearing();
+              const next = Math.round(current + 15);
+              mapRef.current.easeTo({ bearing: next, duration: 300 });
+              setCurrentBearing(next);
+            }
+          }}
+          className="relative group p-1 sm:p-1.5 font-mono text-[10px] sm:text-xs rounded text-gray-400 hover:text-cyan-300 hover:bg-white/10 transition-colors shrink-0"
+          title="Rotate map clockwise (+15°)"
+        >
+          <RotateCw size={12} />
+          <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">ROTATE RIGHT (+15°)</span>
         </button>
         <div className="h-4 sm:h-5 w-px bg-cyan-900/60 mx-0.5 shrink-0" />
         <button 
           type="button"
           data-testid="btn-live-feed"
           onClick={() => setTimeframe('live')}
-          className={`relative group px-2 sm:px-3 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider border rounded-lg transition-colors shrink-0 ${timeframe === 'live' ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-white'}`}
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider border rounded-lg transition-colors shrink-0 ${timeframe === 'live' ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-white'}`}
         >
-          <span className="hidden sm:inline">LIVE FEED</span><span className="sm:hidden">LIVE</span>
+          <span>{dockTier === 'expanded' ? 'LIVE FEED' : 'LIVE'}</span>
           <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">LIVE FEED</span>
         </button>
         <button 
           type="button"
           data-testid="btn-historical"
           onClick={() => setTimeframe('historical')}
-          className={`relative group px-2 sm:px-3 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider border rounded-lg transition-colors shrink-0 ${timeframe === 'historical' ? 'bg-orange-950 border-orange-400 text-orange-300 font-bold shadow-[0_0_10px_rgba(249,115,22,0.4)]' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-white'}`}
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider border rounded-lg transition-colors shrink-0 ${timeframe === 'historical' ? 'bg-orange-950 border-orange-400 text-orange-300 font-bold shadow-[0_0_10px_rgba(249,115,22,0.4)]' : 'bg-black/50 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-white'}`}
         >
-          <span className="hidden sm:inline">HISTORICAL</span><span className="sm:hidden">HIST</span>
+          <span>{dockTier === 'expanded' ? 'HISTORICAL' : 'HIST'}</span>
           <span className="pointer-events-none absolute bottom-full mb-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-orange-300 border border-orange-500/70 shadow-[0_0_12px_rgba(249,115,22,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">HISTORICAL ARCHIVE</span>
+        </button>
+        <div className="h-4 sm:h-5 w-px bg-cyan-900/60 mx-0.5 shrink-0" />
+        <button
+          type="button"
+          data-testid="btn-community-report"
+          onClick={() => {
+            setReportCoordinates([viewState.longitude, viewState.latitude]);
+            setIsReportModalOpen(true);
+          }}
+          className="relative group px-2 sm:px-3 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded border border-emerald-500/80 bg-emerald-950/80 hover:bg-emerald-900/90 text-emerald-300 font-bold shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all flex items-center gap-1 shrink-0"
+          title="Submit a crowdsourced report for a camera, tower, road closure, spring, or hazard (Elevates after 3 vouches)"
+        >
+          <span>📢</span>
+          <span>{dockTier === 'mobile' ? '' : 'REPORT'}</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 right-0 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-emerald-300 border border-emerald-500/70 shadow-[0_0_12px_rgba(16,185,129,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">REPORT ENTITY (3 VOUCHES TO ELEVATE)</span>
         </button>
       </div>
 
@@ -4057,6 +4467,17 @@ export default function SphinxMap() {
           onOpenDeepForecast={() => setShowWeatherWind(true)}
         />
       )}
+      <CommunityReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        initialCoordinates={reportCoordinates}
+        onReportSubmitted={(newReport) => {
+          setCommunityReports(prev => {
+            const updated = [newReport, ...prev];
+            return updated;
+          });
+        }}
+      />
       <CustomCursor settings={settings.cursor} />
     </div>
   );

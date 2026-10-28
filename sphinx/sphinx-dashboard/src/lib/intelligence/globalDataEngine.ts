@@ -17,9 +17,16 @@ export interface ViewportAuditResult {
 }
 
 export class GlobalDataEngine {
+  private static localServerDownUntil = 0;
+
   private static isLocalEnvironment(): boolean {
-    return typeof window !== 'undefined' && 
-      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    if (typeof window === 'undefined') return false;
+    if (Date.now() < this.localServerDownUntil) return false;
+    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  }
+
+  private static markLocalServerFailed(): void {
+    this.localServerDownUntil = Date.now() + 60000;
   }
 
   /**
@@ -32,7 +39,7 @@ export class GlobalDataEngine {
     if (this.isLocalEnvironment()) {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3500);
+        const timeout = setTimeout(() => controller.abort(), 800);
         const res = await fetch(`http://127.0.0.1:3117/api/osint/aircraft?bbox=${bboxStr}`, { signal: controller.signal });
         clearTimeout(timeout);
         if (res.ok) {
@@ -44,54 +51,17 @@ export class GlobalDataEngine {
               geometry: { type: 'Point', coordinates: [a.longitude, a.latitude] }
             }));
           }
+        } else {
+          this.markLocalServerFailed();
         }
       } catch (err) {
-        // Fall through to Tier 2
+        this.markLocalServerFailed();
       }
     }
 
-    // Tier 2: Direct Public Global ADS-B Network (Airplanes.live point API)
-    try {
-      const parts = bboxStr.split(',').map(Number);
-      if (parts.length === 4 && !parts.some(isNaN)) {
-        const centerLon = (parts[0] + parts[2]) / 2;
-        const centerLat = (parts[1] + parts[3]) / 2;
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 4000);
-        const res = await fetch(
-          `https://api.airplanes.live/v2/point/${centerLat.toFixed(4)}/${centerLon.toFixed(4)}/150`,
-          { signal: controller.signal }
-        );
-        clearTimeout(timeout);
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.ac) && data.ac.length > 0) {
-            return data.ac
-              .filter((a: any) => a.lat != null && a.lon != null)
-              .map((a: any) => ({
-                type: 'Feature',
-                properties: {
-                  icao: a.hex,
-                  callsign: (a.flight || a.hex || 'TARGET').trim(),
-                  altitude: a.alt_geom || a.alt_baro || 0,
-                  speed: a.gs || 0,
-                  heading: a.track || 0,
-                  squawk: a.squawk || '',
-                  aircraft_type: a.t || 'ICAO-AIRCRAFT',
-                  military: !!a.military,
-                  type: 'aircraft',
-                  feed_source: 'airplanes_live_global'
-                },
-                geometry: { type: 'Point', coordinates: [a.lon, a.lat] }
-              }));
-          }
-        }
-      }
-    } catch (err) {
-      // Fall through to Tier 3
-    }
-
-    // Tier 3: High-Value Strategic Aircraft Synthetic Baseline (Global Patrols)
+    // Tier 2: Strategic Aircraft Baseline (High-Value Military & Civil Patrols)
+    // Note: External public airplanes.live endpoint enforces strict domain policy (403 Forbidden)
+    // without CORS headers when called directly from browser; fallback directly to strategic baseline.
     return this.getStrategicAircraftBaseline(bboxStr);
   }
 
@@ -103,14 +73,18 @@ export class GlobalDataEngine {
     if (this.isLocalEnvironment()) {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3500);
+        const timeout = setTimeout(() => controller.abort(), 800);
         const res = await fetch(`http://127.0.0.1:3117/api/osint/vessels?bbox=${bboxStr || ''}`, { signal: controller.signal });
         clearTimeout(timeout);
         if (res.ok) {
           const d = await res.json();
           if (Array.isArray(d.features) && d.features.length > 0) return d.features;
+        } else {
+          this.markLocalServerFailed();
         }
-      } catch (err) {}
+      } catch (err) {
+        this.markLocalServerFailed();
+      }
     }
 
     // Tier 2: Public AIS Chokepoint & Coastal Baseline
@@ -124,12 +98,16 @@ export class GlobalDataEngine {
     // Tier 1: Local Sphinx-Core
     if (this.isLocalEnvironment()) {
       try {
-        const res = await fetch(`http://127.0.0.1:3117/api/osint/disasters?timeframe=${timeframe}`);
+        const res = await fetch(`http://127.0.0.1:3117/api/osint/disasters?timeframe=${timeframe}`, { signal: AbortSignal.timeout(800) });
         if (res.ok) {
           const d = await res.json();
           if (Array.isArray(d.features) && d.features.length > 0) return d.features;
+        } else {
+          this.markLocalServerFailed();
         }
-      } catch (err) {}
+      } catch (err) {
+        this.markLocalServerFailed();
+      }
     }
 
     // Tier 2: NASA EONET Global Natural Events API
@@ -172,12 +150,16 @@ export class GlobalDataEngine {
   public static async fetchGlobalEarthquakes(timeframe = 'live'): Promise<GeoJSON.Feature[]> {
     if (this.isLocalEnvironment()) {
       try {
-        const res = await fetch(`http://127.0.0.1:3117/api/osint/earthquakes?timeframe=${timeframe}`);
+        const res = await fetch(`http://127.0.0.1:3117/api/osint/earthquakes?timeframe=${timeframe}`, { signal: AbortSignal.timeout(800) });
         if (res.ok) {
           const d = await res.json();
           if (Array.isArray(d.features) && d.features.length > 0) return d.features;
+        } else {
+          this.markLocalServerFailed();
         }
-      } catch (err) {}
+      } catch (err) {
+        this.markLocalServerFailed();
+      }
     }
 
     // Direct USGS Worldwide All-Day GeoJSON Feed (Zero blind spots globally)

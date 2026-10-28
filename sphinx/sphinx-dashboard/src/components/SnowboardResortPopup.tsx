@@ -5,12 +5,14 @@ export interface SnowboardResortPopupProps {
   resort: any;
   onClose: () => void;
   onGetDirections: (resort: any) => void;
+  onFocusPistes?: (resort: any) => void;
 }
 
 export const SnowboardResortPopup: React.FC<SnowboardResortPopupProps> = ({
   resort,
   onClose,
-  onGetDirections
+  onGetDirections,
+  onFocusPistes
 }) => {
   const lng = Number(resort.lng);
   const lat = Number(resort.lat);
@@ -72,15 +74,23 @@ export const SnowboardResortPopup: React.FC<SnowboardResortPopupProps> = ({
             >
               🏂 GET DIRECTIONS
             </button>
-            {(resort.trailMapUrl || resort.website) && (
+            <button
+              type="button"
+              onClick={() => onFocusPistes ? onFocusPistes(resort) : null}
+              className="py-1.5 px-2.5 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/80 text-cyan-300 rounded text-center text-[11px] font-bold transition-all flex items-center justify-center gap-1 shadow-md"
+              title="View trails, lifts, and slopes directly inside Sphinx"
+            >
+              🎿 Trails & Lifts
+            </button>
+            {resort.website && !resort.website.includes('openskimap.org') && (
               <a
-                href={resort.trailMapUrl || resort.website}
+                href={resort.website}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="py-1.5 px-2 bg-white/10 hover:bg-white/20 text-gray-200 rounded text-center text-[11px] transition-all flex items-center justify-center"
-                title="View Official Trail Map"
+                title="Official Resort Website"
               >
-                🗺️ Map
+                🌐 Web
               </a>
             )}
           </div>

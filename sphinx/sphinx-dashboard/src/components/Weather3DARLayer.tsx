@@ -45,79 +45,8 @@ export const Weather3DARLayer: React.FC<Weather3DARLayerProps> = ({
     return () => clearInterval(interval);
   }, [visible]);
 
-  // High-fidelity active weather cells representing rain, snow, and severe storm bands
-  const weatherCells: ARWeatherCell[] = useMemo(() => [
-    {
-      id: 'ar-cell-rain-seattle',
-      type: 'rain',
-      lat: 47.606,
-      lon: -122.332,
-      name: 'Puget Sound Oceanic Front',
-      intensity: 'HEAVY',
-      rate: '0.62 in/hr',
-      radarDbz: 46,
-      tempF: 48,
-      windKnots: 18,
-      windDir: 220,
-      particleCount: 8
-    },
-    {
-      id: 'ar-cell-rain-orlando',
-      type: 'rain',
-      lat: 28.538,
-      lon: -81.379,
-      name: 'Central Florida Convective Belt',
-      intensity: 'HEAVY',
-      rate: '1.20 in/hr',
-      radarDbz: 52,
-      tempF: 78,
-      windKnots: 22,
-      windDir: 160,
-      particleCount: 10
-    },
-    {
-      id: 'ar-cell-snow-denver',
-      type: 'snow',
-      lat: 39.739,
-      lon: -104.990,
-      name: 'Front Range Mountain Snow Zone',
-      intensity: 'HEAVY',
-      rate: '2.5 in/6hr',
-      radarDbz: 32,
-      tempF: 26,
-      windKnots: 24,
-      windDir: 350,
-      particleCount: 9
-    },
-    {
-      id: 'ar-cell-snow-tahoe',
-      type: 'snow',
-      lat: 39.167,
-      lon: -120.144,
-      name: 'Sierra Nevada Alpine Blizzard',
-      intensity: 'SEVERE',
-      rate: '4.8 in/6hr',
-      radarDbz: 38,
-      tempF: 19,
-      windKnots: 36,
-      windDir: 270,
-      particleCount: 12
-    },
-    {
-      id: 'ar-cell-storm-kansas',
-      type: 'thunderstorm',
-      lat: 38.800,
-      lon: -97.600,
-      name: 'Plains Mesoscale Severe Supercell',
-      intensity: 'SEVERE',
-      rate: '2.10 in/hr',
-      radarDbz: 62,
-      tempF: 68,
-      windKnots: 45,
-      windDir: 240,
-      particleCount: 14
-    }
-  ], []);
+  // Weather cells: initialize empty so synthetic mock cells do not render false weather
+  const weatherCells: ARWeatherCell[] = useMemo(() => [], []);
 
   // Filter live lightning strikes for 3D volumetric electric arc markers
   const lightningStrikes = useMemo(() => {

@@ -6,7 +6,7 @@
       "id": 7025990,
       "properties": {
         "id": 7025990,
-        "name": "Chair 3",
+        "name": "Chair 3 (Thunder Mountain Chair)",
         "type": "lift",
         "aerialway": "chair_lift",
         "pisteType": null,
@@ -65,7 +65,7 @@
       "id": 7165340,
       "properties": {
         "id": 7165340,
-        "name": "Chair 1",
+        "name": "Chair 1 (Sugarpine Chair)",
         "type": "lift",
         "aerialway": "chair_lift",
         "pisteType": null,
@@ -140,7 +140,7 @@
       "id": 7196045,
       "properties": {
         "id": 7196045,
-        "name": "Devils Backbone Road",
+        "name": "Rollercoaster",
         "type": "piste",
         "aerialway": null,
         "pisteType": "downhill",
@@ -219,7 +219,7 @@
       "id": 128920521,
       "properties": {
         "id": 128920521,
-        "name": "Chair 4",
+        "name": "Chair 4 (Emile's Chair)",
         "type": "lift",
         "aerialway": "chair_lift",
         "pisteType": null,
@@ -345,7 +345,7 @@
       "id": 258007924,
       "properties": {
         "id": 258007924,
-        "name": "Chair 2",
+        "name": "Chair 2 (Fir Chair)",
         "type": "lift",
         "aerialway": "chair_lift",
         "pisteType": null,
@@ -375,49 +375,6 @@
           [
             -117.6107606,
             34.2723912
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 285596294,
-      "properties": {
-        "id": 285596294,
-        "name": "Chair Lift",
-        "type": "lift",
-        "aerialway": "station",
-        "pisteType": null,
-        "difficulty": "intermediate",
-        "color": "#f59e0b",
-        "resort": "Mt. Baldy Resort"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            -117.6104855,
-            34.2741719
-          ],
-          [
-            -117.6104295,
-            34.2741929
-          ],
-          [
-            -117.6104195,
-            34.2741967
-          ],
-          [
-            -117.6103905,
-            34.2741438
-          ],
-          [
-            -117.6104565,
-            34.2741191
-          ],
-          [
-            -117.6104855,
-            34.2741719
           ]
         ]
       }
@@ -826,7 +783,7 @@
       "id": 330997475,
       "properties": {
         "id": 330997475,
-        "name": "Mt. Baldy Road",
+        "name": "Bentley's Dream",
         "type": "piste",
         "aerialway": null,
         "pisteType": "downhill",
@@ -1151,7 +1108,7 @@
       "id": 330997478,
       "properties": {
         "id": 330997478,
-        "name": "Devils Backbone Road",
+        "name": "Rollercoaster",
         "type": "piste",
         "aerialway": null,
         "pisteType": "downhill",
@@ -1815,7 +1772,7 @@
       "id": 330997494,
       "properties": {
         "id": 330997494,
-        "name": "Three Ts Trail",
+        "name": "Toilet Bowl",
         "type": "piste",
         "aerialway": null,
         "pisteType": "downhill",
@@ -2024,7 +1981,7 @@
       "id": 330997498,
       "properties": {
         "id": 330997498,
-        "name": "Three Ts Trail",
+        "name": "Mullin's Mile",
         "type": "piste",
         "aerialway": null,
         "pisteType": "downhill",
@@ -2231,7 +2188,7 @@
       "id": 330997499,
       "properties": {
         "id": 330997499,
-        "name": "Three Ts Trail",
+        "name": "Easy Road",
         "type": "piste",
         "aerialway": null,
         "pisteType": "downhill",
@@ -2410,7 +2367,7 @@
       "id": 907467048,
       "properties": {
         "id": 907467048,
-        "name": "Three Ts Trail",
+        "name": "Skyline",
         "type": "piste",
         "aerialway": null,
         "pisteType": "downhill",
@@ -2440,64 +2397,6 @@
           [
             -117.6077199,
             34.2654053
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 907467049,
-      "properties": {
-        "id": 907467049,
-        "name": "Ski Run",
-        "type": "piste",
-        "aerialway": null,
-        "pisteType": "downhill",
-        "difficulty": "intermediate",
-        "color": "#3b82f6",
-        "resort": "Mt. Baldy Resort"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            -117.6060048,
-            34.2652255
-          ],
-          [
-            -117.6058893,
-            34.2651415
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": 932959131,
-      "properties": {
-        "id": 932959131,
-        "name": "Ski Run",
-        "type": "piste",
-        "aerialway": null,
-        "pisteType": "downhill",
-        "difficulty": "intermediate",
-        "color": "#3b82f6",
-        "resort": "Mt. Baldy Resort"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            -117.6098173,
-            34.2709812
-          ],
-          [
-            -117.6099121,
-            34.2711274
-          ],
-          [
-            -117.6100744,
-            34.2710742
           ]
         ]
       }

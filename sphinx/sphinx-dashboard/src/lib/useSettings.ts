@@ -84,6 +84,8 @@ export interface UserSettings {
     zero_blind_spot_hud: boolean;
     toxic_sites: boolean;
     snowboard_trails: boolean;
+    historical_cameras: boolean;
+    community_reports: boolean;
   };
   satellite_provider?: 'hd_arcgis' | 'nasa_viirs' | 'nasa_modis' | 'goes_live';
   tier?: 'free' | 'pro' | 'sovereign';
@@ -116,12 +118,12 @@ const DEFAULT_SETTINGS: UserSettings = {
     custom_pins: true,
     drone: false,
     radio: false,
-    crime_live: true,
+    crime_live: false,
     crime_historical: false,
     defense: false,
     submarine_cables: true,
     wildfires: true,
-    fire_spread_forecast: true,
+    fire_spread_forecast: false,
     vessels: true,
     atlas_obscura: true,
     range_rings: false,
@@ -129,17 +131,19 @@ const DEFAULT_SETTINGS: UserSettings = {
     lightning: true,
     labels: true,
     boundaries: true,
-    wind_hud: true,
+    wind_hud: false,
     crime_heatmap: false,
-    road_closures: true,
-    weather_ar: true,
-    solar_terminator: true,
-    drone_docks: true,
-    blind_spots: true,
-    land_ownership: true,
-    zero_blind_spot_hud: true,
-    toxic_sites: true,
+    road_closures: false,
+    weather_ar: false,
+    solar_terminator: false,
+    drone_docks: false,
+    blind_spots: false,
+    land_ownership: false,
+    zero_blind_spot_hud: false,
+    toxic_sites: false,
     snowboard_trails: true,
+    historical_cameras: false,
+    community_reports: true,
   },
   satellite_provider: 'hd_arcgis',
   tier: 'free',

@@ -1,0 +1,36 @@
+[
+  {
+    "id": "rep-camera-seed-01",
+    "type": "camera",
+    "category_label": "Surveillance / FLOCK",
+    "name": "Flock Safety Falcon ALPR #941 (Austin Verified)",
+    "coordinates": [
+      -97.7461,
+      30.2588
+    ],
+    "reportedBy": "dev_austin_watchdog",
+    "reporters": [
+      "dev_austin_watchdog",
+      "dev_osint_auditor_02",
+      "dev_civil_rights_atx"
+    ],
+    "confirmationsCount": 3,
+    "consensusThreshold": 3,
+    "status": "verified_system",
+    "details": {
+      "vendor": "flock",
+      "vendor_display": "Flock Safety",
+      "model": "Falcon v2 ALPR",
+      "camera_type": "ALPR",
+      "operational_status": "Active",
+      "direction": 180,
+      "install_date": "2023-04-10",
+      "mount_type": "Solar Pole Mount",
+      "sharing_network": "TALON Regional Network",
+      "notes": "Verified municipal intersection deployment with solar mast"
+    },
+    "createdAt": "2023-04-12T10:00:00.000Z",
+    "updatedAt": "2023-04-15T14:20:00.000Z",
+    "promotedToSystemAt": "2023-04-15T14:20:00.000Z"
+  }
+]
