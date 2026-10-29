@@ -1,0 +1,8 @@
+# Voice Interface Dependencies for Sphinx
+openwakeword>=0.5.1
+pyaudio>=0.2.14
+SpeechRecognition>=3.10.1
+piper-tts>=1.2.0
+openai-whisper>=20231117
+requests>=2.31.0
+numpy>=1.24.3

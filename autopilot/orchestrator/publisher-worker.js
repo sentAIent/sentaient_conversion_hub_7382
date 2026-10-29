@@ -6,7 +6,7 @@ import { createClient } from 'redis';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { publishToTikTok, publishToMeta, publishToX, publishToLinkedIn } from './social-publishers.js';
+import { publishToTikTok, publishToMeta, publishToX, publishToLinkedIn, publishToYouTube } from './social-publishers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,6 +18,27 @@ const redis = createClient({
 
 redis.on('error', (err) => console.error('[Worker Redis Error]', err));
 
+// Exponential Backoff helper
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function publishWithBackoff(publishFn, args, maxRetries = 7) {
+    let attempt = 0;
+    while (attempt < maxRetries) {
+        try {
+            return await publishFn(...args);
+        } catch (error) {
+            attempt++;
+            const isRateLimit = error.message.toLowerCase().includes('rate limit') || error.message.toLowerCase().includes('too many requests');
+            if (attempt >= maxRetries || !isRateLimit) {
+                throw error; // throw if we exhausted retries or if it's a fatal non-rate-limit error
+            }
+            const delay = Math.pow(2, attempt) * 2000; // 2s, 4s, 8s, 16s...
+            console.warn(`[Worker] Rate limited. Retrying attempt ${attempt}/${maxRetries} after ${delay}ms...`);
+            await wait(delay);
+        }
+    }
+}
+
 async function getNextApprovedCampaign(brandId) {
     const keys = await redis.keys("queue:*");
     let oldest = null;
@@ -28,8 +49,6 @@ async function getNextApprovedCampaign(brandId) {
         if (dataStr) {
             try {
                 const data = JSON.parse(dataStr);
-                // Check if it belongs to this brand and is approved
-                // Note: The frontend sends `brand` (activeWorkspace) inside the payload, which goes to queue.
                 const campaignBrand = data.brand || data.brand_id;
                 
                 if (campaignBrand === brandId && data.status === 'approved_for_publishing') {
@@ -52,7 +71,6 @@ async function getNextApprovedCampaign(brandId) {
 async function publishCampaign(campaign, key) {
     console.log(`[Worker] Executing campaign ${campaign.campaign_id} for ${campaign.brand}`);
     
-    // Default to the handles in the campaign payload if available, else look up accounts
     const targetAccounts = campaign.targetAccounts || []; 
     
     if (targetAccounts.length === 0) {
@@ -65,7 +83,6 @@ async function publishCampaign(campaign, key) {
 
     const results = [];
 
-    // Iterate through targets (e.g. "TikTok:@sentaient")
     for (const target of targetAccounts) {
         try {
             const [platform, handle] = target.split(':');
@@ -75,18 +92,21 @@ async function publishCampaign(campaign, key) {
 
             switch (platform.toLowerCase()) {
                 case 'tiktok':
-                    res = await publishToTikTok(mediaUrl, text, handle);
+                    res = await publishWithBackoff(publishToTikTok, [mediaUrl, text, handle]);
                     break;
                 case 'instagram':
                 case 'meta':
-                    res = await publishToMeta(mediaUrl, text, handle);
+                    res = await publishWithBackoff(publishToMeta, [mediaUrl, text, handle, !!mediaUrl]);
+                    break;
+                case 'youtube':
+                    res = await publishWithBackoff(publishToYouTube, [mediaUrl, text, text, handle]);
                     break;
                 case 'x':
                 case 'twitter':
-                    res = await publishToX(text, mediaUrl, handle);
+                    res = await publishWithBackoff(publishToX, [text, mediaUrl, handle]);
                     break;
                 case 'linkedin':
-                    res = await publishToLinkedIn(text, handle);
+                    res = await publishWithBackoff(publishToLinkedIn, [text, handle]);
                     break;
                 default:
                     console.error(`[Worker] Unknown platform: ${platform}`);
@@ -99,27 +119,8 @@ async function publishCampaign(campaign, key) {
         }
     }
 
-    // Check if at least one platform succeeded
     const anySuccess = results.some(r => r.success);
 
-    if (anySuccess) {
-        try {
-            console.log(`[Worker] Attempting to capture screenshots of live posts...`);
-            // Dynamic import to avoid breaking publisher if crawlee fails
-            const { screenshotPost } = await import('./crawlee-worker.js');
-            for (const r of results) {
-                if (r.success && r.result?.post_url) {
-                    const screenPath = path.join(__dirname, '..', 'public', 'screenshots', `${campaign.campaign_id}_${r.platform}.png`);
-                    await screenshotPost(r.result.post_url, screenPath);
-                    r.screenshot_url = `/screenshots/${campaign.campaign_id}_${r.platform}.png`;
-                }
-            }
-        } catch (e) {
-            console.error(`[Worker] Failed to capture live screenshots:`, e);
-        }
-    }
-
-    // Update the queue status
     const updated = {
         ...campaign,
         status: anySuccess ? 'published' : 'failed',

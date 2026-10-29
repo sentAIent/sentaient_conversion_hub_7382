@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://lightspeed.sentaient.com/sitemap.xml

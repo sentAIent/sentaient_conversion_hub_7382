@@ -32,10 +32,13 @@ function getPitchMultiplier() {
  * Initialize DJ audio system
  */
 export function initDJAudio() {
-    if (!state.audioCtx) {
-        console.warn('[DJ Synth] No audio context available');
-        return false;
+    if (!state.audioCtx && (typeof window !== 'undefined')) {
+        state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
+    if (state.audioCtx && state.audioCtx.state === 'suspended') {
+        state.audioCtx.resume().catch(() => {});
+    }
+    if (!state.audioCtx) return false;
 
     // Always recreate if context changed or not connected
     if (djMasterGain && djMasterGain.context === state.audioCtx) {
@@ -45,7 +48,10 @@ export function initDJAudio() {
     try {
         // Create master gain
         djMasterGain = state.audioCtx.createGain();
-        djMasterGain.gain.value = 0.8;
+        djMasterGain.gain.value = 0;
+        const djNow = state.audioCtx.currentTime;
+        djMasterGain.gain.setValueAtTime(0, djNow);
+        djMasterGain.gain.linearRampToValueAtTime(0.8, djNow + 0.08);
 
         // Create master filter for tone control
         djMasterFilter = state.audioCtx.createBiquadFilter();
@@ -61,12 +67,10 @@ export function initDJAudio() {
         if (state.masterGain) {
             djMasterFilter.connect(state.masterGain);
             console.log('[DJ Synth] Connected to masterGain chain');
+        } else {
+            djMasterFilter.connect(state.audioCtx.destination);
+            console.log('[DJ Synth] Fallback: Connected to destination');
         }
-
-        // Always connect directly to destination as primary output
-        // (not just as fallback, but as the main route)
-        djMasterFilter.connect(state.audioCtx.destination);
-        console.log('[DJ Synth] Connected directly to speakers (destination)');
 
         console.log('[DJ Synth] Initialized - Gain:', djMasterGain.gain.value,
             'Filter freq:', djMasterFilter.frequency.value,
@@ -2529,14 +2533,10 @@ const SYNTH_MAP = {
  * Trigger a one-shot sound
  */
 export function triggerOneShot(soundId) {
-    if (!state.audioCtx) {
-        console.warn('[DJ Synth] No audio context');
-        return;
-    }
-
-    if (!djMasterGain) {
+    if (!djMasterGain || !state.audioCtx) {
         initDJAudio();
     }
+    if (!state.audioCtx) return;
 
     const synthFn = SYNTH_MAP[soundId];
     if (!synthFn) {
@@ -2554,14 +2554,10 @@ export function triggerOneShot(soundId) {
  * Start a looping sound
  */
 export function startLoop(soundId) {
-    if (!state.audioCtx) {
-        console.warn('[DJ Synth] No audio context');
-        return;
-    }
-
-    if (!djMasterGain) {
+    if (!djMasterGain || !state.audioCtx) {
         initDJAudio();
     }
+    if (!state.audioCtx) return;
 
     // Stop existing loop if running
     if (activeLoops[soundId]) {

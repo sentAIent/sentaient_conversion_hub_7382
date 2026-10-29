@@ -3,9 +3,18 @@
  * Handles all client-side Stripe operations
  */
 
-import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js';
-
-const functions = getFunctions();
+let functions = null;
+async function getFunctionsInstance() {
+    if (!functions) {
+        try {
+            const { getFunctions } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js');
+            functions = getFunctions();
+        } catch (e) {
+            console.warn('[Stripe] Functions not available:', e);
+        }
+    }
+    return functions;
+}
 
 // Stripe Configuration
 export const STRIPE_CONFIG = {

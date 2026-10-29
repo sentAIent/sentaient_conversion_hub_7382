@@ -1,5 +1,4 @@
-import { db } from './firebase.js';
-import { doc, setDoc, getDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { db, doc, setDoc, getDoc, updateDoc, increment } from './firebase.js';
 
 const REF_KEY = 'mindwave_ref_code';
 const INVITES_KEY = 'mindwave_invites_count';

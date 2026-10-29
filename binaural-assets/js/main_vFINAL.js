@@ -31,7 +31,7 @@ window.playMeditationStory = async (storyId, element) => {
         console.log(`[Legacy API] playMeditationStory called for: ${storyId}`);
         const storiesModule = await import('./content/stories.js');
         if (storiesModule.playStory) {
-            storiesModule.playStory(storyId, element);
+            storiesModule.playStory(storyId, false);
         } else {
             console.warn('[Legacy API] playStory function not found in stories module.');
         }

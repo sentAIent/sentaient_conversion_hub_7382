@@ -64,7 +64,9 @@ export async function captureViralVibe(durationMs = 10000, format = 'webm') {
     }
 
     const combinedStream = new MediaStream(tracks);
-    const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp8,opus' });
+    const mimeType = (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus'))
+        ? 'video/webm;codecs=vp8,opus' : ((MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('video/mp4')) ? 'video/mp4' : '');
+    const mediaRecorder = mimeType ? new MediaRecorder(combinedStream, { mimeType }) : new MediaRecorder(combinedStream);
     const chunks = [];
 
     mediaRecorder.ondataavailable = e => {

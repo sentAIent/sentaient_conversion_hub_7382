@@ -28,6 +28,28 @@ app-debug.apk
 lightspeed/.env
 
 # Internal AI Workspace
-odysseus-workspace/data
-odysseus-workspace/logs
+odysseus-workspace/
+.agent/skills/taste-skill-repo/
+.agents/skills/last30days-skill/
+autopilot/moneyprinterturbo/
+autopilot/open-seo/
+autopilot/openmontage/
+autopilot/short-video-generator-AI/
+legaleagle/mcp-configs/general-legal-mcp/
+legaleagle/services/contract-risk-auditor/
+legaleagle/tmp_awesome_llm_apps/
+lightspeed/allama-repo/
+lim_clone/FinceptTerminal_reference/
+sphinx/Crucix/
+sphinx/osiris/
+sphinx/ruview/
+tmp_home/solvent-agent/
+scratch/
+*.corrupt
+*.lock
+sphinx/test_screenshots/
+scratch_tile.png
+snowboarders-paradise/test_parse.js
+sphinx_cache.db*
+
 

@@ -64,6 +64,17 @@ export class SpatialEngine {
         }
     }
 
+    setDestination(newDestination) {
+        if (this.destination === newDestination) return;
+        this.panners.forEach(panner => {
+            try { panner.disconnect(); } catch (e) {}
+            if (newDestination) {
+                try { panner.connect(newDestination); } catch (e) {}
+            }
+        });
+        this.destination = newDestination;
+    }
+
     setOrbitActive(active) {
         if (this.orbitActive === active) return;
         this.orbitActive = active;

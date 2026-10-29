@@ -1,0 +1,421 @@
+{
+  "name": "agent-operated-company",
+  "description": "Free templates and instructions to form a U.S. company an AI agent can operate. An engaged client can have General Legal file it via a formation tool on GL's existing MCP.",
+  "maintainer": "General Legal, LLP",
+  "version": "0.6.0",
+  "entities_supported": [
+    "LLC",
+    "C-Corporation"
+  ],
+  "default_jurisdiction": "Delaware",
+  "mcp": {
+    "endpoint": "https://mcp.general.legal/mcp",
+    "model": "A formation tool is being added to General Legal's existing MCP (the same endpoint as its contract-review service).",
+    "transport": "streamable-http",
+    "auth": "OAuth 2.1 with automatic discovery; a General Legal account is required (no API keys).",
+    "engagement_gate": "No separate engagement tool. Signing in / signing up via https://portal.general.legal is where the human accepts the clickthrough Limited Engagement Letter (human-anchored design). Engaged tools act only after that.",
+    "attorney_in_the_loop": "An attorney reviews and approves before any filing.",
+    "free_access": "The templates and filing instructions are freely readable from this repository by any human or agent; no account or MCP connection is required."
+  },
+  "templates": [
+    {
+      "id": "coi-ccorp",
+      "title": "Certificate of Incorporation (C-corp, single class)",
+      "path": "templates/certificate-of-incorporation-ccorp.md",
+      "docx_path": "templates/certificate-of-incorporation-ccorp.docx",
+      "entity": "C-Corporation",
+      "filed_with_state": true,
+      "fields": [
+        "{Authorized Shares}",
+        "{Company Name}",
+        "{Effective Date}",
+        "{Incorporator Address}",
+        "{Incorporator Name}",
+        "{Par Value}",
+        "{Registered Agent Name}",
+        "{Registered Office Address}"
+      ],
+      "signature_capacities": [
+        "incorporator"
+      ]
+    },
+    {
+      "id": "action-of-incorporator-ccorp",
+      "title": "Action of Incorporator (C-corp)",
+      "path": "templates/action-of-incorporator-ccorp.md",
+      "docx_path": "templates/action-of-incorporator-ccorp.docx",
+      "entity": "C-Corporation",
+      "filed_with_state": false,
+      "fields": [
+        "{Company Name}",
+        "{Director Name}",
+        "{Effective Date}",
+        "{Incorporator Name}"
+      ],
+      "signature_capacities": [
+        "incorporator"
+      ]
+    },
+    {
+      "id": "bylaws-ccorp",
+      "title": "Bylaws (C-corp)",
+      "path": "templates/bylaws-ccorp.md",
+      "docx_path": "templates/bylaws-ccorp.docx",
+      "entity": "C-Corporation",
+      "filed_with_state": false,
+      "fields": [
+        "{Company Name}",
+        "{Incorporation Date}",
+        "{Officer Name}"
+      ],
+      "signature_capacities": [
+        "secretary"
+      ]
+    },
+    {
+      "id": "org-resolutions-ccorp",
+      "title": "Organizational Resolutions (C-corp)",
+      "path": "templates/organizational-resolutions-ccorp.md",
+      "docx_path": "templates/organizational-resolutions-ccorp.docx",
+      "entity": "C-Corporation",
+      "filed_with_state": false,
+      "fields": [
+        "{AI Oversight Officer Name}",
+        "{Aggregate Purchase Price}",
+        "{Company Name}",
+        "{Director Name}",
+        "{Effective Date}",
+        "{Fiscal Year End}",
+        "{Form of Consideration}",
+        "{Founder Name}",
+        "{Number of Shares}",
+        "{Officer Name}",
+        "{Price Per Share}",
+        "{Principal Office Address}"
+      ],
+      "signature_capacities": [
+        "director"
+      ]
+    },
+    {
+      "id": "stock-purchase-ccorp",
+      "title": "Common Stock Purchase Agreement (C-corp)",
+      "path": "templates/common-stock-purchase-agreement-ccorp.md",
+      "docx_path": "templates/common-stock-purchase-agreement-ccorp.docx",
+      "entity": "C-Corporation",
+      "filed_with_state": false,
+      "fields": [
+        "{Aggregate Purchase Price}",
+        "{Company Name}",
+        "{Effective Date}",
+        "{Form of Consideration}",
+        "{Number of Shares}",
+        "{Officer Name}",
+        "{Price Per Share}",
+        "{Purchaser Name}"
+      ],
+      "signature_capacities": [
+        "officer",
+        "purchaser"
+      ]
+    },
+    {
+      "id": "indemnification-ccorp",
+      "title": "Indemnification Agreement (C-corp)",
+      "path": "templates/indemnification-agreement-ccorp.md",
+      "docx_path": "templates/indemnification-agreement-ccorp.docx",
+      "entity": "C-Corporation",
+      "filed_with_state": false,
+      "fields": [
+        "{Company Name}",
+        "{Directors and Officers Insurance Undertaking}",
+        "{Effective Date}",
+        "{Indemnitee Name}",
+        "{Officer Name}"
+      ],
+      "signature_capacities": [
+        "officer",
+        "indemnitee"
+      ]
+    },
+    {
+      "id": "ai-governance-policy-ccorp",
+      "title": "AI Governance Policy (C-corp)",
+      "path": "templates/ai-governance-policy-ccorp.md",
+      "docx_path": "templates/ai-governance-policy-ccorp.docx",
+      "entity": "C-Corporation",
+      "filed_with_state": false,
+      "fields": [
+        "{AI Agent Description}",
+        "{AI Oversight Officer Name}",
+        "{Authority Limits}",
+        "{Company Name}",
+        "{Contract Threshold}",
+        "{Director Name}",
+        "{Effective Date}"
+      ],
+      "signature_capacities": [
+        "director",
+        "ai-oversight-officer"
+      ]
+    },
+    {
+      "id": "cof-llc",
+      "title": "Certificate of Formation (LLC)",
+      "path": "templates/certificate-of-formation-llc.md",
+      "docx_path": "templates/certificate-of-formation-llc.docx",
+      "entity": "LLC",
+      "filed_with_state": true,
+      "fields": [
+        "{Authorized Person Name}",
+        "{Company Name}",
+        "{Effective Date}",
+        "{Registered Agent Name}",
+        "{Registered Office Address}"
+      ],
+      "signature_capacities": [
+        "authorized-person"
+      ]
+    },
+    {
+      "id": "operating-agreement-llc",
+      "title": "Operating Agreement (LLC)",
+      "path": "templates/operating-agreement-llc.md",
+      "docx_path": "templates/operating-agreement-llc.docx",
+      "entity": "LLC",
+      "filed_with_state": false,
+      "fields": [
+        "{Capital Contribution}",
+        "{Company Name}",
+        "{Effective Date}",
+        "{Manager Name}",
+        "{Member Name}"
+      ],
+      "signature_capacities": [
+        "member",
+        "manager"
+      ]
+    },
+    {
+      "id": "ai-governance-policy-llc",
+      "title": "AI Governance Policy (LLC)",
+      "path": "templates/ai-governance-policy-llc.md",
+      "docx_path": "templates/ai-governance-policy-llc.docx",
+      "entity": "LLC",
+      "filed_with_state": false,
+      "fields": [
+        "{AI Agent Description}",
+        "{AI Oversight Officer Name}",
+        "{Authority Limits}",
+        "{Company Name}",
+        "{Contract Threshold}",
+        "{Effective Date}",
+        "{Manager Name}"
+      ],
+      "signature_capacities": [
+        "manager",
+        "ai-oversight-officer"
+      ]
+    },
+    {
+      "id": "stockholder-consent-ccorp",
+      "title": "Stockholder Consent (C-corp, sole stockholder)",
+      "path": "templates/stockholder-consent-ccorp.md",
+      "docx_path": "templates/stockholder-consent-ccorp.docx",
+      "entity": "C-Corporation",
+      "filed_with_state": false,
+      "fields": [
+        "{Company Name}",
+        "{Director Name}",
+        "{Effective Date}",
+        "{Stockholder Name}"
+      ],
+      "signature_capacities": [
+        "stockholder"
+      ]
+    },
+    {
+      "id": "membership-interest-purchase-llc",
+      "title": "Membership Interest Purchase Agreement (LLC)",
+      "path": "templates/membership-interest-purchase-agreement-llc.md",
+      "docx_path": "templates/membership-interest-purchase-agreement-llc.docx",
+      "entity": "LLC",
+      "filed_with_state": false,
+      "fields": [
+        "{Aggregate Purchase Price}",
+        "{Company Name}",
+        "{Company Signatory Capacity}",
+        "{Effective Date}",
+        "{Form of Consideration}",
+        "{Manager Name}",
+        "{Number of Interests}",
+        "{Ownership Percentage}",
+        "{Price Per Interest}",
+        "{Purchaser Name}"
+      ],
+      "signature_capacities": [
+        "manager",
+        "purchaser"
+      ]
+    },
+    {
+      "id": "indemnification-llc-manager",
+      "title": "Indemnification Agreement (LLC Manager)",
+      "path": "templates/indemnification-agreement-llc-manager.md",
+      "docx_path": "templates/indemnification-agreement-llc-manager.docx",
+      "entity": "LLC",
+      "filed_with_state": false,
+      "fields": [
+        "{Company Name}",
+        "{Company Signatory Capacity}",
+        "{Effective Date}",
+        "{Indemnitee Name}",
+        "{Manager Name}"
+      ],
+      "signature_capacities": [
+        "manager",
+        "indemnitee"
+      ]
+    },
+    {
+      "id": "operating-agreement-llc-shelfco",
+      "title": "Operating Agreement (LLC, ShelfCo)",
+      "path": "shelfco/templates/operating-agreement-llc.md",
+      "docx_path": "shelfco/templates/operating-agreement-llc.docx",
+      "entity": "LLC",
+      "variant": "shelfco",
+      "filed_with_state": false,
+      "fields": [
+        "{Capital Contribution}",
+        "{Company Name}",
+        "{Effective Date}",
+        "{Formation Date}",
+        "{Manager Name}",
+        "{Member Name}"
+      ],
+      "signature_capacities": [
+        "member",
+        "manager"
+      ],
+      "note": "Section 1 records the shelf entity's formation, names General Legal's authorized person literally rather than as a field, and has the Member ratify the pre-claim filing. The Member's ratification is the only place the pre-filing is picked up: no one from General Legal signs anything at claim time."
+    },
+    {
+      "id": "ai-governance-policy-llc-shelfco",
+      "title": "AI Governance Policy (LLC, ShelfCo)",
+      "path": "shelfco/templates/ai-governance-policy-llc.md",
+      "docx_path": "shelfco/templates/ai-governance-policy-llc.docx",
+      "entity": "LLC",
+      "variant": "shelfco",
+      "filed_with_state": false,
+      "fields": [
+        "{AI Agent Description}",
+        "{AI Oversight Officer Name}",
+        "{Authority Limits}",
+        "{Company Name}",
+        "{Contract Threshold}",
+        "{Effective Date}",
+        "{Manager Name}"
+      ],
+      "signature_capacities": [
+        "manager",
+        "ai-oversight-officer"
+      ],
+      "note": "Identical to ai-governance-policy-llc except Section 3 no longer asserts the AI Oversight Officer is the sole Member and Manager, so it stays true when the Member and Manager are different people."
+    },
+    {
+      "id": "cof-llc-shelfco",
+      "title": "Certificate of Formation (LLC) - filed copy for the client's records",
+      "path": "shelfco/templates/certificate-of-formation-llc.md",
+      "docx_path": "shelfco/templates/certificate-of-formation-llc.docx",
+      "entity": "LLC",
+      "variant": "shelfco",
+      "filed_with_state": true,
+      "already_filed": true,
+      "fields": [
+        "{Company Name}",
+        "{Formation Day}",
+        "{Formation Month}",
+        "{Formation Year}"
+      ],
+      "signature_capacities": [],
+      "note": "Two pages: a cover sheet explaining the certificate is already on file with Delaware, then a copy of the certificate General Legal's authorized person signed before the client arrived, including his signature image. It renders complete on its face, carries no signature markers, and must never be routed for signature. Delaware's ordinal phrasing splits the date into {Formation Day} ('28th'), {Formation Month} ('July'), and {Formation Year} ('2026'); the ShelfCo operating agreement uses the same date in prose as {Formation Date}."
+    }
+  ],
+  "document_sets": {
+    "llc-shelfco": [
+      "operating-agreement-llc-shelfco",
+      "membership-interest-purchase-llc",
+      "indemnification-llc-manager",
+      "ai-governance-policy-llc-shelfco",
+      "cof-llc-shelfco"
+    ]
+  },
+  "shelfco": {
+    "summary": "Pre-formed 'GL AgentCo <n>, LLC' shelf companies handed to a client near-instantly. LLC only, placeholder name only, no pre-filed EIN. The signing packet is document_sets.llc-shelfco, in envelope order: four documents the client signs, then the certificate copy as an unsigned page.",
+    "role_model": "Two roles, Member and Manager, held by at most two distinct people; one person may hold both. The Member is also the Purchaser. The AI Oversight Officer must be the Member or the Manager. Every name variable is a role, not a person: where one person holds several roles, write the same name into every variable for every role they hold, and never leave one blank. A person holding two roles signs in both capacities, sometimes on both sides of one document: a member who is also the manager signs the membership interest purchase agreement twice, once for the company as its manager and once as the purchaser.",
+    "general_legal_signers": "None. The Certificate of Formation was signed and filed by General Legal's authorized person before the client arrived, and his authority ended when Delaware accepted the filing.",
+    "company_name_rule": "{Company Name} is always the shelf entity's placeholder name. There is no rename variant; a client who wants a specific name should use a from-scratch formation with the base templates.",
+    "unsigned_packet_pages": [
+      "cof-llc-shelfco"
+    ],
+    "shelf_entity_facts": "The four formation-date tokens are one value, the date Delaware accepted the shelf entity's Certificate of Formation, in two shapes: prose {Formation Date} ('July 28, 2026') and the certificate's ordinal split ({Formation Day}/{Formation Month}/{Formation Year}).",
+    "ein": "The shelf entity has no EIN at handoff. The client's agent obtains one with the principal per filing-instructions/delaware-llc-ein-filing-instructions.md; nothing in the packet applies for, ratifies, or transfers an EIN.",
+    "parked_flows": "C-corp ShelfCos (shelfco/dnu-ccorp/), pre-filed EINs with Form 8822-B (shelfco/dnu-prefile-ein/), and renames (shelfco/dnu-rename/) are parked; each directory's README records the decision. Nothing live references them.",
+    "history": "shelfco/docs/changes-from-agent-operated-company.md records every deviation from the base templates."
+  },
+  "filing_steps": [
+    "Choose entity (see filing-instructions/README.md)",
+    "File charter with the state and pay the filing fee",
+    "Appoint a registered agent",
+    "Obtain a free EIN from the IRS (irs.gov)",
+    "Adopt internal documents (bylaws/operating agreement, AI Governance Policy, ownership issuance, indemnification)",
+    "Open a SEPARATE business bank account (do not commingle funds)",
+    "The standard templates issue fully vested ownership (vesting omitted by design; add it only with counsel). If vesting is added, consider an 83(b) election within 30 days (strict deadline)"
+  ],
+  "engagement": {
+    "service_fee": "The standard case is DIY-able; the client can also consult a General Legal attorney if they need help ($500 for a standard single-class LLC or C-corp; the client also pays the state filing fee + registered agent).",
+    "engagement_url": "https://portal.general.legal/signup?utm_source=mcp&utm_medium=agent&utm_campaign=agent-operated-company",
+    "note": "General Legal is a law firm; the human accepts a clickthrough Limited Engagement Letter at portal sign-in (which also serves as OAuth for the MCP). A supervising attorney reviews and approves before filing."
+  },
+  "disclaimer": "Informational only; not legal advice; no attorney-client relationship is formed by using the free templates. Engagement forms only via the Limited Engagement Letter after a conflicts check.",
+  "compliance": {
+    "sanctions_screen": "Run an OFAC sanctions screen (SDN + Consolidated lists) on the human principal, the company name, and any 25%+ owners for EVERY matter before acting; on any hit, block and escalate to a human. Strict-liability -- do not transact with sanctioned persons.",
+    "geoblocking": "Block site access from comprehensively sanctioned regions (e.g., Cuba, Iran, North Korea, Syria, Crimea/DNR/LNR). Handled at the website/edge layer in a separate project, not in this repo.",
+    "no_secrets": "Screening-provider API keys/endpoints live in environment/secrets and are never committed to this (public) repo."
+  },
+  "formats": {
+    "md": "Agent-readable mirror of the annotated DOCX source.",
+    "docx": "Authoritative annotated Word source; generate a clean copy before filing or signature."
+  },
+  "generation": {
+    "authoritative_format": "docx",
+    "markdown_role": "Agent-readable mirror; never converted into signing documents.",
+    "instruction_paragraph_style": "GLInstructionBlock",
+    "instruction_character_style": "GLInstructionInline",
+    "signature_marker": "[[GL-SIGNATURE:{capacity}]]",
+    "field_syntax": "{Field Name}",
+    "clean_copy_rule": "Remove instruction-styled content and Word comments, resolve every field and signature marker, and reject tracked changes before PandaDoc upload.",
+    "company_name_field": "Name stem only; each template supplies the literal , Inc. or , LLC suffix."
+  },
+  "slow_path_defaults": {
+    "ccorp": {
+      "authorized_shares": "10,000,000",
+      "founder_shares": "1,000,000",
+      "par_value": "$0.00001",
+      "price_per_share": "$0.00001",
+      "aggregate_purchase_price": "$10.00",
+      "form_of_consideration": "cash",
+      "fiscal_year_end": "December 31",
+      "directors_and_officers_insurance_undertaking": "The Company shall use commercially reasonable efforts to maintain directors’ and officers’ liability insurance covering the Indemnitee on terms no less favorable than coverage provided to the Company’s other directors and officers."
+    },
+    "llc": {
+      "number_of_interests": "100",
+      "ownership_percentage": "100",
+      "price_per_interest": "$1.00",
+      "aggregate_purchase_price": "$100.00",
+      "capital_contribution": "$100.00",
+      "form_of_consideration": "cash",
+      "company_signatory_capacity": "Manager"
+    }
+  }
+}

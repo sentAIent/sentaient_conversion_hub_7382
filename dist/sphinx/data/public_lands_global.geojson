@@ -1,0 +1,725 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "land-zone-camp-pendleton-marine-corps-base",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -117.58,
+              33.22
+            ],
+            [
+              -117.27,
+              33.22
+            ],
+            [
+              -117.27,
+              33.52
+            ],
+            [
+              -117.58,
+              33.52
+            ],
+            [
+              -117.58,
+              33.22
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Camp Pendleton Marine Corps Base",
+        "category": "FEDERAL_DOD",
+        "agency": "Department of the Navy / USMC",
+        "acronym": "DoD-USMC",
+        "access": "Restricted Military / Federal",
+        "dispatch": "Camp Pendleton PMO / FirstNet Military 911",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-nellis-air-force-range---creech-afb",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -116.8,
+              36.3
+            ],
+            [
+              -114.8,
+              36.3
+            ],
+            [
+              -114.8,
+              37.8
+            ],
+            [
+              -116.8,
+              37.8
+            ],
+            [
+              -116.8,
+              36.3
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Nellis Air Force Range & Creech AFB",
+        "category": "FEDERAL_DOD",
+        "agency": "Department of the Air Force",
+        "acronym": "USAF-NTTR",
+        "access": "Restricted Military / Federal",
+        "dispatch": "Nellis AFB Security Forces",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-fort-bliss-military-reservation",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -106.6,
+              31.7
+            ],
+            [
+              -105.8,
+              31.7
+            ],
+            [
+              -105.8,
+              32.8
+            ],
+            [
+              -106.6,
+              32.8
+            ],
+            [
+              -106.6,
+              31.7
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Fort Bliss Military Reservation",
+        "category": "FEDERAL_DOD",
+        "agency": "Department of the Army",
+        "acronym": "US-ARMY",
+        "access": "Restricted Military / Federal",
+        "dispatch": "Fort Bliss Directorate of Emergency Services",
+        "color": "#ef4444"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-nevada-national-security-site--doe-",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -116.5,
+              36.8
+            ],
+            [
+              -115.8,
+              36.8
+            ],
+            [
+              -115.8,
+              37.3
+            ],
+            [
+              -116.5,
+              37.3
+            ],
+            [
+              -116.5,
+              36.8
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Nevada National Security Site (DOE)",
+        "category": "FEDERAL_DOE",
+        "agency": "Department of Energy / NNSA",
+        "acronym": "DOE-NNSA",
+        "access": "Restricted Military / Federal",
+        "dispatch": "NNSS Protective Force Center",
+        "color": "#f97316"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-black-rock-desert---high-rock-canyon-blm-nca",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.4,
+              40.6
+            ],
+            [
+              -118.8,
+              40.6
+            ],
+            [
+              -118.8,
+              41.5
+            ],
+            [
+              -119.4,
+              41.5
+            ],
+            [
+              -119.4,
+              40.6
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Black Rock Desert - High Rock Canyon BLM NCA",
+        "category": "FEDERAL_BLM",
+        "agency": "Bureau of Land Management (Interior)",
+        "acronym": "DOI-BLM",
+        "access": "Unrestricted Public",
+        "dispatch": "Pershing/Humboldt County Sheriff & BLM Law Enforcement",
+        "color": "#eab308"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-mojave-trails---desert-blm-conservation-lands",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -116.4,
+              34.3
+            ],
+            [
+              -114.8,
+              34.3
+            ],
+            [
+              -114.8,
+              35.4
+            ],
+            [
+              -116.4,
+              35.4
+            ],
+            [
+              -116.4,
+              34.3
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Mojave Trails & Desert BLM Conservation Lands",
+        "category": "FEDERAL_BLM",
+        "agency": "Bureau of Land Management",
+        "acronym": "DOI-BLM",
+        "access": "Unrestricted Public",
+        "dispatch": "San Bernardino County Sheriff / BLM Rangers",
+        "color": "#eab308"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-utah-west-desert-blm-public-lands",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -114,
+              39
+            ],
+            [
+              -112.5,
+              39
+            ],
+            [
+              -112.5,
+              41
+            ],
+            [
+              -114,
+              41
+            ],
+            [
+              -114,
+              39
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Utah West Desert BLM Public Lands",
+        "category": "FEDERAL_BLM",
+        "agency": "Bureau of Land Management",
+        "acronym": "DOI-BLM",
+        "access": "Unrestricted Public",
+        "dispatch": "Tooele/Juab County Sheriff & BLM Interagency Dispatch",
+        "color": "#eab308"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-sierra-national-forest---sequoia-perimeter",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.7,
+              36.8
+            ],
+            [
+              -118.9,
+              36.8
+            ],
+            [
+              -118.9,
+              37.8
+            ],
+            [
+              -119.7,
+              37.8
+            ],
+            [
+              -119.7,
+              36.8
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Sierra National Forest & Sequoia Perimeter",
+        "category": "FEDERAL_USFS",
+        "agency": "US Forest Service (USDA)",
+        "acronym": "USDA-USFS",
+        "access": "Unrestricted Public",
+        "dispatch": "Fresno/Madera County Sheriff & USFS Central Cal Dispatch",
+        "color": "#10b981"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-olympic-national-forest---pacific-nw-timber-basin",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -124.2,
+              47.2
+            ],
+            [
+              -123,
+              47.2
+            ],
+            [
+              -123,
+              48.1
+            ],
+            [
+              -124.2,
+              48.1
+            ],
+            [
+              -124.2,
+              47.2
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Olympic National Forest & Pacific NW Timber Basin",
+        "category": "FEDERAL_USFS",
+        "agency": "US Forest Service",
+        "acronym": "USDA-USFS",
+        "access": "Unrestricted Public",
+        "dispatch": "Jefferson/Clallam County Sheriff & Puget Sound Interagency",
+        "color": "#10b981"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-yosemite-national-park",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.8,
+              37.5
+            ],
+            [
+              -119.2,
+              37.5
+            ],
+            [
+              -119.2,
+              38.2
+            ],
+            [
+              -119.8,
+              38.2
+            ],
+            [
+              -119.8,
+              37.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Yosemite National Park",
+        "category": "FEDERAL_NPS",
+        "agency": "National Park Service (Interior)",
+        "acronym": "DOI-NPS",
+        "access": "Permit Required",
+        "dispatch": "Yosemite Dispatch Emergency Center",
+        "color": "#06b6d4"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-yellowstone-national-park",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -111.1,
+              44.1
+            ],
+            [
+              -110,
+              44.1
+            ],
+            [
+              -110,
+              45.1
+            ],
+            [
+              -111.1,
+              45.1
+            ],
+            [
+              -111.1,
+              44.1
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Yellowstone National Park",
+        "category": "FEDERAL_NPS",
+        "agency": "National Park Service",
+        "acronym": "DOI-NPS",
+        "access": "Permit Required",
+        "dispatch": "Yellowstone Park Rangers & Mammoth Hot Springs Dispatch",
+        "color": "#06b6d4"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-city-of-newport-beach-municipal-corporation",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -117.97,
+              33.57
+            ],
+            [
+              -117.82,
+              33.57
+            ],
+            [
+              -117.82,
+              33.67
+            ],
+            [
+              -117.97,
+              33.67
+            ],
+            [
+              -117.97,
+              33.57
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "City of Newport Beach Municipal Corporation",
+        "category": "MUNICIPAL_INCORPORATED",
+        "agency": "City of Newport Beach Municipal Gov",
+        "acronym": "NB-CITY",
+        "access": "Private / Municipal",
+        "dispatch": "NBPD 911 Communications / Net6 DFR Dispatch",
+        "color": "#38bdf8"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-city-of-chula-vista-municipal-jurisdiction",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -117.15,
+              32.55
+            ],
+            [
+              -116.92,
+              32.55
+            ],
+            [
+              -116.92,
+              32.68
+            ],
+            [
+              -117.15,
+              32.68
+            ],
+            [
+              -117.15,
+              32.55
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "City of Chula Vista Municipal Jurisdiction",
+        "category": "MUNICIPAL_INCORPORATED",
+        "agency": "City of Chula Vista Public Safety",
+        "acronym": "CV-CITY",
+        "access": "Private / Municipal",
+        "dispatch": "CVPD RTIC / DFR CAD Dispatch",
+        "color": "#38bdf8"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-united-states---mexico-international-border-sector--cbp-san-diego---el-centro-",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -117.25,
+              32.53
+            ],
+            [
+              -115.3,
+              32.53
+            ],
+            [
+              -115.3,
+              32.75
+            ],
+            [
+              -117.25,
+              32.75
+            ],
+            [
+              -117.25,
+              32.53
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "United States - Mexico International Border Sector (CBP San Diego & El Centro)",
+        "category": "FEDERAL_DOD",
+        "agency": "US Customs & Border Protection / DHS",
+        "acronym": "DHS-CBP",
+        "access": "Restricted Military / Federal",
+        "dispatch": "CBP Joint Harbor Operations / Sector Dispatch",
+        "color": "#f43f5e"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-strait-of-hormuz-international-maritime-corridor",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              55.8,
+              25.8
+            ],
+            [
+              57.2,
+              25.8
+            ],
+            [
+              57.2,
+              27.2
+            ],
+            [
+              55.8,
+              27.2
+            ],
+            [
+              55.8,
+              25.8
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Strait of Hormuz International Maritime Corridor",
+        "category": "MARITIME_EEZ",
+        "agency": "Oman / UAE / Iran EEZ & Joint Transit Passage (UNCLOS)",
+        "acronym": "INTL-EEZ",
+        "access": "International Waters",
+        "dispatch": "Bandar Abbas VTS / UKMTO Dubai Regional Watch",
+        "color": "#8b5cf6"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-taiwan-strait-maritime-frontier---adiz",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              118.5,
+              23
+            ],
+            [
+              121.5,
+              23
+            ],
+            [
+              121.5,
+              26
+            ],
+            [
+              118.5,
+              26
+            ],
+            [
+              118.5,
+              23
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Taiwan Strait Maritime Frontier & ADIZ",
+        "category": "MARITIME_EEZ",
+        "agency": "Taiwan ROC Coast Guard / PLA Eastern Theater Command ADIZ",
+        "acronym": "ROCCG-ADIZ",
+        "access": "International Waters",
+        "dispatch": "Keelung VTS / ROC Navy Operations Command",
+        "color": "#8b5cf6"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-emirate-of-dubai-autonomous-municipal-domain",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              55,
+              24.8
+            ],
+            [
+              55.6,
+              24.8
+            ],
+            [
+              55.6,
+              25.4
+            ],
+            [
+              55,
+              25.4
+            ],
+            [
+              55,
+              24.8
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Emirate of Dubai Autonomous Municipal Domain",
+        "category": "MUNICIPAL_INCORPORATED",
+        "agency": "Government of Dubai / Dubai Police General HQ",
+        "acronym": "DXB-GOV",
+        "access": "Private / Municipal",
+        "dispatch": "Dubai Police Command & Control (999 DFR Oasis)",
+        "color": "#38bdf8"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "land-zone-republic-of-singapore-island-territory",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              103.6,
+              1.2
+            ],
+            [
+              104.1,
+              1.2
+            ],
+            [
+              104.1,
+              1.5
+            ],
+            [
+              103.6,
+              1.5
+            ],
+            [
+              103.6,
+              1.2
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Republic of Singapore Island Territory",
+        "category": "MUNICIPAL_INCORPORATED",
+        "agency": "Home Team Science & Technology Agency (HTX) / SPF",
+        "acronym": "SG-HTX",
+        "access": "Private / Municipal",
+        "dispatch": "Singapore Police Operations Command (999 DFR Mesh)",
+        "color": "#38bdf8"
+      }
+    }
+  ]
+}

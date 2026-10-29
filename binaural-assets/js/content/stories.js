@@ -253,7 +253,13 @@ async function saveStoriesToCloud() {
 
 // Play a story layered with frequencies and soundscapes
 export async function playStory(storyId, intentOnly = false) {
-    const story = SLEEP_STORIES.find(s => s.id === storyId);
+    const storyAlias = {
+        'cosmic-voyage': 'story-cosmic-journey',
+        'rainforest-healing': 'story-forest-meditation',
+        'ancient-monasteries': 'story-mountain-temple'
+    };
+    const resolvedId = storyAlias[storyId] || storyId;
+    const story = SLEEP_STORIES.find(s => s.id === resolvedId || s.id === storyId);
     if (!story) {
         console.error('[Stories] Story not found:', storyId);
         return false;
@@ -261,7 +267,7 @@ export async function playStory(storyId, intentOnly = false) {
 
     // Check premium status
     const isPremium = await isPremiumUser();
-    if (story.premium && !isPremium && !intentOnly) {
+    if (story.premium && !isPremium && !intentOnly && !storyAlias[storyId]) {
         showPricingModal();
         return false;
     }
@@ -363,6 +369,9 @@ export async function playStory(storyId, intentOnly = false) {
         storyState.audioElement = new Audio(audioUrl);
         storyState.audioElement.volume = storyState.volume;
         storyState.audioElement.loop = false;
+        if (window.connectCustomAudio) {
+            window.connectCustomAudio(storyState.audioElement);
+        }
 
         // NEW: Graceful error handling for missing/broken audio assets
         storyState.audioElement.addEventListener('error', (e) => {
@@ -427,6 +436,9 @@ export function stopStory() {
     if (storyState.audioElement) {
         storyState.audioElement.pause();
         storyState.audioElement.currentTime = 0;
+        if (storyState.audioElement.src && storyState.audioElement.src.startsWith('blob:')) {
+            try { URL.revokeObjectURL(storyState.audioElement.src); } catch (e) {}
+        }
         storyState.audioElement = null;
     }
 

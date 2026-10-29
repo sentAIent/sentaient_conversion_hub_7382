@@ -38,7 +38,8 @@ export function startRecording() {
 
         // Start with audio stream
         let tracks = [...state.destStreamNode.stream.getAudioTracks()];
-        let mimeType = "audio/webm;codecs=opus";
+        let mimeType = (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm;codecs=opus'))
+            ? 'audio/webm;codecs=opus' : ((window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/mp4')) ? 'audio/mp4' : '');
 
         // Add video track if enabled
         if (includeVideo) {
@@ -48,7 +49,8 @@ export function startRecording() {
 
             if (videoTracks.length > 0) {
                 tracks.push(...videoTracks);
-                mimeType = "video/webm";
+                mimeType = (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('video/webm'))
+                    ? 'video/webm' : ((MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('video/mp4')) ? 'video/mp4' : '');
                 console.log('[Recording] ✅ Video track added:', {
                     width: els.canvas.width,
                     height: els.canvas.height,
@@ -61,7 +63,7 @@ export function startRecording() {
 
         // Create combined stream
         const combinedStream = new MediaStream(tracks);
-        state.mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
+        state.mediaRecorder = mimeType ? new MediaRecorder(combinedStream, { mimeType }) : new MediaRecorder(combinedStream);
         state.recordedChunks = [];
 
         state.mediaRecorder.ondataavailable = e => {

@@ -56,6 +56,25 @@ export const CasesView: React.FC<CasesViewProps> = ({ currentTheme, onLoadDemo, 
             fetchCases();
             fetchMembers();
             fetchRecentDocuments();
+
+            // Setup Realtime Subscriptions
+            const casesSubscription = supabase
+                .channel('schema-db-changes')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'cases', filter: `team_id=eq.${profile.current_team_id}` },
+                    () => fetchCases()
+                )
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'documents', filter: `team_id=eq.${profile.current_team_id}` },
+                    () => fetchRecentDocuments()
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(casesSubscription);
+            };
         }
     }, [profile?.current_team_id]);
 

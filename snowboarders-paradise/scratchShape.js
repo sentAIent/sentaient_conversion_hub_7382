@@ -1,0 +1,10 @@
+const THREE = require('three');
+const shape = new THREE.Shape();
+shape.moveTo(0, 0.6);
+shape.quadraticCurveTo(0.13, 0.6, 0.13, 0.4);
+shape.lineTo(0.1, -0.4);
+shape.quadraticCurveTo(0.13, -0.6, 0, -0.6);
+shape.quadraticCurveTo(-0.13, -0.6, -0.1, -0.4);
+shape.lineTo(-0.13, 0.4);
+shape.quadraticCurveTo(-0.13, 0.6, 0, 0.6);
+console.log("Shape works!");

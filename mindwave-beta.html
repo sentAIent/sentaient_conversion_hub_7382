@@ -40,6 +40,7 @@
 <script type="importmap">
     {
         "imports": {
+            "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.48.0/+esm",
             "firebase/app": "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js",
             "firebase/auth": "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js",
             "firebase/firestore": "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js"
@@ -54,11 +55,11 @@
 <!-- SUPER CACHE KILLER: Force fresh load of the new 3600-line fractal engine -->
 <script>
         /**
-         * Mindwave Resilient Bootloader (V132_RESET)
+         * Mindwave Resilient Bootloader (V141_MENU_SCROLL_FIX)
          * Ensures fresh assets but prevents infinite refresh loops.
          */
         (function() {
-            const CURRENT_VERSION = 'V132_RESET';
+            const CURRENT_VERSION = 'V141_MENU_SCROLL_FIX';
             const lastVersion = localStorage.getItem('mw_boot_version');
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
@@ -137,27 +138,47 @@
         // GLOBAL UI TOGGLES (Proxies to controls_v3.js)
         window.switchLeftTab = function(targetId, btn) {
             console.log('[HTML] switchLeftTab clicked:', targetId);
+            const panel = document.getElementById('leftPanel');
+            if (panel) {
+                const pills = panel.querySelectorAll('.tab-pill, .global-tab-btn');
+                pills.forEach(p => p.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+                const cleanId = targetId.toLowerCase().replace('left-', '').replace('tab-', '');
+                panel.querySelectorAll('.tab-panel').forEach(p => {
+                    const cleanPanelId = p.id.toLowerCase().replace('left-', '').replace('tab-', '');
+                    if (p.id === targetId || cleanPanelId === cleanId) { p.classList.remove('hidden'); p.classList.add('active'); }
+                    else { p.classList.add('hidden'); p.classList.remove('active'); }
+                });
+                if (cleanId === 'favorites' && window.renderFavorites) {
+                    window.renderFavorites();
+                }
+            }
             if (window.controls && window.controls.switchLeftTab) {
                 window.controls.switchLeftTab(targetId, btn);
             } else {
-                if (btn && btn.parentNode) {
-                    const pills = btn.parentNode.querySelectorAll('.tab-pill');
-                    pills.forEach(p => p.classList.remove('active'));
-                    btn.classList.add('active');
-                }
                 window._pendingLeftTab = targetId;
             }
         };
         window.switchRightTab = function(targetId, btn) {
             console.log('[HTML] switchRightTab clicked:', targetId);
+            const panel = document.getElementById('rightPanel');
+            if (panel) {
+                const pills = panel.querySelectorAll('.tab-pill, .global-tab-btn');
+                pills.forEach(p => p.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+                const cleanId = targetId.toLowerCase().replace('right-', '').replace('tab-', '');
+                panel.querySelectorAll('.tab-panel').forEach(p => {
+                    const cleanPanelId = p.id.toLowerCase().replace('right-', '').replace('tab-', '');
+                    const isMatch = p.id === targetId || cleanPanelId === cleanId ||
+                                    (cleanId === 'atmos' && cleanPanelId === 'atmosphere') ||
+                                    (cleanId === 'atmosphere' && cleanPanelId === 'atmos');
+                    if (isMatch) { p.classList.remove('hidden'); p.classList.add('active'); }
+                    else { p.classList.add('hidden'); p.classList.remove('active'); }
+                });
+            }
             if (window.controls && window.controls.switchRightTab) {
                 window.controls.switchRightTab(targetId, btn);
             } else {
-                if (btn && btn.parentNode) {
-                    const pills = btn.parentNode.querySelectorAll('.tab-pill');
-                    pills.forEach(p => p.classList.remove('active'));
-                    btn.classList.add('active');
-                }
                 window._pendingRightTab = targetId;
             }
         };
@@ -207,18 +228,92 @@ window.resetGalaxySettings = function() {
             }
         };
 
+        // Resilient audio button proxies ensuring immediate reactivity
+        window.applyPreset = window.applyPreset || function(presetKey, btn) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.applyPreset) m.applyPreset(presetKey, btn);
+            }).catch(e => console.error('[Proxy] applyPreset error:', e));
+        };
+        window.applyComboPreset = window.applyComboPreset || function(comboId, btn) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.applyComboPreset) m.applyComboPreset(comboId, btn);
+            }).catch(e => console.error('[Proxy] applyComboPreset error:', e));
+        };
+        window.handlePlayClick = window.handlePlayClick || function(btn) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.handlePlayClick) m.handlePlayClick(btn);
+            }).catch(e => console.error('[Proxy] handlePlayClick error:', e));
+        };
+        window.handleHyperGammaClick = window.handleHyperGammaClick || function(btn) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.handleHyperGammaClick) m.handleHyperGammaClick(btn);
+            }).catch(e => console.error('[Proxy] handleHyperGammaClick error:', e));
+        };
+        window.startSweepPreset = window.startSweepPreset || function(key) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (m.startSweepPreset) m.startSweepPreset(key);
+            }).catch(e => console.error('[Proxy] startSweepPreset error:', e));
+        };
+        window.stopSweep = window.stopSweep || function() {
+            import('./binaural-assets/js/audio/engine.js').then(m => {
+                if (m.stopSweep) m.stopSweep();
+            }).catch(e => console.error('[Proxy] stopSweep error:', e));
+        };
+        window.playMeditationStory = window.playMeditationStory || function(storyId, element) {
+            import('./binaural-assets/js/content/stories.js').then(m => {
+                if (m.playStory) m.playStory(storyId, false);
+            }).catch(e => console.error('[Proxy] playMeditationStory error:', e));
+        };
+        window.triggerDjSound = window.triggerDjSound || function(padIndex) {
+            const padMap = { 0: 'pad', 1: 'drone', 2: 'crystal', 3: 'choir', 4: 'shimmer', 5: 'subbass', 6: 'heartbeat', 7: 'tibetan' };
+            const soundId = padMap[padIndex] || padIndex;
+            import('./binaural-assets/js/audio/dj-synth.js').then(m => {
+                if (m.triggerOneShot) m.triggerOneShot(soundId);
+            }).catch(e => console.error('[Proxy] triggerDjSound error:', e));
+        };
+        window.showInfoModal = window.showInfoModal || function(key) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (window.showInfoModal) window.showInfoModal(key);
+            }).catch(e => console.error('[Proxy] showInfoModal error:', e));
+        };
+        window.saveCurrentScenePrompt = window.saveCurrentScenePrompt || function() {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (window.saveCurrentScenePrompt) window.saveCurrentScenePrompt();
+            }).catch(e => console.error('[Proxy] saveCurrentScenePrompt error:', e));
+        };
+        window.favoriteActiveBeat = window.favoriteActiveBeat || function() {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (window.favoriteActiveBeat) window.favoriteActiveBeat();
+            }).catch(e => console.error('[Proxy] favoriteActiveBeat error:', e));
+        };
+        window.favoriteCurrentCymatics = window.favoriteCurrentCymatics || function(classId) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (window.favoriteCurrentCymatics) window.favoriteCurrentCymatics(classId);
+            }).catch(e => console.error('[Proxy] favoriteCurrentCymatics error:', e));
+        };
+        window.filterFavorites = window.filterFavorites || function(cat) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (window.filterFavorites) window.filterFavorites(cat);
+            }).catch(e => console.error('[Proxy] filterFavorites error:', e));
+        };
+        window.saveActiveColorFavorite = window.saveActiveColorFavorite || function(color) {
+            import('./binaural-assets/js/ui/controls_v3.js').then(m => {
+                if (window.saveActiveColorFavorite) window.saveActiveColorFavorite(color);
+            }).catch(e => console.error('[Proxy] saveActiveColorFavorite error:', e));
+        };
+
     </script>
 <title>MindWave - Binaural Beats Studio</title>
 <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
 <link href="./binaural-assets/css/tailwind-compiled.css" rel="stylesheet"/>
-<link href="./binaural-assets/css/style.css" rel="stylesheet"/>
+<link href="./binaural-assets/css/style.css?v=V145_FAVS_LABEL_FIX" rel="stylesheet"/>
 <link href="./binaural-assets/css/visual-active.css" rel="stylesheet"/>
 <link href="./binaural-assets/css/sophisticated-ui.css" rel="stylesheet"/>
 <!-- Preload critical resources -->
 <link href="./binaural-assets/js/main_vFINAL.js" rel="modulepreload"/>
 <!-- Visualizer modulepreload removed to unblock critical path -->
 <script defer="" onerror="console.log('[Config] No config.js found - using mock mode')" src="./binaural-assets/config.js" type="module"></script>
-<script onerror="console.error('Failed to load main_vFINAL.js')" src="./binaural-assets/js/main_vFINAL.js?v=999" type="module"></script>
+<script onerror="console.error('Failed to load main_vFINAL.js')" src="./binaural-assets/js/main_vFINAL.js?v=V142_SNOW_PERFECTION" type="module"></script>
 <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -387,8 +482,8 @@ window.resetGalaxySettings = function() {
 <!-- Global Dimmer Overlay -->
 <div class="fixed inset-0 bg-black pointer-events-none z-0" id="dimmerOverlay" style="opacity: 0;"></div>
 <canvas class="fixed inset-0 w-full h-full z-0" id="visualizer"></canvas>
-<!-- 2D Cyber Canvas Overlay -->
-<canvas class="fixed inset-0 w-full h-full pointer-events-none z-0 hidden mix-blend-screen opacity-70" id="cyberCanvas"></canvas>
+<!-- 2D Matrix Canvas Overlay -->
+<canvas class="fixed inset-0 w-full h-full pointer-events-none z-0 hidden mix-blend-screen opacity-70" id="matrixCanvas"></canvas>
 <!-- IMMERSIVE OVERLAY CONTAINER -->
 <!-- FIX: relative positioning allows natural scrolling -->
 <div class="relative w-full min-h-screen z-10 flex flex-col pointer-events-none" id="appOverlay">
@@ -399,15 +494,9 @@ window.resetGalaxySettings = function() {
 <div class="h-3 w-3 rounded-full bg-slate-600 shadow-[0_0_12px_currentColor] shrink-0" id="statusIndicator"></div>
 <!-- Mode Toggles - Theme Aware -->
 <div class="flex gap-0.5 p-1 bg-black/40 rounded-xl border border-white/10 shrink-0" id="modeToggle">
-<button class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200" data-mode="binaural">
-                        Binaural
-                    </button>
-<button class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200" data-mode="isochronic">
-                        Isochronic
-                    </button>
-<button class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200" data-mode="monaural">
-                        Monaural
-                    </button>
+<button class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200" data-mode="binaural"><span class="mode-text-full">Binaural</span><span class="mode-text-short hidden">Bin</span></button>
+<button class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200" data-mode="isochronic"><span class="mode-text-full">Isochronic</span><span class="mode-text-short hidden">Iso</span></button>
+<button class="mode-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200" data-mode="monaural"><span class="mode-text-full">Monaural</span><span class="mode-text-short hidden">Mono</span></button>
 </div>
 <!-- Divider - Hidden on narrow screens -->
 <div class="w-px h-6 bg-white/20 hidden sm:block"></div>
@@ -502,7 +591,7 @@ window.resetGalaxySettings = function() {
 <!-- LEFT: Visual Controls & Toggle -->
 <div class="flex flex-col gap-4 items-center">
 <!-- New Presets Toggle Button (Use old ID 'leftToggle' for logic compat) -->
-<button class="p-3 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all" id="leftToggle" title="Presets">
+<button class="toggle-active p-3 rounded-full bg-white/5 border border-[var(--accent)]/30 text-[var(--accent)] hover:bg-[var(--accent)]/10 hover:border-[var(--accent)] transition-all shadow-[0_0_12px_rgba(var(--accent-rgb,45,212,191),0.15)]" id="leftToggle" style="color: var(--accent);" title="Presets">
 <svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="24">
 <rect height="18" rx="2" ry="2" width="18" x="3" y="3"></rect>
 <line x1="9" x2="9" y1="3" y2="21"></line>
@@ -538,7 +627,7 @@ window.resetGalaxySettings = function() {
 <circle cx="60" cy="60" fill="none" opacity="0.3" r="54" stroke="var(--border)" stroke-width="4"></circle>
 <circle cx="60" cy="60" fill="none" id="timerProgress" r="54" stroke="var(--accent)" stroke-dasharray="339.292" stroke-dashoffset="339.292" stroke-linecap="round" stroke-width="4"></circle>
 </svg>
-<button class="glass-card w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_50px_var(--accent-glow)] hover:scale-105 active:scale-95 transition-all bg-white/5 border border-[var(--accent)]/30 backdrop-blur-xl group relative z-10 shrink-0" id="playBtn">
+<button class="glass-card w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_50px_var(--accent-glow)] hover:scale-105 active:scale-95 transition-all bg-white/5 border border-[var(--accent)]/30 backdrop-blur-xl group relative z-10 shrink-0" id="playBtn" onclick="window.handlePlayClick ? window.handlePlayClick(this) : null">
 <svg class="w-6 h-6 text-[var(--accent)] group-hover:text-white transition-colors ml-1" fill="currentColor" id="playIcon" viewbox="0 0 24 24">
 <polygon points="5 3 19 12 5 21 5 3"></polygon>
 </svg>
@@ -664,7 +753,7 @@ window.resetGalaxySettings = function() {
 </div>
 <div class="order-2 hidden flex flex-wrap justify-center items-center gap-4 px-5 py-4 bg-[#020a14]/90 backdrop-blur-md border border-sky-400/30 rounded-xl shadow-[0_0_30px_rgba(147,210,255,0.15)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full" id="snowflakeFloatingSettingsPanel">
 <!-- Back -->
-<button class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest text-sky-300/70 hover:text-white transition-all border border-sky-400/20 flex items-center gap-1" onclick="document.getElementById('snowflakeSettingsPanel').classList.add('hidden')">
+<button class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest text-sky-300/70 hover:text-white transition-all border border-sky-400/20 flex items-center gap-1" onclick="document.getElementById('snowflakeFloatingSettingsPanel').classList.add('hidden')">
 <svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="15 18 9 12 15 6"></polyline></svg>
                     Back
                 </button>
@@ -687,66 +776,38 @@ window.resetGalaxySettings = function() {
 <input class="mw-slider" id="snowGlowSlider" max="1" min="0" step="0.05" style="accent-color: #7dd3fc;" type="range" value="0.5"/>
 </div>
 </div>
-<div class="order-2 hidden flex-col gap-5 px-5 py-4 bg-[#08020f] border-2 border-purple-500/40 rounded-xl shadow-[0_0_50px_rgba(180,120,255,0.35)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full z-[1000] pointer-events-auto" id="cymaticsFloatingPanel">
-<!-- Header row -->
-<div class="flex items-center gap-5 flex-wrap">
-<button class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest text-purple-300/70 hover:text-white transition-all border border-purple-400/20 flex items-center gap-1" onclick="document.getElementById('cymaticsFloatingPanel').classList.add('hidden')">
-<svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                        Back
-                    </button>
-<!-- Vibration Toggle -->
-<button class="glass-pill p-1 rounded-full hover:bg-white/20 active:scale-95 transition-all text-[var(--accent)]" id="matrixVibrationToggle" title="Toggle Matrix Vibration">
-<svg fill="none" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="12" xmlns="http://www.w3.org/2000/svg">
-<path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path>
-</svg>
+<div class="order-2 hidden flex-wrap justify-center items-center gap-4 px-5 py-4 bg-[#0a0518]/90 backdrop-blur-md border border-[var(--accent)]/30 rounded-xl shadow-[0_0_30px_rgba(45,212,191,0.2)] transition-all animate-fade-in-up w-[95%] sm:w-max mx-auto max-w-full z-[1000] pointer-events-auto" id="cymaticsFloatingPanel">
+<button class="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] hover:text-white transition-all border border-[var(--accent)]/20 flex items-center gap-1" onclick="document.getElementById('cymaticsFloatingPanel').classList.add('hidden')">
+<svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="15 18 9 12 15 6"></polyline></svg> Back
 </button>
-<!-- Rainbow -->
-<div class="flex flex-col gap-0.5 items-center ml-2">
-<div class="flex gap-1 items-center">
-<span class="text-[10px] font-mono uppercase tracking-widest transition-colors text-[var(--accent)] font-bold cursor-pointer select-none" id="labelRGB">RGB</span>
-<span class="text-[10px] text-white/20 select-none">/</span>
-<span class="text-[10px] font-mono uppercase tracking-widest transition-colors text-[var(--text-muted)] cursor-pointer select-none" id="labelRainbow">Rainbow</span>
+<span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider shrink-0" id="cymaticsFloatingTitle">🔊 Harmonic Plates</span>
+<div class="w-px h-6 bg-white/10"></div>
+<div class="flex flex-col gap-0.5 w-28">
+<div class="flex justify-between items-center px-0.5">
+<label class="text-[10px] text-[var(--text-muted)] uppercase font-mono tracking-widest">EFFECT</label>
+<span class="text-[10px] font-bold text-[var(--accent)] font-mono" id="cymaticsFloatingIntensityVal">100%</span>
 </div>
+<input class="mw-slider" id="cymaticsFloatingIntensitySlider" max="2" min="0.1" step="0.05" style="accent-color: var(--accent);" type="range" value="1.0"/>
+</div>
+<div class="w-px h-6 bg-white/10"></div>
+<div class="flex items-center gap-2">
+<label class="text-[10px] text-[var(--text-muted)] uppercase font-mono tracking-widest">COLOR</label>
+<input class="w-5 h-5 rounded cursor-pointer border border-white/20 p-0 bg-transparent" id="cymaticsFloatingColor1" title="Primary Color" type="color" value="#60a9ff"/>
+<input class="w-5 h-5 rounded cursor-pointer border border-white/20 p-0 bg-transparent" id="cymaticsFloatingColor2" title="Secondary Color" type="color" value="#a855f7"/>
+</div>
+<div class="flex items-center gap-1.5 ml-1">
+<span class="text-[9px] font-mono uppercase tracking-widest text-[var(--text-muted)]">RAINBOW</span>
 <label class="premium-toggle">
-<input checked="" id="matrixRainbowToggle" type="checkbox"/>
+<input id="cymaticsFloatingRainbowToggle" type="checkbox"/>
 <span class="toggle-slider"></span>
 </label>
-</div>
-<div class="w-px h-6 bg-white/10 mx-0.5"></div>
-<!-- Sliders Group -->
-<div class="flex items-center gap-5">
-<!-- Speed -->
-<div class="flex flex-col gap-0.5 w-20">
-<div class="flex justify-between items-center px-0.5">
-<label class="premium-label">SPD</label>
-<span class="premium-value" id="matrixSpeedVal">1.0</span>
-</div>
-<input class="mw-slider" id="matrixSpeedSlider" max="5.0" min="0.1" step="0.1" type="range" value="1.0"/>
-</div>
-<!-- Length -->
-<div class="flex flex-col gap-0.5 w-20">
-<div class="flex justify-between items-center px-0.5">
-<label class="premium-label">LEN</label>
-<span class="premium-value" id="matrixLengthVal">1.0</span>
-</div>
-<input class="mw-slider" id="matrixLengthSlider" max="2.0" min="0.1" step="0.1" type="range" value="1.0"/>
-</div>
-<!-- Angle -->
-<div class="flex flex-col gap-0.5 w-20">
-<div class="flex justify-between items-center px-0.5">
-<label class="premium-label">ANG</label>
-<span class="premium-value" id="matrixAngleVal">0°</span>
-</div>
-<input class="mw-slider" id="matrixAngleSlider" max="360" min="0" step="15" type="range" value="0"/>
-</div>
-</div>
 </div>
 </div>
 </div> <!-- Close center panel -->
 <!-- RIGHT: Recording & Mixer Toggle -->
 <div class="flex flex-col gap-5 items-center pb-2">
 <!-- New Mixer Toggle Button (Use old ID 'rightToggle') -->
-<button class="p-3 rounded-full bg-white/5 border border-white/10 text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all order-first" id="rightToggle" title="Mixer">
+<button class="toggle-active p-3 rounded-full bg-white/5 border border-[var(--accent)]/30 text-[var(--accent)] hover:bg-[var(--accent)]/10 hover:border-[var(--accent)] transition-all shadow-[0_0_12px_rgba(var(--accent-rgb,45,212,191),0.15)] order-first" id="rightToggle" style="color: var(--accent);" title="Mixer">
 <svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="24">
 <path d="M12 20v-6M6 20V10M18 20V4"></path>
 </svg>
@@ -756,13 +817,13 @@ window.resetGalaxySettings = function() {
 </footer>
 </div>
 <!-- LEFT SIDEBAR: PRESETS -->
-<aside class="fixed top-0 left-0 h-full w-80 glass-lux border-r border-white/10 -translate-x-full transition-transform duration-500 z-40 flex flex-col pointer-events-auto ui-fade-target" id="leftPanel">
-<div class="relative w-full px-6 py-6 border-b border-white/5 flex flex-col justify-center items-center shrink-0 min-h-[120px] gap-4">
+<aside class="fixed top-0 left-0 h-full w-80 glass-lux border-r border-white/10 translate-x-0 transition-transform duration-500 z-40 flex flex-col pointer-events-auto ui-fade-target" id="leftPanel">
+<div class="relative w-full px-4 pt-3 pb-2.5 border-b border-white/5 flex flex-col justify-center items-center shrink-0 gap-2">
 <a class="hover:opacity-80 transition-opacity block" href="#" onclick="window.location.reload()">
-<img alt="MindWave Logo" class="h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(45,212,191,0.2)] rounded-lg relative z-10" src="./mindwave-logo.png"/>
+<img alt="MindWave Logo" class="h-16 w-auto object-contain drop-shadow-[0_0_12px_rgba(45,212,191,0.2)] rounded-lg relative z-10" src="./mindwave-logo.png"/>
 </a>
 <!-- AI GOAL INPUT SECTION -->
-<div class="w-full px-6 animate-[fade-in_0.5s_ease]" id="aiGoalSection">
+<div class="w-full px-2 animate-[fade-in_0.5s_ease]" id="aiGoalSection">
 <div class="w-full space-y-3 animate-[fade-in_0.5s_ease]">
 <input class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[var(--accent)] transition-all" id="aiGoalInput" placeholder="Try 'Focus for 20 mins'..." type="text"/>
 <button class="w-[90%] mx-auto h-[52px] bg-[var(--accent)] text-[var(--bg-main)] rounded-xl text-[11px] font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-3" id="aiGenerateBtn">
@@ -773,16 +834,17 @@ window.resetGalaxySettings = function() {
 </div>
 <div class="hidden mt-2 text-[10px] text-[var(--accent)] italic leading-relaxed px-1 opacity-80" id="aiInsight"></div>
 </div>
-<button class="absolute top-4 right-4 opacity-50 hover:opacity-100 z-20" id="closeLeftBtn"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="20">
+<button class="absolute top-3 right-3 p-2 rounded-lg bg-white/5 border border-white/10 hover:border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-all z-20" id="closeLeftBtn" title="Close Panel"><svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18">
 <line x1="18" x2="6" y1="6" y2="18"></line>
 <line x1="6" x2="18" y1="6" y2="18"></line>
 </svg></button>
 </div>
 <!-- LEFT TAB NAVIGATION -->
-<nav class="sidebar-tabs shrink-0 flex w-full bg-black/20">
-<div class="tab-pill active flex-1 py-3 text-[10px]" onclick="switchLeftTab('audio', this)">Audio</div>
-<div class="tab-pill flex-1 py-3 text-[10px]" onclick="switchLeftTab('beats', this)">Beats</div>
-<div class="tab-pill flex-1 py-3 text-[10px]" onclick="switchLeftTab('settings', this)">Settings</div>
+<nav class="sidebar-tabs shrink-0 flex w-full">
+<button class="tab-pill active flex-1 py-2.5 px-1.5 text-[10px] font-bold uppercase tracking-wider" onclick="switchLeftTab('audio', this)">Audio</button>
+<button class="tab-pill flex-1 py-2.5 px-1.5 text-[10px] font-bold uppercase tracking-wider" onclick="switchLeftTab('beats', this)">Beats</button>
+<button class="tab-pill flex-1 py-2.5 px-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--accent)]" onclick="switchLeftTab('favorites', this)">⭐ Favs</button>
+<button class="tab-pill flex-1 py-2.5 px-1.5 text-[10px] font-bold uppercase tracking-wider" onclick="switchLeftTab('settings', this)"><span class="tab-full">Settings</span><span class="tab-short hidden">Set</span></button>
 </nav>
 <!-- MAIN CONTAINER FOR ALL CONTROLS - Scrollable -->
 <div class="flex-1 overflow-y-auto custom-scrollbar no-scrollbar-firefox px-6">
@@ -884,11 +946,46 @@ window.resetGalaxySettings = function() {
 </div>
 <!-- TAB: BEATS -->
 <div class="tab-panel hidden space-y-6" id="left-tab-beats">
+<!-- SECTION: Generator Sliders -->
+<div class="sidebar-section">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="section-label">Generator Sliders</h3>
+    </div>
+    <div class="space-y-5">
+        <!-- Base Pitch -->
+        <div class="mw-slider-container">
+            <div class="flex justify-between items-center mb-4">
+                <label class="premium-label text-white/70">Base Pitch</label>
+                <span class="premium-value-badge" id="baseValue">200Hz</span>
+            </div>
+            <input class="mw-slider" id="baseSlider" max="1500" min="50" step="0.1" type="range" value="200"/>
+        </div>
+        <!-- Beat Freq -->
+        <div class="mw-slider-container">
+            <div class="flex justify-between items-center mb-4">
+                <label class="premium-label text-white/70">Beat Frequency</label>
+                <span class="premium-value-badge" id="beatValue">10Hz</span>
+            </div>
+            <input class="mw-slider" id="beatSlider" max="100" min="0.5" step="0.1" type="range" value="10"/>
+        </div>
+        <!-- Binaural Vol -->
+        <div class="mw-slider-container">
+            <div class="flex justify-between items-center mb-4">
+                <label class="premium-label text-white/70">Binaural Volume</label>
+                <span class="premium-value-badge" id="volValue">50%</span>
+            </div>
+            <input class="mw-slider" id="volSlider" max="1" min="0" step="0.01" type="range" value="0.5"/>
+        </div>
+    </div>
+</div>
 <!-- SECTION: Neural Modulation -->
 <div class="sidebar-section">
 <div class="flex items-center justify-between mb-2">
 <h3 class="section-label">Neural Modulation</h3>
+<div class="flex items-center gap-2">
+<button onclick="window.favoriteActiveBeat && window.favoriteActiveBeat()" class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-all flex items-center gap-1" title="Favorite Current Beat Entrainment">⭐ Fav Beat</button>
 <div class="premium-value-badge" id="audioModeBadge">BINAURAL</div>
+</div>
 </div>
 <div class="flex items-center gap-4 mb-4">
 <button aria-label="Info" class="transition-colors" onclick="showInfoModal('brain_waves')" style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
@@ -904,41 +1001,133 @@ window.resetGalaxySettings = function() {
 <div class="grid grid-cols-2 gap-2 w-full">
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[50px]" onclick="applyPreset('delta', this)" title="Deep restorative sleep (0.5-4Hz)">
 <span class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Delta</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Sleep</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">0.5-4Hz • Sleep</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[50px]" onclick="applyPreset('theta', this)" title="Deep meditation and dreaming (4-8Hz)">
 <span class="absolute top-1 right-1 text-[10px] opacity-70">🔒</span>
 <span class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Theta</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Meditation</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">4-8Hz • Meditation</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[50px]" onclick="applyPreset('alpha', this)" title="Relaxed focus and creativity (8-14Hz)">
 <span class="absolute top-1 right-1 text-[10px] opacity-70">🔒</span>
 <span class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Alpha</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Relaxation</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">8-14Hz • Relaxation</span>
 </button>
 <!-- Mu Waves (8-13Hz, between Alpha and Beta) -->
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[50px]" onclick="applyPreset('mu', this)" title="Sensorimotor rhythm for body syncing (9-11Hz)">
 <span class="absolute top-1 right-1 text-[10px] opacity-70">🔒</span>
 <span class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Mu</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Body Sync</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">9-11Hz • Body Sync</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[50px]" onclick="applyPreset('beta', this)" title="Active focus and alertness (14-30Hz)">
 <span class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Beta</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Focus</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">14-30Hz • Focus</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[50px]" onclick="applyPreset('gamma', this)" title="Peak awareness and cognition (30-100Hz)">
 <span class="absolute top-1 right-1 text-[10px] opacity-70">🔒</span>
 <span class="text-sm font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Gamma</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Awareness</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">30-100Hz • Awareness</span>
 </button>
 <!-- Hyper-Gamma (Locked by default) - Full width spanning both columns -->
 <button class="preset-btn col-span-2 flex flex-col items-center justify-center glass-pill border border-amber-500/30 hover:bg-white/10 hover:border-amber-500/50 transition-all group relative h-[50px]" id="hyperGammaBtn" onclick="handleHyperGammaClick(this)" title="Advanced high-frequency states (40-100Hz)">
 <span class="absolute top-1 right-1 text-[10px]" id="hyperGammaLock">🔒</span>
 <span class="text-sm font-bold text-amber-400 text-opacity-80 group-hover:text-opacity-100 uppercase tracking-wide">Hyper-Γ</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">40-100Hz • Advanced</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">40-100Hz • Peak Insight</span>
 </button>
 </div>
 </div>
+
+<div class="sidebar-section mt-6">
+    <div class="flex items-center justify-between mb-2">
+        <h3 class="section-label text-cyan-400">Deep Dive Custom Frequencies</h3>
+        <div class="premium-value-badge border-cyan-500/30 text-cyan-400">PRO</div>
+    </div>
+    <div class="grid grid-cols-2 gap-2 w-full">
+        <!-- Buttons injected here -->
+
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-0.5', this)" title="Extreme Deep State">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">0.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Epsilon • Deep State</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-1.5', this)" title="Deepest Healing">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">1.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Delta • Healing</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-2.5', this)" title="Immune Support">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">2.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Delta • Immunity</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-3.0', this)" title="Anti-Aging">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">3.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Delta • Anti-Aging</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-4.5', this)" title="REM Sleep">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">4.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Theta • REM Sleep</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-5.5', this)" title="Deep Meditation">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">5.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Theta • Deep Zen</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-6.5', this)" title="Memory Consolidation">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">6.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Theta • Memory</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-7.83', this)" title="Earth Resonance">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">7.83 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Schumann • Earth</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-8.5', this)" title="Light Relaxation">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">8.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Alpha • Light Relax</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-10.0', this)" title="Serotonin / Mood">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">10.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Alpha • Serotonin</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-11.5', this)" title="Flow State">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">11.5 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Alpha • Flow State</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-12.0', this)" title="Centering">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">12.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Alpha • Centering</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-14.0', this)" title="Focused Attention">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">14.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Beta • Focus</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-16.0', this)" title="Cognitive Enhance">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">16.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Beta • Cognition</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-18.0', this)" title="Alertness & Energy">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">18.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Beta • Alertness</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-20.0', this)" title="Peak Intel">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">20.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Beta • Peak Intel</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-30.0', this)" title="Hyper-Focus">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">30.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Gamma • Hyper-Focus</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-40.0', this)" title="Advanced Insight">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">40.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Gamma • Insight</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-50.0', this)" title="Universal Compassion">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">50.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Gamma • Compassion</span>
+        </button>
+        <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all group relative h-[50px]" onclick="applyPreset('freq-200.0', this)" title="Mystical Conscious">
+            <span class="text-xs font-bold text-cyan-400 text-opacity-80 group-hover:text-opacity-100">200.0 Hz</span>
+            <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Lambda • Mystical</span>
+        </button>
+    </div>
+</div>
+
 <!-- SECTION: Biological Resonance -->
 <div class="sidebar-section">
 <div class="py-4 flex items-center justify-center shrink-0 gap-5">
@@ -957,45 +1146,80 @@ window.resetGalaxySettings = function() {
 <div class="grid grid-cols-2 gap-2 shrink-0">
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[50px]" onclick="applyPreset('heal-174', this)" title="Pain relief and security">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">174 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Pain Relief</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">Pain Relief</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[50px]" onclick="applyPreset('heal-285', this)" title="Tissue regeneration">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">285 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Tissue</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">Tissue Repair</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[50px]" onclick="applyPreset('heal-396', this)" title="Liberation from fear">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">396 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Liberation</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">Liberate Fear</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group h-[50px]" onclick="applyPreset('heal-417', this)" title="Facilitating change">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">417 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Change</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">Facilitate Change</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group h-[50px]" onclick="applyPreset('heal-432', this)" title="Nature's balance">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">432 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Nature</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">Natural Harmony</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group h-[50px]" onclick="applyPreset('heal-528', this)" title="DNA repair and miracles">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">528 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Repair</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">DNA Miracle</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group h-[50px]" onclick="applyPreset('heal-639', this)" title="Connecting relationships">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">639 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Connection</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">Connection &amp; Love</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group h-[50px]" onclick="applyPreset('heal-741', this)" title="Awakening intuition">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">741 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Intuition</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">Awaken Intuition</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group h-[50px]" onclick="applyPreset('heal-852', this)" title="Returning to spiritual order">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">852 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Spirit</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">Spiritual Order</span>
 </button>
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group h-[50px]" onclick="applyPreset('heal-963', this)" title="Divine consciousness">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">963 Hz</span>
-<span class="text-[10px] text-[var(--text-muted)] mt-0.5">Oneness</span>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5">Crown Oneness</span>
 </button>
 </div>
+</div>
+<!-- TAB: FAVORITES -->
+<div class="tab-panel hidden space-y-6" id="left-tab-favorites">
+<div class="sidebar-section">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="section-label flex items-center gap-2"><span class="text-amber-400">⭐</span>Saved Favorites</h3>
+        <span class="premium-value-badge" id="favoritesCountBadge">0</span>
+    </div>
+    <p class="text-[10px] text-[var(--text-muted)] mb-4">One-click activation for your favorite Cymatics, Visuals, Beats, Soundscapes, &amp; Full Scenes.</p>
+
+    <!-- Save Current Scene Action Button -->
+    <button class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[var(--accent)]/20 via-cyan-500/20 to-fuchsia-500/20 border border-[var(--accent)]/40 hover:border-[var(--accent)] hover:shadow-[0_0_20px_rgba(45,212,191,0.25)] text-xs font-bold flex flex-col items-center justify-center gap-1 text-white transition-all group" onclick="window.saveCurrentScenePrompt()">
+        <div class="flex items-center gap-2 text-[var(--accent)] group-hover:text-white">
+            <span class="text-sm">⭐</span>
+            <span class="tracking-wide uppercase font-black">Snapshot Current Scene</span>
+        </div>
+        <span class="text-[9px] text-[var(--text-muted)] group-hover:text-white/80">Saves active visuals, cymatics, beat &amp; audio mix</span>
+    </button>
+</div>
+
+<!-- Category Filter Pills -->
+<div class="sidebar-section pt-0">
+    <div class="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar-firefox" id="favoritesFilterBar">
+        <button class="fav-filter-pill active px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/50 whitespace-nowrap transition-all" data-filter="all" onclick="window.filterFavorites('all')">All</button>
+        <button class="fav-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-white/5 text-[var(--text-muted)] border border-white/10 whitespace-nowrap transition-all hover:bg-white/10" data-filter="scenes" onclick="window.filterFavorites('scenes')">🌟 Scenes</button>
+        <button class="fav-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-white/5 text-[var(--text-muted)] border border-white/10 whitespace-nowrap transition-all hover:bg-white/10" data-filter="cymatics" onclick="window.filterFavorites('cymatics')">🌊 Cymatics</button>
+        <button class="fav-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-white/5 text-[var(--text-muted)] border border-white/10 whitespace-nowrap transition-all hover:bg-white/10" data-filter="visuals" onclick="window.filterFavorites('visuals')">🎨 Visuals</button>
+        <button class="fav-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-white/5 text-[var(--text-muted)] border border-white/10 whitespace-nowrap transition-all hover:bg-white/10" data-filter="beats" onclick="window.filterFavorites('beats')">🧠 Beats</button>
+        <button class="fav-filter-pill px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-white/5 text-[var(--text-muted)] border border-white/10 whitespace-nowrap transition-all hover:bg-white/10" data-filter="audio" onclick="window.filterFavorites('audio')">🎵 Audio</button>
+    </div>
+
+    <!-- Favorites Cards Container -->
+    <div id="favoritesListContainer" class="flex flex-col gap-2 mt-4">
+        <!-- Rendered by renderFavorites() -->
+    </div>
 </div>
 </div>
 <!-- TAB: SETTINGS -->
@@ -1043,17 +1267,17 @@ window.resetGalaxySettings = function() {
 </div> <!-- End main container -->
 </aside>
 <!-- RIGHT SIDEBAR: MIXER -->
-<aside class="fixed top-0 right-0 h-full w-80 glass-lux border-l border-white/10 translate-x-full transition-transform duration-500 z-40 flex flex-col pointer-events-auto ui-fade-target" id="rightPanel">
+<aside class="fixed top-0 right-0 h-full w-80 glass-lux border-l border-white/10 translate-x-0 transition-transform duration-500 z-40 flex flex-col pointer-events-auto ui-fade-target" id="rightPanel">
 <div class="px-6 py-6 border-b border-white/5 flex justify-between items-center shrink-0">
 <h2 class="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase">MindWave Pro</h2>
 <div class="flex items-center gap-4">
-<button class="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[var(--accent)] transition-all opacity-70 hover:opacity-100 text-[var(--text-muted)] hover:text-[var(--accent)]" id="collapseAllBtn" title="Collapse All Sections">
+<button class="p-2 rounded-lg bg-white/5 border border-white/10 hover:border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-all opacity-80 hover:opacity-100" id="collapseAllBtn" title="Collapse All Sections">
 <svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18">
 <polyline points="6 9 12 15 18 9"></polyline>
 <polyline points="6 3 12 9 18 3"></polyline>
 </svg>
 </button>
-<button class="opacity-70 hover:opacity-100 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all" id="closeRightBtn" title="Close Panel"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="20">
+<button class="p-2 rounded-lg bg-white/5 border border-white/10 hover:border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-all opacity-80 hover:opacity-100" id="closeRightBtn" title="Close Panel"><svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18">
 <line x1="18" x2="6" y1="6" y2="18"></line>
 <line x1="6" x2="18" y1="6" y2="18"></line>
 </svg></button>
@@ -1061,10 +1285,10 @@ window.resetGalaxySettings = function() {
 </div>
 <!-- RIGHT TAB NAVIGATION -->
 <nav class="sidebar-tabs shrink-0 flex w-full">
-<div class="tab-pill active flex-1" id="tour-visuals-tab" onclick="switchRightTab('visuals', this)" title="Visual Effects">Visuals</div>
-<div class="tab-pill flex-1" onclick="switchRightTab('cymatics', this)" title="Cymatics Engine">Cymatics</div>
-<div class="tab-pill flex-1" onclick="switchRightTab('studio', this)" title="DJ Studio">Studio</div>
-<div class="tab-pill flex-1" onclick="switchRightTab('atmosphere', this)" title="Soundscapes">Atmos</div>
+<button class="tab-pill active flex-1 py-2.5 px-2 text-[10px] font-bold uppercase tracking-wider" id="tour-visuals-tab" onclick="switchRightTab('visuals', this)" title="Visual Effects">Visuals</button>
+<button class="tab-pill flex-1 py-2.5 px-2 text-[10px] font-bold uppercase tracking-wider" onclick="switchRightTab('cymatics', this)" title="Cymatics Engine"><span class="tab-full">Cymatics</span><span class="tab-short hidden">Cym</span></button>
+<button class="tab-pill flex-1 py-2.5 px-2 text-[10px] font-bold uppercase tracking-wider" onclick="switchRightTab('studio', this)" title="DJ Studio">Studio</button>
+<button class="tab-pill flex-1 py-2.5 px-2 text-[10px] font-bold uppercase tracking-wider" onclick="switchRightTab('atmosphere', this)" title="Soundscapes">Atmos</button>
 </nav>
 <!-- MAIN CONTAINER FOR ALL PERFORMANCE CONTROLS - Scrollable -->
 <div class="flex-1 overflow-y-auto custom-scrollbar no-scrollbar-firefox px-6">
@@ -1238,16 +1462,29 @@ window.resetGalaxySettings = function() {
 </div>
 <!-- SECTION: Chromatic Resonance -->
 <div class="sidebar-section">
-<h3 class="section-label mb-4">Chromatic Resonance</h3>
-<div class="flex items-center justify-between">
+<h3 class="section-label mb-3">Chromatic Resonance</h3>
 <div class="flex items-center gap-4">
-<div class="relative w-10 h-10 rounded-full border border-white/20 shadow-lg cursor-pointer overflow-hidden ring-4 ring-black/40" id="colorPreview" style="background-color: #60a9ff;">
-<input class="absolute inset-0 opacity-0 cursor-pointer scale-150" id="visualColorPicker" type="color" value="#60a9ff"/>
-</div>
-<button class="glass-btn !p-2 !rounded-full" id="randomColorBtn">
-<svg fill="none" height="18" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="18"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" x2="21" y1="15" y2="21"></line><line x1="4" x2="9" y1="4" y2="9"></line></svg>
-</button>
-</div>
+    <!-- Active Color -->
+    <div class="flex flex-col items-center gap-1">
+        <div class="relative w-9 h-9 rounded-full border border-white/20 shadow-lg cursor-pointer overflow-hidden ring-2 ring-black/40" id="colorPreview" style="background-color: #60a9ff;" title="Choose Hue">
+            <input class="absolute inset-0 opacity-0 cursor-pointer scale-150" id="visualColorPicker" type="color" value="#60a9ff"/>
+        </div>
+        <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Color</span>
+    </div>
+    <!-- Random Color -->
+    <div class="flex flex-col items-center gap-1">
+        <button class="glass-btn !w-9 !h-9 !p-0 !rounded-full flex items-center justify-center" id="randomColorBtn" title="Random Color">
+            <svg fill="none" height="15" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="15"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" x2="21" y1="15" y2="21"></line><line x1="4" x2="9" y1="4" y2="9"></line></svg>
+        </button>
+        <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Random</span>
+    </div>
+    <!-- Favorite Current Visual -->
+    <div class="flex flex-col items-center gap-1">
+        <button class="glass-btn !w-9 !h-9 !p-0 !rounded-full flex items-center justify-center text-amber-400" id="saveColorBtn" onclick="if (window.saveActiveColorFavorite) { window.saveActiveColorFavorite(); } else { const viz = window.getVisualizer && window.getVisualizer(); const activeModes = Array.from(viz && viz.activeModes || ['cyber']); window.toggleQuickFavorite('visual', activeModes[0], { mode: activeModes[0], title: activeModes[0].toUpperCase() + ' Visual', subtitle: 'Dynamic visual state' }); }" title="Favorite Current Color &amp; Visual">
+            <svg fill="currentColor" height="15" viewbox="0 0 24 24" width="15"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+        </button>
+        <span class="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Favorite</span>
+    </div>
 </div>
 </div>
 <!-- SECTION: Active Mode Parameters -->
@@ -1275,50 +1512,50 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 </div>
-<!-- Cyber Settings (2D) -->
-<div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="cyberSettingsPanel">
+<!-- Matrix Settings (2D) -->
+<div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="matrixSettingsPanel">
 <div class="flex justify-between items-center px-0.5">
-<span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Cyber Config</span>
+<span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Matrix Config</span>
 <div class="flex items-center bg-black/20 rounded p-0.5 gap-0.5">
-<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-cyber-mode="random" id="cyberModeRandom">RND</button>
-<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-cyber-mode="mindwave" id="cyberModeMindwave">MW</button>
-<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-cyber-mode="custom" id="cyberModeCustom">TXT</button>
+<button class="px-2 py-0.5 rounded text-[9px] font-mono text-[var(--text-muted)] hover:text-white transition-all uppercase" data-matrix-mode="random" id="matrixModeRandom" title="Random Characters">Random</button>
+<button class="px-2 py-0.5 rounded text-[9px] font-mono text-[var(--text-muted)] hover:text-white transition-all uppercase" data-matrix-mode="mindwave" id="matrixModeMindwave" title="MindWave Characters">MindWave</button>
+<button class="px-2 py-0.5 rounded text-[9px] font-mono text-[var(--text-muted)] hover:text-white transition-all uppercase" data-matrix-mode="custom" id="matrixModeCustom" title="Custom Text">Custom</button>
 </div>
 </div>
-<input class="w-full bg-black/40 border border-white/10 rounded text-[10px] text-white px-2 py-1.5 outline-none focus:border-[var(--accent)] uppercase font-mono" id="cyberTextInput" maxlength="32" placeholder="CUSTOM TEXT" type="text"/>
+<input class="w-full bg-black/40 border border-white/10 rounded text-[10px] text-white px-2 py-1.5 outline-none focus:border-[var(--accent)] uppercase font-mono" id="matrixTextInput" maxlength="32" placeholder="CUSTOM TEXT" type="text"/>
 <div class="flex items-center justify-between">
 <div class="flex items-center gap-4">
-<input class="w-6 h-6 rounded cursor-pointer bg-transparent border-none p-0" id="cyberColorPicker" type="color" value="#00FF41"/>
+<input class="w-6 h-6 rounded cursor-pointer bg-transparent border-none p-0" id="matrixColorPicker" type="color" value="#00FF41"/>
 <div class="flex gap-1">
-<button class="p-1 rounded bg-white/5 text-[var(--text-muted)] hover:text-white" id="cyberRandomColorBtn"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line></svg></button>
-<button class="p-1 rounded bg-white/5 text-[var(--accent)]" id="cyberVibrationToggle"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path></svg></button>
+<button class="p-1 rounded bg-white/5 text-[var(--text-muted)] hover:text-white" id="matrixRandomColorBtn" title="Random Color"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line></svg></button>
+<button class="p-1 rounded bg-white/5 text-[var(--accent)]" id="matrixVibrationToggle" title="Audio Vibration Effect"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><path d="M2 12h3l2 8 4-16 4 16 2-8h3"></path></svg></button>
 </div>
 </div>
-<label class="premium-toggle scale-75 origin-right">
-<input checked="" id="cyberRainbowToggle" type="checkbox"/>
+<label class="premium-toggle scale-75 origin-right" title="Toggle Rainbow Colors">
+<input checked="" id="matrixRainbowToggle" type="checkbox"/>
 <span class="toggle-slider"></span>
 </label>
 </div>
 </div>
-<!-- Matrix Settings (3D) -->
-<div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="matrixSettingsPanel">
+<!-- Cyber Settings (3D) -->
+<div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="cyberSettingsPanel">
 <div class="flex justify-between items-center px-0.5">
-<span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Matrix Engine</span>
+<span class="text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider">Cyber Engine</span>
 <div class="flex items-center bg-black/20 rounded p-0.5 gap-0.5">
-<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-matrix-mode="random" id="matrixModeRandom">RND</button>
-<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-matrix-mode="mindwave" id="matrixModeMindwave">MW</button>
-<button class="px-1.5 py-0.5 rounded text-[10px] font-mono text-[var(--text-muted)] hover:text-white transition-all" data-matrix-mode="custom" id="matrixModeCustom">TXT</button>
+<button class="px-2 py-0.5 rounded text-[9px] font-mono text-[var(--text-muted)] hover:text-white transition-all uppercase" data-cyber-mode="random" id="cyberModeRandom" title="Random Grid">Random</button>
+<button class="px-2 py-0.5 rounded text-[9px] font-mono text-[var(--text-muted)] hover:text-white transition-all uppercase" data-cyber-mode="mindwave" id="cyberModeMindwave" title="MindWave Grid">MindWave</button>
+<button class="px-2 py-0.5 rounded text-[9px] font-mono text-[var(--text-muted)] hover:text-white transition-all uppercase" data-cyber-mode="custom" id="cyberModeCustom" title="Custom Grid Text">Custom</button>
 </div>
 </div>
-<input class="w-full bg-black/40 border border-white/10 rounded text-[10px] text-white px-2 py-1.5 outline-none focus:border-[var(--accent)] uppercase font-mono" id="matrixTextInput" maxlength="32" placeholder="ENCRYPTED MESSAGE" type="text"/>
+<input class="w-full bg-black/40 border border-white/10 rounded text-[10px] text-white px-2 py-1.5 outline-none focus:border-[var(--accent)] uppercase font-mono" id="cyberTextInput" maxlength="32" placeholder="ENCRYPTED MESSAGE" type="text"/>
 <div class="flex items-center justify-between">
 <div class="flex items-center gap-4">
-<input class="w-6 h-6 rounded cursor-pointer bg-transparent border-none p-0" id="matrixColorPicker" type="color" value="#00FF41"/>
+<input class="w-6 h-6 rounded cursor-pointer bg-transparent border-none p-0" id="cyberColorPicker" type="color" value="#00FF41"/>
 <div class="flex gap-1 items-center">
-<button class="p-1 rounded bg-white/5 text-[var(--text-muted)] hover:text-white" id="matrixRandomColorBtn" title="Random Solid Color"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line></svg></button>
+<button class="p-1 rounded bg-white/5 text-[var(--text-muted)] hover:text-white" id="cyberRandomColorBtn" title="Random Solid Color"><svg fill="none" height="10" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="10"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" x2="21" y1="20" y2="3"></line></svg></button>
 <div class="w-px h-4 bg-white/10 mx-1"></div>
 <label class="premium-toggle scale-75 origin-left" title="Toggle Rainbow Mode">
-<input checked="" id="matrixRainbowToggleRight" type="checkbox"/>
+<input checked="" id="cyberRainbowToggleRight" type="checkbox"/>
 <span class="toggle-slider"></span>
 </label>
 <span class="text-[9px] font-mono uppercase tracking-widest text-[var(--text-muted)]">Rainbow</span>
@@ -1328,21 +1565,28 @@ window.resetGalaxySettings = function() {
 </div>
 <!-- Snowflake Settings -->
 <div class="hidden flex flex-col gap-5 p-3 rounded-xl bg-white/5 border border-white/10" id="snowflakeSettingsPanel">
-<span class="text-[10px] font-bold text-sky-300 uppercase tracking-wider px-0.5">Atmospheric Drift</span>
+<span class="text-[10px] font-bold text-sky-300 uppercase tracking-wider px-0.5">Snowflakes</span>
 <div class="space-y-3">
 <div class="flex flex-col gap-0.5">
 <div class="flex justify-between items-center px-0.5">
 <label class="premium-label">COUNT</label>
-<span class="premium-value" id="snowflakeCountVal">5k</span>
+<span class="premium-value" id="snowflakeCountVal">200</span>
 </div>
-<input class="mw-slider" id="snowflakeCountSlider" max="15000" min="1000" step="500" type="range" value="5000"/>
+<input class="mw-slider" id="snowflakeCountSlider" max="1000" min="50" oninput="if(window.getVisualizer && window.getVisualizer()){ window.getVisualizer().setSnowCount(this.value); document.getElementById('snowflakeCountVal').textContent = this.value; }" step="50" type="range" value="200"/>
 </div>
 <div class="flex flex-col gap-0.5">
 <div class="flex justify-between items-center px-0.5">
 <label class="premium-label">DRIFT</label>
 <span class="premium-value" id="snowflakeDriftVal">1.0</span>
 </div>
-<input class="mw-slider" id="snowflakeDriftSlider" max="5.0" min="0.1" step="0.1" type="range" value="1.0"/>
+<input class="mw-slider" id="snowflakeDriftSlider" max="5.0" min="0.0" oninput="if(window.getVisualizer && window.getVisualizer()){ let v = parseFloat(this.value); let exp = v * v; window.getVisualizer().setSnowDrift(exp); document.getElementById('snowflakeDriftVal').textContent = exp.toFixed(1); }" step="0.05" type="range" value="1.0"/>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex justify-between items-center px-0.5">
+<label class="premium-label">SIZE</label>
+<span class="premium-value" id="snowflakeSizeVal">1.0</span>
+</div>
+<input class="mw-slider" id="snowflakeSizeSlider" max="3.0" min="0.1" oninput="if(window.getVisualizer && window.getVisualizer()){ window.getVisualizer().setSnowSize(this.value); document.getElementById('snowflakeSizeVal').textContent = this.value; }" step="0.1" type="range" value="1.0"/>
 </div>
 </div>
 </div>
@@ -3074,202 +3318,207 @@ window.resetGalaxySettings = function() {
 </div>
 <div class="cymatics-class-section bg-black/40 border border-cyan-500/20 rounded-xl p-4">
 <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4">
+<div class="flex items-center gap-2 shrink-0">
 <h4 class="text-cyan-300 font-bold text-[11px] uppercase tracking-wider flex items-center gap-2 shrink-0">
-<span class="opacity-50">[22]</span> True Image-Based Cymatics
-            
-        </h4>
-<div class="flex flex-wrap items-center gap-3 shrink-0">
-<div class="flex items-center gap-1 bg-black/40 px-2 py-1 rounded border border-white/5 shrink-0 z-10 relative">
-<input class="cymatic-color-picker w-5 h-5 rounded cursor-pointer border-none p-0 bg-transparent" data-class="22" data-color="1" type="color" value="#60a9ff" title="Primary Color"/>
-<input class="cymatic-color-picker w-5 h-5 rounded cursor-pointer border-none p-0 bg-transparent" data-class="22" data-color="2" type="color" value="#a855f7" title="Secondary Color"/>
+<span class="opacity-50">[22]</span> Harmonic Cymatic Plates
+</h4>
+<button class="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all" onclick="window.favoriteCurrentCymatics(22)" title="Favorite active Cymatic plate variation">
+<span>⭐</span><span>Fav</span>
+</button>
 </div>
-<div class="flex items-center gap-1 bg-black/40 px-2 py-1 rounded border border-white/5 shrink-0" title="Intensity">
-<i class="fas fa-sun text-[8px] text-gray-400"></i>
-<input class="cymatic-intensity-slider w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer" data-class="22" max="2.0" min="0.1" step="0.05" type="range" value="1.0"/>
+<div class="flex flex-wrap items-center gap-3 shrink-0">
+<div class="flex items-center gap-1.5 bg-black/40 px-2 py-1 rounded border border-white/5 shrink-0 z-10 relative" title="Color Changer (Primary / Secondary)">
+<span class="text-[9px] font-mono text-[var(--text-muted)] uppercase">COLOR</span>
+<input class="cymatic-color-picker w-5 h-5 rounded cursor-pointer border border-white/20 p-0 bg-transparent" data-class="22" data-color="1" type="color" value="#60a9ff" title="Primary Color"/>
+<input class="cymatic-color-picker w-5 h-5 rounded cursor-pointer border border-white/20 p-0 bg-transparent" data-class="22" data-color="2" type="color" value="#a855f7" title="Secondary Color"/>
+</div>
+<div class="flex items-center gap-2 bg-black/40 px-2 py-1 rounded border border-white/5 shrink-0" title="Resonance Effect Slider">
+<span class="text-[9px] font-mono text-[var(--text-muted)] uppercase">EFFECT</span>
+<span class="text-[10px] font-bold text-[var(--accent)] font-mono" id="cymatic22IntensityVal">100%</span>
+<input class="cymatic-intensity-slider w-20 sm:w-28 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer" data-class="22" max="2.0" min="0.1" step="0.05" style="accent-color: var(--accent);" type="range" value="1.0"/>
 </div>
 <span class="text-[9px] text-cyan-500/50 font-mono shrink-0">30 Vars</span>
 </div>
 </div>
 <div class="grid grid-cols-3 gap-3">
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 0)" title="Load Variation 0">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 0)" title="Fractal Heart">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_1.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 0</span>
-<span class="text-xs font-bold text-white text-center w-full block">Plasma</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Fractal Heart</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 1)" title="Load Variation 1">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 1)" title="Fluid Resonance">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_2.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 1</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Fluid Resonance</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 2)" title="Load Variation 2">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 2)" title="Particle Swarm">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_3.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 2</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Particle Swarm</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 3)" title="Load Variation 3">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 3)" title="Quantum Topology">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_4.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 3</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Quantum Topology</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 4)" title="Load Variation 4">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 4)" title="Prime Harmonic">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_5.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 4</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Prime Harmonic</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 5)" title="Load Variation 5">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 5)" title="Metatron's Cube">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_6.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 5</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Metatron's Cube</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 6)" title="Load Variation 6">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 6)" title="Obsidian Gold">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_7.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 6</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Obsidian Gold</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 7)" title="Load Variation 7">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 7)" title="Abyssal Web">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_8.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 7</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Abyssal Web</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 8)" title="Load Variation 8">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 8)" title="Nebula Plasma">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_9.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 8</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Nebula Plasma</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 9)" title="Load Variation 9">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 9)" title="Emerald Matrix">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_10.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 9</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Emerald Matrix</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 10)" title="Load Variation 10">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 10)" title="Mercury Crimson">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_11.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 10</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Mercury Crimson</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 11)" title="Load Variation 11">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 11)" title="Quantum Crystal">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_12.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 11</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Quantum Crystal</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 12)" title="Load Variation 12">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 12)" title="Solar Flare">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_13.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 12</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Solar Flare</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 13)" title="Load Variation 13">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 13)" title="Amethyst Fractal">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_14.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 13</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Amethyst Fractal</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 14)" title="Load Variation 14">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 14)" title="Astral Lotus">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_15.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 14</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Astral Lotus</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 15)" title="Load Variation 15">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 15)" title="Celestial Mandala">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_16.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 15</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Celestial Mandala</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 16)" title="Load Variation 16">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 16)" title="Quantum Flower">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_0.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 16</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Quantum Flower</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 17)" title="Load Variation 17">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 17)" title="Ethereal Nexus">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_1.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 17</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Ethereal Nexus</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 18)" title="Load Variation 18">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 18)" title="Neon Labyrinth">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_2.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 18</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Neon Labyrinth</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 19)" title="Load Variation 19">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 19)" title="Prismatic Core">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_3.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 19</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Prismatic Core</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 20)" title="Load Variation 20">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 20)" title="Obsidian Bloom">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_4.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 20</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Obsidian Bloom</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 21)" title="Load Variation 21">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 21)" title="Void Resonance">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_5.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 21</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Void Resonance</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 22)" title="Load Variation 22">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 22)" title="Golden Spiral">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_6.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 22</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Golden Spiral</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 23)" title="Load Variation 23">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 23)" title="Solar Resonance">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_7.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 23</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Solar Resonance</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 24)" title="Load Variation 24">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 24)" title="Lunar Tides">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_8.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 24</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Lunar Tides</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 25)" title="Load Variation 25">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 25)" title="Cyber Lotus">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_9.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 25</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Cyber Lotus</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 26)" title="Load Variation 26">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 26)" title="Bioluminescent Flora">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_10.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 26</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Bioluminescent Flora</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 27)" title="Load Variation 27">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 27)" title="Chrono Vortex">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_11.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 27</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Chrono Vortex</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 28)" title="Load Variation 28">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 28)" title="Diamond Lattice">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_12.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 28</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Diamond Lattice</span>
 </div>
 </button>
-<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 29)" title="Load Variation 29">
+<button class="cymatics-pattern-btn aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-cyan-400/80 transition-all group relative bg-black/20" onclick="window.setCymaticPattern(22, 29)" title="Seraphim Harmonics">
 <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-100 group-hover:scale-105" src="binaural-assets/images/cymatics/ai_cymatic_13.png"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent flex flex-col justify-end p-2">
-<span class="text-[10px] font-bold text-white tracking-widest drop-shadow-md">VAR 29</span>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-1.5 pointer-events-none">
+<span class="text-[9px] font-bold text-white tracking-wide truncate drop-shadow-md">Seraphim Harmonics</span>
 </div>
 </button>
 </div>
@@ -3561,33 +3810,25 @@ window.resetGalaxySettings = function() {
 </div>
 </div>
 <!-- TAB: ATMOSPHERE -->
-<div class="tab-panel hidden space-y-6" id="tab-atmosphere">
-<!-- Soundscapes -->
-<div class="sidebar-section">
-<h3 class="premium-label text-white mb-4">Atmospheric Layer</h3>
-<section class="mixer-section" data-section="atmosphere">
-<div class="flex justify-between items-center mb-4 cursor-pointer section-header" onclick="toggleMixerSection('atmosphere')">
-<div class="flex items-center gap-4">
-<svg class="section-arrow transition-transform duration-200" fill="none" height="12" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="12">
-<polyline points="6 9 12 15 18 9"></polyline>
-</svg>
-<h3 class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Atmosphere
-                        </h3>
-<button aria-label="Info" class="ml-2 transition-colors relative" onclick="showInfoModal('atmosphere'); event.stopPropagation();" style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
-<svg fill="none" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="12" xmlns="http://www.w3.org/2000/svg">
-<circle cx="12" cy="12" r="10"></circle>
-<line x1="12" x2="12" y1="16" y2="12"></line>
-<line x1="12" x2="12.01" y1="8" y2="8"></line>
-</svg>
-</button>
+<div class="tab-panel hidden" id="tab-atmosphere" style="flex: 0 0 auto !important; justify-content: flex-start !important; padding-top: 0 !important; margin-top: 0 !important; gap: 0 !important;">
+    <!-- Soundscapes -->
+    <div class="sidebar-section" style="padding: 0 !important; border: none !important;">
+        <section class="mixer-section" data-section="atmosphere" style="margin: 0 !important; padding: 0 !important;">
+<div class="flex flex-col w-full" style="margin-top: 30px; margin-bottom: 40px;">
+    <div class="flex justify-between items-center px-1 mb-1">
+        <label class="premium-label tracking-widest text-[10px] text-cyan-400">MASTER VOLUME</label>
+        <span class="premium-value text-[10px]" id="atmosMasterValue">80%</span>
+    </div>
+    <input class="mw-slider w-full" id="atmosMasterSlider" max="1" min="0" step="0.01" type="range" value="0.8"/>
 </div>
-<div class="flex flex-col gap-0.5" onclick="event.stopPropagation()">
-<div class="flex justify-between items-center px-0.5">
-<label class="premium-label">MASTER</label>
-<span class="premium-value" id="atmosMasterValue">80%</span>
-</div>
-<input class="mw-slider w-24" id="atmosMasterSlider" max="1" min="0" step="0.01" type="range" value="0.8"/>
-</div>
+
+
+<div class="flex items-center justify-between mb-3 px-1">
+    <div class="flex flex-col">
+        <h4 class="text-[10px] font-bold text-white uppercase tracking-wider">Environmental Soundscapes</h4>
+        <span class="text-[9px] text-[var(--text-muted)]">16 High-Fidelity Ambience Layers</span>
+    </div>
+    <button onclick="window.toggleQuickFavorite('audio', 'atmos-mix', { title: 'Atmosphere Ambience Mix', subtitle: 'Multi-layer soundscape mix', soundscapes: { ...(window.state?.soundscapeSettings || {}) } })" class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-all flex items-center gap-1" title="Favorite Current Atmosphere Mix">⭐ Fav Mix</button>
 </div>
 <div class="section-content">
 <div class="grid grid-cols-1 gap-5" id="soundscapeContainer">

@@ -30,7 +30,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,glb,json}'],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 50 * 1024 * 1024,
         navigateFallback: '/index.html'
       }
     })
@@ -69,6 +69,7 @@ export default defineConfig({
     emptyOutDir: false,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
+      external: ['@mlc-ai/web-llm', '@langchain/langgraph', 'livekit-client'],
       input: {
         main: path.resolve(__dirname, 'index.html'),
         mindwave: path.resolve(__dirname, 'mindwave.html'),

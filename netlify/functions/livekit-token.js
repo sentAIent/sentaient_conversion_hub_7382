@@ -1,4 +1,10 @@
-const { AccessToken } = require('livekit-server-sdk');
+let AccessToken = null;
+try {
+  const mod = 'livekit-server-sdk';
+  AccessToken = require(mod).AccessToken;
+} catch (e) {
+  AccessToken = null;
+}
 
 exports.handler = async (event, context) => {
   // Ensure the request is POST or GET, handle CORS if necessary
@@ -28,6 +34,14 @@ exports.handler = async (event, context) => {
     // In a real app, you would verify the user's session token here.
     const participantIdentity = `space-commander-${Math.floor(Math.random() * 10000)}`;
     const participantName = 'Interstellar Player';
+
+    if (!AccessToken) {
+      return {
+        statusCode: 501,
+        headers,
+        body: JSON.stringify({ error: 'LiveKit server SDK is not installed on this environment.' })
+      };
+    }
 
     // 3. Create the secure JWT Token
     // We give the user permission to join the "interstellar-bridge" room

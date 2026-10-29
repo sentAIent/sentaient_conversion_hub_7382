@@ -57,16 +57,14 @@ export function initDJAudio() {
         djMasterGain.connect(djMasterFilter);
 
         // CRITICAL: Connect to masterGain first (for volume control), then ALSO to destination
-        // This ensures DJ sounds go through the same chain as other audio
+        // Connect to masterGain first (for volume control), fallback to destination
         if (state.masterGain) {
             djMasterFilter.connect(state.masterGain);
             console.log('[DJ Synth] Connected to masterGain chain');
+        } else {
+            djMasterFilter.connect(state.audioCtx.destination);
+            console.log('[DJ Synth] Fallback: Connected to destination');
         }
-
-        // Always connect directly to destination as primary output
-        // (not just as fallback, but as the main route)
-        djMasterFilter.connect(state.audioCtx.destination);
-        console.log('[DJ Synth] Connected directly to speakers (destination)');
 
         console.log('[DJ Synth] Initialized - Gain:', djMasterGain.gain.value,
             'Filter freq:', djMasterFilter.frequency.value,

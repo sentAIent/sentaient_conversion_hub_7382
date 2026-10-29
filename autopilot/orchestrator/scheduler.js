@@ -94,3 +94,37 @@ async function startScheduler() {
 }
 
 startScheduler();
+
+// Daily cleanup cron job for Minio/S3 to save disk space
+cron.schedule('0 2 * * *', async () => {
+    console.log(`[Scheduler] 🧹 Running daily Minio cleanup job...`);
+    try {
+        const { Client } = await import('minio');
+        const minioClient = new Client({
+            endPoint: process.env.MINIO_ENDPOINT || 'localhost',
+            port: parseInt(process.env.MINIO_PORT || '9000'),
+            useSSL: process.env.MINIO_USE_SSL === 'true',
+            accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+            secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin'
+        });
+        
+        const bucketName = 'autopilot-media';
+        const objectsStream = minioClient.listObjectsV2(bucketName, '', true);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        let deletedCount = 0;
+        for await (const obj of objectsStream) {
+            if (obj.lastModified < yesterday && (obj.name.endsWith('.mp4') || obj.name.endsWith('.webm'))) {
+                await minioClient.removeObject(bucketName, obj.name);
+                deletedCount++;
+            }
+        }
+        console.log(`[Scheduler] 🧹 Cleanup complete. Deleted ${deletedCount} old media files.`);
+    } catch (e) {
+        console.error(`[Scheduler] 🧹 Cleanup failed:`, e);
+    }
+}, {
+    scheduled: true,
+    timezone: "America/Los_Angeles"
+});

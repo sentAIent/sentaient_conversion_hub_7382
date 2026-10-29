@@ -1,0 +1,210 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "nuc-diablo",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.854,
+          35.211
+        ]
+      },
+      "properties": {
+        "name": "Diablo Canyon Nuclear Power Plant",
+        "category": "Nuclear Energy",
+        "status": "Operational",
+        "capacity_mw": 2256,
+        "operator": "PG&E"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nuc-paloverde",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.868,
+          33.396
+        ]
+      },
+      "properties": {
+        "name": "Palo Verde Nuclear Generating Station",
+        "category": "Nuclear Energy",
+        "status": "Operational",
+        "capacity_mw": 3937,
+        "operator": "APS"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nuc-vogtle",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.762,
+          33.142
+        ]
+      },
+      "properties": {
+        "name": "Alvin W. Vogtle Nuclear Plant (AP1000 Units 3&4)",
+        "category": "Nuclear Energy",
+        "status": "Operational",
+        "capacity_mw": 4536,
+        "operator": "Southern Nuclear"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nuc-gravelines",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.136,
+          51.015
+        ]
+      },
+      "properties": {
+        "name": "Gravelines Nuclear Power Station",
+        "category": "Nuclear Energy",
+        "status": "Operational",
+        "capacity_mw": 5460,
+        "operator": "EDF France"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nuc-barakah",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          52.257,
+          23.966
+        ]
+      },
+      "properties": {
+        "name": "Barakah Nuclear Energy Plant (APR1400)",
+        "category": "Nuclear Energy",
+        "status": "Operational",
+        "capacity_mw": 5600,
+        "operator": "ENEC UAE"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "space-ksc",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -80.604,
+          28.573
+        ]
+      },
+      "properties": {
+        "name": "Kennedy Space Center / Cape Canaveral SFS",
+        "category": "Space Launch Facility",
+        "status": "Active",
+        "pads": [
+          "LC-39A",
+          "SLC-40",
+          "SLC-41"
+        ],
+        "operator": "NASA / USSF"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "space-vafb",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.584,
+          34.742
+        ]
+      },
+      "properties": {
+        "name": "Vandenberg Space Force Base (Western Range)",
+        "category": "Space Launch Facility",
+        "status": "Active",
+        "pads": [
+          "SLC-4E",
+          "SLC-2W"
+        ],
+        "operator": "USSF Space Launch Delta 30"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "space-kourou",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -52.768,
+          5.239
+        ]
+      },
+      "properties": {
+        "name": "Guiana Space Centre (Europe Spaceport)",
+        "category": "Space Launch Facility",
+        "status": "Active",
+        "launcher": "Ariane 6 / Vega-C",
+        "operator": "ESA / CNES"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port-lalb",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.232,
+          33.743
+        ]
+      },
+      "properties": {
+        "name": "Port of Los Angeles / Long Beach Complex",
+        "category": "Deepwater Seaport",
+        "status": "Operational",
+        "annual_teu": 19000000,
+        "security_zone": "USCG Captain of the Port LA-LB"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port-rotterdam",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.148,
+          51.956
+        ]
+      },
+      "properties": {
+        "name": "Port of Rotterdam (Maasvlakte)",
+        "category": "Deepwater Seaport",
+        "status": "Operational",
+        "annual_teu": 14500000,
+        "security_zone": "Havenbedrijf Rotterdam VTS"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port-singapore",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.771,
+          1.258
+        ]
+      },
+      "properties": {
+        "name": "Port of Singapore (Tuas Mega Port)",
+        "category": "Deepwater Seaport",
+        "status": "Operational",
+        "annual_teu": 39000000,
+        "security_zone": "MPA Singapore VTS"
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-const { CheerioCrawler } = require('crawlee');
+// Native crawler implementation without external dependencies
 
 exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
@@ -12,46 +12,50 @@ exports.handler = async (event, context) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'URL is required' }) };
     }
 
-    let scrapedData = {};
-
-    const crawler = new CheerioCrawler({
-      maxRequestsPerCrawl: 1,
-      async requestHandler({ request, $, log }) {
-        log.info(`Processing ${request.url}...`);
-        
-        // Extract basic competitor intel
-        const title = $('title').text();
-        const description = $('meta[name="description"]').attr('content') || '';
-        const h1 = $('h1').text().trim();
-        
-        // Extract all headers for content analysis
-        const headers = [];
-        $('h2, h3').each((i, el) => {
-          headers.push($(el).text().trim());
-        });
-
-        // Basic pricing extraction heuristic
-        const pricingText = [];
-        $('*').each((i, el) => {
-          const text = $(el).text();
-          if (text.includes('$') || text.toLowerCase().includes('pricing')) {
-            // Very naive extraction for demo purposes
-            if (text.length < 100) pricingText.push(text.trim());
-          }
-        });
-
-        scrapedData = {
-          url: request.url,
-          title,
-          description,
-          h1,
-          headers: headers.slice(0, 10), // Limit to top 10
-          pricingIndicators: pricingText.slice(0, 5)
-        };
-      },
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SentAIentCrawler/1.0)' }
     });
+    const html = await res.text();
 
-    await crawler.run([url]);
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+
+    const descMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i) ||
+                      html.match(/<meta\s+content=["']([^"']*)["']\s+name=["']description["']/i);
+    const description = descMatch ? descMatch[1].trim() : '';
+
+    const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    const h1 = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
+
+    const headers = [];
+    const headerRegex = /<h[23][^>]*>([\s\S]*?)<\/h[23]>/gi;
+    let match;
+    while ((match = headerRegex.exec(html)) !== null && headers.length < 10) {
+      const clean = match[1].replace(/<[^>]+>/g, '').trim();
+      if (clean) headers.push(clean);
+    }
+
+    const pricingIndicators = [];
+    const textChunks = html.replace(/<script[\s\S]*?<\/script>/gi, '')
+                           .replace(/<style[\s\S]*?<\/style>/gi, '')
+                           .replace(/<[^>]+>/g, ' ')
+                           .split(/\s{2,}|\n/);
+    for (const chunk of textChunks) {
+      const trimmed = chunk.trim();
+      if ((trimmed.includes('$') || trimmed.toLowerCase().includes('pricing')) && trimmed.length > 2 && trimmed.length < 100) {
+        pricingIndicators.push(trimmed);
+        if (pricingIndicators.length >= 5) break;
+      }
+    }
+
+    const scrapedData = {
+      url,
+      title,
+      description,
+      h1,
+      headers,
+      pricingIndicators
+    };
 
     return {
       statusCode: 200,

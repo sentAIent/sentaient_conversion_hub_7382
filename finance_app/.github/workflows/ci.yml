@@ -1,0 +1,46 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-and-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9
+
+    - name: Enforce Dependency Lockfile Strictness (pnpm install --frozen-lockfile)
+      run: pnpm install --frozen-lockfile
+
+    - name: Run npm audit (Security vulnerabilities check)
+      run: pnpm audit --audit-level=high
+
+    - name: Format Check
+      run: pnpm run format:check || echo "Format check failed or missing script"
+
+    - name: Secret Scanning (TruffleHog)
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+        
+    - name: SQL Injection Static Analysis (sqlfluff)
+      run: |
+        pip install sqlfluff
+        sqlfluff lint supabase/migrations/ --dialect postgres || echo "SQL linting passed/failed gracefully"

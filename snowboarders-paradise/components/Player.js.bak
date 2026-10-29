@@ -1,0 +1,496 @@
+import React, { useRef, useState, useEffect } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
+import * as THREE from 'three';
+import { Platform } from 'react-native';
+import { getTerrainHeight, getTerrainNormal } from '../utils/terrainUtils';
+import { MockBackend } from '../utils/mockBackend';
+import { useCustomization } from './CustomizationContext';
+import { CarveTrail } from './CarveTrail';
+import { useAIAnnouncer } from './AIAnnouncer';
+import { socket } from './socket';
+
+// Custom Hook for all snowboarding keyboard controls
+function useControls() {
+  const keys = useRef({ 
+    skate: false, brake: false, left: false, right: false, 
+    jump: false, cameraCycle: false, grab: false,
+    grab1: false, grab2: false, grab3: false
+  });
+  
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const handleKeyDown = (e) => {
+      switch(e.code) {
+        case 'KeyW': case 'ArrowUp': keys.current.skate = true; break;
+        case 'KeyS': case 'ArrowDown': keys.current.brake = true; break;
+        case 'KeyA': case 'ArrowLeft': keys.current.left = true; break;
+        case 'KeyD': case 'ArrowRight': keys.current.right = true; break;
+        case 'Space': keys.current.jump = true; break;
+        case 'KeyC': keys.current.cameraCycle = true; break;
+        case 'ShiftLeft': case 'ShiftRight': keys.current.grab = true; break;
+        case 'Digit1': keys.current.grab1 = true; break;
+        case 'Digit2': keys.current.grab2 = true; break;
+        case 'Digit3': keys.current.grab3 = true; break;
+      }
+    };
+    const handleKeyUp = (e) => {
+      switch(e.code) {
+        case 'KeyW': case 'ArrowUp': keys.current.skate = false; break;
+        case 'KeyS': case 'ArrowDown': keys.current.brake = false; break;
+        case 'KeyA': case 'ArrowLeft': keys.current.left = false; break;
+        case 'KeyD': case 'ArrowRight': keys.current.right = false; break;
+        case 'Space': keys.current.jump = false; break;
+        case 'KeyC': keys.current.cameraCycle = false; break;
+        case 'ShiftLeft': case 'ShiftRight': keys.current.grab = false; break;
+        case 'Digit1': keys.current.grab1 = false; break;
+        case 'Digit2': keys.current.grab2 = false; break;
+        case 'Digit3': keys.current.grab3 = false; break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+  return keys;
+}
+
+export function Player({ gameStarted, camDistance, camHeight, saveHighlight }) {
+  const { camera } = useThree();
+  const playerRef = useRef();
+  const visualRef = useRef();
+  const controls = useControls();
+  
+  const [animState, setAnimState] = useState({ carving: 0, inAir: false, grabbing: false, wipeout: false });
+  const [cameraMode, setCameraMode] = useState(0); 
+  const lastCamToggle = useRef(0);
+  
+  // Custom Kinematic Physics
+  const pos = useRef(new THREE.Vector3(0, 50, 0));
+  const vel = useRef(new THREE.Vector3(0, 0, 0));
+  
+  const boardRotation = useRef(0);
+  const angularVel = useRef(0);
+  const carvingIntensity = useRef(0);
+  
+  // Game state
+  const score = useRef(0);
+  const [displayScore, setDisplayScore] = useState(0);
+  const lastJump = useRef(0);
+  const trickRotation = useRef(new THREE.Vector3(0,0,0));
+  const totalAirRotation = useRef(new THREE.Vector3(0,0,0));
+  const [trickMsg, setTrickMsg] = useState("");
+
+  const { colors, equippedBoard } = useCustomization();
+  const [upgrades, setUpgrades] = useState([]);
+  const { announceTrick } = useAIAnnouncer();
+
+  useEffect(() => {
+    MockBackend.loadProgression().then(data => {
+      setUpgrades(data.unlocked || []);
+    });
+  }, []);
+
+  // Reference for camera
+  const cameraTarget = useRef(new THREE.Vector3());
+  const comboMultiplier = useRef(1);
+  const wasInAir = useRef(false);
+  const isWipeout = useRef(false);
+  const wipeoutTimer = useRef(0);
+  const lastSync = useRef(0);
+  
+
+  useFrame((state, delta) => {
+    if (!gameStarted) return;
+    const dt = Math.min(delta, 0.05);
+    const now = Date.now();
+    
+    if (isWipeout.current) {
+      wipeoutTimer.current -= dt;
+      if (wipeoutTimer.current <= 0) {
+        isWipeout.current = false;
+        pos.current.y += 5; // Pop up
+        vel.current.set(0,0,0);
+        trickRotation.current.set(0,0,0);
+        totalAirRotation.current.set(0,0,0);
+        boardRotation.current = 0;
+      }
+      setAnimState({ carving: 0, inAir: false, grabbing: false, wipeout: true });
+      return;
+    }
+
+    const { skate, brake, left, right, jump, cameraCycle } = controls.current;
+
+    // Camera Toggle
+    if (cameraCycle && now - lastCamToggle.current > 300) {
+      setCameraMode((prev) => (prev + 1) % 3);
+      lastCamToggle.current = now;
+    }
+
+    // GROUND COLLISION & NORMAL
+    const px = pos.current.x;
+    const pz = pos.current.z;
+    const groundY = getTerrainHeight(px, pz);
+    const groundNormalObj = getTerrainNormal(px, pz);
+    const groundNormal = new THREE.Vector3(groundNormalObj.x, groundNormalObj.y, groundNormalObj.z);
+
+    let inAir = pos.current.y > groundY + 0.1;
+    const gravity = new THREE.Vector3(0, -80, 0); // Snappy gravity
+
+    if (inAir) {
+      vel.current.addScaledVector(gravity, dt);
+      
+      // Double Jump Upgrade
+      if (jump && upgrades.includes('double_jump') && !doubleJumpUsed.current && now - lastJump.current > 300) {
+        vel.current.y = Math.max(vel.current.y, 0) + 30;
+        lastJump.current = now;
+        doubleJumpUsed.current = true;
+      }
+
+      // Trick System - vastly faster rotations for arcade feel
+      let deltaX = 0, deltaY = 0, deltaZ = 0;
+      if (jump) { deltaX = 12 * dt; deltaZ = 8 * dt; }
+      
+      if (left) deltaY = 10 * dt;
+      if (right) deltaY = -10 * dt;
+      
+      trickRotation.current.x += deltaX;
+      trickRotation.current.y += deltaY;
+      trickRotation.current.z += deltaZ;
+      
+      totalAirRotation.current.x += Math.abs(deltaX);
+      totalAirRotation.current.y += Math.abs(deltaY);
+      totalAirRotation.current.z += Math.abs(deltaZ);
+      
+      if (controls.current.grab) score.current += (50 * dt * comboMultiplier.current);
+      if (controls.current.grab1) score.current += (100 * dt * comboMultiplier.current);
+      if (controls.current.grab2) score.current += (200 * dt * comboMultiplier.current);
+      if (controls.current.grab3) score.current += (300 * dt * comboMultiplier.current);
+      
+    } else {
+      // LANDING WIPE OUT CHECK
+      if (wasInAir.current) {
+        doubleJumpUsed.current = false;
+        // More forgiving landing (within 60 degrees)
+        const trickFlat = Math.abs(Math.sin(trickRotation.current.x)) < 0.8 && 
+                          Math.abs(Math.sin(trickRotation.current.z)) < 0.8;
+        
+        if (!trickFlat) {
+          isWipeout.current = true;
+          wipeoutTimer.current = 1.5;
+          if (saveHighlight) saveHighlight();
+          setTrickMsg("WIPEOUT!");
+          comboMultiplier.current = upgrades.includes('magnetic_coins') ? 2 : 1;
+          announceTrick("wipeout", 0, true);
+          // Lose some speed on wipeout
+          vel.current.multiplyScalar(0.3);
+        } else {
+          // Success
+          const spins = Math.floor(totalAirRotation.current.y / Math.PI);
+          const flips = Math.floor(totalAirRotation.current.x / (Math.PI * 2));
+          if (spins > 0 || flips > 0) {
+            const spinName = spins > 0 ? `${spins * 180}` : '';
+            const flipName = flips > 0 ? (flips > 1 ? `Double Flip` : `Flip`) : '';
+            const trickScore = (spins * 500) + (flips * 1000);
+            comboMultiplier.current += 0.5;
+            const finalScore = (trickScore * comboMultiplier.current) * (upgrades.includes('titanium_board') ? 2 : 1);
+            score.current += finalScore;
+            
+            if (finalScore >= 1000 && MockBackend) {
+              const coinsEarned = Math.floor(finalScore / 1000);
+              MockBackend.loadProgression().then(data => {
+                MockBackend.saveProgression({ ...data, coins: (data.coins || 0) + coinsEarned });
+              });
+            }
+
+            const trickName = `${spinName} ${flipName}`.trim();
+            if (finalScore >= 3000 && saveHighlight) {
+              saveHighlight();
+              setTrickMsg(`EPIC ${trickName}! +${trickScore} (CLIP SAVED)`);
+            } else {
+              setTrickMsg(`Sick ${trickName}! +${trickScore}`);
+            }
+            announceTrick(trickName, Math.floor(finalScore));
+            setTimeout(() => setTrickMsg(""), 2000);
+            
+            // Massive speed boost on landing a trick!
+            vel.current.multiplyScalar(1.4);
+          } else {
+            comboMultiplier.current = upgrades.includes('magnetic_coins') ? 2 : 1;
+          }
+        }
+        totalAirRotation.current.set(0,0,0);
+        trickRotation.current.set(0,0,0);
+      }
+
+      // Physics on Ground
+      pos.current.y = groundY;
+      
+      // Downhill acceleration based on slope
+      const slopeForce = gravity.clone().projectOnPlane(groundNormal);
+      vel.current.addScaledVector(slopeForce, dt * 1.5);
+      
+      // Constant base downhill thrust (Arcade feel)
+      vel.current.z -= 40 * dt;
+      
+      // Speed limits & Friction
+      const maxSpeed = skate ? 180 : 120;
+      let speed = vel.current.length();
+      
+      if (speed > maxSpeed) {
+        vel.current.multiplyScalar(maxSpeed / speed);
+      } else {
+        // Frame-rate independent friction
+        vel.current.multiplyScalar(Math.exp(-0.2 * dt)); 
+      }
+      
+      // Steering & Momentum
+      if (left) angularVel.current += 10 * dt;
+      if (right) angularVel.current -= 10 * dt;
+      angularVel.current *= Math.exp(-4.0 * dt); // Snappy return
+      
+      boardRotation.current += angularVel.current * dt;
+      
+      // Limit board rotation to +/- 70 degrees from forward
+      boardRotation.current = Math.max(-1.2, Math.min(1.2, boardRotation.current));
+      
+      const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), boardRotation.current);
+      
+      // Arcade Drift - align velocity to board direction
+      if (speed > 5) {
+         const driftSpeed = 8.0; 
+         const slopeForward = forward.clone().projectOnPlane(groundNormal).normalize();
+         const alignedVel = slopeForward.clone().multiplyScalar(speed);
+         // Keep the natural gravity Y velocity intact while drifting horizontally
+         const targetVel = new THREE.Vector3(alignedVel.x, vel.current.y, alignedVel.z);
+         vel.current.lerp(targetVel, 1.0 - Math.exp(-driftSpeed * dt));
+      }
+      
+      if (skate) vel.current.addScaledVector(forward, 60 * dt);
+      if (brake) vel.current.multiplyScalar(Math.exp(-2.5 * dt)); // Hard brake
+      
+      // Auto-jump if hitting an uphill ridge fast, else manual jump
+      const isUphill = groundNormal.z < -0.2;
+      if ((jump && now - lastJump.current > 300) || (isUphill && speed > 60 && now - lastJump.current > 500)) {
+        vel.current.y += jump ? 40 : 30; // Massive jump
+        lastJump.current = now;
+        pos.current.y += 1.0; // pop off ground
+      }
+      
+      carvingIntensity.current = Math.abs(angularVel.current) * speed;
+    }
+    
+    // Smooth Y interpolation for camera and visuals
+    const smoothedY = currentSmoothedY || pos.current.y;
+    currentSmoothedY = THREE.MathUtils.lerp(smoothedY, pos.current.y, 10 * dt);
+
+    wasInAir.current = inAir;
+    
+    // Ensure we don't apply velocity twice (bug fix)
+    
+    // Update visuals with smoothed Y
+    if (visualRef.current) {
+      visualRef.current.position.set(pos.current.x, currentSmoothedY, pos.current.z);
+      
+      const forward = new THREE.Vector3(0,0,-1).applyAxisAngle(new THREE.Vector3(0,1,0), boardRotation.current);
+      // Project forward onto the slope so it's not horizontal
+      const slopeForward = forward.clone().projectOnPlane(groundNormal).normalize();
+      
+      const targetRotation = new THREE.Matrix4().lookAt(
+        new THREE.Vector3(0,0,0),
+        slopeForward,
+        inAir ? new THREE.Vector3(0,1,0) : groundNormal
+      );
+      const targetQuat = new THREE.Quaternion().setFromRotationMatrix(targetRotation);
+      
+      if (inAir) {
+        const tqx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), trickRotation.current.x);
+        const tqy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), trickRotation.current.y);
+        const tqz = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), trickRotation.current.z);
+        targetQuat.multiply(tqy).multiply(tqx).multiply(tqz);
+      }
+      
+      visualRef.current.quaternion.slerp(targetQuat, 0.2);
+    }
+    
+    setAnimState({ carving: Math.sign(angularVel.current), inAir, grabbing: inAir && controls.current.grab, grabType: controls.current.grab1 ? 'method' : controls.current.grab2 ? 'indy' : controls.current.grab3 ? 'stiffy' : null, wipeout: false });
+
+    // Scoring
+    score.current += Math.max(0, vel.current.length() * dt * comboMultiplier.current);
+    if (Math.floor(state.clock.elapsedTime * 10) % 2 === 0) {
+      if (Math.abs(displayScore - score.current) > 10) setDisplayScore(Math.floor(score.current));
+    }
+    
+    // Camera
+    const playerV = new THREE.Vector3(pos.current.x, currentSmoothedY, pos.current.z);
+    if (cameraMode === 0) {
+      const idealOffset = new THREE.Vector3(0, camHeight * 4, camDistance * 4);
+      idealOffset.applyAxisAngle(new THREE.Vector3(0,1,0), boardRotation.current);
+      idealOffset.add(playerV);
+      
+      const lookAt = playerV.clone().add(new THREE.Vector3(0,0,-20).applyAxisAngle(new THREE.Vector3(0,1,0), boardRotation.current));
+      
+      camera.position.lerp(idealOffset, 0.1);
+      camera.lookAt(lookAt);
+      
+      const speed = vel.current.length();
+      camera.fov = THREE.MathUtils.lerp(camera.fov, 60 + Math.min(speed * 0.5, 40), 0.1);
+      camera.updateProjectionMatrix();
+    }
+    
+    // Multiplayer Sync (every 100ms)
+    if (now - lastSync.current > 100) {
+      socket.emit('player_update', {
+        id: socket.id,
+        pos: pos.current,
+        boardRotation: boardRotation.current,
+        animState
+      });
+      lastSync.current = now;
+    }
+  });
+
+  return (
+    <group>
+      <Html position={[0, 3, 0]} center zIndexRange={[100, 0]}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none', padding: '10px', width: '350px' }}>
+          <div style={{
+             background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(12px)',
+             border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '24px',
+             padding: '12px 36px', color: '#fff', fontSize: 48, fontWeight: '900', fontStyle: 'italic',
+             textShadow: '0 0 20px rgba(0, 208, 255, 0.8)', boxShadow: '0 8px 32px 0 rgba(0,0,0,0.3)',
+             display: 'flex', flexDirection: 'column', alignItems: 'center'
+          }}>
+            <div style={{ fontSize: 16, color: '#00d0ff', letterSpacing: 2 }}>SCORE</div>
+            {displayScore.toLocaleString()}
+            <div style={{ fontSize: 24, color: '#ff9900', marginTop: -5 }}>x{comboMultiplier.current.toFixed(1)}</div>
+          </div>
+          {trickMsg && (
+            <div style={{ color: isWipeout.current ? '#ff3333' : '#00ffcc', fontSize: 32, fontWeight: '900', fontStyle: 'italic', textShadow: `0 0 15px ${isWipeout.current ? '#ff3333' : '#00ffcc'}`, marginTop: 20 }}>
+              {trickMsg}
+            </div>
+          )}
+        </div>
+      </Html>
+
+      <group ref={visualRef} scale={[4, 4, 4]}>
+        <mesh position={[0, -0.4, 0]}>
+          <boxGeometry args={[0.4, 0.05, 1.8]} />
+          <meshStandardMaterial color={colors.snowboard || "#111"} metalness={0.9} roughness={0.1} emissive={colors.snowboard || "#00d0ff"} emissiveIntensity={0.8} />
+        </mesh>
+        {/* The Player Avatar */}
+        <SnowboarderAvatar animState={animState} colors={colors} />
+      </group>
+      
+      {/* Dynamic Carve Trail */}
+      <CarveTrail playerPos={pos} carvingIntensity={carvingIntensity} />
+
+      {/* Touch Controls Overlay */}
+      <Html fullscreen style={{ pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', bottom: 30, left: 30, display: 'flex', pointerEvents: 'auto', opacity: 0.7 }}>
+          <div 
+            style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(0, 255, 255, 0.2)', border: '2px solid #00d0ff', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}
+            onTouchStart={(e) => {
+              const touch = e.touches[0];
+              const rect = e.target.getBoundingClientRect();
+              const x = touch.clientX - rect.left - 60;
+              if (x < -20) { controls.current.left = true; controls.current.right = false; }
+              else if (x > 20) { controls.current.right = true; controls.current.left = false; }
+            }}
+            onTouchMove={(e) => {
+              const touch = e.touches[0];
+              const rect = e.target.getBoundingClientRect();
+              const x = touch.clientX - rect.left - 60;
+              if (x < -20) { controls.current.left = true; controls.current.right = false; }
+              else if (x > 20) { controls.current.right = true; controls.current.left = false; }
+              else { controls.current.left = false; controls.current.right = false; }
+            }}
+            onTouchEnd={() => { controls.current.left = false; controls.current.right = false; }}
+          >
+            <div style={{ pointerEvents: 'none', color: '#00d0ff', fontWeight: 'bold' }}>STEER</div>
+          </div>
+        </div>
+
+        <div style={{ position: 'absolute', bottom: 30, right: 30, display: 'flex', gap: 15, pointerEvents: 'auto', opacity: 0.8 }}>
+           <div 
+            style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255, 0, 255, 0.3)', border: '2px solid #ff00ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}
+            onTouchStart={() => controls.current.grab = true}
+            onTouchEnd={() => controls.current.grab = false}
+          >
+            GRAB
+          </div>
+          <div 
+            style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255, 165, 0, 0.3)', border: '2px solid #ffa500', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}
+            onTouchStart={() => controls.current.jump = true}
+            onTouchEnd={() => controls.current.jump = false}
+          >
+            JUMP
+          </div>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+export function SnowboarderAvatar({ animState, colors = {}, ghost }) {
+  const { carving, inAir, grabbing, wipeout } = animState || { carving: 0, inAir: false, grabbing: false, wipeout: false };
+  const group = React.useRef();
+  const { scene, animations } = useGLTF("https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb");
+  const { actions } = useAnimations(animations, group);
+
+  React.useEffect(() => {
+    scene.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  }, [scene]);
+
+  React.useEffect(() => {
+    let actionName = 'Idle';
+    if (wipeout) {
+      // no wipeout animation, just idle and we will rotate the group
+      actionName = 'Idle';
+    } else if (inAir) {
+      actionName = 'Run'; // 'Jump' isn't in Soldier usually, so we use Run or Idle
+    } else if (Math.abs(carving) > 0) {
+      actionName = 'Run';
+    }
+
+    let activeAction = actions[actionName] || actions['Idle'];
+    if (activeAction) {
+      activeAction.reset().fadeIn(0.2).play();
+    }
+    
+    return () => {
+      if (activeAction) activeAction.fadeOut(0.2);
+    };
+  }, [inAir, carving, wipeout, actions]);
+
+  const bodyLeanZ = carving === -1 ? -0.3 : (carving === 1 ? 0.3 : 0);
+  const bodyLeanX = inAir ? (grabbing ? 0.6 : 0) : 0;
+
+  if (wipeout) {
+    return (
+      <group position={[0, -0.4, 0]}>
+        <group ref={group} position={[0, 0, 0]} rotation={[1.5, 0, Math.random()]}>
+          <primitive object={scene} scale={[0.8, 0.8, 0.8]} />
+        </group>
+      </group>
+    );
+  }
+
+  return (
+    <group position={[0, -0.4, 0]}>
+      <group ref={group} position={[0, 0, 0]} rotation={[bodyLeanX, 1.57, bodyLeanZ]}>
+        <primitive object={scene} scale={[0.8, 0.8, 0.8]} />
+      </group>
+    </group>
+  );
+}
+
+useGLTF.preload("https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb");

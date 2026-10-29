@@ -64,8 +64,8 @@ class BinauralProcessor extends AudioWorkletProcessor {
                 this.isoPhase += isoPhaseInc;
                 if (this.isoPhase > TWO_PI) this.isoPhase -= TWO_PI;
                 
-                // Square wave for the pulse (0 or 1)
-                const pulse = Math.sin(this.isoPhase) > 0 ? 1 : 0;
+                // Smooth raised-cosine window for click-free isochronic pulse
+                const pulse = 0.5 * (1 + Math.sin(this.isoPhase));
                 
                 // Both ears get the same base freq multiplied by the pulse
                 channelLeft[i] = sampleLeft * pulse;

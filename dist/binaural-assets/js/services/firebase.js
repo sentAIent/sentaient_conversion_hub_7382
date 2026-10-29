@@ -5,11 +5,13 @@
 import { state } from '../state.js';
 
 // Module-level variables (populated after init)
-let app, auth, db, storage;
-let initializeApp, getAuth, getFirestore, getStorage;
-let onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile;
-let collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, addDoc, where, limit, collectionGroup;
-let ref, uploadBytes, getDownloadURL, deleteObject;
+let app = null, auth = null, db = null, storage = null;
+let initializeApp = () => ({}), getAuth = (a) => auth || { currentUser: state.currentUser }, getFirestore = (a) => db || {}, getStorage = (a) => storage || {};
+let onAuthStateChanged = () => () => {}, signInWithCustomToken = async () => {}, signInWithEmailAndPassword = async () => {}, createUserWithEmailAndPassword = async () => {}, signOut = async () => {}, sendPasswordResetEmail = async () => {}, updateProfile = async () => {}, deleteUser = async () => {};
+let collection = () => ({}), doc = (...args) => ({ id: args[args.length - 1] }), setDoc = async () => {}, getDoc = async () => ({ exists: () => false, data: () => ({}) }), getDocs = async () => ({ empty: true, forEach: () => {} }), deleteDoc = async () => {}, onSnapshot = () => () => {}, query = () => ({}), orderBy = () => ({}), serverTimestamp = () => new Date(), addDoc = async () => ({ id: 'mock_' + Date.now() }), where = () => ({}), limit = () => ({}), collectionGroup = () => ({});
+let updateDoc = async () => {}, increment = (n) => n;
+let getApps = () => (app ? [app] : []);
+let ref = () => ({}), uploadBytes = async () => {}, getDownloadURL = async () => '', deleteObject = async () => {};
 
 const authCallbacks = [];
 let unsubscribeLibrary = null;
@@ -112,6 +114,7 @@ export async function initFirebase() {
         signOut = firebaseAuth.signOut;
         sendPasswordResetEmail = firebaseAuth.sendPasswordResetEmail;
         updateProfile = firebaseAuth.updateProfile;
+        deleteUser = firebaseAuth.deleteUser;
 
         getFirestore = firebaseFirestore.getFirestore;
         const initializeFirestore = firebaseFirestore.initializeFirestore;
@@ -132,6 +135,9 @@ export async function initFirebase() {
         where = firebaseFirestore.where;
         limit = firebaseFirestore.limit;
         serverTimestamp = firebaseFirestore.serverTimestamp;
+        updateDoc = firebaseFirestore.updateDoc || updateDoc;
+        increment = firebaseFirestore.increment || increment;
+        if (firebaseApp.getApps) getApps = firebaseApp.getApps;
 
         getStorage = firebaseStorage.getStorage;
         ref = firebaseStorage.ref;
@@ -150,11 +156,11 @@ export async function initFirebase() {
                 localCache: persistentLocalCache({
                     tabManager: persistentMultipleTabManager()
                 })
-            });
+            }, "mindwave");
             console.log('[Firebase] Persistence enabled (Modern API)');
         } catch (e) {
             console.warn('[Firebase] Firestore init custom settings failed, falling back to default:', e);
-            db = getFirestore(app);
+            db = getFirestore(app, "mindwave");
         }
 
         console.log("Firebase initialized successfully");
@@ -192,27 +198,50 @@ export async function initFirebase() {
                     console.warn('[StorageManager] Failed to load module:', err);
                 });
 
-                // 2. Background Refresh from Firestore
+                // 2. Background Refresh from Firestore (Subscriptions + Profile)
                 try {
+                    // Check subscriptions (Stripe)
                     const subDoc = await getDoc(doc(db, 'subscriptions', user.uid));
+                    let active = false;
+                    let lifetime = false;
+                    let plan = 'free';
+
                     if (subDoc.exists()) {
                         const data = subDoc.data();
-                        const active = data.status === 'active';
-                        const lifetime = data.plan === 'lifetime';
+                        active = data.status === 'active';
+                        lifetime = data.plan === 'lifetime';
+                        plan = data.plan || 'pro';
+                    }
 
+                    // Override with Profile Data (Promo Codes)
+                    const profileDoc = await getDoc(doc(db, 'users', user.uid, 'profile', 'data'));
+                    if (profileDoc.exists()) {
+                        const profileData = profileDoc.data();
+                        if (profileData.isPremium) {
+                            active = true;
+                            lifetime = profileData.isLifetime || lifetime;
+                            plan = profileData.tier || plan || 'pro';
+                        }
+                    }
+
+                    if (active) {
                         // Update state
-                        state.isLifetime = active && lifetime;
-                        state.userTier = active ? (data.plan || 'pro') : 'free';
+                        state.isLifetime = lifetime;
+                        state.userTier = plan;
 
                         // Sync localStorage
-                        localStorage.setItem('mindwave_premium', active ? 'true' : 'false');
+                        localStorage.setItem('mindwave_premium', 'true');
                         localStorage.setItem('mindwave_tier', state.userTier);
-                        localStorage.setItem('mindwave_lifetime', (active && lifetime) ? 'true' : 'false');
+                        localStorage.setItem('mindwave_lifetime', lifetime ? 'true' : 'false');
 
                         console.log('[Auth] Refreshed Tier:', state.userTier, 'Lifetime:', state.isLifetime);
                     }
                 } catch (err) {
-                    console.warn('[Auth] sub refresh failed:', err.message);
+                    if (err.message && err.message.includes('offline')) {
+                        console.log('[Auth] Offline mode. Skipped profile refresh.');
+                    } else {
+                        console.warn('[Auth] sub/profile refresh failed:', err.message);
+                    }
                 }
             } else {
                 state.userTier = 'free';
@@ -231,8 +260,25 @@ export async function initFirebase() {
 
     } catch (e) {
         console.warn("Firebase Init Failed (Network or Config):", e);
-        // Fallback to offline mode?
-        // Could enable isMock = true here as fallback? 
+        console.warn("[Firebase] Network request failed. Falling back to MOCK MODE.");
+        isMock = true;
+        
+        // Attempt to load from localStorage or just use a dummy offline profile
+        const storedUser = localStorage.getItem('mindwave_mock_user');
+        if (storedUser) {
+            try {
+                const user = JSON.parse(storedUser);
+                if (localStorage.getItem('mindwave_premium') === 'true') {
+                    window.__MOCK_PREMIUM = true;
+                }
+                state.currentUser = user;
+                authCallbacks.forEach(cb => cb(user));
+            } catch (err) {
+                authCallbacks.forEach(cb => cb(null));
+            }
+        } else {
+            authCallbacks.forEach(cb => cb(null));
+        }
     }
 }
 
@@ -260,7 +306,7 @@ export async function loginUser(email, password) {
     }
 
     if (!auth) throw new Error("Firebase not initialized");
-    return signInWithEmailAndPassword(auth, email, password);
+    return await signInWithEmailAndPassword(auth, email, password);
 }
 
 export async function registerUser(email, password, displayName) {
@@ -301,6 +347,17 @@ export async function logoutUser() {
     }
     if (!auth) return;
     return signOut(auth);
+}
+
+export async function deleteUserAccount() {
+    if (isMock) {
+        localStorage.removeItem('mindwave_mock_user');
+        state.currentUser = null;
+        authCallbacks.forEach(cb => cb(null));
+        return Promise.resolve();
+    }
+    if (!auth || !auth.currentUser) throw new Error("No user is currently signed in");
+    return deleteUser(auth.currentUser);
 }
 
 export async function resetPassword(email) {
@@ -564,6 +621,36 @@ export async function fetchAudioLibrary() {
     });
     return tracks;
 }
+/**
+ * Update the user's profile document with premium status and codes used
+ * @param {string} uid - User ID
+ * @param {object} data - Data to merge into profile (e.g., {isPremium: true, usedPromoCodes: ['Yogananda']})
+ */
+export async function updateUserProfile(uid, data) {
+    if (isMock) {
+        console.log('[Firebase Mock] Updating user profile:', uid, data);
+        if (data.isPremium) {
+            localStorage.setItem('mindwave_premium', 'true');
+        }
+        return;
+    }
+
+    if (!db) {
+        console.warn("[Firebase] Cannot update user profile: DB not initialized");
+        return;
+    }
+
+    const docRef = doc(db, 'users', uid, 'profile', 'data');
+    
+    // Use setDoc with merge: true to avoid overwriting existing data
+    await setDoc(docRef, {
+        ...data,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+    
+    console.log('[Firebase] User profile updated for:', uid);
+}
+
 export {
     auth,
     db,
@@ -574,6 +661,9 @@ export {
     doc,
     setDoc,
     deleteDoc,
+    updateDoc,
+    increment,
+    getApps,
     collection,
     query,
     orderBy,
@@ -583,5 +673,9 @@ export {
     where,
     limit,
     getDocs,
-    collectionGroup
+    collectionGroup,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject
 };

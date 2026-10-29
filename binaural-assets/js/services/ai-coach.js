@@ -83,6 +83,25 @@ class AICoachService {
             briefing += `And: ${activeTickets[1].headline}. `;
         }
         
+        // Solar Photobiology & Circadian Sunlight Briefing
+        if (window.solarService && window.solarService.engine) {
+            try {
+                const coords = window.solarService.engine.getUserCoordinates();
+                const advice = window.solarService.engine.getOptimalExposureAdvice(coords.lat, coords.lon);
+                const curPhase = advice.schedule.currentPhase;
+                if (curPhase) {
+                    briefing += `Solar photobiology update: Right now is the ${curPhase.name}. `;
+                    if (advice.schedule.uvbStart) {
+                        const uvbTime = advice.schedule.uvbStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        briefing += `Your peak Vitamin D and UVB window starts at ${uvbTime}. `;
+                    }
+                    briefing += `${curPhase.action} `;
+                }
+            } catch (e) {
+                console.warn('[AICoach] Solar briefing error:', e);
+            }
+        }
+
         briefing += "I will start the binaural focus engine now. Let's get to work.";
 
         this.speak(briefing);

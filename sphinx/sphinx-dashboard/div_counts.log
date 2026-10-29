@@ -1,0 +1,224 @@
+97 1       </div>
+98 1       
+99 2       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-96">
+100 2         <GeocodingSearch onLocationSelect={(lat, lon) => handleJumpTo(lat, lon, 12)} />
+101 1       </div>
+102 1 
+103 1       {/* SPHINX OS HUD */}
+104 2       <div 
+105 2         style={{ width: isLegendCollapsed ? 'clamp(100px, 8vw, 130px)' : 'clamp(280px, 25vw, 380px)', fontSize: 'clamp(10px, 1vw, 14px)', transition: 'width 0.3s ease-in-out' }}
+106 2         className="absolute top-4 left-4 z-10 bg-black/80 border border-cyan-900/50 p-4 rounded-lg text-white font-mono shadow-[0_0_15px_rgba(8,145,178,0.2)] backdrop-blur-sm overflow-hidden"
+107 2       >
+108 3         <div className="flex justify-between items-center mb-3 border-b border-cyan-900/50 pb-2">
+109 3           {!isLegendCollapsed && <h1 className="text-xl font-bold text-cyan-400 tracking-widest whitespace-nowrap">SPHINX OS</h1>}
+110 3           
+111 4           <div className="flex items-center gap-2">
+112 4             <button 
+113 4               onClick={() => setIsLegendCollapsed(!isLegendCollapsed)}
+114 4               className="text-cyan-400 hover:text-white transition-colors p-1"
+115 4               title={isLegendCollapsed ? "Expand" : "Collapse"}
+116 4             >
+117 4               {isLegendCollapsed ? '»' : '«'}
+118 4             </button>
+119 4             {!isLegendCollapsed && (
+120 4               <button 
+121 4                 onClick={() => {
+122 4                   const anyVisible = Object.values(settings.layers).some(v => v);
+123 4                   toggleAllLayers(!anyVisible);
+124 4                 }}
+125 4                 className="text-xs text-cyan-500 hover:text-cyan-300 transition-colors bg-cyan-950/30 px-2 py-1 rounded border border-cyan-900 whitespace-nowrap"
+126 4               >
+127 4                 {Object.values(settings.layers).some(v => v) ? 'HIDE ALL' : 'SHOW ALL'}
+128 4               </button>
+129 4             )}
+130 3           </div>
+131 2         </div>
+132 3         <div className="space-y-2 mt-4 text-sm">
+133 3 
+134 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.custom_pins ? 'opacity-50' : ''}`} onClick={() => toggleLayer('custom_pins')} onMouseEnter={() => setHoveredLegendLayer('custom_pins')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+135 4               <span className="flex items-center gap-3">
+136 4                 <button className="text-gray-400 hover:text-white shrink-0">
+137 4                   {settings.layers.custom_pins ? <Eye size={16} /> : <EyeOff size={16} />}
+138 4                 </button>
+139 4                 <div className="w-3 h-3 bg-purple-500 rounded-full shrink-0"></div>
+140 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Custom Pins</span>}
+141 4               </span>
+142 4               <span className="text-purple-400 font-bold ml-2">{visibleCounts.custom_pins}</span>
+143 3             </div>
+144 3 
+145 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.aircraft ? 'opacity-50' : ''}`} onClick={() => toggleLayer('aircraft')} onMouseEnter={() => setHoveredLegendLayer('aircraft')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+146 4               <span className="flex items-center gap-3">
+147 4                 <button className="text-gray-400 hover:text-white shrink-0">
+148 4                   {settings.layers.aircraft ? <Eye size={16} /> : <EyeOff size={16} />}
+149 4                 </button>
+150 4                 <div className="w-3 h-3 bg-cyan-400 shrink-0" style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}></div>
+151 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Aircraft</span>}
+152 4               </span>
+153 4               <span className="text-cyan-400 font-bold ml-2">{visibleCounts.aircraft}</span>
+154 3             </div>
+155 3             
+156 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.cell_towers ? 'opacity-50' : ''}`} onClick={() => toggleLayer('cell_towers')} onMouseEnter={() => setHoveredLegendLayer('cell_towers')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+157 4               <span className="flex items-center gap-3">
+158 4                 <button className="text-gray-400 hover:text-white shrink-0">
+159 4                   {settings.layers.cell_towers ? <Eye size={16} /> : <EyeOff size={16} />}
+160 4                 </button>
+161 4                 <span className="text-fuchsia-500 font-bold text-lg leading-none shrink-0 w-4 text-center">△</span>
+162 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Cell Towers</span>}
+163 4               </span>
+164 4               <span className="text-fuchsia-400 font-bold ml-2">{visibleCounts.cellTowers}</span>
+165 3             </div>
+166 3 
+167 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.springs ? 'opacity-50' : ''}`} onClick={() => toggleLayer('springs')} onMouseEnter={() => setHoveredLegendLayer('springs')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+168 4               <span className="flex items-center gap-3">
+169 4                 <button className="text-gray-400 hover:text-white shrink-0">
+170 4                   {settings.layers.springs ? <Eye size={16} /> : <EyeOff size={16} />}
+171 4                 </button>
+172 4                 <span className="text-blue-500 font-bold text-xl leading-none shrink-0 w-4 text-center">♦</span>
+173 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Springs</span>}
+174 4               </span>
+175 4               <span className="text-blue-400 font-bold ml-2">{visibleCounts.springs}</span>
+176 3             </div>
+177 3 
+178 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.power ? 'opacity-50' : ''}`} onClick={() => toggleLayer('power')} onMouseEnter={() => setHoveredLegendLayer('power')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+179 4               <span className="flex items-center gap-3">
+180 4                 <button className="text-gray-400 hover:text-white shrink-0">
+181 4                   {settings.layers.power ? <Eye size={16} /> : <EyeOff size={16} />}
+182 4                 </button>
+183 4                 <span className="text-yellow-500 text-xl leading-none shrink-0 w-4 text-center">■</span>
+184 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Power Grid</span>}
+185 4               </span>
+186 4               <span className="text-yellow-400 font-bold ml-2">{visibleCounts.power}</span>
+187 3             </div>
+188 3 
+189 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.aviation ? 'opacity-50' : ''}`} onClick={() => toggleLayer('aviation')} onMouseEnter={() => setHoveredLegendLayer('aviation')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+190 4               <span className="flex items-center gap-3">
+191 4                 <button className="text-gray-400 hover:text-white shrink-0">
+192 4                   {settings.layers.aviation ? <Eye size={16} /> : <EyeOff size={16} />}
+193 4                 </button>
+194 4                 <span className="text-red-400 text-lg leading-none shrink-0 w-4 text-center">△</span>
+195 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Aviation/Helipads</span>}
+196 4               </span>
+197 4               <span className="text-red-400 font-bold ml-2">{visibleCounts.aviation}</span>
+198 3             </div>
+199 3 
+200 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.emergency ? 'opacity-50' : ''}`} onClick={() => toggleLayer('emergency')} onMouseEnter={() => setHoveredLegendLayer('emergency')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+201 4               <span className="flex items-center gap-3">
+202 4                 <button className="text-gray-400 hover:text-white shrink-0">
+203 4                   {settings.layers.emergency ? <Eye size={16} /> : <EyeOff size={16} />}
+204 4                 </button>
+205 4                 <span className="text-emerald-500 font-bold text-xl leading-none shrink-0 w-4 text-center">+</span>
+206 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Emergency</span>}
+207 4               </span>
+208 4               <span className="text-emerald-400 font-bold ml-2">{visibleCounts.emergency}</span>
+209 3             </div>
+210 3 
+211 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.cameras ? 'opacity-50' : ''}`} onClick={() => toggleLayer('cameras')} onMouseEnter={() => setHoveredLegendLayer('cameras')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+212 4               <span className="flex items-center gap-3">
+213 4                 <button className="text-gray-400 hover:text-white shrink-0">
+214 4                   {settings.layers.cameras ? <Eye size={16} /> : <EyeOff size={16} />}
+215 4                 </button>
+216 4                 <span className="text-white text-lg leading-none shrink-0 w-4 text-center">○</span>
+217 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Cameras / ALPR</span>}
+218 4               </span>
+219 4               <span className="text-gray-300 font-bold ml-2">{visibleCounts.cameras}</span>
+220 3             </div>
+221 3 
+222 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.weather_stations ? 'opacity-50' : ''}`} onClick={() => toggleLayer('weather_stations')} onMouseEnter={() => setHoveredLegendLayer('weather_stations')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+223 4               <span className="flex items-center gap-3">
+224 4                 <button className="text-gray-400 hover:text-white shrink-0">
+225 4                   {settings.layers.weather_stations ? <Eye size={16} /> : <EyeOff size={16} />}
+226 4                 </button>
+227 4                 <div className="w-3 h-3 bg-sky-300 rounded-full shrink-0"></div>
+228 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Weather Stations</span>}
+229 4               </span>
+230 4               <span className="text-sky-300 font-bold ml-2">{visibleCounts.weather_stations}</span>
+231 3             </div>
+232 3 
+233 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.data_centers ? 'opacity-50' : ''}`} onClick={() => toggleLayer('data_centers')} onMouseEnter={() => setHoveredLegendLayer('data_centers')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+234 4               <span className="flex items-center gap-3">
+235 4                 <button className="text-gray-400 hover:text-white shrink-0">
+236 4                   {settings.layers.data_centers ? <Eye size={16} /> : <EyeOff size={16} />}
+237 4                 </button>
+238 4                 <div className="w-3 h-3 bg-purple-500 rounded-sm shrink-0"></div>
+239 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Data Centers</span>}
+240 4               </span>
+241 4               <span className="text-purple-400 font-bold ml-2">{visibleCounts.data_centers}</span>
+242 3             </div>
+243 3 
+244 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.radars ? 'opacity-50' : ''}`} onClick={() => toggleLayer('radars')} onMouseEnter={() => setHoveredLegendLayer('radars')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+245 4               <span className="flex items-center gap-3">
+246 4                 <button className="text-gray-400 hover:text-white shrink-0">
+247 4                   {settings.layers.radars ? <Eye size={16} /> : <EyeOff size={16} />}
+248 4                 </button>
+249 4                 <span className="text-rose-500 font-bold text-xl leading-none shrink-0 w-4 text-center">◎</span>
+250 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Radar / Arrays</span>}
+251 4               </span>
+252 4               <span className="text-rose-400 font-bold ml-2">{visibleCounts.radars}</span>
+253 3             </div>
+254 3 
+255 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.public_lands ? 'opacity-50' : ''}`} onClick={() => toggleLayer('public_lands')} onMouseEnter={() => setHoveredLegendLayer('public_lands')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+256 4               <span className="flex items-center gap-3">
+257 4                 <button className="text-gray-400 hover:text-white shrink-0">
+258 4                   {settings.layers.public_lands ? <Eye size={16} /> : <EyeOff size={16} />}
+259 4                 </button>
+260 4                 <div className="w-3 h-3 bg-green-500/50 border border-green-800 shrink-0"></div>
+261 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Public Lands</span>}
+262 4               </span>
+263 4               <span className="text-green-500 font-bold ml-2">{visibleCounts.public_lands}</span>
+264 3             </div>
+265 3 
+266 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.campsites ? 'opacity-50' : ''}`} onClick={() => toggleLayer('campsites')} onMouseEnter={() => setHoveredLegendLayer('campsites')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+267 4               <span className="flex items-center gap-3">
+268 4                 <button className="text-gray-400 hover:text-white shrink-0">
+269 4                   {settings.layers.campsites ? <Eye size={16} /> : <EyeOff size={16} />}
+270 4                 </button>
+271 4                 <span className="text-orange-500 font-bold text-lg leading-none shrink-0 w-4 text-center">◮</span>
+272 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Campsites</span>}
+273 4               </span>
+274 4               <span className="text-orange-400 font-bold ml-2">{visibleCounts.campsites}</span>
+275 3             </div>
+276 3 
+277 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.trails ? 'opacity-50' : ''}`} onClick={() => toggleLayer('trails')} onMouseEnter={() => setHoveredLegendLayer('trails')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+278 4               <span className="flex items-center gap-3">
+279 4                 <button className="text-gray-400 hover:text-white shrink-0">
+280 4                   {settings.layers.trails ? <Eye size={16} /> : <EyeOff size={16} />}
+281 4                 </button>
+282 4                 <div className="w-3 h-0.5 bg-amber-600 shrink-0"></div>
+283 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Trails/Paths</span>}
+284 4               </span>
+285 4               <span className="text-amber-500 font-bold ml-2">{visibleCounts.trails}</span>
+286 3             </div>
+287 3 
+288 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.disasters ? 'opacity-50' : ''}`} onClick={() => toggleLayer('disasters')} onMouseEnter={() => setHoveredLegendLayer('disasters')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+289 4               <span className="flex items-center gap-3">
+290 4                 <button className="text-gray-400 hover:text-white shrink-0">
+291 4                   {settings.layers.disasters ? <Eye size={16} /> : <EyeOff size={16} />}
+292 4                 </button>
+293 4                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shrink-0"></div>
+294 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Disasters / Events</span>}
+295 4               </span>
+296 4               <span className="text-red-500 font-bold ml-2">{visibleCounts.disasters}</span>
+297 3             </div>
+298 3 
+299 4             <div className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.earthquakes ? 'opacity-50' : ''}`} onClick={() => toggleLayer('earthquakes')} onMouseEnter={() => setHoveredLegendLayer('earthquakes')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+300 4               <span className="flex items-center gap-3">
+301 4                 <button className="text-gray-400 hover:text-white shrink-0">
+302 4                   {settings.layers.earthquakes ? <Eye size={16} /> : <EyeOff size={16} />}
+303 4                 </button>
+304 4                 <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse shrink-0"></div>
+305 4                 {!isLegendCollapsed && <span className="whitespace-nowrap">Earthquakes</span>}
+306 4               </span>
+307 4               <span className="text-orange-500 font-bold ml-2">{visibleCounts.earthquakes}</span>
+308 3             </div>
+309 3 
+310 2         </div>
+311 1       </div>
+312 1       
+313 1       
+314 1       </Map>
+315 1 
+316 1       {pinCreationMode && (
+317 2         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: '#1e1e1e', padding: '25px', borderRadius: '8px', zIndex: 1000, color: 'white', minWidth: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', border: '1px solid #333' }}>
+318 2           <h3 style={{ marginTop: 0, marginBottom: 20, borderBottom: '1px solid #444', paddingBottom: 10 }}>Create Custom Pin</h3>
+319 3           <div style={{ display: 'flex', flexDirection: 'column' }}>
+320 4             <div style={{ marginBottom: 15, display: 'flex', flexDirection: 'column', gap: 5 }}>

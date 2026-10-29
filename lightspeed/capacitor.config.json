@@ -1,0 +1,20 @@
+{
+  "appId": "com.sentaient.lightspeed",
+  "appName": "LightSpeed",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "CapacitorCookies": {
+      "enabled": true
+    },
+    "SecureStoragePlugin": {
+      "enabled": true
+    },
+    "SSLPinning": {
+      "certs": ["supabase.co"]
+    }
+  }
+}

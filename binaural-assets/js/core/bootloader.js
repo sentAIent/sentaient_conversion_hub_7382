@@ -20,7 +20,7 @@ export function bootApp() {
     initAuthAndServices();
 
     // 4. Load Content Modules (Stories, Classical, Audio Lib, Journey)
-    requestIdleCallback ? requestIdleCallback(loadContentModules) : setTimeout(loadContentModules, 100);
+    typeof requestIdleCallback !== 'undefined' ? requestIdleCallback(loadContentModules) : setTimeout(loadContentModules, 100);
 
     // Check if survey should be triggered
     setTimeout(() => {

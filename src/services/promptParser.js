@@ -9,7 +9,8 @@ export async function parseScenePrompt(prompt) {
       speed: lowerPrompt.includes('driv') || lowerPrompt.includes('fast') ? 'fast' : 'slow',
       audioParams: { wind: 0.1, birds: 0.0, water: 0.0, traffic: 0.0, rain: 0.0 },
       visualMode: lowerPrompt.includes('3d') || lowerPrompt.includes('abstract') || lowerPrompt.includes('cyber') ? '3d' : 'video',
-      videoId: 'Q-PQ2AcieH8' // Default Paris driving
+      videoId: 'Q-PQ2AcieH8', // Default Paris driving
+      musicGenerationPrompt: `A cinematic and ambient instrumental soundtrack perfectly matching the theme: ${p}`
     };
     
     if (lowerPrompt.includes('birds')) result.audioParams.birds = 0.9;
@@ -35,16 +36,19 @@ export async function parseScenePrompt(prompt) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `You are an environment simulator. Parse the user's prompt into a JSON object matching this schema:
+            text: `You are an absolute specialist in cultural synesthesia, emotional mapping, and audiovisual design. Your job is to translate ANY user input (a word, a sentence, a book title like "Dune", a film like "The Matrix", a myth like "Icarus", or an abstract emotion) into a perfect, immersive audio-visual simulation.
+
+Analyze the cultural vibe, time period, and emotional weight of the prompt. Then output a JSON object matching this exact schema:
 {
-  "location": "string (name of place)",
+  "location": "string (the geographical or fictional setting)",
   "speed": "slow" | "fast",
-  "visualMode": "video" | "3d",
-  "videoId": "string (a real YouTube video ID that fits the prompt, e.g., 'Q-PQ2AcieH8' for Paris drive, 'lZ_2382q8cM' for NYC rain, 'F0B6bU-h_0A' for Kyoto walk, 'O2Wb-J9QdDU' for Swiss Alps train)",
-  "audioParams": { "wind": float 0-1, "birds": float 0-1, "water": float 0-1, "traffic": float 0-1, "rain": float 0-1 }
+  "visualMode": "video" | "3d" | "manim",
+  "videoId": "string (A real YouTube video ID that perfectly matches the vibe. E.g., 'Q-PQ2AcieH8' for Paris, 'lZ_2382q8cM' for NYC rain, 'F0B6bU-h_0A' for Kyoto, 'O2Wb-J9QdDU' for snowy train, '09E_p5z3iNU' for deep forest groove, or find another relevant standard ambience video ID)",
+  "audioParams": { "wind": float 0-1, "birds": float 0-1, "water": float 0-1, "traffic": float 0-1, "rain": float 0-1 },
+  "musicGenerationPrompt": "string (A highly detailed, 1-2 sentence prompt to feed into an AI Music Generator to create the perfect background song for this input. Include instruments, tempo, genre, and emotional tone matching the user's exact input)"
 }
-Return ONLY valid JSON.
-Prompt: "${prompt}"`
+Return ONLY valid JSON without markdown formatting.
+User Input: "${prompt}"`
           }]
         }]
       })

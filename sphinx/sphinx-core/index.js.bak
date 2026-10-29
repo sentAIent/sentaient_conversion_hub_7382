@@ -1,0 +1,261 @@
+import express from 'express';
+import cors from 'cors';
+import { spawn } from 'child_process';
+import dotenv from 'dotenv';
+import { createLLMProvider } from './lib/llm/index.mjs';
+import { ThreatEvaluator } from './lib/evaluator.mjs';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3117;
+
+app.use(cors());
+app.use(express.json());
+
+// ============================================
+// TIER 3: ZERO-TRUST SECURE MESH (Tailscale)
+// ============================================
+// In production, uncomment this middleware to ONLY allow traffic from your Tailscale VPN subnet
+/*
+app.use((req, res, next) => {
+  const clientIp = req.ip || req.socket.remoteAddress;
+  // Tailscale IPs always start with 100.
+  if (!clientIp.startsWith('100.') && !clientIp.includes('127.0.0.1')) {
+    console.warn(`[Sphinx Mesh] Unauthorized access attempt blocked from ${clientIp}`);
+    return res.status(403).send('Zero-Trust Mesh Authentication Failed.');
+  }
+  next();
+});
+*/
+
+// ============================================
+// TIER 1 -> TIER 2: MOBILE SYNC API
+// ============================================
+app.post('/api/sync/memory', async (req, res) => {
+  const { offline_events } = req.body;
+  if (!offline_events || !Array.isArray(offline_events)) {
+    return res.status(400).send('Invalid sync payload');
+  }
+
+  console.log(`[Sphinx Sync] Receiving ${offline_events.length} offline events from Mobile Edge...`);
+  for (const event of offline_events) {
+    // Ingest offline mobile events into the master ChromaDB
+    await evaluator.memory.storeEvent(event.source, event.data, event.assessment);
+  }
+  
+  res.json({ status: 'synced', inserted: offline_events.length });
+});
+
+// Initialize Local LLM (Ollama)
+const llmProvider = createLLMProvider({
+  LLM_PROVIDER: 'ollama',
+  LLM_MODEL: 'llama3:8b', // Adjust based on your hardware
+  OLLAMA_BASE_URL: 'http://localhost:11434'
+});
+
+const evaluator = new ThreatEvaluator(llmProvider);
+
+console.log(`[Sphinx] Central Core Initializing...`);
+
+// 1. OSINT & Recon Routes (Ported from Osiris)
+app.post('/api/recon/ip', async (req, res) => {
+  // Placeholder for Osiris IP intel logic
+  res.json({ status: 'active', message: 'Osiris IP Intel integrated.' });
+});
+
+app.post('/api/recon/vulnerability', async (req, res) => {
+  // Placeholder for Osiris CVE scanning
+  res.json({ status: 'active', message: 'Osiris Vuln Scanner integrated.' });
+});
+
+import { OpenSkyService } from './lib/opensky.mjs';
+import { WatchtowerService } from './lib/watchtower.mjs';
+import { DisastersService } from './lib/disasters.mjs';
+
+const opensky = new OpenSkyService();
+const watchtower = new WatchtowerService();
+const disasters = new DisastersService();
+
+// On-demand OSINT Sweeps based on frontend viewport
+app.get('/api/osint/aircraft', async (req, res) => {
+  const { bbox } = req.query;
+  const aircraft = await opensky.fetchLiveAircraft(bbox);
+  
+  // Look for anomalies (e.g., squawking emergency 7700 or special purpose)
+  const anomalies = aircraft.filter(a => a.squawk === '7700' || a.spi === true);
+  if (anomalies.length > 0) {
+    const assessment = await evaluator.evaluateData('OpenSky Network', { anomalies });
+    console.log(`[Sphinx OSINT] Airspace Anomaly Assessment: ${assessment}`);
+  }
+  
+  res.json({ aircraft });
+});
+
+
+
+app.get('/api/osint/celltowers', async (req, res) => {
+  const { bbox } = req.query;
+  const cellTowersData = await watchtower.fetchCellTowers(bbox);
+  res.json(cellTowersData);
+});
+
+
+
+app.get('/api/osint/disasters', async (req, res) => {
+  const { timeframe } = req.query;
+  const disastersData = await disasters.fetchSevereWeather(timeframe);
+  res.json(disastersData);
+});
+
+app.get('/api/osint/earthquakes', async (req, res) => {
+  const { timeframe } = req.query;
+  const earthquakesData = await disasters.fetchEarthquakes(timeframe);
+  res.json(earthquakesData);
+});
+
+
+app.get('/api/osint/overpass', async (req, res) => {
+  const data = await watchtower.fetchAllOverpass(req.query.bbox);
+  res.json(data);
+});
+
+
+
+
+
+
+// 2. Global Sweeps (Ported from Crucix)
+app.post('/api/sweep/ingest', async (req, res) => {
+  const { source, payload } = req.body;
+  if (!source || !payload) return res.status(400).send('Missing source or payload');
+  
+  const assessment = await evaluator.evaluateData(source, payload);
+  res.json({ status: 'evaluated', assessment });
+});
+
+// ============================================
+// BASE DEFENSE INTEGRATIONS
+// ============================================
+
+import { HomeAssistantController } from './lib/ha_controller.mjs';
+const haController = new HomeAssistantController();
+
+// Frigate AI Object Detection Webhook
+app.post('/api/defense/frigate', async (req, res) => {
+  const event = req.body;
+  
+  if (event && event.type === 'new' && event.after) {
+    const { label, camera } = event.after;
+    console.log(`[Sphinx Base Defense] Camera ${camera} detected a ${label}.`);
+    
+    // Evaluate the physical threat using the LLM
+    const assessment = await evaluator.evaluateData(`Frigate Camera: ${camera}`, { detected: label, event });
+    console.log(`[Sphinx Base Defense] Assessment: ${assessment}`);
+    
+    // Execute automated defense if threat is FLASH
+    if (assessment.includes('[FLASH]')) {
+      await haController.lockAllDoors();
+      await haController.pulseRedLights();
+      
+      // Notify user via TTS
+      const warningMessage = `Warning. Perimeter breach detected on ${camera}. Initiating base lockdown.`;
+      const ttsProcess = spawn('python3', ['./voice/tts.py', warningMessage]);
+      ttsProcess.stderr.on('data', (data) => console.error(`[TTS Error] ${data}`));
+    }
+  }
+  
+  res.status(200).send('OK');
+});
+
+// Home Assistant Sensor Webhook
+app.post('/api/defense/home-assistant', async (req, res) => {
+  const { entity_id, state } = req.body;
+  
+  console.log(`[Sphinx Base Defense] Sensor ${entity_id} changed to ${state}.`);
+  const assessment = await evaluator.evaluateData('Home Assistant', { entity: entity_id, state });
+  console.log(`[Sphinx Base Defense] Assessment: ${assessment}`);
+  res.status(200).send('OK');
+});
+
+// ============================================
+// EXTENDED PERIMETER (Phase 3)
+// ============================================
+
+// RuView (ESP32 WiFi Sensing) Telemetry
+app.post('/api/perimeter/ruview', async (req, res) => {
+  const { device_id, vitals, motion, distance } = req.body;
+  
+  if (motion === 'detected' || vitals.heart_rate > 100) {
+    console.log(`[Sphinx Perimeter] Through-wall movement detected by ${device_id}. Distance: ${distance}m.`);
+    const assessment = await evaluator.evaluateData('RuView', { device_id, vitals, motion, distance });
+    
+    if (assessment.includes('[FLASH]') || assessment.includes('[PRIORITY]')) {
+      const warningMessage = `Unidentified presence detected behind wall at ${distance} meters.`;
+      spawn('python3', ['./voice/tts.py', warningMessage]);
+    }
+  }
+  res.status(200).send('OK');
+});
+
+// RTL-SDR (Signals Intelligence) Telemetry
+app.post('/api/perimeter/sigint', async (req, res) => {
+  const { frequency, type, audio_transcript } = req.body;
+  
+  console.log(`[Sphinx SIGINT] Intercepted local radio traffic on ${frequency}MHz (${type}).`);
+  const assessment = await evaluator.evaluateData('RTL-SDR', { frequency, type, transcript: audio_transcript });
+  
+  if (assessment.includes('[PRIORITY]')) {
+    spawn('python3', ['./voice/tts.py', `Priority alert on local radio band: ${audio_transcript}`]);
+  }
+  res.status(200).send('OK');
+});
+
+// ============================================
+// VISION & MEMORY (Phase 4)
+// ============================================
+
+app.post('/api/vision/detect', async (req, res) => {
+  const { objects, confidence } = req.body;
+  
+  console.log(`[Sphinx Vision] Visual threat detected: ${objects.join(', ')} (Confidence: ${confidence})`);
+  const assessment = await evaluator.evaluateData('YOLO Vision', { objects, confidence });
+  
+  if (assessment.includes('[FLASH]')) {
+    await haController.lockAllDoors();
+    spawn('python3', ['./voice/tts.py', `Imminent visual threat detected. Locking doors.`]);
+  }
+  res.status(200).send('OK');
+});
+// 3. Voice Interface Hooks (openWakeWord + Whisper + Piper)
+app.post('/api/voice/command', async (req, res) => {
+  const { command } = req.body;
+  if (!command) return res.status(400).send('No command provided.');
+
+  console.log(`[Sphinx] Received audio transcription: "${command}"`);
+  
+  // Evaluate the command using Ollama
+  try {
+    const response = await llmProvider.complete(
+      "You are Sphinx, a highly advanced personal security AI. Be brief, clinical, and helpful.",
+      command
+    );
+    
+    const replyText = response.text;
+    console.log(`[Sphinx] Speaking: ${replyText}`);
+    
+    // Invoke the TTS Python script
+    const ttsProcess = spawn('python3', ['./voice/tts.py', replyText]);
+    ttsProcess.stderr.on('data', (data) => console.error(`[TTS Error] ${data}`));
+    
+    res.json({ response: replyText });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('LLM Evaluation failed.');
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`[Sphinx] Server running on http://localhost:${PORT}`);
+  console.log(`[Sphinx] Ready to receive sensory inputs and voice commands.`);
+});

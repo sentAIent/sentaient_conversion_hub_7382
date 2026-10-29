@@ -2686,7 +2686,7 @@ const getFragmentShader = (classId) => {
             vec3 tintedTex = mix(texColor.rgb, targetColor, blendFactor);
             vec3 finalColor = tintedTex * max(0.0, 1.0 - swarmDepletion * 0.6 * uIntensity);
             customColor = mix(activeColor1, activeColor2, swarmAccumulation);
-            finalColor += customColor * swarmAccumulation * 5.0 * luma * (1.0 + highPulse * 1.5);
+            finalColor += customColor * swarmAccumulation * 2.2 * uIntensity * luma * (1.0 + highPulse * 1.5);
             gl_FragColor = vec4(finalColor, texColor.a * uAlpha);
 
 #elif VARIATION == 3
@@ -2739,7 +2739,7 @@ const getFragmentShader = (classId) => {
             // Physical ring sector accumulation
             vec3 finalColor = texColor.rgb * (1.0 - rayGlow * 0.5 * uIntensity);
             customColor = mix(activeColor1, activeColor2, ringGlow);
-            finalColor += customColor * ringGlow * 5.0 * luma * (1.0 + highPulse);
+            finalColor += customColor * ringGlow * 2.2 * uIntensity * luma * (1.0 + highPulse);
             gl_FragColor = vec4(finalColor, texColor.a * uAlpha);
 
 #elif VARIATION == 5
@@ -2824,7 +2824,7 @@ const getFragmentShader = (classId) => {
             float energy = smoothstep(0.0, 0.5, plasma) * smoothstep(0.5, 0.0, abs(cosmicWaves));
             vec3 finalColor = texColor.rgb * (1.0 - energy * 0.5 * uIntensity);
             customColor = mix(activeColor1, activeColor2, sin(r * 10.0 - time)*0.5+0.5);
-            finalColor += customColor * energy * 5.0 * luma * (1.0 + lowPulse);
+            finalColor += customColor * energy * 2.2 * uIntensity * luma * (1.0 + lowPulse);
             gl_FragColor = vec4(finalColor, texColor.a * uAlpha);
 
 #elif VARIATION == 9
@@ -2857,7 +2857,7 @@ const getFragmentShader = (classId) => {
             float reflect = smoothstep(0.3, 0.0, abs(metalWaves)) * liquid;
             vec3 finalColor = texColor.rgb * 0.7;
             customColor = mix(activeColor1, activeColor2, liquid);
-            finalColor += customColor * reflect * 4.5 * luma * (1.0 + midPulse);
+            finalColor += customColor * reflect * 2.0 * uIntensity * luma * (1.0 + midPulse);
             gl_FragColor = vec4(finalColor, texColor.a * uAlpha);
 
 #elif VARIATION == 11
@@ -2873,7 +2873,7 @@ const getFragmentShader = (classId) => {
             float shards = smoothstep(0.1, 0.0, abs(crystalGeo));
             vec3 finalColor = texColor.rgb * (1.0 - shards * 0.5 * uIntensity);
             customColor = mix(activeColor1, activeColor2, crys * 0.5 + 0.5);
-            finalColor += customColor * shards * 5.0 * luma * (1.0 + highPulse * 1.5);
+            finalColor += customColor * shards * 2.2 * uIntensity * luma * (1.0 + highPulse * 1.5);
             gl_FragColor = vec4(finalColor, texColor.a * uAlpha);
 
 #elif VARIATION == 12
@@ -2889,7 +2889,7 @@ const getFragmentShader = (classId) => {
             float heat = smoothstep(0.4, 0.0, abs(sunburst)) * flares;
             vec3 finalColor = texColor.rgb * 0.6;
             customColor = mix(activeColor1, activeColor2, r + flares * 0.5);
-            finalColor += customColor * heat * 6.0 * luma * (1.0 + lowPulse * 1.5);
+            finalColor += customColor * heat * 2.2 * uIntensity * luma * (1.0 + lowPulse * 1.5);
             gl_FragColor = vec4(finalColor, texColor.a * uAlpha);
 
 #elif VARIATION == 13
@@ -2905,7 +2905,7 @@ const getFragmentShader = (classId) => {
             float edges = smoothstep(0.15, 0.0, abs(interlocking));
             vec3 finalColor = texColor.rgb * (1.0 - edges * 0.4 * uIntensity);
             customColor = mix(activeColor1, activeColor2, frac);
-            finalColor += customColor * edges * 4.5 * luma * (1.0 + highPulse);
+            finalColor += customColor * edges * 2.0 * uIntensity * luma * (1.0 + highPulse);
             gl_FragColor = vec4(finalColor, texColor.a * uAlpha);
 
 #else
@@ -2913,10 +2913,14 @@ const getFragmentShader = (classId) => {
             gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
 #endif
 
-            // Apply universal tint using uColor1/uColor2 so color pickers work even at low intensity
+            // Apply universal tint using uColor1/uColor2
             float finalLuma = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
             vec3 globalTint = mix(uColor1, uColor2, finalLuma);
-            gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * globalTint * 2.5, 0.5);
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * globalTint * 1.35, 0.45);
+
+            // Tone mapping & contrast preservation: prevents blown-out white clipping
+            gl_FragColor.rgb = gl_FragColor.rgb / (1.0 + gl_FragColor.rgb * 0.45);
+            gl_FragColor.rgb = pow(clamp(gl_FragColor.rgb, 0.0, 1.0), vec3(0.92));
         }
         `;
     } else if (classId === 23) {

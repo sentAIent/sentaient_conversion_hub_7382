@@ -2,20 +2,23 @@ import { state } from '../state.js';
 
 export class VoiceSynth {
     constructor() {
-        this.synth = window.speechSynthesis;
+        this.synth = typeof window !== 'undefined' ? (window.speechSynthesis || null) : null;
         this.voices = [];
         this.voice = null;
         this.isSpeaking = false;
         
-        // Load voices
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = () => this._loadVoices();
+        // Load voices safely
+        if (this.synth && typeof this.synth.onvoiceschanged !== 'undefined') {
+            this.synth.onvoiceschanged = () => this._loadVoices();
         }
-        this._loadVoices();
+        if (this.synth) {
+            this._loadVoices();
+        }
     }
 
     _loadVoices() {
-        this.voices = this.synth.getVoices();
+        if (!this.synth || typeof this.synth.getVoices !== 'function') return;
+        this.voices = this.synth.getVoices() || [];
         // Try to find a soothing voice (e.g., a calm female or specific high-quality voice)
         // This is highly browser-dependent.
         this.voice = this.voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English') || v.name.includes('Daniel') || v.name.includes('Serena')) || this.voices[0];
@@ -28,6 +31,10 @@ export class VoiceSynth {
      */
     speak(text) {
         return new Promise((resolve) => {
+            if (!this.synth || typeof SpeechSynthesisUtterance === 'undefined') {
+                resolve();
+                return;
+            }
             if (this.synth.speaking) {
                 this.synth.cancel(); // Cancel any ongoing speech
             }
@@ -77,7 +84,8 @@ export class VoiceSynth {
         
         const now = state.audioCtx.currentTime;
         const currentVol = state.masterGain.gain.value;
-        const masterSliderVol = parseFloat(document.getElementById('masterVolSlider')?.value || 1.0);
+        const parsedVol = parseFloat(document.getElementById('masterVolSlider')?.value);
+        const masterSliderVol = isNaN(parsedVol) ? 1.0 : Math.max(0, Math.min(1, parsedVol));
         
         // Cancel any pending fades
         state.masterGain.gain.cancelScheduledValues(now);
@@ -88,13 +96,14 @@ export class VoiceSynth {
             const duckVol = masterSliderVol * 0.4;
             state.masterGain.gain.linearRampToValueAtTime(duckVol, now + 0.5);
         } else {
-            // Restore to slider volume
+            // Restore to slider volume only if audio is still actively playing
+            if (!state.isPlaying) return;
             state.masterGain.gain.linearRampToValueAtTime(masterSliderVol, now + 1.0);
         }
     }
 
     stop() {
-        if (this.synth.speaking) {
+        if (this.synth && this.synth.speaking) {
             this.synth.cancel();
         }
         this.isSpeaking = false;

@@ -135,6 +135,9 @@ function updateTimeDisplay() {
 // Initialize IndexedDB for user tracks
 function initClassicalDB() {
     return new Promise((resolve, reject) => {
+        if (typeof indexedDB === 'undefined') {
+            return resolve();
+        }
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onerror = () => {
@@ -424,6 +427,11 @@ export async function initClassical() {
 
     // Volume Control
     if (volSlider) {
+        const initVol = parseFloat(volSlider.value);
+        if (!isNaN(initVol)) {
+            classicalState.volume = initVol;
+            if (volValue) volValue.textContent = Math.round(initVol * 100) + '%';
+        }
         volSlider.addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             classicalState.volume = v;
@@ -541,8 +549,8 @@ export async function playClassical(id) {
     classicalState.audio.volume = classicalState.volume;
     classicalState.audio.loop = true;
 
-    // Connect ephemeral tracks to the Master WebAudio Chain
-    if (piece.isEphemeral && window.connectCustomAudio) {
+    // Connect to the Master WebAudio Chain
+    if (window.connectCustomAudio) {
         window.connectCustomAudio(classicalState.audio);
     }
 
@@ -607,6 +615,9 @@ export function stopClassical() {
     if (classicalState.audio) {
         classicalState.audio.pause();
         classicalState.audio.removeEventListener('timeupdate', updateTimeDisplay);
+        if (classicalState.audio.src && classicalState.audio.src.startsWith('blob:')) {
+            try { URL.revokeObjectURL(classicalState.audio.src); } catch (e) {}
+        }
         classicalState.audio = null;
     }
     classicalState.isPlaying = false;
