@@ -95,7 +95,7 @@ const projects = [
   },
   {
     title: 'AutoPilot',
-    description: 'Enterprise B2B social media marketing automation platform. AI-driven content creation that handles scheduling and posting.',
+    description: 'Enterprise B2B and B2C social media marketing automation platform. AI-driven content creation that handles scheduling and posting.',
     longDescription: 'Our flagship B2B platform revolutionizes how enterprises handle their marketing. By deploying autonomous AI agents, it seamlessly orchestrates campaigns from ideation to execution, automatically calculating ROI and adjusting strategies in real-time based on live market data.',
     features: [
       'Autonomous Campaign Execution',
@@ -185,19 +185,19 @@ const PortfolioSection = () => {
                 
                 {/* Background Image (Scales up slightly on hover) */}
                 <div 
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover/card:scale-110 filter brightness-[0.7] group-hover/card:brightness-[1.1]"
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover/card:scale-110 filter brightness-[0.95] group-hover/card:brightness-[1.1]"
                   style={{ backgroundImage: `url(${project.bgImage})` }}
                 />
                 
-                {/* Gradient overlays for legibility */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent opacity-70 group-hover/card:opacity-40 transition-opacity duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 md:opacity-0 group-hover/card:opacity-80 transition-opacity duration-700" />
+                {/* Gradient overlays for legibility - reduced so images appear clearly */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/30 to-transparent opacity-30 group-hover/card:opacity-20 transition-opacity duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30 md:opacity-0 group-hover/card:opacity-30 transition-opacity duration-700" />
                 
                 {/* App Content inside the un-skewed box */}
                 <div className="absolute inset-0 pointer-events-auto">
                   
                   {/* Floating Logo (Appears small, grows on hover) - Default State */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-90 group-hover/card:opacity-0 transition-opacity duration-300 w-32 h-32 flex items-center justify-center pointer-events-none drop-shadow-2xl">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-100 group-hover/card:opacity-0 transition-opacity duration-300 w-32 h-32 flex items-center justify-center pointer-events-none drop-shadow-2xl">
                     {project.logo && (
                       <img src={project.logo} alt="" className={`w-full h-full object-contain ${project.logoScale}`} />
                     )}

@@ -42,11 +42,18 @@ try {
     }
 
     // Initialize Firebase App Check with reCAPTCHA Enterprise
-    if (typeof window !== "undefined") {
-        initializeAppCheck(app, {
-            provider: new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_SITE_KEY || 'YOUR_RECAPTCHA_ENTERPRISE_SITE_KEY_HERE'),
-            isTokenAutoRefreshEnabled: true
-        });
+    if (typeof window !== "undefined" && import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
+        if (import.meta.env.DEV || window.location.hostname === 'localhost') {
+            self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+        }
+        try {
+            initializeAppCheck(app, {
+                provider: new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
+                isTokenAutoRefreshEnabled: true
+            });
+        } catch (e) {
+            console.warn("AppCheck initialization failed (expected in local dev if recaptcha isn't configured for localhost):", e);
+        }
     }
 } catch (error) {
     console.error("Firebase initialization error:", error);

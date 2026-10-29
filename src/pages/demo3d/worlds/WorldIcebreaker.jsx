@@ -423,98 +423,58 @@ const IslandEnvironment = ({ centerZ }) => {
   );
 };
 
+export const runIcebreakerMelt = () => {
+  if (window._isWorldActionActive) return;
+  window.icebreakerThaw = 0;
+  window._isWorldActionActive = true;
+  const start = performance.now();
+  const dur = 4200;
+  const step = (now) => {
+    const el = now - start;
+    const prog = Math.min(1.0, el / dur);
+    window.icebreakerThaw = 1 - Math.pow(1 - prog, 3);
+    if (prog < 1.0) {
+      requestAnimationFrame(step);
+    } else {
+      window.icebreakerThaw = 1.0;
+      window._isWorldActionActive = false;
+    }
+  };
+  requestAnimationFrame(step);
+};
+if (typeof window !== 'undefined') {
+  window.triggerIcebreakerMelt = runIcebreakerMelt;
+}
+
 const IcebreakerController = () => {
   const scroll = useScroll();
-  const [locked, setLocked] = useState(false);
-  const [textLocked, setTextLocked] = useState(false);
-  const [caveLocked, setCaveLocked] = useState(false);
-  const textLockRef = useRef({ triggered: false, timer: 0 });
-  const caveLockRef = useRef({ triggered: false, timer: 0 });
-  
   useEffect(() => {
-    window.icebreakerThaw = 0;
-    window.icebreakerThawLocked = false;
-    window.icebreakerTextLocked = false;
-    window.icebreakerCaveLocked = false;
+    window.icebreakerThaw = window.icebreakerThaw || 0;
   }, []);
 
-  useFrame((state, delta) => {
-    const p = scroll.offset;
-    
-    // Trigger lock at Stop 1 (Cave Entrance)
-    if (!caveLockRef.current.triggered && p >= 0.22) {
-      caveLockRef.current.triggered = true;
-      setCaveLocked(true);
-      window.icebreakerCaveLocked = true;
-      if (scroll.el) {
-        scroll.el.style.overflow = 'hidden';
-        scroll.el.scrollTop = 0.22 * (scroll.el.scrollHeight - scroll.el.clientHeight);
-      }
+  useFrame(() => {
+    const p = window._warpProgress !== undefined ? window._warpProgress : scroll.offset;
+    if (p >= 0.125 && p <= 0.145 && window.icebreakerThaw === 0 && !window._isWorldActionActive) {
+      if (window.triggerIcebreakerMelt) window.triggerIcebreakerMelt();
+    }
+    if ((p < 0.08 || p > 0.18) && window.icebreakerThaw !== 0 && !window._isWorldActionActive) {
+      window.icebreakerThaw = 0;
     }
     
-    if (window.icebreakerCaveLocked) {
-      if (scroll.el) {
-        scroll.el.scrollTop = 0.22 * (scroll.el.scrollHeight - scroll.el.clientHeight);
-      }
-      caveLockRef.current.timer += delta;
-      // Unlock after 1.5 seconds to force a pause
-      if (caveLockRef.current.timer > 1.5) {
-        window.icebreakerCaveLocked = false;
-        setCaveLocked(false);
-        if (scroll.el) scroll.el.style.overflow = 'auto';
-      }
-    }
 
-    // Trigger lock at Stop 2 (Melt)
-    if (!locked && p >= 0.265 && window.icebreakerThaw < 1.0) {
-      setLocked(true);
-      window.icebreakerThawLocked = true;
-      if (scroll.el) {
-        scroll.el.style.overflow = 'hidden';
-        scroll.el.scrollTop = 0.27 * (scroll.el.scrollHeight - scroll.el.clientHeight);
-      }
-    }
     
-    if (window.icebreakerThawLocked) {
-      // Keep it strictly at 0.27 during the animation
-      if (scroll.el) {
-        scroll.el.scrollTop = 0.27 * (scroll.el.scrollHeight - scroll.el.clientHeight);
-      }
 
-      window.icebreakerThaw += delta * 0.15; // Takes ~6.6 seconds to melt
-      if (window.icebreakerThaw >= 1.0) {
-        window.icebreakerThaw = 1.0;
-        window.icebreakerThawLocked = false;
-        if (scroll.el && !textLocked) scroll.el.style.overflow = 'auto';
-        setLocked(false);
-      }
-    } else {
-      if (p < 0.2) window.icebreakerThaw = 0;
-    }
+
+
+
     
-    // Trigger text lock at Stop 3
-    if (!textLockRef.current.triggered && p >= 0.285 && window.icebreakerThaw >= 1.0) {
-      textLockRef.current.triggered = true;
-      setTextLocked(true);
-      window.icebreakerTextLocked = true;
-      if (scroll.el) {
-        scroll.el.style.overflow = 'hidden';
-        scroll.el.scrollTop = 0.29 * (scroll.el.scrollHeight - scroll.el.clientHeight);
-      }
-    }
+
+
     
-    if (window.icebreakerTextLocked) {
-      if (scroll.el) {
-        scroll.el.scrollTop = 0.29 * (scroll.el.scrollHeight - scroll.el.clientHeight);
-      }
-      textLockRef.current.timer += delta;
-      // Unlock after 1.5 seconds
-      if (textLockRef.current.timer > 1.5) {
-        window.icebreakerTextLocked = false;
-        setTextLocked(false);
-        if (scroll.el) scroll.el.style.overflow = 'auto';
-      }
-    }
+
+    
+
+
   });
   return null;
 };

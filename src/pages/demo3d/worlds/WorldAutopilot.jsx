@@ -72,14 +72,14 @@ const WorldAutopilot = ({ position, rotation, visible }) => {
 
   useFrame(() => {
     if (!visible) return;
-    if (scroll.offset > 0.575 && scroll.offset < 0.595 && !hasLocked && !window.autopilotLocked) {
+    if (scroll.offset > 0.29 && scroll.offset < 0.31 && !hasLocked && !window.autopilotLocked) {
       window.autopilotLocked = true;
       setHasLocked(true);
       setTimeout(() => {
         window.autopilotLocked = false;
       }, 1500);
     }
-    if ((scroll.offset < 0.55 || scroll.offset > 0.62) && hasLocked) {
+    if ((scroll.offset < 0.27 || scroll.offset > 0.33) && hasLocked) {
       setHasLocked(false);
       window.autopilotLocked = false;
     }

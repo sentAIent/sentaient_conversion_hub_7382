@@ -91,7 +91,7 @@ const projects = [
   },
   {
     title: 'AutoPilot',
-    description: 'Enterprise B2B social media marketing automation platform. AI-driven content creation that handles scheduling, posting, and comprehensive macro and micro analytics.',
+    description: 'Enterprise B2B and B2C social media marketing automation platform. AI-driven content creation that handles scheduling, posting, and comprehensive macro and micro analytics.',
     longDescription: 'Our flagship B2B platform revolutionizes how enterprises handle their marketing. By deploying autonomous AI agents, it seamlessly orchestrates campaigns from ideation to execution, automatically calculating ROI and adjusting strategies in real-time based on live market data.',
     features: [
       'Autonomous Campaign Execution',

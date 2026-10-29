@@ -84,7 +84,7 @@ const WormholeMatrix = ({ startZ = 10, endZ = -500, visible = true }) => {
 
   return (
     <mesh visible={visible}>
-      <tubeGeometry args={[path, 200, 15, 32, false]} />
+      <tubeGeometry args={[path, 200, 25, 32, false]} />
       <shaderMaterial
         ref={materialRef}
         vertexShader={matrixVertexShader}

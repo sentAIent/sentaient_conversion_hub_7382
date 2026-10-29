@@ -197,14 +197,14 @@ const WorldContango = ({ position, rotation, visible }) => {
 
   useFrame(() => {
     if (!visible) return;
-    if (scroll.offset > 0.925 && scroll.offset < 0.935 && !hasLocked && !window.contangoLocked) {
+    if (scroll.offset > 0.465 && scroll.offset < 0.475 && !hasLocked && !window.contangoLocked) {
       window.contangoLocked = true;
       setHasLocked(true);
       setTimeout(() => {
         window.contangoLocked = false;
       }, 4000);
     }
-    if ((scroll.offset < 0.90 || scroll.offset > 0.96) && hasLocked) {
+    if ((scroll.offset < 0.45 || scroll.offset > 0.49) && hasLocked) {
       setHasLocked(false);
       window.contangoLocked = false;
     }

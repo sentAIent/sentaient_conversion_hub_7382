@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import Icon from '../AppIcon';
+import { Link } from 'react-router-dom';
+import HeaderDropdown from './HeaderDropdown';
 import logo from './sentAIent_logo_Aug2025_BG-Transparent_TEXT-60A9FF_A-202733_I-60A9FF_INFINITY-ORANGE-Horizontal_990x990.png';
 
 const Header = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const auth = useAuth(); // It might be null if rendered outside AuthProvider, but we wrapped it in Routes.jsx
-  const currentUser = auth?.currentUser;
-  const logout = auth?.logout;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,24 +15,6 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navigationItems = [
-    {
-      name: 'Home',
-      path: '/portfolio',
-      icon: 'Home'
-    },
-    {
-      name: 'Our Platforms',
-      path: '/portfolio', // In the future, this can link to #platforms if we add scroll IDs
-      icon: 'Layout'
-    }
-  ];
-
-  const isActivePath = (path) => location.pathname === path;
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
@@ -63,164 +38,8 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-2">
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-gray-400 hover:text-white hover:bg-white/5"
-            >
-              <Icon name="Home" size={16} />
-              <span>Home</span>
-            </button>
-            <button
-              onClick={() => document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth' })}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-gray-400 hover:text-white hover:bg-white/5"
-            >
-              <Icon name="Layout" size={16} />
-              <span>Our Platforms</span>
-            </button>
-            
-            <button 
-              onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-              className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-white/10 text-white hover:bg-white/20 border border-white/10"
-            >
-              <span>Contact Us</span>
-            </button>
-            
-            {currentUser ? (
-              <>
-                <button 
-                  onClick={() => {
-                    if (window.confirm("Are you sure you want to nuke all your local data? This is irreversible.")) {
-                      localStorage.clear();
-                      sessionStorage.clear();
-                      // Also clear indexedDB if needed, but local/session is a start
-                      window.location.reload();
-                    }
-                  }}
-                  className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-orange-600/10 text-orange-500 hover:bg-orange-600/20 border border-orange-500/20"
-                >
-                  <Icon name="Trash2" size={16} />
-                  <span>Nuke My Data</span>
-                </button>
-                <button 
-                  onClick={async () => {
-                    try {
-                      await logout();
-                      navigate('/');
-                    } catch (err) {
-                      console.error("Failed to log out", err);
-                    }
-                  }}
-                  className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
-                >
-                  <span>Log Out</span>
-                </button>
-              </>
-            ) : (
-              <Link 
-                to="/login"
-                className="flex items-center space-x-2 px-6 py-2 ml-2 rounded-full text-sm font-medium transition-colors duration-200 bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20"
-              >
-                <span>Login</span>
-              </Link>
-            )}
-          </nav>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={toggleMobileMenu}
-            className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors duration-300"
-            aria-label="Toggle mobile menu"
-          >
-            <Icon
-              name={isMobileMenuOpen ? "X" : "Menu"}
-              size={24}
-              className="transition-transform duration-300"
-            />
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        <div
-          className={`lg:hidden transition-all duration-300 overflow-hidden ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
-            }`}
-        >
-          <div className="px-6 py-4 bg-[#0A0A0B] border-t border-white/5">
-            <nav className="space-y-2">
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 text-gray-400 hover:text-white hover:bg-white/5"
-              >
-                <Icon name="Home" size={18} />
-                <span>Home</span>
-              </button>
-              
-              <button
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  document.getElementById('platforms')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 text-gray-400 hover:text-white hover:bg-white/5"
-              >
-                <Icon name="Layout" size={18} />
-                <span>Our Platforms</span>
-              </button>
-              
-              <button 
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-                }}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-blue-600 text-white hover:bg-blue-500"
-              >
-                <span>Contact Us</span>
-              </button>
-              
-              {currentUser ? (
-                <>
-                  <button 
-                    onClick={() => {
-                      if (window.confirm("Are you sure you want to nuke all your local data? This is irreversible.")) {
-                        localStorage.clear();
-                        sessionStorage.clear();
-                        window.location.reload();
-                      }
-                    }}
-                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-orange-600/10 text-orange-500 hover:bg-orange-600/20 border border-orange-500/20"
-                  >
-                    <Icon name="Trash2" size={18} />
-                    <span>Nuke My Data</span>
-                  </button>
-                  <button 
-                    onClick={async () => {
-                      setIsMobileMenuOpen(false);
-                      try {
-                        await logout();
-                        navigate('/');
-                      } catch (err) {
-                        console.error("Failed to log out", err);
-                      }
-                    }}
-                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
-                  >
-                    <span>Log Out</span>
-                  </button>
-                </>
-              ) : (
-                <Link 
-                  to="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 mt-4 rounded-lg text-sm font-medium transition-colors duration-200 bg-white/10 text-white hover:bg-white/20 border border-white/10"
-                >
-                  <span>Login</span>
-                </Link>
-              )}
-            </nav>
-          </div>
+          {/* Consolidated Dropdown Menu in Top Right Corner */}
+          <HeaderDropdown />
         </div>
       </div>
     </header>

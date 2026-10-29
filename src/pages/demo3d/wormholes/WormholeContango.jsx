@@ -80,6 +80,8 @@ const WormholeContango = ({ position, rotation = [0, 0, 0], length = 6000, radiu
   const tempObject = useMemo(() => new THREE.Object3D(), []);
   const tempColor = useMemo(() => new THREE.Color(), []);
 
+  const totalCount = allCandles.length;
+
   useEffect(() => {
     if (!wickMeshRef.current || !bodyMeshRef.current) return;
     

@@ -154,7 +154,11 @@ export function AuthProvider({ children }) {
                         subscription: mergedSubscription
                     });
                 } catch (err) {
-                    console.error("Error fetching user data:", err);
+                    if (err?.code === 'permission-denied' || err?.message?.includes('Missing or insufficient permissions')) {
+                        console.warn("User data access restricted by Firestore permissions. Continuing with authenticated user profile.");
+                    } else {
+                        console.error("Error fetching user data:", err);
+                    }
                     setCurrentUser(user);
                     secureStorage.removeItem('sentaient_lifetime_access');
                 }

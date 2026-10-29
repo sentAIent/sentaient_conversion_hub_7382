@@ -38,7 +38,7 @@ const projects = [
   {
     title: 'AutoPilot',
     tag: 'Enterprise',
-    description: 'Enterprise B2B social media marketing automation platform. AI-driven content creation.',
+    description: 'Enterprise B2B and B2C social media marketing automation platform. AI-driven content creation.',
     bgImage: '/hero_slide_autopilot.jpg',
     logo: '/autopilot_logo.png',
     logoScale: 'scale-[1.1]',
@@ -69,7 +69,7 @@ const Card = ({ project, index, progress, range, targetScale }) => {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${project.bgImage})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-40" />
         
         {/* Glassmorphism Panel */}
         <div className="absolute bottom-8 left-8 right-8 md:bottom-12 md:left-12 md:right-auto md:w-[450px] p-8 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl flex flex-col items-start">
@@ -88,9 +88,9 @@ const Card = ({ project, index, progress, range, targetScale }) => {
         </div>
 
         {/* Large floating logo */}
-        <div className="absolute top-12 right-12 md:top-1/2 md:-translate-y-1/2 md:right-24 w-32 h-32 md:w-64 md:h-64 opacity-20 pointer-events-none mix-blend-screen">
+        <div className="absolute top-12 right-12 md:top-1/2 md:-translate-y-1/2 md:right-24 w-32 h-32 md:w-64 md:h-64 opacity-100 pointer-events-none drop-shadow-2xl">
           {project.logo && (
-            <img src={project.logo} alt="" className={`w-full h-full object-contain filter grayscale ${project.logoScale}`} />
+            <img src={project.logo} alt="" className={`w-full h-full object-contain ${project.logoScale}`} />
           )}
         </div>
       </motion.div>
