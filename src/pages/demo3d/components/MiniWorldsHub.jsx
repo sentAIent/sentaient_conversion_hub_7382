@@ -322,11 +322,13 @@ export const WORLDS_DATA = [
   { name: 'Autopilot', startP: 0.275, p: 0.30, endP: 0.31, color: '#10B981', ringColor: '#FF3366', logoUrl: '/autopilot_logo.png', logoScale: [1.4, 0.766], summary: 'Enterprise Social Media Marketing Automation', description: 'Automate multi-channel brand growth with AI-driven content generation, scheduled omnichannel publishing, and predictive audience engagement.' }
 ];
 
-export default function MiniWorldsHub() {
+export default function MiniWorldsHub({ visible = true }) {
   const scroll = useScroll();
   const groupRef = useRef();
   const [hoveredWorld, setHoveredWorld] = useState(null);
   const hoverTimeoutRef = useRef(null);
+  const [showHub, setShowHub] = useState(true);
+
   const handleHoverStart = (name) => {
     if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null; }
     setHoveredWorld(name);
@@ -358,8 +360,15 @@ export default function MiniWorldsHub() {
         setWinSize({ w, h });
       }
     }
-    if (groupRef.current) groupRef.current.visible = scroll.offset < 0.05;
+    const p = window._warpProgress !== undefined ? window._warpProgress : (scroll ? scroll.offset : 0);
+    const shouldShow = visible && p < 0.025;
+    if (shouldShow !== showHub) {
+      setShowHub(shouldShow);
+    }
+    if (groupRef.current) groupRef.current.visible = shouldShow;
   });
+
+  if (!visible || !showHub) return null;
 
   const curW = winSize.w || 1200, curH = winSize.h || 800;
   const visibleH = 2 * 510 * Math.tan((75 * Math.PI / 180) / 2);

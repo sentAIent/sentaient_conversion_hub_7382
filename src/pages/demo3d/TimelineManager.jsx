@@ -343,7 +343,7 @@ export const TimelineManager = () => {
 
   return (
     <group>
-      <MiniWorldsHub />
+      <MiniWorldsHub visible={activeZones.intro} />
       <WormholeMatrix startZ={10} endZ={-1250} visible={activeZones.intro} />
       
       <WorldMindWave position={[0, 0, -1350]} visible={activeZones.mindwave} />
