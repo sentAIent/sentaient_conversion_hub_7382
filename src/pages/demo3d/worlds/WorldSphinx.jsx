@@ -1,5 +1,4 @@
-import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import React, { useMemo } from 'react';
 import { Text, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -186,8 +185,8 @@ const PharaonicHead = () => {
             <meshStandardMaterial color={LIMESTONE_BASE} roughness={0.88} />
           </mesh>
           {/* Ear Helix Rim */}
-          <mesh position={[side * 0.6, 1.5, 0.5]}>
-            <torusGeometry args={[6.5, 1.2, 8, 16, Math.PI * 0.85]} />
+          <mesh position={[side * 0.8, 0, 0]}>
+            <cylinderGeometry args={[1.2, 1.2, 16, 8]} />
             <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.85} />
           </mesh>
           {/* Inner Concha Shadow Hollow */}
@@ -204,14 +203,6 @@ const PharaonicHead = () => {
         <sphereGeometry args={[33, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.58]} />
         <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.88} metalness={0.02} />
       </mesh>
-
-      {/* Weathered Geological Horizontal Strata Rings over Crown */}
-      {[6, 14, 22, 30].map((ry, idx) => (
-        <mesh key={`strata-ring-${idx}`} position={[0, ry, -2]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[30 - idx * 2.8, 1.2, 10, 36, Math.PI]} />
-          <meshStandardMaterial color={idx % 2 === 0 ? LIMESTONE_SHADOW : LIMESTONE_BASE} roughness={0.9} />
-        </mesh>
-      ))}
 
       {/* Flared Nemes Side Wings (Weathered Limestone Bedrock) */}
       {[-1, 1].map((side, i) => (
@@ -445,20 +436,6 @@ const GreatPyramidsHorizon = () => {
 // 4. MAIN WORLD SPHINX SCENE COMPONENT
 // ---------------------------------------------------------------------------
 export default function WorldSphinx({ position, visible }) {
-  const radarRingsRef = useRef();
-
-  // Animation Loop
-  useFrame((state) => {
-    if (!visible) return;
-    const t = state.clock.getElapsedTime();
-
-    // Orbital Threat Radar concentric rings rotation
-    if (radarRingsRef.current) {
-      radarRingsRef.current.rotation.y = t * 0.08;
-      radarRingsRef.current.rotation.x = Math.sin(t * 0.3) * 0.06;
-    }
-  });
-
   if (!visible) return null;
 
   return (
@@ -542,25 +519,7 @@ export default function WorldSphinx({ position, visible }) {
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 4. CELESTIAL THREAT RADAR RINGS (HIGH IN THE TWILIGHT SKY)     */}
-      {/* ------------------------------------------------------------- */}
-      <group ref={radarRingsRef} position={[0, 420, -1100]}>
-        <mesh rotation={[Math.PI / 5, 0, 0]}>
-          <ringGeometry args={[480, 488, 64]} />
-          <meshBasicMaterial color={GOLD_24K} transparent opacity={0.32} side={THREE.DoubleSide} />
-        </mesh>
-        <mesh rotation={[-Math.PI / 4, 0, 0]}>
-          <ringGeometry args={[520, 526, 64]} />
-          <meshBasicMaterial color="#38bdf8" transparent opacity={0.25} side={THREE.DoubleSide} />
-        </mesh>
-        <mesh rotation={[0, Math.PI / 3, 0]}>
-          <ringGeometry args={[560, 565, 64]} />
-          <meshBasicMaterial color="#f59e0b" transparent opacity={0.2} side={THREE.DoubleSide} />
-        </mesh>
-      </group>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 5. HOLOGRAPHIC TYPOGRAPHY BLADE (CLEANLY FRAMED ON LEFT FLANK) */}
+      {/* 4. HOLOGRAPHIC TYPOGRAPHY BLADE (CLEANLY FRAMED ON LEFT FLANK) */}
       {/* ------------------------------------------------------------- */}
       <group position={[-520, 80, -560]} rotation={[0, Math.PI / 9, 0]}>
         {/* Holographic Obsidian Glass Blade Backing */}
