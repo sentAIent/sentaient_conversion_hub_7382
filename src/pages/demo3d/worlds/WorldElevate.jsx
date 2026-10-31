@@ -24,7 +24,7 @@ const AlpinePineTree = ({ position, scale = 1.0 }) => {
           </mesh>
           <mesh position={[0, tier.h * 0.22, 0]}>
             <coneGeometry args={[tier.rB * 0.92, tier.h * 0.65, 7]} />
-            <meshStandardMaterial color="#f1f5f9" roughness={0.3} metalness={0.1} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.5} metalness={0.02} />
           </mesh>
         </group>
       ))}
@@ -127,8 +127,8 @@ function createAlpineMountainGeometry() {
 
   const colors = [];
   const normals = geom.attributes.normal;
-  const snowPure = new THREE.Color("#f1f5f9"); // Soft natural white snow, prevents bloom glare
-  const snowShade = new THREE.Color("#cbd5e1"); // Soft sky-tinted shadowed snow
+  const snowPure = new THREE.Color("#ffffff"); // Luminous pure alpine snow
+  const snowShade = new THREE.Color("#f1f5f9"); // Clean off-white shadowed snow (never dingy gray)
   const rockDark = new THREE.Color("#475569");  // Slate granite grey, never pitch-black
   const rockMid = new THREE.Color("#64748b");   // Sunlit granite
   const rockBrown = new THREE.Color("#78716c"); // Warm rocky accents
@@ -412,8 +412,8 @@ function createAlaskanMassifRidgeGeometry(width = 2400, height = 1400, depth = 9
 
   const colors = [];
   const normals = geom.attributes.normal;
-  const snowPure = new THREE.Color("#f1f5f9");
-  const snowShade = new THREE.Color("#cbd5e1");
+  const snowPure = new THREE.Color("#ffffff");
+  const snowShade = new THREE.Color("#f1f5f9");
   const rockDark = new THREE.Color("#475569");
   const rockMid = new THREE.Color("#64748b");
 
@@ -753,12 +753,12 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
       if (landingSpray2Ref.current) landingSpray2Ref.current.visible = false;
       if (hockeySprayRef.current) hockeySprayRef.current.visible = false;
     } else if (t < 3.3) {
-      // CARVING AT THE TOP OF THE MOUNTAIN: Dynamic sweeping S-turns across upper headwall powder (Z: 650 -> 240)
+      // CARVING AT THE TOP OF THE MOUNTAIN: Dynamic sweeping S-turns across upper headwall powder (Z: 650 -> 360)
       const p = (t - 0.8) / 2.5;
       const carveFreq = p * Math.PI * 3;
       const carveEnv = Math.sin(p * Math.PI);
       rx = Math.sin(carveFreq) * 32 * carveEnv;
-      rz = THREE.MathUtils.lerp(650, 240, p);
+      rz = THREE.MathUtils.lerp(650, 360, p);
       ry = getMountainTerrainY(rz) + 0.5;
       riderPitch = getTerrainSlopePitch(rz);
       const carveTurn = Math.cos(carveFreq) * carveEnv;
@@ -782,112 +782,136 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
         dropInSprayRef.current.position.set(-rx * 0.3, ry + 1.2, rz + 24);
       }
     } else if (t < 5.2) {
-      // STRAIGHT DOWN TO FIRST JUMP: Aerodynamic straight-line tuck charging dead-center into Cliff 1 Lip (Z: 240 -> 50)
-      if (dropInSprayRef.current) dropInSprayRef.current.visible = false;
+      // HIGH-SPEED CHARGE DOWN COULOIR INTO FIRST JUMP: Aerodynamic speed tuck rocketing down the fall-line (Z: 360 -> 50)
       const p = (t - 3.3) / 1.9;
-      const accelP = Math.pow(p, 1.25);
+      const speedP = Math.pow(p, 1.6); // Explosive acceleration compounding speed right into Cliff 1 Lip
       rx = 0;
-      rz = THREE.MathUtils.lerp(240, 50, accelP);
+      rz = THREE.MathUtils.lerp(360, 50, speedP);
       ry = getMountainTerrainY(rz) + 0.5;
       riderPitch = getTerrainSlopePitch(rz);
       riderYaw = 0;
       riderRoll = 0;
       isStrapped = true;
-      crouchDrop = -4.5;
 
+      // Aggressive speed tuck uncoiling into dynamic kicker pop right at the lip (p > 0.85):
+      const popSpring = p > 0.85 ? Math.sin(((p - 0.85) / 0.15) * Math.PI * 0.5) * 6.5 : 0;
+      crouchDrop = -5.8 + popSpring;
+      torsoPitch = 0.42 * (1 - popSpring * 0.5);
       torsoYaw = 0.18; headYaw = Math.PI / 2;
-      lArmRoll = -0.85; rArmRoll = 0.85;
-      lArmPitch = 0.1; rArmPitch = 0.1;
+      lArmRoll = -0.45; rArmRoll = 0.45;
+      lArmPitch = -0.4; rArmPitch = -0.4;
       rLegPitch = 0; lLegPitch = 0;
+
+      if (dropInSprayRef.current) {
+        dropInSprayRef.current.visible = true;
+        const s = 1.0 + p * 2.2;
+        dropInSprayRef.current.scale.set(s * 0.8, s * 0.6, s * 2.5);
+        dropInSprayRef.current.position.set(0, ry + 1.0, rz + 28);
+      }
     } else if (t < 8.0) {
-      // CLIFF JUMP 1: High-Speed Launch Off Sheer 416-Unit Granite Cliff (Z: 50 -> -265)!
-      // Clean Newtonian gravity arc + floaty Layout Wildcat Backflip (zero gimbal lock)
+      // CLIFF JUMP 1: High-Speed Launch with MASSIVE SKY POP (+350 pop, apex +30 units above lip)
+      if (dropInSprayRef.current) dropInSprayRef.current.visible = false;
       const p = (t - 5.2) / 2.8;
       const lateralP = p * p * (3 - 2 * p);
       rx = THREE.MathUtils.lerp(0, -22, lateralP);
       rz = THREE.MathUtils.lerp(50, -265, p);
       const takeoffY = getMountainTerrainY(50);     // 1136 (Cliff 1 lip)
 
-      // Exact Newtonian ballistic parabola: upward pop of +432/2.8 = +154 units/s, constant gravity descent to Y=457
-      ry = takeoffY + 0.5 + 432 * p - 1111 * p * p;
+      // High-altitude ballistic arc: rockets +30 units skyward over Cliff 1 Lip, then heavy gravity descent to Y=457
+      ry = takeoffY + 0.5 + 350 * p - 1029 * p * p;
 
-      // Pure Layout Wildcat Backflip: smooth rotation around pitch axis with zero gimbal-lock yaw flip
-      const flipRaw = Math.max(0, Math.min(1, (p - 0.10) / 0.72));
-      const flipP = flipRaw * flipRaw * (3 - 2 * flipRaw);
+      // Trick actively flips and spins throughout the air ALL THE WAY DOWN until just before landing (p=0.92)
+      const flipRaw = Math.min(1.0, p / 0.92);
+      const flipP = Math.pow(flipRaw, 0.92); // Continuous dynamic rotation from lip to 92% of flight
       const baseSlopePitch = THREE.MathUtils.lerp(getTerrainSlopePitch(50), getTerrainSlopePitch(-265), p);
-      riderPitch = baseSlopePitch + flipP * Math.PI * 2;
-      riderYaw = 0;
-      riderRoll = Math.sin(flipP * Math.PI) * 0.12; // Subtle freeride hip style tweak
+      riderPitch = baseSlopePitch + flipP * Math.PI * 4; // Double Backflip (2 full 360° flips = 720°)
+      riderYaw = -flipP * Math.PI * 2; // Full 360° spin
+      riderRoll = Math.sin(flipP * Math.PI * 2) * (1 - flipRaw * 0.4) * 0.18;
       isStrapped = true;
 
-      // Anatomical layout arch at apex, spotting landing, and deep knee compression on touchdown
-      const layoutArch = Math.sin(flipP * Math.PI);
-      const landCompress = p > 0.86 ? Math.sin(((p - 0.86) / 0.14) * Math.PI) * 5.5 : 0;
-      crouchDrop = -3.5 * (1 - layoutArch) - landCompress;
-      torsoPitch = -0.32 * layoutArch;
+      // Double layout tuck & extension; opens body and spots landing at p >= 0.92, followed by shock compression
+      const layoutArch = Math.sin(flipP * Math.PI * 2);
+      const landCompress = p > 0.92 ? Math.sin(((p - 0.92) / 0.08) * Math.PI) * 6.0 : 0;
+      crouchDrop = -4.5 * (1 - Math.abs(layoutArch)) - landCompress;
+      torsoPitch = -0.35 * layoutArch;
       torsoYaw = 0.18;
       headYaw = Math.PI / 2;
-      headPitch = layoutArch * 0.35 - (p > 0.7 ? 0.35 : 0);
+      headPitch = p < 0.92 ? (layoutArch * 0.35 - (p > 0.6 ? 0.35 : 0)) : -0.38;
       lArmRoll = -0.85 - layoutArch * 0.45;
       rArmRoll = 0.85 + layoutArch * 0.45;
       lArmPitch = 0.1 - layoutArch * 0.2;
       rArmPitch = 0.1 - layoutArch * 0.2;
       rLegPitch = 0; lLegPitch = 0;
 
-      if (p > 0.88 && landingSpray1Ref.current) {
+      if (p > 0.92 && landingSpray1Ref.current) {
         landingSpray1Ref.current.visible = true;
-        const s = (p - 0.88) * 9;
+        const s = (p - 0.92) * 14;
         landingSpray1Ref.current.position.set(rx, ry, rz);
         landingSpray1Ref.current.scale.set(s, s * 1.5, s);
       }
     } else if (t < 10.8) {
-      // MID-MOUNTAIN SPRINT & CLIFF JUMP 2: High-Speed Launch Off Sheer 334-Unit Abyss Cliff (Z: -460 -> -785)!
+      // MID-MOUNTAIN SPRINT & CLIFF JUMP 2: Blistering Couloir Sprint into MASSIVE ABYSS POP (+330 pop, apex +37 units above lip)!
       if (landingSpray1Ref.current) landingSpray1Ref.current.visible = false;
       const p = (t - 8.0) / 2.8;
       isStrapped = true;
 
       if (p < 0.26) {
-        // Blistering transition run (Z: -265 -> -460) up the upturned snow kicker lip of Cliff 2
+        // High-velocity couloir charge (Z: -265 -> -460) up the upturned snow kicker lip of Cliff 2
         const subP = p / 0.26;
+        const speedP = Math.pow(subP, 1.55); // Rapid acceleration coming out of landing into Cliff 2
         rx = THREE.MathUtils.lerp(-22, 14, subP);
-        rz = THREE.MathUtils.lerp(-265, -460, subP);
+        rz = THREE.MathUtils.lerp(-265, -460, speedP);
         ry = getMountainTerrainY(rz) + 0.5;
         riderPitch = getTerrainSlopePitch(rz);
-        riderYaw = -0.22 * Math.sin(subP * Math.PI);
-        riderRoll = 0.32 * Math.sin(subP * Math.PI);
-        crouchDrop = -3.5 - subP * 3.0;
+        riderYaw = -0.15 * Math.sin(subP * Math.PI);
+        riderRoll = 0.22 * Math.sin(subP * Math.PI);
+
+        // Deep speed tuck uncoiling into explosive kicker pop:
+        const popSpring2 = subP > 0.85 ? Math.sin(((subP - 0.85) / 0.15) * Math.PI * 0.5) * 6.5 : 0;
+        crouchDrop = -5.8 + popSpring2;
+        torsoPitch = 0.42 * (1 - popSpring2 * 0.5);
         torsoYaw = 0.18; headYaw = Math.PI / 2;
-        lArmRoll = -0.85; rArmRoll = 0.85;
+        lArmRoll = -0.45; rArmRoll = 0.45;
+        lArmPitch = -0.4; rArmPitch = -0.4;
+
+        if (dropInSprayRef.current) {
+          dropInSprayRef.current.visible = true;
+          const s = 1.2 + subP * 2.0;
+          dropInSprayRef.current.scale.set(s * 0.8, s * 0.6, s * 2.5);
+          dropInSprayRef.current.position.set(rx, ry + 1.0, rz + 28);
+        }
       } else {
-        // Launches at high speed off the Abyss cliff lip (Z=-460, Y=294) while the cliff drops straight to Y=-40!
+        if (dropInSprayRef.current) dropInSprayRef.current.visible = false;
+        // Launches at high speed off the Abyss cliff lip (Z=-460, Y=294) with HUGE SKY POP
         const jumpP = (p - 0.26) / 0.74;
         rx = THREE.MathUtils.lerp(14, 18, jumpP);
         rz = THREE.MathUtils.lerp(-460, -785, jumpP);
         const takeoffY = getMountainTerrainY(-460);   // 294 (Cliff 2 lip)
         const landingY = getMountainTerrainY(-785);   // -106 (Lower landing slope)
-        const baseChordY = THREE.MathUtils.lerp(takeoffY, landingY, jumpP);
-        const airArc = Math.sin(Math.pow(jumpP, 0.72) * Math.PI) * 210;
-        ry = baseChordY + 0.5 + airArc;
+        // Authentic Newtonian ballistic trajectory with massive +330 skyward pop:
+        ry = takeoffY + 0.5 + 330 * jumpP - 730 * jumpP * jumpP;
 
-        const trickRaw = Math.max(0, Math.min(1, (jumpP - 0.04) / 0.82));
-        const trickP = trickRaw * trickRaw * (3 - 2 * trickRaw);
+        // Trick actively corks and spins throughout the air ALL THE WAY DOWN until just before landing (jumpP=0.92)
+        const trickRaw = Math.min(1.0, jumpP / 0.92);
+        const trickP = Math.pow(trickRaw, 0.92); // Continuous dynamic rotation from lip to 92% of flight
         const baseSlopePitch = THREE.MathUtils.lerp(getTerrainSlopePitch(-460), getTerrainSlopePitch(-785), jumpP);
-        riderPitch = baseSlopePitch + trickP * Math.PI * 2; // Full Layout Backflip
-        riderYaw = -trickP * Math.PI * 4; // Full 720° two-revolution spin
-        riderRoll = Math.sin(trickP * Math.PI) * 0.32;
+        riderPitch = baseSlopePitch + trickP * Math.PI * 4; // Double Cork Flip (2 full 360° flips = 720°)
+        riderYaw = -trickP * Math.PI * 6; // 1080° Spin (3 full 360° revolutions!)
+        riderRoll = Math.sin(trickP * Math.PI * 2) * (1 - trickRaw * 0.4) * 0.32;
 
-        const grab = Math.sin(trickP * Math.PI);
-        const landCompress = jumpP > 0.86 ? Math.sin(((jumpP - 0.86) / 0.14) * Math.PI) * 6.0 : 0;
+        // Dynamic board grab during rotation; releases grab and extends body at jumpP >= 0.92 to stomp the landing
+        const grab = Math.sin(Math.min(1.0, trickP) * Math.PI);
+        const landCompress = jumpP > 0.92 ? Math.sin(((jumpP - 0.92) / 0.08) * Math.PI) * 6.5 : 0;
         crouchDrop = -7.5 * grab - landCompress;
         torsoYaw = 0.18;
         headYaw = Math.PI / 2;
-        headPitch = -0.45 * grab;
+        headPitch = jumpP < 0.92 ? -0.45 * grab : -0.35;
         lArmPitch = 0.1 + grab * 0.65; lArmRoll = -0.85 + grab * 0.55;
         rArmPitch = 0.1 - grab * 0.35; rArmRoll = 0.85 + grab * 0.25;
 
-        if (jumpP > 0.85 && landingSpray2Ref.current) {
+        if (jumpP > 0.92 && landingSpray2Ref.current) {
           landingSpray2Ref.current.visible = true;
-          const s = (jumpP - 0.85) * 9;
+          const s = (jumpP - 0.92) * 14;
           landingSpray2Ref.current.position.set(rx, ry, rz);
           landingSpray2Ref.current.scale.set(s, s * 1.4, s);
         }
@@ -1757,17 +1781,17 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
       {/* ========================================================= */}
       {/* 2. CALIBRATED NATURAL ALPINE DAYTIME LIGHTING             */}
       {/* ========================================================= */}
-      {/* Soft Overcast Arctic Ambient Light */}
-      <ambientLight intensity={0.46} color="#cbd5e1" />
+      {/* Luminous Arctic Daylight Ambient */}
+      <ambientLight intensity={0.65} color="#f8fafc" />
 
       {/* Primary Diffused Winter Sunlight (Soft, realistic illumination) */}
-      <directionalLight position={[-1100, 2400, 800]} intensity={1.15} color="#fffdf5" />
+      <directionalLight position={[-1100, 2400, 800]} intensity={1.25} color="#fffdf5" />
 
       {/* Soft Snowpack Valley Fill */}
-      <directionalLight position={[800, -100, -700]} intensity={0.32} color="#cbd5e1" />
+      <directionalLight position={[800, 200, -700]} intensity={0.45} color="#f0f9ff" />
 
-      {/* Base Arena Daylight Fill */}
-      <directionalLight position={[0, 600, -965]} intensity={0.35} color="#ffffff" />
+      {/* Base Arena Clean Daylight Fill (Ensures base snow is radiant off-white, never dark gray) */}
+      <directionalLight position={[-200, 900, -850]} intensity={0.95} color="#fffcf5" />
 
       {/* Gentle Airborne Alpine Powder Flurry */}
       <Sparkles 
@@ -1883,10 +1907,10 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
           </mesh>
         </group>
 
-        {/* Base Resort Apron (Pristine snow arena for the brawl, helipad, and lodge) */}
+        {/* Base Resort Apron (Luminous off-white alpine powder, never dingy gray) */}
         <mesh position={[0, -145, -970]} rotation={[-0.05, 0, 0]}>
           <boxGeometry args={[650, 14, 380]} />
-          <meshStandardMaterial color="#f1f5f9" roughness={0.4} metalness={0.05} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.5} metalness={0.02} />
         </mesh>
 
         {/* Alpine Pine Forest Glades (Rich snow-covered evergreen clusters along mountain flanks) */}
@@ -1914,7 +1938,7 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
         ].map((drift, i) => (
           <mesh key={i} position={drift.pos} rotation={drift.rot} scale={drift.scale}>
             <sphereGeometry args={[1, 16, 16]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.38} metalness={0.04} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.5} metalness={0.02} />
           </mesh>
         ))}
 
@@ -1926,7 +1950,7 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
           </mesh>
           <mesh position={[0, 60, 0]} rotation={[0, 0, Math.PI / 4]}>
             <boxGeometry args={[55, 55, 66]} />
-            <meshStandardMaterial color="#f8fafc" roughness={0.3} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.5} metalness={0.02} />
           </mesh>
           <mesh position={[0, 20, 31]}>
             <planeGeometry args={[65, 20]} />

@@ -1,27 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Sparkles, ScrollControls, Scroll, useScroll, useTexture } from '@react-three/drei';
+import { Sparkles, ScrollControls, Scroll, useScroll } from '@react-three/drei';
 import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing';
-
-const HUDLogoMesh = ({ url, scale }) => {
-  const texture = useTexture(url);
-  const s = Array.isArray(scale) ? [scale[0], scale[1], 1] : [scale, scale, 1];
-  return (
-    <mesh scale={s}>
-      <planeGeometry args={[1, 1]} />
-      <meshBasicMaterial map={texture} transparent={false} alphaTest={0.5} depthWrite side={THREE.DoubleSide} toneMapped={false} />
-    </mesh>
-  );
-};
+import * as THREE from 'three';
 import { CameraController, TimelineManager } from '../TimelineManager';
 import { useWaypointControls } from '../navigation/WaypointNavigator';
-import { WORLDS_DATA, getPrimitiveLogo } from './MiniWorldsHub';
-import * as THREE from 'three';
-
-const FloatingHUDLogo = () => {
-  return null;
-};
+import { WORLDS_DATA } from './MiniWorldsHub';
 
 const WORLD_CONFIG = {
   'MindWave': {
@@ -450,9 +435,6 @@ const Scene3D = () => {
         <React.Suspense fallback={null}>
           <CameraController />
           <TimelineManager />
-        </React.Suspense>
-        <React.Suspense fallback={null}>
-          <FloatingHUDLogo />
         </React.Suspense>
         <Sparkles count={2000} scale={200} size={4} speed={0.8} opacity={0.5} color="#00ff44" />
 

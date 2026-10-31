@@ -15,8 +15,10 @@ fi
 echo "[Husky] Checking code formatting in autopilot..."
 cd autopilot || exit 1
 
-source ~/.nvm/nvm.sh
-nvm use 20
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  source "$HOME/.nvm/nvm.sh"
+  nvm use 20 2>/dev/null || true
+fi
 
 # Run format check if the script exists, otherwise run next best thing or pass
 if npm run | grep -q 'format:check'; then
