@@ -17,137 +17,137 @@ const DESERT_SAND = '#c29b62';        // Warm rolling dunes sand
 const GOLD_24K = '#ffd700';           // Royal pharaonic gold leaf (subtle accents & stela hieroglyphs)
 
 // --- Authentic High-Definition Continuous Parametric Pharaonic Face Geometry ---
-// Sculpted directly from the proportions of Khafre and the Great Sphinx of Giza
+// Sculpted directly from the human proportions of the Great Sphinx of Giza (Khafre)
+// and the Sphinx of Hatshepsut: upright dignified profile, planar cheeks, noble brow,
+// almond eyes with eyeliner contour, serene archaic smile, and human pharaonic jaw.
 function createSphinxFaceGeometry() {
-  const numRows = 48;
-  const numCols = 48;
+  const numRows = 54;
+  const numCols = 54;
   const positions = [];
   const uvs = [];
   const indices = [];
 
   for (let r = 0; r < numRows; r++) {
     const v = r / (numRows - 1); // 0 (forehead at brow band) to 1 (under chin)
-    const y = 20 - v * 48;       // from y = 20 down to y = -28
+    const y = 21.0 - v * 45.0;   // from y = 21 down to y = -24
 
-    // Width curve from forehead to jaw
+    // Anatomical width of pharaonic human head (broad cheekbones, tapered chin)
     let halfWidth;
-    if (v < 0.28) {
-      halfWidth = 19 + v * 12;
-    } else if (v < 0.60) {
-      halfWidth = 22.5 + Math.sin((v - 0.28) / 0.32 * Math.PI) * 2.5; // noble wide cheekbones
-    } else if (v < 0.85) {
-      halfWidth = 23 - (v - 0.60) * 16; // tapering pharaonic jaw
+    if (v < 0.22) {
+      halfWidth = 18.2 + v * 6.5; // forehead
+    } else if (v < 0.54) {
+      const t = (v - 0.22) / 0.32;
+      halfWidth = 19.6 + Math.sin(t * Math.PI) * 2.2; // wide regal cheekbones (peaks ~21.8)
+    } else if (v < 0.82) {
+      const t = (v - 0.54) / 0.28;
+      halfWidth = 21.0 - t * 7.0; // tapering pharaonic jaw
     } else {
-      halfWidth = 19 - (v - 0.85) * 35; // rounded chin
+      const t = (v - 0.82) / 0.18;
+      halfWidth = 14.0 - t * 5.0; // rounded human chin
     }
-    halfWidth = Math.max(5, halfWidth);
 
     for (let c = 0; c < numCols; c++) {
       const u = (c / (numCols - 1)) * 2 - 1; // -1 to +1
       const x = u * halfWidth;
+      const absX = Math.abs(x);
       const absU = Math.abs(u);
 
-      // Base head curvature (cranial stone relief)
-      const headRadius = 24;
-      let z = Math.sqrt(Math.max(0, headRadius * headRadius - (u * 21) * (u * 21) * 0.7 - ((v - 0.5) * 44) * ((v - 0.5) * 44) * 0.45));
-
-      // 1. Forehead plane
-      if (v < 0.25) {
-        const fFactor = Math.sin((v / 0.25) * Math.PI);
-        z += 1.4 * fFactor * Math.max(0, 1 - absU * 1.5);
+      // BASE PLANAR FACIAL SURFACE (Not a bulging sphere/cylinder)
+      let z = 18.2 - Math.pow(x / 14.0, 2) * 2.2;
+      if (absX > 12.0) {
+        z -= Math.pow((absX - 12.0) / 7.5, 2) * 6.0;
       }
 
-      // 2. Continuous Pharaonic Brow Ridge
-      const browCenterV = 0.27;
-      const browDistV = Math.abs(v - browCenterV);
-      if (browDistV < 0.08) {
-        const bV = Math.cos((browDistV / 0.08) * (Math.PI / 2));
-        const bU = Math.max(0, 1 - Math.pow(absU - 0.35, 2) * 5);
-        z += 3.2 * bV * bU;
-        if (absU < 0.2) {
-          z += 2.0 * bV * (1 - absU / 0.2);
+      // 1. Forehead plane: broad, noble, slightly inclined
+      if (v < 0.22) {
+        const t = v / 0.22;
+        z += Math.sin(t * Math.PI) * 0.75 * (1 - absU * 0.65);
+      }
+
+      // 2. Continuous Pharaonic Supraorbital Brow Ridge
+      if (v >= 0.20 && v <= 0.32) {
+        const distV = Math.abs(v - 0.26) / 0.06;
+        const browV = Math.cos(distV * (Math.PI / 2));
+        const eyeBrowU = Math.max(0, 1 - Math.pow((absU - 0.36) / 0.32, 2));
+        z += 1.8 * browV * eyeBrowU;
+        if (absU < 0.18) {
+          z += 1.3 * browV * (1 - absU / 0.18);
         }
       }
 
       // 3. Almond Eye Sockets & Sculpted Stone Eyelids
-      const eyeCenterV = 0.37;
-      const eyeCenterU = 0.40;
-      const distEyeV = Math.abs(v - eyeCenterV);
-      const distEyeU = Math.abs(absU - eyeCenterU);
-      if (distEyeV < 0.08 && distEyeU < 0.22) {
-        const normDV = distEyeV / 0.08;
-        const normDU = distEyeU / 0.22;
-        const eyeMask = Math.max(0, 1 - (normDV * normDV + normDU * normDU));
-        z -= 2.6 * eyeMask;
-        // Convex almond stone eyeball
-        const globeDV = distEyeV / 0.05;
-        const globeDU = distEyeU / 0.14;
-        if (globeDV * globeDV + globeDU * globeDU < 1.0) {
-          const globe = Math.max(0, 1 - (globeDV * globeDV + globeDU * globeDU));
-          z += 1.8 * globe;
+      const eyeCenterV = 0.36;
+      const eyeCenterU = 0.38;
+      const distEyeV = Math.abs(v - eyeCenterV) / 0.08;
+      const distEyeU = Math.abs(absU - eyeCenterU) / 0.22;
+      if (distEyeV < 1.0 && distEyeU < 1.0) {
+        const eyeMask = Math.max(0, 1 - (distEyeV * distEyeV + distEyeU * distEyeU));
+        z -= 2.2 * eyeMask;
+        const eyeballV = distEyeV / 0.65;
+        const eyeballU = distEyeU / 0.65;
+        if (eyeballV * eyeballV + eyeballU * eyeballU < 1.0) {
+          const eyeballMask = Math.max(0, 1 - (eyeballV * eyeballV + eyeballU * eyeballU));
+          z += 1.4 * eyeballMask;
         }
-        // Sculpted upper eyelid fold
-        if (v < eyeCenterV && distEyeV < 0.05 && distEyeU < 0.18) {
-          z += 0.8 * Math.cos((distEyeV / 0.05) * (Math.PI / 2));
+        if (v < eyeCenterV && distEyeV < 0.6 && distEyeU < 0.8) {
+          z += 0.6 * Math.cos((distEyeV / 0.6) * (Math.PI / 2));
         }
       }
 
       // 4. Regal High Cheekbones of Khafre
-      const cheekCenterV = 0.50;
+      const cheekCenterV = 0.48;
       const cheekCenterU = 0.52;
-      const distCheek = Math.hypot((v - cheekCenterV) / 0.16, (absU - cheekCenterU) / 0.22);
+      const distCheek = Math.hypot((v - cheekCenterV) / 0.14, (absU - cheekCenterU) / 0.25);
       if (distCheek < 1.0) {
-        z += 2.8 * Math.cos(distCheek * (Math.PI / 2));
+        z += 2.0 * Math.cos(distCheek * (Math.PI / 2));
       }
 
-      // 5. Authentic Broken Nose of Giza (Weathered chisel fracture depression)
-      if (absU < 0.22 && v >= 0.28 && v <= 0.58) {
-        const nWidth = 1 - (absU / 0.22);
-        if (v < 0.40) {
-          const bridgeT = (v - 0.28) / 0.12;
-          z += (2.5 + bridgeT * 2.0) * nWidth;
-        } else if (v <= 0.54) {
-          // Sheared break: drops into eroded limestone depression
-          const fracT = (v - 0.40) / 0.14;
-          const chiseled = Math.sin(v * 45 + u * 20) * 0.35;
-          z += (3.5 - fracT * 1.8 + chiseled) * nWidth;
+      // 5. Authentic Weathered Limestone Nose of Giza
+      if (absX < 4.2 && v >= 0.28 && v <= 0.58) {
+        const nWidth = Math.cos((absX / 4.2) * (Math.PI / 2));
+        if (v < 0.38) {
+          const t = (v - 0.28) / 0.10;
+          z += (0.8 + t * 1.6) * nWidth;
+        } else if (v <= 0.52) {
+          const t = (v - 0.38) / 0.14;
+          z += (2.4 - t * 0.5) * nWidth;
         } else {
-          const baseT = (v - 0.54) / 0.04;
-          z += (1.7 - baseT * 0.8) * nWidth;
+          const t = (v - 0.52) / 0.06;
+          z += (1.9 - t * 1.1) * nWidth;
         }
       }
 
       // 6. Philtrum Groove
-      if (v >= 0.55 && v <= 0.65 && absU < 0.08) {
-        z -= 0.6 * (1 - absU / 0.08);
+      if (v >= 0.57 && v <= 0.66 && absX < 1.4) {
+        z -= 0.5 * (1 - absX / 1.4);
       }
 
-      // 7. Full Ancient Pharaonic Lips with Subtle Archaic Smile
-      if (absU < 0.38 && v >= 0.63 && v <= 0.76) {
-        const lipWidth = Math.cos((absU / 0.38) * (Math.PI / 2));
-        if (v >= 0.63 && v <= 0.69) {
-          const upT = Math.sin(((v - 0.63) / 0.06) * Math.PI);
-          z += 2.4 * upT * lipWidth;
-        }
-        if (Math.abs(v - 0.69) < 0.015) {
-          z -= 0.8 * lipWidth;
-        }
-        if (v >= 0.69 && v <= 0.76) {
-          const lowT = Math.sin(((v - 0.69) / 0.07) * Math.PI);
-          z += 2.2 * lowT * lipWidth;
+      // 7. Serene Archaic Egyptian Smile & Full Pharaonic Lips
+      if (absX < 8.2 && v >= 0.64 && v <= 0.77) {
+        const lipWidth = Math.cos((absX / 8.2) * (Math.PI / 2));
+        if (v < 0.70) {
+          const t = (v - 0.64) / 0.06;
+          const cupid = Math.sin(t * Math.PI);
+          const bowIndent = (absX < 1.2) ? 0.3 : 0;
+          z += (1.6 * cupid - bowIndent) * lipWidth;
+        } else if (Math.abs(v - 0.70) < 0.012) {
+          z -= 0.6 * lipWidth;
+        } else {
+          const t = (v - 0.70) / 0.07;
+          z += (1.4 * Math.sin(t * Math.PI)) * lipWidth;
         }
       }
 
-      // 8. Strong Pharaonic Chin & Mental Crease
-      if (v >= 0.76 && v <= 0.94 && absU < 0.35) {
-        const chinWidth = Math.cos((absU / 0.35) * (Math.PI / 2));
-        if (v >= 0.76 && v <= 0.80) {
-          z -= 0.8 * Math.sin(((v - 0.76) / 0.04) * Math.PI) * chinWidth;
-        }
-        if (v >= 0.80 && v <= 0.94) {
-          const cT = Math.sin(((v - 0.80) / 0.14) * Math.PI);
-          z += 2.8 * cT * chinWidth;
-        }
+      // 8. Mental Crease beneath lower lip
+      if (v >= 0.77 && v <= 0.82 && absX < 6.0) {
+        const t = (v - 0.77) / 0.05;
+        z -= 0.6 * Math.sin(t * Math.PI) * Math.cos((absX / 6.0) * (Math.PI / 2));
+      }
+
+      // 9. Broad Dignified Human Chin
+      if (v >= 0.82 && v <= 0.98 && absX < 8.0) {
+        const t = (v - 0.82) / 0.16;
+        z += 1.8 * Math.sin(t * Math.PI) * Math.cos((absX / 8.0) * (Math.PI / 2));
       }
 
       positions.push(x, y, z);
@@ -184,25 +184,37 @@ function createNemesWingGeometry(side) {
 
   for (let r = 0; r < numVSteps; r++) {
     const v = r / (numVSteps - 1);
-    const y = 22 - v * 52; // from y = 22 down to -30
+    const y = 22.0 - v * 50.0; // from y = 22 down to -28
     
-    // Iconic flared triangular outer contour
-    const flare = Math.sin(v * Math.PI * 0.82);
-    const innerX = (17 + v * 3) * side;
-    const outerX = (23 + flare * 21) * side;
-    
-    const zInner = 20 - v * 10;
-    const zOuter = 10 - flare * 5;
+    // Smooth inner contour hugging the pharaonic head & jaw
+    let innerX;
+    if (v < 0.2) {
+      innerX = 18.0 + v * 8.0;
+    } else if (v < 0.55) {
+      innerX = 19.6 + Math.sin(((v - 0.2) / 0.35) * Math.PI) * 1.5;
+    } else if (v < 0.85) {
+      innerX = 20.0 - ((v - 0.55) / 0.30) * 6.0;
+    } else {
+      innerX = 14.0 - ((v - 0.85) / 0.15) * 5.0;
+    }
+    innerX *= side;
+
+    // Majestic cobra-hood flare
+    const flare = Math.sin(Math.pow(v, 0.75) * Math.PI);
+    const outerX = (21.0 + flare * 17.5) * side;
+
+    const zInner = 14.5 - v * 4.5;
+    const zOuter = 7.5 - flare * 3.5;
 
     for (let c = 0; c < numUSteps; c++) {
       const u = c / (numUSteps - 1);
       const x = innerX + (outerX - innerX) * u;
       let z = zInner + (zOuter - zInner) * u;
-      
+
       // Carved horizontal pleated linen ridges
-      const pleat = Math.sin(v * Math.PI * 22) * 0.5 * (1 - u * 0.25);
+      const pleat = Math.sin(v * Math.PI * 20.0) * 0.45 * (1 - u * 0.2);
       z += pleat;
-      
+
       positions.push(x, y, z);
       uvs.push(u, v);
     }
@@ -304,39 +316,63 @@ const PharaonicHead = () => {
         <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.82} metalness={0.02} />
       </mesh>
 
-      {/* Subtle Depth Shadow in the Mouth Crease */}
-      <mesh position={[0, -13.2, 24.2]}>
-        <boxGeometry args={[14, 0.4, 1.2]} />
-        <meshBasicMaterial color="#1a1209" />
-      </mesh>
-
-      {/* Dark Weathered Nostril Cavity Recesses Under Broken Nose */}
+      {/* Royal Kohl Eyeliner Cosmetic Bands (Ancient Egyptian Sculpture Accent) */}
       {[-1, 1].map((side, i) => (
-        <mesh key={`nostril-${i}`} position={[side * 2.2, -4.5, 24.0]} rotation={[0.4, 0, side * 0.15]}>
-          <sphereGeometry args={[1.5, 10, 8]} scale={[1.1, 0.75, 0.7]} />
-          <meshBasicMaterial color="#1f140b" />
-        </mesh>
+        <group key={`eyeliner-${i}`} position={[side * 7.6, 4.8, 17.5]} rotation={[0, 0, side * -0.05]}>
+          <mesh position={[0, 0, 0]}>
+            <boxGeometry args={[6.8, 0.45, 0.4]} />
+            <meshStandardMaterial color="#2d1c0e" roughness={0.7} />
+          </mesh>
+          <mesh position={[side * 4.2, 0.2, -0.3]} rotation={[0, 0, side * 0.12]}>
+            <boxGeometry args={[2.2, 0.3, 0.4]} />
+            <meshStandardMaterial color="#2d1c0e" roughness={0.7} />
+          </mesh>
+        </group>
       ))}
 
-      {/* Authentic Broken Beard Scar Under Chin (Beard broke off in antiquity) */}
-      <mesh position={[0, -28.5, 20]} rotation={[-0.2, 0, 0]}>
-        <cylinderGeometry args={[5.2, 7.0, 5.5, 16]} />
-        <meshStandardMaterial color={LIMESTONE_FRACTURE} roughness={0.96} />
-      </mesh>
+      {/* Royal Braided Ceremonial Osiride Beard (from Hatshepsut Sphinx & Ancient Giza) */}
+      <group position={[0, -23.5, 17.6]}>
+        {/* Burnished Gold Chin Fastener Strap */}
+        <mesh position={[0, 0.5, -0.4]}>
+          <boxGeometry args={[7.4, 2.0, 4.2]} />
+          <meshStandardMaterial color={GOLD_24K} metalness={0.65} roughness={0.35} />
+        </mesh>
+        {/* Braided Limestone Column Shaft */}
+        <mesh position={[0, -18, -0.2]} rotation={[0.03, 0, 0]}>
+          <boxGeometry args={[6.4, 34, 4.0]} />
+          <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.85} />
+        </mesh>
+        {/* Braided Horizontal Flutes / Rings */}
+        {Array.from({ length: 11 }).map((_, i) => (
+          <mesh key={`beard-ring-${i}`} position={[0, -2.8 - i * 2.8, 1.8]}>
+            <cylinderGeometry args={[3.2, 3.2, 1.2, 12]} rotation={[0, 0, Math.PI / 2]} />
+            <meshStandardMaterial 
+              color={i % 2 === 0 ? GOLD_24K : LIMESTONE_SHADOW} 
+              roughness={0.6} 
+              metalness={i % 2 === 0 ? 0.55 : 0.05} 
+            />
+          </mesh>
+        ))}
+        {/* Curled Forward Base Tip */}
+        <mesh position={[0, -35.2, 0.4]} rotation={[0.3, 0, 0]}>
+          <sphereGeometry args={[3.2, 16, 12]} scale={[1, 0.8, 1.1]} />
+          <meshStandardMaterial color={GOLD_24K} metalness={0.65} roughness={0.35} />
+        </mesh>
+      </group>
 
       {/* Prominent Classical Pharaonic Limestone Ears (Flanking Cheeks) */}
       {[-1, 1].map((side, i) => (
-        <group key={`ear-${i}`} position={[side * 23.5, 2, 11]} rotation={[0.06, side * 0.25, side * 0.1]}>
+        <group key={`ear-${i}`} position={[side * 20.8, 4.0, 11.5]} rotation={[0.04, side * 0.28, side * 0.08]}>
           <mesh>
-            <cylinderGeometry args={[4.2, 3.2, 18, 16]} />
+            <cylinderGeometry args={[4.2, 2.8, 16, 16]} />
             <meshStandardMaterial color={LIMESTONE_BASE} roughness={0.88} />
           </mesh>
-          <mesh position={[side * 0.8, 0, 0]}>
-            <cylinderGeometry args={[1.2, 1.2, 16, 8]} />
+          <mesh position={[side * 0.6, -1.0, 0.2]}>
+            <cylinderGeometry args={[1.6, 1.2, 12, 8]} />
             <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.85} />
           </mesh>
-          <mesh position={[side * 0.2, 0, 0]}>
-            <boxGeometry args={[1.5, 9, 4]} />
+          <mesh position={[side * 0.1, 0, 0.5]}>
+            <boxGeometry args={[1.2, 8, 3]} />
             <meshStandardMaterial color={LIMESTONE_SHADOW} roughness={0.95} />
           </mesh>
         </group>
@@ -344,16 +380,40 @@ const PharaonicHead = () => {
 
       {/* --- B. Authentic Weathered Limestone Nemes Headdress --- */}
       {/* Upper Cranial Cowl Dome */}
-      <mesh position={[0, 15, -4]} scale={[1.08, 1.05, 1.1]}>
-        <sphereGeometry args={[26, 36, 24, 0, Math.PI * 2, 0, Math.PI * 0.58]} />
-        <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.86} metalness={0.02} />
+      <mesh position={[0, 15, -4]} scale={[1.06, 1.05, 1.08]}>
+        <sphereGeometry args={[25, 36, 24, 0, Math.PI * 2, 0, Math.PI * 0.56]} />
+        <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.84} metalness={0.05} />
       </mesh>
 
+      {/* Alternating Royal Gold Band Accents on Crown */}
+      {[22, 27, 32].map((by, idx) => (
+        <mesh key={`crown-band-${idx}`} position={[0, by, -3]} rotation={[0.1, 0, 0]}>
+          <torusGeometry args={[20 - idx * 3.8, 0.8, 8, 32, Math.PI]} />
+          <meshStandardMaterial color={GOLD_24K} roughness={0.4} metalness={0.65} />
+        </mesh>
+      ))}
+
       {/* Horizontal Pharaonic Brow Band Across Forehead */}
-      <mesh position={[0, 19.5, 14]} rotation={[0.08, 0, 0]}>
-        <boxGeometry args={[42, 3.2, 14]} />
-        <meshStandardMaterial color={LIMESTONE_SHADOW} roughness={0.9} />
+      <mesh position={[0, 20.8, 16.5]} rotation={[0.06, 0, 0]}>
+        <boxGeometry args={[41, 3.2, 6.0]} />
+        <meshStandardMaterial color={GOLD_24K} roughness={0.4} metalness={0.65} />
       </mesh>
+
+      {/* Royal Sacred Uraeus Cobra at Center of Brow Band */}
+      <group position={[0, 24.5, 20.0]} rotation={[-0.08, 0, 0]}>
+        <mesh position={[0, 0, 0]}>
+          <coneGeometry args={[2.2, 6.5, 12]} rotation={[Math.PI, 0, 0]} />
+          <meshStandardMaterial color={GOLD_24K} roughness={0.35} metalness={0.75} />
+        </mesh>
+        <mesh position={[0, 3.8, 0.4]}>
+          <sphereGeometry args={[1.2, 12, 10]} />
+          <meshStandardMaterial color={GOLD_24K} roughness={0.35} metalness={0.75} />
+        </mesh>
+        <mesh position={[0, 5.2, 0.2]}>
+          <cylinderGeometry args={[1.5, 1.5, 0.6, 16]} rotation={[Math.PI / 2, 0, 0]} />
+          <meshStandardMaterial color="#dc2626" roughness={0.3} metalness={0.5} />
+        </mesh>
+      </group>
 
       {/* Sweeping Flared Nemes Wings with Pleated Linen Ridges */}
       <mesh geometry={wingRightGeometry}>
@@ -369,12 +429,6 @@ const PharaonicHead = () => {
       </mesh>
       <mesh geometry={lapetLeftGeometry}>
         <meshStandardMaterial color={LIMESTONE_BASE} roughness={0.85} />
-      </mesh>
-
-      {/* Weathered Uraeus Stump on Brow (Eroded Stone Knot) */}
-      <mesh position={[0, 22.5, 21.2]} rotation={[0.12, 0, 0]}>
-        <sphereGeometry args={[2.8, 14, 12]} scale={[1, 1.3, 0.9]} />
-        <meshStandardMaterial color={LIMESTONE_SHADOW} roughness={0.92} />
       </mesh>
 
       {/* Rear Nemes Queue extending down spine */}
