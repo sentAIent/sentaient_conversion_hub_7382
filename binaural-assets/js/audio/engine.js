@@ -452,8 +452,19 @@ function clearMediaSession() {
 }
 
 export function stopAudio(immediate = false) {
-    const hasAudio = state.isPlaying || state.binauralNode || state.oscLeft || (state.activeSoundscapes && Object.keys(state.activeSoundscapes).length > 0) || state.brownNoiseNode || state.pinkNoiseNode;
-    if (!hasAudio) return;
+    if (typeof window !== 'undefined') {
+        try { if (window.stopClassical) window.stopClassical(); } catch (e) { }
+        try { if (window.stopStory) window.stopStory(); } catch (e) { }
+        try { if (window.stopCustomAudio) window.stopCustomAudio(); } catch (e) { }
+        try { if (window.stopAllLoops) window.stopAllLoops(); } catch (e) { }
+        try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { }
+    }
+    const hasAudio = state.isPlaying || state.binauralNode || state.oscLeft || (state.activeSoundscapes && Object.keys(state.activeSoundscapes).length > 0) || state.brownNoiseNode || state.pinkNoiseNode || (ambientSynth && ambientSynth.isPlaying);
+    if (!hasAudio) {
+        state.isPlaying = false;
+        if (uiCallback) uiCallback(false);
+        return;
+    }
     if (state.isRecording) stopRecording();
 
     // Stop daily limit check
@@ -491,12 +502,16 @@ export function stopAudio(immediate = false) {
     if (state.customAudioSource) { try { state.customAudioSource.disconnect(); } catch (e) { } state.customAudioSource = null; }
     try { ambientSynth.stop(); } catch (e) { }
 
-    const now = state.audioCtx.currentTime;
+    const now = state.audioCtx ? state.audioCtx.currentTime : 0;
 
-    if (immediate) {
+    if (immediate || !state.masterGain) {
         // IMMEDIATE STOP: No fade-out, kill audio instantly
-        state.masterGain.gain.cancelScheduledValues(now);
-        state.masterGain.gain.setValueAtTime(0, now);
+        if (state.masterGain && state.audioCtx) {
+            try {
+                state.masterGain.gain.cancelScheduledValues(now);
+                state.masterGain.gain.setValueAtTime(0, now);
+            } catch (e) { }
+        }
 
         // Stop oscillators immediately (no timeout)
         if (state.binauralNode) { try { state.binauralNode.disconnect(); } catch (e) { } state.binauralNode = null; }
@@ -516,9 +531,13 @@ export function stopAudio(immediate = false) {
         Object.keys(state.activeSoundscapes).forEach(id => stopSingleSoundscape(id));
     } else {
         // NORMAL STOP: Fade out gracefully
-        state.masterGain.gain.cancelScheduledValues(now);
-        state.masterGain.gain.setValueAtTime(state.masterGain.gain.value, now);
-        state.masterGain.gain.linearRampToValueAtTime(0, now + 0.05);
+        if (state.masterGain && state.audioCtx) {
+            try {
+                state.masterGain.gain.cancelScheduledValues(now);
+                state.masterGain.gain.setValueAtTime(state.masterGain.gain.value, now);
+                state.masterGain.gain.linearRampToValueAtTime(0, now + 0.05);
+            } catch (e) { }
+        }
 
         // Delay oscillator cleanup to allow for volume micro-fade
         if (state.stopTimeout) clearTimeout(state.stopTimeout);
@@ -815,9 +834,14 @@ export function isSweepActive() {
     return state.sweepActive;
 }
 
-// Check if audio is currently playing
+// Check if audio is currently playing across any engine or subsystem
 export function isAudioPlaying() {
-    return state.isPlaying || (state.activeSoundscapes && Object.keys(state.activeSoundscapes).length > 0);
+    const hasCoreAudio = state.isPlaying || (state.activeSoundscapes && Object.keys(state.activeSoundscapes).length > 0) || (ambientSynth && ambientSynth.isPlaying);
+    const hasClassical = typeof window !== 'undefined' && typeof window.isClassicalPlaying === 'function' && window.isClassicalPlaying();
+    const hasStory = typeof window !== 'undefined' && typeof window.isStoryPlaying === 'function' && window.isStoryPlaying();
+    const hasCustom = typeof window !== 'undefined' && typeof window.isCustomAudioPlaying === 'function' && window.isCustomAudioPlaying();
+    const hasDJLoop = typeof window !== 'undefined' && typeof window.getActiveDJLoopCount === 'function' && window.getActiveDJLoopCount() > 0;
+    return !!(hasCoreAudio || hasClassical || hasStory || hasCustom || hasDJLoop);
 }
 
 const noiseBufferCache = {};
@@ -915,7 +939,10 @@ export function fadeIn(duration = 2) {
  * @param {Function} onComplete - Callback when fade completes
  */
 export function fadeOut(duration = 2, onComplete = null) {
-    if (!state.masterGain || !state.audioCtx) return;
+    if (!state.masterGain || !state.audioCtx) {
+        if (typeof onComplete === 'function') onComplete();
+        return;
+    }
     const now = state.audioCtx.currentTime;
 
     // Clear any existing timeout

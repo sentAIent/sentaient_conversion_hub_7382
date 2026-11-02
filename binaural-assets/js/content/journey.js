@@ -791,8 +791,16 @@ window.startLessonAction = async (lessonId) => {
             import('../audio/session-timer.js'),
             import('../audio/engine.js'),
             import('../visuals/visualizer_lazy.js'),
-            import('../ui/controls_v4.js')
+            import('../ui/controls_v3.js')
         ]);
+
+        // Stop conflicting external audio
+        if (typeof window !== 'undefined') {
+            try { if (window.stopClassical) window.stopClassical(); } catch (e) { }
+            try { if (window.stopStory) window.stopStory(); } catch (e) { }
+            try { if (window.stopCustomAudio) window.stopCustomAudio(); } catch (e) { }
+            try { if (window.stopAllLoops) window.stopAllLoops(); } catch (e) { }
+        }
 
         // Start audio playback and visuals
         await startAudio();

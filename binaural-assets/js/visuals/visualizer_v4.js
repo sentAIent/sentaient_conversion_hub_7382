@@ -51,7 +51,7 @@ static CYMATIC_PATTERNS = [
         this.cymaticClass = initialState.cymaticClass !== undefined ? initialState.cymaticClass : 22;
         this.cymaticVariation = initialState.cymaticVariation !== undefined ? initialState.cymaticVariation : 0;
         this.cymaticColors = initialState.cymaticColors || ['#EEA0EB', '#FFB1A3'];
-        this.snowSizeOverride = initialState.snowSizeOverride !== undefined ? initialState.snowSizeOverride : 1.0;
+        this.snowSizeOverride = initialState.snowSizeOverride !== undefined ? initialState.snowSizeOverride : 0.3;
         this.currentCymaticData = { name: "Fractal Heart", n: 1, m: 1, energy: 0.2 };
         this.cymaticsHistory = [];
         this.cymaticsHistoryIndex = -1;

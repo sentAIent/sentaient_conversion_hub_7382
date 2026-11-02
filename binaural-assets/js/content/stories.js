@@ -281,6 +281,12 @@ export async function playStory(storyId, intentOnly = false) {
     if (storyState.isPlaying) {
         stopStory();
     }
+    // Stop conflicting external audio sources
+    if (typeof window !== 'undefined') {
+        try { if (window.stopClassical) window.stopClassical(); } catch (e) { }
+        try { if (window.stopCustomAudio) window.stopCustomAudio(); } catch (e) { }
+        try { if (window.stopAllLoops) window.stopAllLoops(); } catch (e) { }
+    }
 
     // Set sliders immediately after stopStory to ensure correct Hz is displayed
     if (story.recommendedFreq) {
@@ -470,7 +476,12 @@ export function getStoryVolume() {
 
 // Check if story is playing
 export function isStoryPlaying() {
-    return storyState.isPlaying;
+    return !!(storyState.isPlaying || (storyState.audioElement && !storyState.audioElement.paused));
+}
+
+if (typeof window !== 'undefined') {
+    window.isStoryPlaying = isStoryPlaying;
+    window.stopStory = stopStory;
 }
 
 // Get current story

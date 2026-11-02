@@ -2687,4 +2687,9 @@ function updateStopAllVisibility() {
     }
 }
 
+if (typeof window !== 'undefined') {
+    window.getActiveDJLoopCount = getActiveLoopCount;
+    window.stopAllLoops = stopAllLoops;
+}
+
 console.log('[DJ Synth] Module loaded');

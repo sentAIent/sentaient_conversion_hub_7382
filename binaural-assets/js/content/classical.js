@@ -529,7 +529,9 @@ export async function playClassical(id) {
 
     // Stop conflicts
     stopClassical(); // Stop self
+    if (window.stopStory) window.stopStory(); // Stop active stories
     if (window.stopCustomAudio) window.stopCustomAudio(); // Stop other custom audio
+    if (window.stopAllLoops) window.stopAllLoops(); // Stop DJ loops
 
     // Phase 4: Offline Audio Intercept
     let srcUrl = piece.url;
@@ -686,7 +688,12 @@ function updateUI() {
 
 // External Observability
 export function isClassicalPlaying() {
-    return classicalState.isPlaying;
+    return !!(classicalState.isPlaying || (classicalState.audio && !classicalState.audio.paused));
+}
+
+if (typeof window !== 'undefined') {
+    window.isClassicalPlaying = isClassicalPlaying;
+    window.stopClassical = stopClassical;
 }
 
 export function onClassicalStateChange(callback) {

@@ -221,8 +221,10 @@ export async function playCustomAudio(trackId) {
     if (audioLibraryState.audioElement) {
         stopCustomAudio();
     }
-    // Also stop Classical Music if playing
+    // Also stop conflicting audio from other modules
     if (window.stopClassical) window.stopClassical();
+    if (window.stopStory) window.stopStory();
+    if (window.stopAllLoops) window.stopAllLoops();
 
     audioLibraryState.currentTrack = track;
 
@@ -332,6 +334,15 @@ export function getAudioLibraryState() {
         currentTrack: audioLibraryState.currentTrack,
         trackCount: audioLibraryState.tracks.length
     };
+}
+
+export function isCustomAudioPlaying() {
+    return !!(audioLibraryState.isPlaying || (audioLibraryState.audioElement && !audioLibraryState.audioElement.paused));
+}
+
+if (typeof window !== 'undefined') {
+    window.isCustomAudioPlaying = isCustomAudioPlaying;
+    window.stopCustomAudio = stopCustomAudio;
 }
 
 // Format file size

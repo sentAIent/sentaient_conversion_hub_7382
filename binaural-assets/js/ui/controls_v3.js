@@ -717,6 +717,7 @@ export function setupUI() {
     }
 
     if (els.aiGoalInput) {
+        els.aiGoalInput.value = '';
         els.aiGoalInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleAIGenerate();
         });
@@ -1600,6 +1601,7 @@ export function setupUI() {
     const snowGlowSlider = document.getElementById('snowGlowSlider');
     const snowGlowVal   = document.getElementById('snowGlowVal');
     if (snowSizeSlider) {
+        if (snowSizeVal) snowSizeVal.textContent = parseFloat(snowSizeSlider.value || 0.3).toFixed(1) + 'x';
         snowSizeSlider.addEventListener('input', () => {
             const v = parseFloat(snowSizeSlider.value);
             if (snowSizeVal) snowSizeVal.textContent = v.toFixed(1) + 'x';
@@ -2234,6 +2236,12 @@ export async function handlePlayClick() {
         // 4. Perform the actual stop logic (with fade)
         stopSession();
         if (isClassicalPlaying()) stopClassical();
+        if (typeof window !== 'undefined') {
+            try { if (window.stopStory) window.stopStory(); } catch (e) { }
+            try { if (window.stopCustomAudio) window.stopCustomAudio(); } catch (e) { }
+            try { if (window.stopAllLoops) window.stopAllLoops(); } catch (e) { }
+            try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { }
+        }
         endSessionTracking(false);
 
         console.log('[Controls] Calling fadeOut(1.5)...');
@@ -2330,6 +2338,12 @@ async function handleAudioToggle() {
         // 3. Perform the actual stop logic (with fade)
         stopSession();
         if (isClassicalPlaying()) stopClassical();
+        if (typeof window !== 'undefined') {
+            try { if (window.stopStory) window.stopStory(); } catch (e) { }
+            try { if (window.stopCustomAudio) window.stopCustomAudio(); } catch (e) { }
+            try { if (window.stopAllLoops) window.stopAllLoops(); } catch (e) { }
+            try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { }
+        }
         endSessionTracking(false);
         fadeOut(1.5, () => {
             stopAudio();
@@ -4357,10 +4371,23 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         }
     }
 
-    // BLOCKER: If a story is playing, do NOT apply presets that would override story frequency
-    if (storyState && (storyState.isPlaying || storyState.isTransitioning)) {
-        console.log('[Controls] Blocked applyPreset because Story is Playing/Transitioning');
-        return;
+    // Stop conflicting standalone playback if user is applying a new preset
+    if (btnElement || autoStart) {
+        if (typeof window !== 'undefined') {
+            if (storyState && storyState.isPlaying) {
+                console.log('[Controls] User switched to preset, stopping story');
+                try { if (window.stopStory) window.stopStory(); } catch (e) { }
+            }
+            try { if (window.stopClassical) window.stopClassical(); } catch (e) { }
+            try { if (window.stopCustomAudio) window.stopCustomAudio(); } catch (e) { }
+            try { if (window.stopAllLoops) window.stopAllLoops(); } catch (e) { }
+        }
+    } else {
+        // If programmatic and story is playing/transitioning, protect story frequency
+        if (storyState && (storyState.isPlaying || storyState.isTransitioning)) {
+            console.log('[Controls] Blocked programmatic applyPreset because Story is Playing/Transitioning');
+            return;
+        }
     }
 
     console.log("[Controls] applyPreset called:", type, "autoStart:", autoStart);
@@ -4618,6 +4645,14 @@ export async function applyComboPreset(comboId, btnElement) {
 
     // Track active combo preset
     state.activeComboPreset = comboId;
+
+    // Stop conflicting external audio
+    if (typeof window !== 'undefined') {
+        try { if (window.stopStory) window.stopStory(); } catch (e) { }
+        try { if (window.stopClassical) window.stopClassical(); } catch (e) { }
+        try { if (window.stopCustomAudio) window.stopCustomAudio(); } catch (e) { }
+        try { if (window.stopAllLoops) window.stopAllLoops(); } catch (e) { }
+    }
 
     // Turn off audio first if playing (visuals continue independently)
     const wasPlaying = isAudioPlaying(); // Use helper to catch fade states
