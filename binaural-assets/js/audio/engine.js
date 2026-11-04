@@ -1064,8 +1064,14 @@ export function updateFrequencies() {
     state.beatFrequency = beat;
 
     console.log(`[Freq] Update: Base=${base}Hz, Beat=${beat}Hz`);
-    if (els.baseValue) els.baseValue.textContent = `${base.toFixed(1)} Hz`;
-    if (els.beatValue) els.beatValue.textContent = `${beat.toFixed(1)} Hz`;
+    if (els.baseValue && !els.baseValue.classList.contains('is-editing')) {
+        els.baseValue.textContent = `${base % 1 === 0 ? base.toFixed(0) : base.toFixed(1)} Hz`;
+    }
+    if (els.beatValue && !els.beatValue.classList.contains('is-editing')) {
+        const decimals = (beat.toString().split('.')[1] || '').length;
+        const precision = Math.min(Math.max(decimals, 1), 2);
+        els.beatValue.textContent = `${beat.toFixed(precision)} Hz`;
+    }
     
     if (state.binauralNode && state.isPlaying) {
         state.binauralNode.port.postMessage({
@@ -1175,7 +1181,7 @@ export function updateFrequencies() {
 export function updateBeatsVolume() {
     if (!els.volSlider) return;
     const vol = getSafeBeatsVolume();
-    if (els.volValue) els.volValue.textContent = `${Math.round(vol * 100)}%`;
+    if (els.volValue && !els.volValue.classList.contains('is-editing')) els.volValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.beatsGain) {
         if (state.isPlaying && state.audioCtx) state.beatsGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.05);
         else state.beatsGain.gain.value = vol;
@@ -1185,7 +1191,7 @@ export function updateBeatsVolume() {
 export function updateMasterVolume() {
     if (!els.masterVolSlider) return;
     const vol = getSafeMasterVolume();
-    if (els.masterVolValue) els.masterVolValue.textContent = `${Math.round(vol * 100)}%`;
+    if (els.masterVolValue && !els.masterVolValue.classList.contains('is-editing')) els.masterVolValue.textContent = `${Math.round(vol * 100)}%`;
     if (state.masterGain) {
         if (state.isPlaying && state.audioCtx) state.masterGain.gain.setTargetAtTime(vol, state.audioCtx.currentTime, 0.05);
         else state.masterGain.gain.value = vol;

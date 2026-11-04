@@ -52,6 +52,7 @@ static CYMATIC_PATTERNS = [
         this.cymaticVariation = initialState.cymaticVariation !== undefined ? initialState.cymaticVariation : 0;
         this.cymaticColors = initialState.cymaticColors || ['#EEA0EB', '#FFB1A3'];
         this.snowSizeOverride = initialState.snowSizeOverride !== undefined ? initialState.snowSizeOverride : 0.3;
+        this.snowSpinRate = initialState.snowSpinRate !== undefined ? initialState.snowSpinRate : 1.0;
         this.currentCymaticData = { name: "Fractal Heart", n: 1, m: 1, energy: 0.2 };
         this.cymaticsHistory = [];
         this.cymaticsHistoryIndex = -1;
@@ -59,8 +60,8 @@ static CYMATIC_PATTERNS = [
         
         // Matrix (2D Overlay) Configuration
         this.matrixConfig = {
-            logicMode: initialState.matrixLogicMode || 'matrix', // Default to Japanese characters
-            customText: initialState.matrixCustomText || "WELCOME",
+            logicMode: initialState.matrixLogicMode || 'mindwave', // Default to MindWave characters
+            customText: initialState.matrixCustomText || "MINDWAVE",
             angle: initialState.matrixAngle || 0,
             speed: initialState.matrixSpeedMultiplier || 1.0,
             length: 1.0,
@@ -205,7 +206,7 @@ static CYMATIC_PATTERNS = [
             // REMOVED: Exhaustive initialization calls here to fix 5s loading delay.
             // Modes are now initialized lazily in updateVisibility().
 
-            this.camera.position.z = 5;
+            this.camera.position.z = 4.2;
 
             // Dynamic Layout Handling
             this.handleLayoutChange = this.handleLayoutChange.bind(this);
@@ -488,6 +489,7 @@ static CYMATIC_PATTERNS = [
         const ctx = this.overlayCtx;
         if (!canvas || !ctx) return;
 
+        this.resizeOverlayCanvas();
         this.matrixStreams = [];
         this.matrixCyberStreams = this.matrixStreams;
 
@@ -504,7 +506,6 @@ static CYMATIC_PATTERNS = [
         // Sync local settings with theme
         let currentTheme = window.getCurrentTheme ? window.getCurrentTheme() : { color: '#2dd4bf' };
 
-        this.resizeOverlayCanvas();
         this.cyberColorCustomized = false;
 
         const themes = [
@@ -2179,6 +2180,7 @@ static CYMATIC_PATTERNS = [
                 uColor:          { value: this.customColor ? this.customColor.clone() : new THREE.Color(0xa5f3eb) }, // Respect custom color
                 uIntensity:      { value: 0 },
                 uSizeMultiplier: { value: this.snowSizeOverride },
+                uSpinRate:       { value: this.snowSpinRate !== undefined ? this.snowSpinRate : 1.0 },
                 uGlowAmount:     { value: 0.5 },
                 uTime:           { value: 0 },
             },
@@ -2188,12 +2190,13 @@ static CYMATIC_PATTERNS = [
                 attribute float aSpinSpeed;
                 attribute float aSpinPhase;
                 uniform float uSizeMultiplier;
+                uniform float uSpinRate;
                 uniform float uTime;
                 varying float vOpacity;
                 varying float vSpinAngle;
                 void main() {
                     vOpacity = aOpacity;
-                    vSpinAngle = uTime * aSpinSpeed + aSpinPhase;
+                    vSpinAngle = uTime * aSpinSpeed * uSpinRate + aSpinPhase;
                     vec4 mv = modelViewMatrix * vec4(position, 1.0);
                     gl_Position = projectionMatrix * mv;
                     gl_PointSize = max(8.0, aSize * uSizeMultiplier * (300.0 / -mv.z));
@@ -2247,6 +2250,14 @@ static CYMATIC_PATTERNS = [
             this._snowData.material.uniforms.uSizeMultiplier.value = this.snowSizeOverride;
             console.log('[Viz] Snow Size Override:', mult);
         }
+    }
+
+    setSnowSpinRate(rate) {
+        this.snowSpinRate = Math.max(0.0, Math.min(10.0, parseFloat(rate) !== undefined ? parseFloat(rate) : 1.0));
+        if (this._snowData?.material?.uniforms?.uSpinRate) {
+            this._snowData.material.uniforms.uSpinRate.value = this.snowSpinRate;
+        }
+        console.log('[Viz] Snow Spin Rate Override:', this.snowSpinRate);
     }
 
     setSnowCount(count) {
@@ -3447,7 +3458,7 @@ static CYMATIC_PATTERNS = [
             else if (mode === 'cyber') label.textContent = "CYBER";
             else if (mode === 'matrix') label.textContent = "MATRIX";
             else if (mode === 'snowflake') label.textContent = "SNOWFALL";
-            else if (mode === 'multi') label.textContent = "MULTI-SENSORY";
+            else if (mode === 'multi') label.textContent = "";
             else label.textContent = "";
         }
     }
@@ -4152,9 +4163,10 @@ static CYMATIC_PATTERNS = [
                 // Animate Hero Snowflakes
                 if (s.spinMeshes) {
                     const heroPulse = 1.0 + (vNormBass || 0) * 0.15;
+                    const spinRate = this.snowSpinRate !== undefined ? this.snowSpinRate : 1.0;
                     s.spinMeshes.forEach((mesh, idx) => {
-                        mesh.rotation.z += s.spinSpeeds[idx] * spdMult;
-                        mesh.rotation.y += s.spinSpeeds[idx] * 0.8 * spdMult;
+                        mesh.rotation.z += s.spinSpeeds[idx] * spdMult * spinRate;
+                        mesh.rotation.y += s.spinSpeeds[idx] * 0.8 * spdMult * spinRate;
                         mesh.position.y -= (s.spinSpeeds[idx] * 0.1) * spdMult;
                         mesh.scale.setScalar(heroPulse);
                         if (mesh.position.y < -25) mesh.position.y = 25;

@@ -1906,10 +1906,12 @@ function updateModeUI(mode) {
             // Active style - theme-aware
             btn.classList.add('toggle-active');
             btn.classList.remove('toggle-inactive');
+            btn.style.color = '';
         } else {
             // Inactive style - theme-aware
             btn.classList.remove('toggle-active');
             btn.classList.add('toggle-inactive');
+            btn.style.color = '';
         }
     });
 

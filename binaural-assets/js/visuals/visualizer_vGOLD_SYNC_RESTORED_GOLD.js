@@ -2578,7 +2578,7 @@ static CYMATIC_PATTERNS = [
             else if (mode === 'cyber') label.textContent = "CYBER";
             else if (mode === 'matrix') label.textContent = "MATRIX";
             else if (mode === 'snowflake') label.textContent = "SNOWFALL";
-            else if (mode === 'multi') label.textContent = "MULTI-SENSORY";
+            else if (mode === 'multi') label.textContent = "";
             else label.textContent = "";
         }
     }

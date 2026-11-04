@@ -527,9 +527,79 @@ input[type='range']::-webkit-slider-thumb {
     border-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Light themes: active mode button uses white text for contrast against accent bg */
-[data-theme-type="light"] #modeToggle .mode-btn.toggle-active {
-    color: white !important;
+/* Active mode button (bin/iso/mono) - darker text color for sharp visibility on highlighted accent bg */
+#modeToggle .mode-btn.toggle-active,
+#modeToggle .mode-btn.toggle-active span,
+#modeToggle .mode-btn.toggle-active .mode-text-full,
+#modeToggle .mode-btn.toggle-active .mode-text-short,
+#topControlBar .mode-btn.toggle-active,
+#topControlBar .mode-btn.toggle-active span {
+    background-color: var(--accent) !important;
+    color: #050811 !important;
+    font-weight: 800 !important;
+    text-shadow: none !important;
+}
+
+#modeToggle .mode-btn.toggle-active:hover,
+#modeToggle .mode-btn.toggle-active:hover span {
+    color: #000000 !important;
+}
+
+#visualLabel:empty,
+#visualLabelContainer:has(#visualLabel:empty) {
+    display: none !important;
+}
+
+/* ==========================================
+   EDITABLE PARAMETER VALUES - Click to Type
+   Allows clicking any slider value badge to enter precise numbers via keyboard
+   ========================================== */
+.editable-value {
+    cursor: text !important;
+    position: relative;
+    transition: all 0.15s ease;
+}
+
+.editable-value:hover {
+    outline: 1px dashed var(--accent, #2dd4bf) !important;
+    background-color: rgba(var(--accent-rgb, 45, 212, 191), 0.15) !important;
+    box-shadow: 0 0 8px var(--accent-glow, rgba(45, 212, 191, 0.25)) !important;
+}
+
+.editable-value.is-editing {
+    padding: 0 !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.editable-value-input {
+    background: #090d16 !important;
+    color: #ffffff !important;
+    border: 1.5px solid var(--accent, #2dd4bf) !important;
+    box-shadow: 0 0 12px var(--accent-glow, rgba(45, 212, 191, 0.4)) !important;
+    border-radius: 6px !important;
+    padding: 1px 4px !important;
+    font-family: monospace, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    outline: none !important;
+    width: 68px !important;
+    max-width: 100% !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+}
+
+.editable-value-input::-webkit-inner-spin-button,
+.editable-value-input::-webkit-outer-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+.editable-value-input {
+    -moz-appearance: textfield !important;
 }
 
 /* ==========================================
@@ -903,16 +973,64 @@ body[data-theme="sentaient"] .glass-pill:not(.active) {
 }
 
 /* HEADER ICONS - Force Accent Color (Global) */
+#topControlBar button,
+#topControlBar button:not(.toggle-active):not(.locked),
+#topControlBar button svg,
+#topControlBar button svg *,
+#topControlBar .mode-btn:not(.toggle-active),
+#modeToggle .mode-btn:not(.toggle-active),
+#snapshotBtn,
+#lockUIBtn,
+#coachBtn,
+#bioBtn,
+#aiCoachBtn,
+#leantimeBtn,
+#vibeBtn,
+#solarBtn,
 #tutorialBtn,
+#installBtn,
 #feedbackBtn,
 #profileBtn,
 #themeBtn {
     color: var(--accent) !important;
+    stroke: currentColor !important;
     opacity: 1;
 }
 
-#lockUIBtn:not(.toggle-active) {
+#topControlBar button svg,
+#topControlBar button svg path,
+#topControlBar button svg circle,
+#topControlBar button svg rect,
+#topControlBar button svg line,
+#topControlBar button svg polyline,
+#topControlBar button svg polygon {
+    stroke: currentColor !important;
+}
+
+#topControlBar button:hover,
+#topControlBar button:hover svg,
+#topControlBar button:hover svg * {
     color: var(--accent) !important;
+    stroke: currentColor !important;
+}
+
+#topControlBar button.toggle-active,
+#topControlBar button.locked {
+    background-color: var(--accent) !important;
+    color: var(--bg-main, #0f172a) !important;
+}
+
+#topControlBar button.toggle-active svg,
+#topControlBar button.toggle-active svg *,
+#topControlBar button.locked svg,
+#topControlBar button.locked svg * {
+    stroke: currentColor !important;
+    color: var(--bg-main, #0f172a) !important;
+}
+
+#topControlBar .w-px,
+#topControlBar .bg-white\/20 {
+    background-color: rgba(var(--accent-rgb, 45, 212, 191), 0.3) !important;
 }
 
 /* SIDEBAR TOGGLE BUTTONS - Theme Accent */
@@ -1075,16 +1193,34 @@ input[type=range]::-webkit-slider-runnable-track {
     background: #a78bfa;
     box-shadow: 0 0 8px rgba(167, 139, 250, 0.4);
 }
+.tone-slider::-moz-range-thumb {
+    background: #a78bfa;
+    box-shadow: 0 0 8px rgba(167, 139, 250, 0.4);
+    border: none;
+    border-radius: 50%;
+}
 
 .speed-slider::-webkit-slider-thumb {
     background: #fbbf24;
     box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+}
+.speed-slider::-moz-range-thumb {
+    background: #fbbf24;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+    border: none;
+    border-radius: 50%;
 }
 
 /* Volume sliders - complementary color distinct from accent */
 .volume-slider::-webkit-slider-thumb {
     background: var(--volume-accent);
     box-shadow: 0 0 12px var(--volume-glow);
+}
+.volume-slider::-moz-range-thumb {
+    background: var(--volume-accent);
+    box-shadow: 0 0 12px var(--volume-glow);
+    border: none;
+    border-radius: 50%;
 }
 
 .visualizer-container {
@@ -1592,13 +1728,39 @@ select {
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
 }
 
+/* Idle UI Fade-out Styles */
+.ui-fade-target {
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.idle-hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+#leftPanel.idle-hidden {
+    transform: translateX(-100%) !important;
+}
+
+#rightPanel.idle-hidden {
+    transform: translateX(100%) !important;
+}
+
+#topControlBar.idle-hidden {
+    transform: translateY(-120%) !important;
+}
+
+#bottomControlBar.idle-hidden {
+    transform: translateY(120%) !important;
+}
+
 /* --- COCKPIT LAYOUT (Desktop) --- */
 @media (min-width: 1024px) {
 
-    /* Fixed Sidebars with Enhanced Glassmorphism - Increased Opacity for Background Masking */
-    #leftPanel {
+    /* Fixed Sidebars with Enhanced Glassmorphism - Floating Overlays over Fullscreen Visuals */
+    #leftPanel:not(.idle-hidden) {
         transform: translateX(0) !important;
-        background: rgba(15, 23, 42, 0.98);
+        background: rgba(15, 23, 42, 0.88);
         backdrop-filter: blur(24px) saturate(150%);
         -webkit-backdrop-filter: blur(24px) saturate(150%);
         box-shadow:
@@ -1606,9 +1768,9 @@ select {
             inset -1px 0 0 rgba(255, 255, 255, 0.1);
     }
 
-    #rightPanel {
+    #rightPanel:not(.idle-hidden) {
         transform: translateX(0) !important;
-        background: rgba(15, 23, 42, 0.98);
+        background: rgba(15, 23, 42, 0.88);
         backdrop-filter: blur(24px) saturate(150%);
         -webkit-backdrop-filter: blur(24px) saturate(150%);
         box-shadow:
@@ -1664,12 +1826,13 @@ button,
 }
 
 /* Dynamic Preset Button Sizing - scales with viewport height */
-.preset-btn {
-    /* Dynamic padding based on viewport height */
-    padding-top: clamp(0.25rem, 1vh, 0.75rem);
-    padding-bottom: clamp(0.25rem, 1vh, 0.75rem);
-    /* Minimum height for touch targets */
-    min-height: clamp(36px, 5vh, 56px);
+.preset-btn,
+.combo-preset-btn,
+#leftPanel .preset-btn {
+    border-radius: 12px !important;
+    padding: 6px 8px !important;
+    min-height: 48px !important;
+    height: auto !important;
 }
 
 /* Brain waves grid buttons - dynamic sizing */
@@ -1680,12 +1843,22 @@ button,
 }
 
 /* Brain wave button text scaling */
-#leftPanel .preset-btn span:first-child {
-    font-size: clamp(10px, 1.2vh + 0.2rem, 14px);
+#leftPanel .preset-btn > span:not([class*="text-muted"]):not(.absolute) {
+    font-size: clamp(9px, 1.2vh + 0.2rem, 13px) !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
 }
 
-#leftPanel .preset-btn span:last-child {
-    font-size: clamp(7px, 0.8vh + 0.1rem, 9px);
+#leftPanel .preset-btn [class*="text-muted"] {
+    font-size: clamp(7px, 0.8vh + 0.1rem, 9px) !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block;
 }
 
 /* For very small heights, make text even smaller */
@@ -1978,11 +2151,62 @@ button,
 .panel-compact svg {
     transform: scale(var(--icon-scale, 1));
 }
+.panel-compact .px-6,
+.panel-narrow .px-6 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
 
 .panel-compact .preset-btn,
 .panel-compact .combo-preset-btn {
-    padding: 0.5rem !important;
+    padding: 0.25rem 0.375rem !important;
+    min-height: 38px !important;
+    height: auto !important;
 }
+.panel-compact .preset-btn > span,
+.panel-compact .combo-preset-btn > span {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.panel-compact .tab-pill {
+    font-size: 8px !important;
+    letter-spacing: 0.5px !important;
+    padding: 6px 2px !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+}
+
+#modeToggle .mode-btn {
+    letter-spacing: 0 !important;
+    font-size: 9.5px !important;
+    padding: 6px 1px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.mode-text-short, .tab-short { display: none; }
+.panel-narrow #modeToggle .mode-text-full,
+.panel-compact #modeToggle .mode-text-full,
+.panel-narrow .tab-full,
+.panel-compact .tab-full,
+.panel-narrow .preset-btn [class*="text-muted"],
+.panel-compact .preset-btn [class*="text-muted"],
+.panel-narrow .combo-preset-btn [class*="text-muted"],
+.panel-compact .combo-preset-btn [class*="text-muted"] { display: none !important; }
+.panel-narrow #modeToggle .mode-text-short,
+.panel-compact #modeToggle .mode-text-short,
+.panel-narrow .tab-short,
+.panel-compact .tab-short { display: inline !important; }
+.panel-compact #spatialOrbitToggleBtn,
+.panel-narrow #spatialOrbitToggleBtn { font-size: 8.5px !important; padding: 3px 6px !important; letter-spacing: 0 !important; }
+.panel-ultra-narrow #modeToggle .mode-btn { font-size: 8px !important; padding: 4px 1px !important; }
+.panel-ultra-narrow .grid-cols-2 { grid-template-columns: 1fr !important; }
+.cymatics-pattern-btn div { width: 100% !important; min-width: 0 !important; box-sizing: border-box !important; }
+.cymatics-pattern-btn span { display: block !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
 
 /* Resize handle indicator */
 .panel-resize-handle::before {
@@ -2224,8 +2448,6 @@ body[data-theme="dawn"] .preset-btn.active {
 /* Mode toggle buttons for light themes - handled by generic [data-theme-type="light"] rules above */
 
 /* Visual mode buttons (Sphere/Flow/Lava) - dark text for light themes */
-body[data-theme="cloud"] #topControlBar button[id$="Btn"],
-body[data-theme="dawn"] #topControlBar button[id$="Btn"],
 body[data-theme="cloud"] #sphereBtn,
 body[data-theme="dawn"] #sphereBtn,
 body[data-theme="cloud"] #flowBtn,
@@ -2467,11 +2689,15 @@ body[data-theme="dawn"] #topControlBar span[class*="text-white"] {
 }
 
 /* Icon buttons - use accent color */
+body[data-theme="cloud"] #topControlBar button,
+body[data-theme="dawn"] #topControlBar button,
 body[data-theme="cloud"] #topRightIcons button,
 body[data-theme="dawn"] #topRightIcons button {
     color: var(--accent) !important;
 }
 
+body[data-theme="cloud"] #topControlBar button svg,
+body[data-theme="dawn"] #topControlBar button svg,
 body[data-theme="cloud"] #topRightIcons button svg,
 body[data-theme="dawn"] #topRightIcons button svg {
     stroke: var(--accent) !important;
@@ -3707,6 +3933,7 @@ body #feedbackSurveyModal.survey-contrast-fix select option {
 
 /* Base Panel Enhancement */
 #leftPanel, #rightPanel {
+    min-width: 300px !important;
     background: linear-gradient(180deg, var(--bg-panel) 0%, rgba(2, 6, 23, 0.98) 100%);
     backdrop-filter: var(--glass-blur);
     border-right: 1px solid var(--border);
@@ -3742,11 +3969,14 @@ body #feedbackSurveyModal.survey-contrast-fix select option {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1.5px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border);
-    color: var(--text-muted);
+    color: var(--accent) !important;
 }
 
 .tab-pill:hover {
@@ -3759,7 +3989,7 @@ body #feedbackSurveyModal.survey-contrast-fix select option {
 .tab-pill.active {
     background: var(--accent-glow) !important;
     border-color: var(--accent) !important;
-    color: white !important;
+    color: var(--accent) !important;
     box-shadow: 0 0 15px var(--accent-glow), inset 0 0 10px rgba(255, 255, 255, 0.1) !important;
     transform: scale(1.02);
 }
@@ -3864,6 +4094,30 @@ body #feedbackSurveyModal.survey-contrast-fix select option {
 }
 
 .mw-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 5px var(--bg-panel), 0 0 25px var(--accent);
+}
+
+.mw-slider::-moz-range-track {
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    border: none;
+}
+
+.mw-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 0 4px var(--bg-panel), 0 0 15px var(--accent-glow);
+    border: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.mw-slider::-moz-range-thumb:hover {
     transform: scale(1.2);
     box-shadow: 0 0 0 5px var(--bg-panel), 0 0 25px var(--accent);
 }

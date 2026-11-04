@@ -179,8 +179,11 @@ window.controls = {
         });
         
         // Special context hook
-        if ((cleanId === 'visuals' || cleanId === 'tab-visuals') && typeof window.updateActiveTabContext === 'function') {
-            window.updateActiveTabContext();
+        if (cleanId === 'visuals' || cleanId === 'tab-visuals') {
+            if (typeof syncActiveModePanels === 'function') syncActiveModePanels();
+            if (typeof window.updateActiveTabContext === 'function') {
+                window.updateActiveTabContext();
+            }
         }
         
         // Persistence
@@ -190,6 +193,7 @@ window.controls = {
 
         // Re-bind or trigger resize for dynamic components if needed
         window.dispatchEvent(new CustomEvent('mw-tab-switched', { detail: { side: 'right', tabId: targetId } }));
+        if (typeof initEditableValueDisplays === 'function') initEditableValueDisplays();
         console.log(`[Sensory Hub] Switched to ${targetId.toUpperCase()} tab`);
     },
     switchLeftTab: function(targetId, btn) {
@@ -240,6 +244,7 @@ window.controls = {
 
         // Re-bind or trigger resize for dynamic components if needed
         window.dispatchEvent(new CustomEvent('mw-tab-switched', { detail: { side: 'left', tabId: targetId } }));
+        if (typeof initEditableValueDisplays === 'function') initEditableValueDisplays();
         console.log(`[Left Panel] Switched to ${targetId.toUpperCase()}`);
     }
 };
@@ -272,11 +277,17 @@ setTimeout(() => {
 }, 50);
 
 
-// NEW: Global UI Sync Listener for Visual Modes
-window.addEventListener('mindwave:visual-mode-sync', (e) => {
-    if (!e.detail || !e.detail.activeModes) return;
-    const activeModes = new Set(e.detail.activeModes);
-    
+export function syncActiveModePanels(activeModesInput) {
+    const viz = (typeof getVisualizer === 'function') ? getVisualizer() : (window.getVisualizer ? window.getVisualizer() : null);
+    let activeModes;
+    if (activeModesInput) {
+        activeModes = activeModesInput instanceof Set ? activeModesInput : new Set(activeModesInput);
+    } else if (viz && viz.activeModes) {
+        activeModes = viz.activeModes;
+    } else {
+        activeModes = new Set(['snowflake', 'matrix', 'waves', 'tsunami']);
+    }
+
     // Core visual buttons mapping
     const buttons = [
         { id: 'sphereBtn', mode: 'sphere' },
@@ -298,10 +309,11 @@ window.addEventListener('mindwave:visual-mode-sync', (e) => {
         { id: 'cymaticsBtn', mode: 'cymatics' }
     ];
 
-    buttons.forEach(({ id, mode }) => {
+    buttons.forEach(({ id, mode: btnMode }) => {
         const btn = document.getElementById(id);
         if (!btn) return;
-        const isActive = activeModes.has(mode);
+        const target = (viz && viz.mapMode) ? viz.mapMode(btnMode) : btnMode;
+        const isActive = activeModes.has(target) || activeModes.has(btnMode);
         if (isActive) {
             btn.classList.add('active', 'toggle-active');
             btn.classList.remove('toggle-inactive');
@@ -310,6 +322,112 @@ window.addEventListener('mindwave:visual-mode-sync', (e) => {
             btn.classList.add('toggle-inactive');
         }
     });
+
+    // Subpanels & Contextual Wrapper
+    const matrixPanel = document.getElementById('matrixSettingsPanel');
+    const cyberPanel = document.getElementById('cyberSettingsPanel');
+    const galaxyPanel = document.getElementById('galaxySettingsPanel');
+    const snowflakePanel = document.getElementById('snowflakeSettingsPanel');
+    const tsunamiPanel = document.getElementById('tsunamiSettingsPanel');
+    const contextualWrapper = document.getElementById('contextualVisualSettings');
+
+    let anySubPanelVisible = false;
+
+    if (matrixPanel) {
+        if (typeof state !== 'undefined' && typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
+        const shouldShow = activeModes.has('matrix') && (typeof state === 'undefined' || state.matrixPanelOpen);
+        if (shouldShow) {
+            matrixPanel.classList.remove('hidden');
+            anySubPanelVisible = true;
+        } else {
+            matrixPanel.classList.add('hidden');
+        }
+    }
+
+    if (cyberPanel) {
+        if (typeof state !== 'undefined' && typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = true;
+        const shouldShow = activeModes.has('cyber') && (typeof state === 'undefined' || state.cyberPanelOpen);
+        if (shouldShow) {
+            cyberPanel.classList.remove('hidden');
+            anySubPanelVisible = true;
+        } else {
+            cyberPanel.classList.add('hidden');
+        }
+    }
+
+    if (galaxyPanel) {
+        if (typeof state !== 'undefined' && typeof state.galaxyPanelOpen === 'undefined') state.galaxyPanelOpen = true;
+        const shouldShow = activeModes.has('galaxy') && (typeof state === 'undefined' || state.galaxyPanelOpen);
+        if (shouldShow) {
+            galaxyPanel.classList.remove('hidden');
+            anySubPanelVisible = true;
+        } else {
+            galaxyPanel.classList.add('hidden');
+        }
+    }
+
+    if (snowflakePanel) {
+        if (activeModes.has('snowflake')) {
+            snowflakePanel.classList.remove('hidden');
+            anySubPanelVisible = true;
+        } else {
+            snowflakePanel.classList.add('hidden');
+        }
+    }
+
+    if (tsunamiPanel) {
+        if (activeModes.has('tsunami')) {
+            tsunamiPanel.classList.remove('hidden');
+            anySubPanelVisible = true;
+        } else {
+            tsunamiPanel.classList.add('hidden');
+        }
+    }
+
+    const flowPanel = document.getElementById('flowSettingsSidebar');
+    if (flowPanel) {
+        if (activeModes.has('particles')) { flowPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { flowPanel.classList.add('hidden'); }
+    }
+
+    const lavaPanel = document.getElementById('lavaSettingsSidebar');
+    if (lavaPanel) {
+        if (activeModes.has('lava')) { lavaPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { lavaPanel.classList.add('hidden'); }
+    }
+
+    const rainPanel = document.getElementById('rainSettingsSidebar');
+    if (rainPanel) {
+        if (activeModes.has('rainforest')) { rainPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { rainPanel.classList.add('hidden'); }
+    }
+
+    const zenPanel = document.getElementById('zenSettingsSidebar');
+    if (zenPanel) {
+        if (activeModes.has('zengarden')) { zenPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { zenPanel.classList.add('hidden'); }
+    }
+
+    const oceanPanel = document.getElementById('oceanSettingsSidebar');
+    if (oceanPanel) {
+        if (activeModes.has('ocean') || activeModes.has('waves')) { oceanPanel.classList.remove('hidden'); anySubPanelVisible = true; }
+        else { oceanPanel.classList.add('hidden'); }
+    }
+
+    if (contextualWrapper) {
+        if (anySubPanelVisible) {
+            contextualWrapper.classList.remove('hidden');
+        } else {
+            contextualWrapper.classList.add('hidden');
+        }
+    }
+}
+window.syncActiveModePanels = syncActiveModePanels;
+
+// NEW: Global UI Sync Listener for Visual Modes
+window.addEventListener('mindwave:visual-mode-sync', (e) => {
+    if (!e.detail || !e.detail.activeModes) return;
+    syncActiveModePanels(e.detail.activeModes);
 });
 
 
@@ -717,7 +835,22 @@ export function setupUI() {
     }
 
     if (els.aiGoalInput) {
+        const wipeEmailVal = () => {
+            const val = (els.aiGoalInput.value || '').trim();
+            if (val.includes('@') || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+                els.aiGoalInput.value = '';
+            }
+        };
+        wipeEmailVal();
         els.aiGoalInput.value = '';
+        els.aiGoalInput.addEventListener('focus', wipeEmailVal);
+        els.aiGoalInput.addEventListener('input', wipeEmailVal);
+        els.aiGoalInput.addEventListener('change', wipeEmailVal);
+        els.aiGoalInput.addEventListener('animationstart', (e) => {
+            if (e.animationName && e.animationName.toLowerCase().includes('autofill')) {
+                wipeEmailVal();
+            }
+        });
         els.aiGoalInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleAIGenerate();
         });
@@ -1595,19 +1728,55 @@ export function setupUI() {
         });
     }
 
-    // Snow customization sliders
+    // Snow customization sliders (floating dock and sidebar settings panel)
     const snowSizeSlider = document.getElementById('snowSizeSlider');
     const snowSizeVal   = document.getElementById('snowSizeVal');
+    const snowflakeSizeSlider = document.getElementById('snowflakeSizeSlider');
+    const snowflakeSizeVal   = document.getElementById('snowflakeSizeVal');
     const snowGlowSlider = document.getElementById('snowGlowSlider');
     const snowGlowVal   = document.getElementById('snowGlowVal');
+    const snowSpinSlider = document.getElementById('snowSpinSlider');
+    const snowSpinVal   = document.getElementById('snowSpinVal');
+    const snowflakeSpinSlider = document.getElementById('snowflakeSpinSlider');
+    const snowflakeSpinVal   = document.getElementById('snowflakeSpinVal');
+
+    const updateAllSnowSizes = (val) => {
+        const num = parseFloat(val);
+        if (isNaN(num)) return;
+        if (snowSizeVal) snowSizeVal.textContent = num.toFixed(1) + 'x';
+        if (snowflakeSizeVal) snowflakeSizeVal.textContent = num.toFixed(1);
+        if (snowSizeSlider && parseFloat(snowSizeSlider.value) !== num) snowSizeSlider.value = num;
+        if (snowflakeSizeSlider && parseFloat(snowflakeSizeSlider.value) !== num) snowflakeSizeSlider.value = num;
+        const viz = getVisualizer();
+        if (viz?.setSnowSize) viz.setSnowSize(num);
+    };
+
+    const updateAllSnowSpins = (val) => {
+        const num = parseFloat(val);
+        if (isNaN(num)) return;
+        if (snowSpinVal) snowSpinVal.textContent = num.toFixed(1) + 'x';
+        if (snowflakeSpinVal) snowflakeSpinVal.textContent = num.toFixed(1) + 'x';
+        if (snowSpinSlider && parseFloat(snowSpinSlider.value) !== num) snowSpinSlider.value = num;
+        if (snowflakeSpinSlider && parseFloat(snowflakeSpinSlider.value) !== num) snowflakeSpinSlider.value = num;
+        const viz = getVisualizer();
+        if (viz?.setSnowSpinRate) viz.setSnowSpinRate(num);
+    };
+
+    const initSnowVal = parseFloat(snowSizeSlider?.value || snowflakeSizeSlider?.value || 0.3);
+    updateAllSnowSizes(initSnowVal);
+    setTimeout(() => updateAllSnowSizes(initSnowVal), 600);
+
     if (snowSizeSlider) {
-        if (snowSizeVal) snowSizeVal.textContent = parseFloat(snowSizeSlider.value || 0.3).toFixed(1) + 'x';
-        snowSizeSlider.addEventListener('input', () => {
-            const v = parseFloat(snowSizeSlider.value);
-            if (snowSizeVal) snowSizeVal.textContent = v.toFixed(1) + 'x';
-            const viz = getVisualizer();
-            if (viz?.setSnowSize) viz.setSnowSize(v);
-        });
+        snowSizeSlider.addEventListener('input', () => updateAllSnowSizes(snowSizeSlider.value));
+    }
+    if (snowflakeSizeSlider) {
+        snowflakeSizeSlider.addEventListener('input', () => updateAllSnowSizes(snowflakeSizeSlider.value));
+    }
+    if (snowSpinSlider) {
+        snowSpinSlider.addEventListener('input', () => updateAllSnowSpins(snowSpinSlider.value));
+    }
+    if (snowflakeSpinSlider) {
+        snowflakeSpinSlider.addEventListener('input', () => updateAllSnowSpins(snowflakeSpinSlider.value));
     }
     if (snowGlowSlider) {
         snowGlowSlider.addEventListener('input', () => {
@@ -1984,15 +2153,34 @@ export function setupUI() {
                  viz.setCymaticColor(colorPicker.value);
             } 
             
-            // Set Matrix to TXT (custom) mode by default
+            // Set Matrix to MindWave mode by default per user specification
             const cText = document.getElementById('cyberTextInput')?.value || "";
-            const mText = document.getElementById('matrixTextInput')?.value || "";
+            let mText = document.getElementById('matrixTextInput')?.value || "";
+            if (mText.includes('@') || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mText.trim())) {
+                mText = "";
+                const mEl = document.getElementById('matrixTextInput');
+                if (mEl) mEl.value = "";
+            }
 
             if (viz.setCyberLogicMode) viz.setCyberLogicMode('custom', cText);
-            if (viz.setMatrixLogicMode) viz.setMatrixLogicMode('custom', mText);
+            if (viz.setMatrixLogicMode) viz.setMatrixLogicMode('mindwave', mText);
 
-            // Force Mindwave logic mode (MW) for Matrix? No, user wants TXT.
-            if (viz.setMatrixMode) viz.setMatrixMode(false); 
+            // Sync Matrix Mode buttons UI to MindWave
+            const mWaveBtn = document.getElementById('matrixModeMindwave');
+            const mRandBtn = document.getElementById('matrixModeRandom');
+            const mCustBtn = document.getElementById('matrixModeCustom');
+            if (mWaveBtn) {
+                mWaveBtn.classList.add('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
+                mWaveBtn.classList.remove('text-[var(--text-muted)]');
+            }
+            if (mRandBtn) {
+                mRandBtn.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
+                mRandBtn.classList.add('text-[var(--text-muted)]');
+            }
+            if (mCustBtn) {
+                mCustBtn.classList.remove('bg-[var(--accent)]', 'text-[var(--bg-main)]', 'font-bold');
+                mCustBtn.classList.add('text-[var(--text-muted)]');
+            } 
 
             // Matrix Rainbow mode is forced to true on load per user request
             const isRainbowEnabled = true;
@@ -2035,25 +2223,8 @@ export function setupUI() {
                 }
             });
 
-            // Show matrix panel if matrix is active
-            const matrixPanel = document.getElementById('matrixSettingsPanel');
-            if (matrixPanel && viz.activeModes.has('matrix')) {
-                if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
-                if (state.matrixPanelOpen) {
-                    matrixPanel.classList.remove('hidden');
-                    matrixPanel.classList.add('flex', 'items-center');
-                }
-            }
-
-            // Show cyber panel if cyber is active
-            const cyberPanel = document.getElementById('cyberSettingsPanel');
-            if (cyberPanel && viz.activeModes.has('cyber')) {
-                if (typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = true;
-                if (state.cyberPanelOpen) {
-                    cyberPanel.classList.remove('hidden');
-                    cyberPanel.classList.add('flex', 'items-center');
-                }
-            }
+            // Sync all visual button states and contextual settings panels
+            syncActiveModePanels(viz.activeModes || defaultLoadout);
 
             // Reveal canvas and controls — everything is ready
             const canvas = document.getElementById('visualizer');
@@ -2098,6 +2269,9 @@ export function setupUI() {
             applyVisualDefaults();
         }, { once: true });
     }
+
+    // Immediately sync default visual panels and button active states on load
+    syncActiveModePanels(['snowflake', 'matrix', 'waves', 'tsunami']);
 
     // Defer visualizer loading until after UI is fully settled
     setTimeout(() => {
@@ -2162,8 +2336,201 @@ export function setupUI() {
     
     // Initialize Per-Visual Color Pickers
     initVisualColorPickers();
+
+    // Initialize Click-to-Edit Parameter Values & High-Sensitivity Controls
+    initEditableValueDisplays();
 }
 window.setupUI = setupUI; // EXPOSE GLOBALLY FOR DEBUGGING
+
+/**
+ * Click-to-Edit Parameter Values & High-Sensitivity Controls
+ * Enables clicking on any parameter badge/label (e.g., beatValue, baseValue, volValue, etc.)
+ * to enter exact numeric values with the keyboard, while keeping sliders in sync.
+ * Also provides wheel tuning and fine-grain decimal support on sliders.
+ */
+export function initEditableValueDisplays() {
+    const findSliderForValue = (valEl) => {
+        const id = valEl.id;
+        if (id) {
+            let candidateId = id.replace(/Value$/, 'Slider').replace(/Val$/, 'Slider');
+            if (candidateId !== id) {
+                const s = document.getElementById(candidateId);
+                if (s && s.type === 'range') return s;
+            }
+            const map = {
+                'baseValue': 'baseSlider',
+                'beatValue': 'beatSlider',
+                'volValue': 'volSlider',
+                'masterVolValue': 'masterVolSlider',
+                'atmosMasterValue': 'atmosMasterSlider',
+                'balanceValue': 'balanceSlider',
+                'dimmerVal': 'globalDimmerSlider',
+                'visualSpeedVal': 'visualSpeedSlider',
+                'audioSensitivityVal': 'audioSensitivitySlider',
+                'geoComplexityVal': 'geoComplexitySlider',
+                'mouseInfluenceValue': 'mouseInfluenceSlider'
+            };
+            if (map[id]) {
+                const s = document.getElementById(map[id]);
+                if (s) return s;
+            }
+        }
+        const container = valEl.closest('.mw-slider-container, .sidebar-section, .flex-col, .flex, div');
+        if (container) {
+            const s = container.querySelector('input[type="range"]');
+            if (s) return s;
+        }
+        return null;
+    };
+
+    const valueSelectors = '.premium-value-badge, .premium-value, [id$="Value"], [id$="Val"]';
+    const valueElements = document.querySelectorAll(valueSelectors);
+
+    valueElements.forEach(valEl => {
+        if (valEl.dataset.editableBound === 'true') return;
+        if (valEl.id === 'audioModeBadge') return;
+        if (valEl.closest('button') && !valEl.id.includes('Value') && !valEl.id.includes('Val')) return;
+
+        const slider = findSliderForValue(valEl);
+        if (!slider) return;
+
+        valEl.dataset.editableBound = 'true';
+        valEl.classList.add('editable-value');
+        valEl.setAttribute('title', 'Click to type exact value with keyboard');
+
+        valEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (valEl.classList.contains('is-editing')) return;
+
+            valEl.classList.add('is-editing');
+            const originalText = valEl.textContent.trim();
+
+            let rawNum = '';
+            if (slider && !isNaN(parseFloat(slider.value))) {
+                if (slider.max === '1' && (slider.id.includes('vol') || slider.id.includes('Vol') || slider.id.includes('Dimmer') || originalText.includes('%'))) {
+                    rawNum = String(Math.round(parseFloat(slider.value) * 100));
+                } else {
+                    rawNum = String(slider.value);
+                }
+            } else {
+                const match = originalText.match(/-?[\d.]+/);
+                rawNum = match ? match[0] : '';
+            }
+
+            let unit = '';
+            if (originalText.includes('Hz')) unit = 'Hz';
+            else if (originalText.includes('%')) unit = '%';
+            else if (originalText.endsWith('x')) unit = 'x';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.inputMode = 'decimal';
+            input.className = 'editable-value-input';
+            input.value = rawNum;
+
+            valEl.textContent = '';
+            valEl.appendChild(input);
+
+            requestAnimationFrame(() => {
+                input.focus();
+                input.select();
+            });
+
+            let committed = false;
+            const commit = () => {
+                if (committed) return;
+                committed = true;
+                valEl.classList.remove('is-editing');
+
+                const valStr = input.value.trim();
+                const parsed = parseFloat(valStr);
+
+                if (!isNaN(parsed)) {
+                    let targetVal = parsed;
+                    const isPercent = unit === '%' || (slider && slider.max === '1' && (slider.id.includes('vol') || slider.id.includes('Vol') || slider.id.includes('Dimmer')));
+
+                    if (isPercent && slider.max === '1') {
+                        if (parsed > 1.0) targetVal = parsed / 100;
+                    }
+
+                    if (slider) {
+                        const min = slider.min !== '' ? parseFloat(slider.min) : -Infinity;
+                        const max = slider.max !== '' ? parseFloat(slider.max) : Infinity;
+                        targetVal = Math.min(Math.max(targetVal, min), max);
+
+                        slider.value = targetVal;
+                        slider.dispatchEvent(new Event('input', { bubbles: true }));
+                        slider.dispatchEvent(new Event('change', { bubbles: true }));
+
+                        if (slider.id === 'baseSlider' || slider.id === 'beatSlider') {
+                            if (typeof updateFrequencies === 'function') updateFrequencies();
+                        }
+                    }
+
+                    if (unit === 'Hz') {
+                        const decimals = (targetVal.toString().split('.')[1] || '').length;
+                        const precision = Math.min(Math.max(decimals, 1), 2);
+                        valEl.textContent = `${targetVal.toFixed(precision)} Hz`;
+                    } else if (unit === '%') {
+                        valEl.textContent = `${Math.round(isPercent ? targetVal * 100 : targetVal)}%`;
+                    } else if (unit === 'x') {
+                        valEl.textContent = `${targetVal.toFixed(1)}x`;
+                    } else {
+                        valEl.textContent = String(targetVal);
+                    }
+                } else {
+                    valEl.textContent = originalText;
+                }
+            };
+
+            const cancel = () => {
+                if (committed) return;
+                committed = true;
+                valEl.classList.remove('is-editing');
+                valEl.textContent = originalText;
+            };
+
+            input.addEventListener('keydown', (ke) => {
+                if (ke.key === 'Enter') {
+                    ke.preventDefault();
+                    commit();
+                } else if (ke.key === 'Escape') {
+                    ke.preventDefault();
+                    cancel();
+                }
+            });
+
+            input.addEventListener('blur', () => {
+                commit();
+            });
+        });
+
+        const handleWheel = (e) => {
+            e.preventDefault();
+            const step = parseFloat(slider.step) || 0.1;
+            const dir = e.deltaY < 0 ? 1 : -1;
+            const cur = parseFloat(slider.value) || 0;
+            const min = slider.min !== '' ? parseFloat(slider.min) : -Infinity;
+            const max = slider.max !== '' ? parseFloat(slider.max) : Infinity;
+            const next = Math.min(Math.max(Math.round((cur + dir * step) * 1000) / 1000, min), max);
+
+            slider.value = next;
+            slider.dispatchEvent(new Event('input', { bubbles: true }));
+            slider.dispatchEvent(new Event('change', { bubbles: true }));
+
+            if (slider.id === 'baseSlider' || slider.id === 'beatSlider') {
+                if (typeof updateFrequencies === 'function') updateFrequencies();
+            }
+        };
+
+        valEl.addEventListener('wheel', handleWheel, { passive: false });
+        if (!slider.dataset.wheelBound) {
+            slider.dataset.wheelBound = 'true';
+            slider.addEventListener('wheel', handleWheel, { passive: false });
+        }
+    });
+}
+window.initEditableValueDisplays = initEditableValueDisplays;
 
 
 // --- NATIVE BACKGROUND AUDIO HACK ---
@@ -2865,10 +3232,12 @@ function updateModeUI(mode) {
             // Active style - theme-aware
             btn.classList.add('toggle-active');
             btn.classList.remove('toggle-inactive');
+            btn.style.color = '';
         } else {
             // Inactive style - theme-aware
             btn.classList.remove('toggle-active');
             btn.classList.add('toggle-inactive');
+            btn.style.color = '';
         }
     });
 
@@ -3514,128 +3883,8 @@ export function setVisualMode(mode, forceState = null, isManual = false) {
             }
         });
     }
-
-    // Panel Visibility Logic
-    const matrixPanel = document.getElementById('matrixSettingsPanel');
-    const cyberPanel = document.getElementById('cyberSettingsPanel');
-    const galaxyPanel = document.getElementById('galaxySettingsPanel');
-    const snowflakePanel = document.getElementById('snowflakeSettingsPanel');
-    const tsunamiPanel = document.getElementById('tsunamiSettingsPanel');
-    const contextualWrapper = document.getElementById('contextualVisualSettings');
-
-    const matrixActive = activeModes.has('matrix');
-    const cyberActive = activeModes.has('cyber');
-    const galaxyActive = activeModes.has('galaxy');
-    const snowflakeActive = activeModes.has('snowflake');
-    const tsunamiActive = activeModes.has('tsunami');
-
-    let anySubPanelVisible = false;
-
-    // Matrix Panel Toggle (3D)
-    if (matrixPanel) {
-        if (typeof state.matrixPanelOpen === 'undefined') state.matrixPanelOpen = true;
-        const shouldShow = matrixActive && state.matrixPanelOpen;
-        if (shouldShow) {
-            matrixPanel.classList.remove('hidden');
-            anySubPanelVisible = true;
-        } else {
-            matrixPanel.classList.add('hidden');
-        }
-    }
-
-    // Cyber Panel Toggle (2D)
-    if (cyberPanel) {
-        if (typeof state.cyberPanelOpen === 'undefined') state.cyberPanelOpen = true;
-        const shouldShow = cyberActive && state.cyberPanelOpen;
-        if (shouldShow) {
-            cyberPanel.classList.remove('hidden');
-            anySubPanelVisible = true;
-        } else {
-            cyberPanel.classList.add('hidden');
-        }
-    }
-
-    // Galaxy Panel Toggle
-    if (galaxyPanel) {
-        if (typeof state.galaxyPanelOpen === 'undefined') state.galaxyPanelOpen = true;
-        const shouldShow = galaxyActive && state.galaxyPanelOpen;
-        if (shouldShow) {
-            galaxyPanel.classList.remove('hidden');
-            anySubPanelVisible = true;
-        } else {
-            galaxyPanel.classList.add('hidden');
-        }
-    }
-
-    // Snowflake Panel Toggle
-    if (snowflakePanel) {
-        const shouldShow = snowflakeActive; // Always show if active for now
-        if (shouldShow) {
-            snowflakePanel.classList.remove('hidden');
-            anySubPanelVisible = true;
-        } else {
-            snowflakePanel.classList.add('hidden');
-        }
-    }
-    
-    // Tsunami Panel Toggle
-    if (tsunamiPanel) {
-        if (tsunamiActive) {
-            tsunamiPanel.classList.remove('hidden');
-            anySubPanelVisible = true;
-        } else {
-            tsunamiPanel.classList.add('hidden');
-        }
-    }
-
-    // Flow Panel Toggle
-    const flowPanel = document.getElementById('flowSettingsSidebar');
-    if (flowPanel) {
-        const shouldShow = activeModes.has('particles');
-        if (shouldShow) { flowPanel.classList.remove('hidden'); anySubPanelVisible = true; }
-        else { flowPanel.classList.add('hidden'); }
-    }
-
-    // Lava Panel Toggle
-    const lavaPanel = document.getElementById('lavaSettingsSidebar');
-    if (lavaPanel) {
-        const shouldShow = activeModes.has('lava');
-        if (shouldShow) { lavaPanel.classList.remove('hidden'); anySubPanelVisible = true; }
-        else { lavaPanel.classList.add('hidden'); }
-    }
-
-    // Rain Panel Toggle
-    const rainPanel = document.getElementById('rainSettingsSidebar');
-    if (rainPanel) {
-        const shouldShow = activeModes.has('rainforest');
-        if (shouldShow) { rainPanel.classList.remove('hidden'); anySubPanelVisible = true; }
-        else { rainPanel.classList.add('hidden'); }
-    }
-
-    // Zen Panel Toggle
-    const zenPanel = document.getElementById('zenSettingsSidebar');
-    if (zenPanel) {
-        const shouldShow = activeModes.has('zengarden');
-        if (shouldShow) { zenPanel.classList.remove('hidden'); anySubPanelVisible = true; }
-        else { zenPanel.classList.add('hidden'); }
-    }
-
-    // Ocean Panel Toggle
-    const oceanPanel = document.getElementById('oceanSettingsSidebar');
-    if (oceanPanel) {
-        const shouldShow = activeModes.has('ocean') || activeModes.has('waves');
-        if (shouldShow) { oceanPanel.classList.remove('hidden'); anySubPanelVisible = true; }
-        else { oceanPanel.classList.add('hidden'); }
-    }
-
-    // Contextual Wrapper Visibility
-    if (contextualWrapper) {
-        if (anySubPanelVisible) {
-            contextualWrapper.classList.remove('hidden');
-        } else {
-            contextualWrapper.classList.add('hidden');
-        }
-    }
+    // Delegate panel visibility and button states to unified sync function
+    syncActiveModePanels(activeModes);
 }
 window.setVisualMode = setVisualMode;
 
@@ -3759,9 +4008,14 @@ export function setTheme(themeName) {
         if (topBar) {
             topBar.style.backgroundColor = t.panel;
             topBar.style.borderColor = t.border;
-            topBar.querySelectorAll('button, span, div').forEach(el => {
+            topBar.querySelectorAll('span, label').forEach(el => {
                 if (!el.classList.contains('toggle-active')) {
                     el.style.color = t.text;
+                }
+            });
+            topBar.querySelectorAll('button').forEach(btn => {
+                if (!btn.classList.contains('toggle-active') && !btn.classList.contains('locked')) {
+                    btn.style.color = t.accent;
                 }
             });
         }
@@ -3796,12 +4050,23 @@ export function setTheme(themeName) {
         if (topBar) {
             topBar.style.backgroundColor = '';
             topBar.style.borderColor = '';
-            topBar.querySelectorAll('button, span, div').forEach(el => {
+            topBar.querySelectorAll('span, label').forEach(el => {
                 el.style.color = '';
+            });
+            topBar.querySelectorAll('button').forEach(btn => {
+                if (!btn.classList.contains('toggle-active') && !btn.classList.contains('locked')) {
+                    btn.style.color = t.accent;
+                }
             });
         }
         if (typeof updateJourneyStyles === 'function') updateJourneyStyles();
     }
+
+    document.querySelectorAll('.tab-pill, #modeToggle .mode-btn').forEach(btn => {
+        if (!btn.classList.contains('active') && !btn.classList.contains('toggle-active')) {
+            btn.style.color = t.accent;
+        }
+    });
     
     // Always call enforceLightThemeStyles to update global injected CSS
     if (typeof enforceLightThemeStyles === 'function') {
@@ -6405,7 +6670,14 @@ function setupMatrixControls() {
     const textInput = document.getElementById('matrixTextInput');
 
     if (textInput) {
+        if (textInput.value.includes('@') || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(textInput.value.trim())) {
+            textInput.value = '';
+        }
         textInput.addEventListener('input', (e) => {
+            if (e.target.value.includes('@') || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value.trim())) {
+                e.target.value = '';
+                return;
+            }
             const viz = getVisualizer();
             if (viz && viz.setMatrixLogicMode) {
                 // Find active mode from buttons
@@ -6454,7 +6726,7 @@ function resetIdleTimer() {
 }
 
 function showUI() {
-    const targets = document.querySelectorAll('.ui-fade-target');
+    const targets = document.querySelectorAll('.ui-fade-target, #leftPanel, #rightPanel, #topControlBar, #bottomControlBar, #visualDock');
     targets.forEach(el => {
         el.classList.remove('idle-hidden');
     });
@@ -6464,7 +6736,7 @@ function showUI() {
 function hideUI() {
     if (state.uiLocked) return;
     if (document.querySelector('.modal.active')) return;
-    const targets = document.querySelectorAll('.ui-fade-target');
+    const targets = document.querySelectorAll('.ui-fade-target, #leftPanel, #rightPanel, #topControlBar, #bottomControlBar, #visualDock');
     targets.forEach(el => {
         el.classList.add('idle-hidden');
     });
