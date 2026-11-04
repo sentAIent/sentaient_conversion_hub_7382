@@ -39,6 +39,9 @@
     <meta name="theme-color" content="#0f172a">
 
     <!-- Import Map for ES6 Module Resolution -->
+
+
+    <!-- Preload Firebase SDKs to prevent waterfall -->
     <script type="importmap">
     {
         "imports": {
@@ -48,8 +51,6 @@
         }
     }
     </script>
-
-    <!-- Preload Firebase SDKs to prevent waterfall -->
     <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js">
     <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js">
     <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js">
@@ -198,17 +199,9 @@
     </script>
     <title>MindWave - Binaural Beats Studio</title>
     <!-- Compiled Tailwind utilities instead of CDN (300KB+ → ~20KB) -->
-    <link rel="stylesheet" href="./binaural-assets/css/tailwind-compiled.css">
-    <link rel="stylesheet" href="./binaural-assets/css/style.css">
-    <link rel="stylesheet" href="./binaural-assets/css/visual-active.css">
-    <link rel="stylesheet" href="./binaural-assets/css/sophisticated-ui.css">
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="./binaural-assets/js/main_vFINAL.js">
+    <link rel="modulepreload" href="/assets/main_vFINAL-o_QAOjOm.js">
     <!-- Visualizer modulepreload removed to unblock critical path -->
-    <script type="module" src="./binaural-assets/config.js" defer
-        onerror="console.log('[Config] No config.js found - using mock mode')"></script>
-    <script type="module" src="./binaural-assets/js/main_vFINAL.js"
-        onerror="console.error('Failed to load main_vFINAL.js')"></script>
     <style>
         /* Fallback Styles if Tailwind fails */
         body {
@@ -358,7 +351,13 @@
         }
     </script>
     <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
-</head>
+  <script type="module" crossorigin src="/assets/mindwave-friday-C322kGGH.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/preload-helper-CS1eXPs2.js">
+  <link rel="modulepreload" crossorigin href="/assets/bootloader-BWdj3KB1.js">
+  <link rel="stylesheet" crossorigin href="/assets/bootloader-D8gydro4.css">
+  <link rel="stylesheet" crossorigin href="/assets/main_vFINAL-BdZYZZ4v.css">
+  <link rel="stylesheet" crossorigin href="/assets/sophisticated-ui-CPbQeSmY.css">
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
 
 <body
     class="w-full relative min-h-screen bg-slate-900 text-slate-200 antialiased selection:bg-cyan-500 selection:text-white">
@@ -1131,7 +1130,7 @@
         <div
             class="relative w-full px-6 py-6 border-b border-white/5 flex flex-col justify-center items-center shrink-0 min-h-[120px] gap-4">
             <a href="#" onclick="window.location.reload()" class="hover:opacity-80 transition-opacity block">
-                <img src="./mindwave-logo.png" alt="MindWave Logo"
+                <img src="/assets/mindwave-logo-BPvssvmr.png" alt="MindWave Logo"
                     class="h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(45,212,191,0.2)] rounded-lg relative z-10">
             </a>
 
@@ -1644,43 +1643,43 @@
                             </h4>
                             <div class="grid grid-cols-2 gap-3">
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(22)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Cosmic Symphony</span>
 </button>
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(23)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Nebula Core</span>
 </button>
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(24)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Stellar Fracture</span>
 </button>
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(25)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Golden Supernova</span>
 </button>
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(26)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Void Blossoms</span>
 </button>
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(27)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Event Horizon</span>
 </button>
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(28)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Kleinian Bloom</span>
 </button>
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(29)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Apollonian Depth</span>
 </button>
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(30)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Dark Matter</span>
 </button>
                                 <button class="cymatics-pattern-btn p-2.5 rounded-lg bg-white/5 border border-teal-500/40 text-[9px] font-bold uppercase text-white shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_20px_rgba(20,184,166,0.6)] hover:bg-teal-500/20 hover:border-teal-400 transition-all group relative overflow-hidden" onclick="selectCymaticPattern(31)">
-    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('binaural-assets/images/prime_prime.png');"></div>
+    <div class="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none" style="background-image: url('/assets/prime_prime-Bdg5rCR7.png');"></div>
     <span class="relative z-10 group-hover:text-teal-200 transition-colors tracking-wider">Galactic Spire</span>
 </button>
                                 </div>

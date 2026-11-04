@@ -29,6 +29,7 @@ const AutopilotPrivacy = React.lazy(() => import('./pages/AutopilotPrivacy'));
 const AutopilotTerms = React.lazy(() => import('./pages/AutopilotTerms'));
 const ContangoOldPage = React.lazy(() => import('./pages/ContangoOldPage'));
 const AgentStudio = React.lazy(() => import('./pages/AgentStudio'));
+const AdminAnalyticsDashboard = React.lazy(() => import('./pages/analytics/AdminAnalyticsDashboard'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -45,7 +46,8 @@ const ProjectRoutes = () => {
             <ScrollToTop />
             <React.Suspense fallback={<PageLoader />}>
             <RouterRoutes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Demo3DHome />} />
+              <Route path="/landing" element={<Home />} />
               <Route path="/simulator" element={<ScenerySimulator />} />
               <Route path="/integrations" element={<IntegrationsDemo />} />
               <Route path="/privacy" element={<PrivacyTerms />} />
@@ -57,7 +59,8 @@ const ProjectRoutes = () => {
               <Route path="/home-alt" element={<HomeAlt />} />
               <Route path="/homepage-ai-consultancy-hub" element={<HomepageAIConsultancyHub />} />
               <Route path="/demo" element={<DemoHome />} />
-              <Route path="/landing3d" element={<Demo3DHome />} />
+              <Route path="/landing3d" element={<Navigate to="/" replace />} />
+              <Route path="/demo3d" element={<Navigate to="/" replace />} />
               <Route path="/demo3d-backup" element={<Demo3DBackupHome />} />
               <Route path="/ai-solutions-experience-center" element={<AISolutionsExperienceCenter />} />
               <Route path="/trust-transparency-hub" element={<TrustTransparencyHub />} />
@@ -67,6 +70,11 @@ const ProjectRoutes = () => {
               <Route path="/agent-studio" element={<AgentStudio />} />
               <Route path="/checkout-success" element={<CheckoutSuccess />} />
               <Route path="/itravel" element={<ITravel />} />
+              
+              {/* Admin & Telemetry Analytics */}
+              <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
+              <Route path="/admin" element={<Navigate to="/admin/analytics" replace />} />
+              <Route path="/analytics" element={<Navigate to="/admin/analytics" replace />} />
               
               {/* Auth Routes */}
               <Route path="/login" element={<Login />} />
@@ -80,7 +88,7 @@ const ProjectRoutes = () => {
               <Route path="/autopilot/privacy" element={<AutopilotPrivacy />} />
               <Route path="/autopilot/terms" element={<AutopilotTerms />} />
 
-              <Route path="/portfolio" element={<Navigate to="/" replace />} />
+              <Route path="/portfolio" element={<Navigate to="/landing" replace />} />
               <Route path="*" element={<NotFound />} />
             </RouterRoutes>
           </React.Suspense>

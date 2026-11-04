@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -23,6 +23,27 @@ import WorldMatrix from './worlds/WorldMatrix';
 import WorldLightSpeed from './worlds/WorldLightSpeed';
 import MiniWorldsHub from './components/MiniWorldsHub';
 import './navigation/WaypointNavigator';
+import { WORLD_PAUSE_STATIONS, startWorldPause, clearActiveWorldPause } from './navigation/WorldPauseManager';
+import analytics from '../../services/ComprehensiveAnalytics';
+
+const WORLD_NAMES_MAP = {
+  mindwave: 'MindWave',
+  icebreaker: 'Icebreaker',
+  interstellar: 'Interstellar',
+  legal: 'Legal Eagle',
+  autopilot: 'Autopilot',
+  clove: 'CloveH2O',
+  fantasy: 'FantasyQuant',
+  contango: 'Contango',
+  sentaient: 'sentAIent',
+  elevate: 'Elevate',
+  sphinx: 'Sphinx',
+  liquid: 'Liquid',
+  maya: 'Maya',
+  pyramid: 'PyRAmid',
+  matrix: 'Matrix',
+  lightspeed: 'LightSpeed'
+};
 
 // Import Wormholes
 import WormholeMatrix from './wormholes/WormholeMatrix';
@@ -40,61 +61,57 @@ import WormholeLightSpeed from './wormholes/WormholeLightSpeed';
 
 // The Masterpiece Hybrid Timeline - Drop down into Icebreaker, then pure straight line Z-axis
 export const SCROLL_TIMELINE = [
-  // Intro -> MindWave (Center at Z=-1250)
+  // Intro -> MindWave (Center at Z=-1350)
   { p: 0.000, x: 0, y: 0, z: 10, rx: 0, ry: 0 },
   { p: 0.020, x: 0, y: 0, z: -250, rx: 0, ry: 0 },    
-  { p: 0.030, x: 0, y: 0, z: -1250, rx: 0, ry: 0 }, // Arrive MindWave (Center)
-  { p: 0.050, x: 0, y: 0, z: -1250, rx: 0, ry: 0 }, // PAUSE MindWave (4% gap)
+  { p: 0.030, x: 0, y: 0, z: -850, rx: 0, ry: 0 }, // Arrive MindWave (Zoomed out 500 units)
+  { p: 0.045, x: 0, y: 0, z: -850, rx: 0, ry: 0 }, // PAUSE MindWave
   
   // Plunge straight down into Ice Wormhole (Drop 1)
-  { p: 0.060, x: 0, y: 0, z: -1250, rx: -Math.PI / 2, ry: 0 }, // Start dive
+  { p: 0.060, x: 0, y: 0, z: -1250, rx: -Math.PI / 2, ry: 0 }, // Transition to dive entry
   { p: 0.090, x: 0, y: -3000, z: -1250, rx: -Math.PI / 2, ry: 0 }, // Diving
   
-  // Pull out of the dive into Icebreaker
-  { p: 0.100, x: 0, y: -3980, z: -1750, rx: 0, ry: 0 }, // Level out
-  { p: 0.110, x: 0, y: -3980, z: -1900, rx: 0, ry: 0 }, // Stop 1 (Blue People) - farther back
-  { p: 0.120, x: 0, y: -3980, z: -1900, rx: 0, ry: 0 }, // PAUSE Stop 1
-  { p: 0.130, x: 0, y: -3980, z: -2250, rx: 0, ry: 0 }, // Move to Stop 2 (Fire/Dance)
-  { p: 0.135, x: 0, y: -3980, z: -2250, rx: 0, ry: 0 }, // PAUSE Stop 2 (Lock triggers here)
-  { p: 0.140, x: 0, y: -3980, z: -2800, rx: 0, ry: 0 }, // Move to Stop 3 (Text Title)
-  { p: 0.145, x: 0, y: -3980, z: -2800, rx: 0, ry: 0 }, // PAUSE Stop 3
-  { p: 0.150, x: 0, y: -3980, z: -3250, rx: 0, ry: 0 }, // Start entering Wormhole
+  // Pull out of the dive into Icebreaker (Center at Z=-2275)
+  { p: 0.105, x: 0, y: -3980, z: -1550, rx: 0, ry: 0 }, // Level out into Icebreaker cavern
+  { p: 0.120, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 }, // Arrive Icebreaker (Zoomed out 600 units)
+  { p: 0.142, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 }, // PAUSE Icebreaker (Thaw triggers at p=0.135)
+  { p: 0.155, x: 0, y: -3980, z: -3250, rx: 0, ry: 0 }, // Exit Icebreaker into wormhole
   
   // Soundwaves Wormhole 
   { p: 0.160, x: 0, y: -3980, z: -4000, rx: 0, ry: 0 },
   { p: 0.180, x: 0, y: -3980, z: -6250, rx: 0, ry: 0 },
   
   // Interstellar (Center at Z=-7550)
-  { p: 0.190, x: 0, y: -3980, z: -7150, rx: 0, ry: 0 }, // Arrive Interstellar
-  { p: 0.210, x: 0, y: -3980, z: -7150, rx: 0, ry: 0 }, // PAUSE Interstellar
+  { p: 0.190, x: 0, y: -3980, z: -6750, rx: 0, ry: 0 }, // Arrive Interstellar (Zoomed out 800 units)
+  { p: 0.210, x: 0, y: -3980, z: -6750, rx: 0, ry: 0 }, // PAUSE Interstellar
   { p: 0.220, x: 0, y: -3980, z: -8250, rx: 0, ry: 0 }, // Exit Interstellar
   
-// Legal Eagle (Center at Z=-10550)
+  // Legal Eagle (Center at Z=-10550)
   { p: 0.230, x: 0, y: -3980, z: -8750, rx: 0, ry: 0 }, 
-  { p: 0.240, x: 0, y: -3980, z: -10550, rx: 0, ry: 0 }, // Arrive Legal Eagle
-  { p: 0.255, x: 0, y: -3980, z: -10550, rx: 0, ry: 0 }, // PAUSE Legal Eagle
+  { p: 0.240, x: 0, y: -3980, z: -9850, rx: 0, ry: 0 }, // Arrive Legal Eagle (Zoomed out 700 units)
+  { p: 0.255, x: 0, y: -3980, z: -9850, rx: 0, ry: 0 }, // PAUSE Legal Eagle
   { p: 0.265, x: 0, y: -3980, z: -11550, rx: 0, ry: 0 }, // Exit Legal Eagle
   
   // Autopilot Wormhole
-  { p: 0.275, x: 0, y: -3980, z: -12550, rx: 0, ry: 0 }, 
+  { p: 0.275, x: 0, y: -3980, z: -12250, rx: 0, ry: 0 }, 
   
   // Autopilot (Center at Z=-13550)
-  { p: 0.285, x: 0, y: -3980, z: -13550, rx: 0, ry: 0 }, // Arrive Autopilot
-  { p: 0.300, x: 0, y: -3980, z: -13550, rx: 0, ry: 0 }, // PAUSE Autopilot
+  { p: 0.285, x: 0, y: -3980, z: -12850, rx: 0, ry: 0 }, // Arrive Autopilot (Zoomed out 700 units)
+  { p: 0.300, x: 0, y: -3980, z: -12850, rx: 0, ry: 0 }, // PAUSE Autopilot
   { p: 0.310, x: 0, y: -3980, z: -14550, rx: 0, ry: 0 }, // Exit Autopilot
 
   // CloveH2O Wormhole
-  { p: 0.320, x: 0, y: -3980, z: -15550, rx: 0, ry: 0 }, 
+  { p: 0.320, x: 0, y: -3980, z: -15250, rx: 0, ry: 0 }, 
 
   // CloveH2O (Center at Z=-16550)
-  { p: 0.330, x: 0, y: -4000, z: -16550, rx: 0, ry: 0 }, // Arrive CloveH2O
-  { p: 0.360, x: 0, y: -4000, z: -16550, rx: 0, ry: 0 }, // PAUSE CloveH2O
+  { p: 0.330, x: 0, y: -3980, z: -15850, rx: 0, ry: 0 }, // Arrive CloveH2O (Zoomed out 700 units)
+  { p: 0.360, x: 0, y: -3980, z: -15850, rx: 0, ry: 0 }, // PAUSE CloveH2O
   
   // FantasyQuant Waterslide (Drop straight down from CloveH2O Z=-16550)
   { p: 0.370, x: 0, y: -4500, z: -16550, rx: -1.5, ry: 0 }, // Pitch down and drop
   { p: 0.395, x: 0, y: -12200, z: -16550, rx: -1.5, ry: 0 }, // Reach bottom
-  { p: 0.405, x: 0, y: -11750, z: -17175, rx: -0.1, ry: 0 }, // Shoot out into stands
-  { p: 0.420, x: 0, y: -11750, z: -17175, rx: -0.1, ry: 0 }, // PAUSE FantasyQuant
+  { p: 0.405, x: 0, y: -11450, z: -16650, rx: -0.2, ry: 0 }, // Shoot out into stadium press-box (Zoomed out)
+  { p: 0.420, x: 0, y: -11450, z: -16650, rx: -0.2, ry: 0 }, // PAUSE FantasyQuant
   { p: 0.430, x: 0, y: -11750, z: -17800, rx: 0, ry: 0 }, // Exit FantasyQuant
 
   // Candlesticks Wormhole (Long) -> now leads to Contango
@@ -117,10 +134,11 @@ export const SCROLL_TIMELINE = [
   { p: 0.555, x: 0, y: -11750, z: -33000, rx: 0, ry: 0 }, // PAUSE Elevate
   { p: 0.570, x: 0, y: -11750, z: -34000, rx: 0, ry: 0 }, // Fly through
   
-  // Sphinx
+  // Sphinx (Center at Z=-37000, Camera holds at Z=-36250, 750 units clearance)
   { p: 0.580, x: 0, y: -11750, z: -35000, rx: 0, ry: 0 },
-  { p: 0.600, x: 0, y: -11750, z: -37000, rx: 0, ry: 0 },
-  { p: 0.620, x: 0, y: -11750, z: -38000, rx: 0, ry: 0 },
+  { p: 0.600, x: 0, y: -11750, z: -36250, rx: 0, ry: 0 }, // Arrive Sphinx
+  { p: 0.620, x: 0, y: -11750, z: -36250, rx: 0, ry: 0 }, // PAUSE Sphinx
+  { p: 0.630, x: 0, y: -11750, z: -38000, rx: 0, ry: 0 },
   
   // Liquid (Center at Z=-41750, Camera holds at Z=-41000, 750 units clearance)
   { p: 0.640, x: 0, y: -11750, z: -39000, rx: 0, ry: 0 },
@@ -134,19 +152,22 @@ export const SCROLL_TIMELINE = [
   { p: 0.735, x: 0, y: -11750, z: -45000, rx: 0, ry: 0 }, // PAUSE Maya
   { p: 0.755, x: 0, y: -11750, z: -46500, rx: 0, ry: 0 },
   
-  // PyRAmid
+  // PyRAmid (Center at Z=-49000, Camera holds at Z=-48520, zoomed in ~370 units closer)
   { p: 0.770, x: 0, y: -11750, z: -47000, rx: 0, ry: 0 },
-  { p: 0.790, x: 0, y: -11750, z: -49000, rx: 0, ry: 0 },
-  { p: 0.820, x: 0, y: -11750, z: -50000, rx: 0, ry: 0 },
+  { p: 0.790, x: 0, y: -11750, z: -48520, rx: 0, ry: 0 }, // Arrive PyRAmid (Zoomed in close)
+  { p: 0.815, x: 0, y: -11750, z: -48520, rx: 0, ry: 0 }, // PAUSE PyRAmid (Zoomed in close)
+  { p: 0.830, x: 0, y: -11750, z: -50000, rx: 0, ry: 0 }, // Exit PyRAmid
   
-  // Matrix
+  // Matrix (Center at Z=-53000, Camera holds at Z=-52620, zoomed in ~370 units closer)
   { p: 0.840, x: 0, y: -11750, z: -51000, rx: 0, ry: 0 },
-  { p: 0.860, x: 0, y: -11750, z: -53000, rx: 0, ry: 0 },
-  { p: 0.890, x: 0, y: -11750, z: -54000, rx: 0, ry: 0 },
+  { p: 0.860, x: 0, y: -11750, z: -52620, rx: 0, ry: 0 }, // Arrive Matrix (Zoomed in close)
+  { p: 0.885, x: 0, y: -11750, z: -52620, rx: 0, ry: 0 }, // PAUSE Matrix (Zoomed in close)
+  { p: 0.900, x: 0, y: -11750, z: -54000, rx: 0, ry: 0 },
   
-  // LightSpeed
+  // LightSpeed (Center at Z=-57000)
   { p: 0.910, x: 0, y: -11750, z: -55000, rx: 0, ry: 0 },
-  { p: 0.930, x: 0, y: -11750, z: -57000, rx: 0, ry: 0 },
+  { p: 0.930, x: 0, y: -11750, z: -56250, rx: 0, ry: 0 }, // Arrive LightSpeed (Zoomed out 750 units)
+  { p: 0.960, x: 0, y: -11750, z: -56250, rx: 0, ry: 0 }, // PAUSE LightSpeed
   { p: 1.000, x: 0, y: -11750, z: -58000, rx: 0, ry: 0 },
 ];
 
@@ -180,7 +201,14 @@ export const CameraController = () => {
   const lightRef = useRef();
 
   useFrame((state) => {
-    let progress = window._warpProgress !== undefined ? window._warpProgress : scroll.offset;
+    let progress = (window._isTransitActive && window._warpProgress !== undefined)
+      ? window._warpProgress 
+      : scroll.offset;
+    if (window._worldPauseLockProgress !== undefined && window._worldPauseLockProgress !== null) {
+      progress = window._worldPauseLockProgress;
+    } else if (window._icebreakerLockCamera || window.icebreakerThawLocked) {
+      progress = 0.131;
+    }
     window._currentProgress = progress;
     const targetPos = getPosFromProgress(progress);
     
@@ -288,15 +316,24 @@ export const TimelineManager = () => {
   });
   
   const activeZonesRef = useRef(activeZones);
+  const visitedPauseWorldsRef = useRef({});
+
+  useEffect(() => {
+    return () => {
+      clearActiveWorldPause();
+    };
+  }, []);
 
   useFrame(() => {
-    const p = window._warpProgress !== undefined ? window._warpProgress : scroll.offset;
+    const p = (window._isTransitActive && window._warpProgress !== undefined)
+      ? window._warpProgress 
+      : scroll.offset;
     
     const newZones = {
       intro: p < 0.025,
       mindwave: p >= 0.020 && p < 0.058,
       wormhole_ice: p >= 0.055 && p < 0.098,
-      icebreaker: p >= 0.095 && p < 0.150, 
+      icebreaker: p >= 0.095 && p < 0.155, 
       wormhole_sound: p >= 0.148 && p < 0.188,
       interstellar: p >= 0.188 && p < 0.222, 
       w_legal: p >= 0.220 && p < 0.245,
@@ -338,6 +375,40 @@ export const TimelineManager = () => {
     if (changed) {
       activeZonesRef.current = newZones;
       setActiveZones(newZones);
+
+      // Track dwell time in active world
+      const activeWorldKey = Object.keys(WORLD_NAMES_MAP).find(k => newZones[k]);
+      if (activeWorldKey) {
+        analytics.startWorldDwell(WORLD_NAMES_MAP[activeWorldKey]);
+      } else {
+        analytics.endWorldDwell();
+      }
+    }
+
+    // Mandatory Focal Pause for Every World
+    if (!window._isTransitActive && !window._isWorldActionActive) {
+      const scrollP = scroll.offset;
+      
+      // Reset visited flag when user has scrolled far enough away from the world's center
+      WORLD_PAUSE_STATIONS.forEach((st) => {
+        if (visitedPauseWorldsRef.current[st.id]) {
+          if (Math.abs(scrollP - st.p) > 0.045) {
+            visitedPauseWorldsRef.current[st.id] = false;
+          }
+        }
+      });
+
+      // Check if user has entered any world's pause zone
+      for (let i = 0; i < WORLD_PAUSE_STATIONS.length; i++) {
+        const st = WORLD_PAUSE_STATIONS[i];
+        if (!visitedPauseWorldsRef.current[st.id]) {
+          if (scrollP >= st.triggerMin && scrollP <= st.triggerMax) {
+            visitedPauseWorldsRef.current[st.id] = true;
+            startWorldPause(st);
+            break;
+          }
+        }
+      }
     }
   });
 

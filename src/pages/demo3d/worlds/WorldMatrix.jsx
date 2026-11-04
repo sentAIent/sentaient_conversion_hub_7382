@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
+import { useFrame, useLoader } from '@react-three/fiber';
+import { Text, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ---------------------------------------------------------------------------
@@ -156,6 +156,10 @@ export default function WorldMatrix({ position, visible }) {
   const ring2Ref = useRef();
   const ring3Ref = useRef();
   const discRef = useRef();
+
+  // Load official glowing Matrix emblem
+  const logoTex = useLoader(THREE.TextureLoader, '/matrix_logo_bright.png');
+  logoTex.colorSpace = THREE.SRGBColorSpace;
 
   // Load Katakana texture atlas with instant fallback
   const atlasTexture = useMemo(() => {
@@ -479,99 +483,20 @@ export default function WorldMatrix({ position, visible }) {
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 5. 3D HOLOGRAPHIC TYPOGRAPHY BLADE (CLEANLY OFF TO THE SIDE)  */}
+      {/* 5. CENTERPIECE: FLOATING MATRIX LOGO ABOVE ANIMATION          */}
       {/* ------------------------------------------------------------- */}
-      <group position={[-540, 100, -580]} rotation={[0, Math.PI / 10, 0]}>
-        {/* Holographic Frosted Obsidian Blade Backing with 20px margins */}
-        <mesh position={[150, -10, -2]}>
-          <planeGeometry args={[300, 260]} />
-          <meshStandardMaterial 
-            color="#020a04" 
-            transparent 
-            opacity={0.52} 
-            roughness={0.12} 
-            metalness={0.92} 
-            side={THREE.DoubleSide} 
-          />
-        </mesh>
-        {/* Glowing Emerald Top Rail */}
-        <mesh position={[150, 120, 0]}>
-          <boxGeometry args={[302, 3, 2]} />
-          <meshStandardMaterial color="#00ff66" emissive="#00ff66" emissiveIntensity={3.2} />
-        </mesh>
-
-        {/* Category Badge */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[20, 92, 0]}
-          fontSize={11}
-          color="#00e5ff"
-          letterSpacing={0.12}
-          anchorX="left"
-          anchorY="middle"
-        >
-          EXP // 15  ◈  AUTONOMOUS AI COLLECTIVE
-        </Text>
-
-        {/* World Name Title (M in MATRIX has generous margin, zero cutoff) */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[20, 50, 0]}
-          fontSize={46}
-          color="#ffffff"
-          outlineWidth={1.5}
-          outlineColor="#004416"
-          anchorX="left"
-          anchorY="middle"
-        >
-          MATRIX
-        </Text>
-
-        {/* Value Proposition Headline */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[20, 8, 0]}
-          fontSize={13.5}
-          color="#00ff66"
-          maxWidth={260}
-          lineHeight={1.3}
-          anchorX="left"
-          anchorY="middle"
-        >
-          AUTONOMOUS AI SOFTWARE ENGINEERING & RESEARCH LAB
-        </Text>
-
-        {/* System Capability Description */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[20, -50, 0]}
-          fontSize={11}
-          color="#cbd5e1"
-          maxWidth={260}
-          lineHeight={1.45}
-          anchorX="left"
-          anchorY="middle"
-        >
-          Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors systems, and conducts deep debugging.
-        </Text>
-
-        {/* Telemetry Pills */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[20, -105, 0]}
-          fontSize={9.5}
-          color="#00e5ff"
-          letterSpacing={0.05}
-          anchorX="left"
-          anchorY="middle"
-        >
-          [ ◈ ZERO-SHOT REFACTOR  ◈ PRODUCTION CODE ]
-        </Text>
+      <group position={[0, 480, -750]}>
+        <Float speed={1.8} rotationIntensity={0.04} floatIntensity={0.3}>
+          <mesh position={[0, 0, 0]}>
+            <planeGeometry args={[260, 62]} />
+            <meshBasicMaterial 
+              map={logoTex} 
+              transparent 
+              depthWrite={false} 
+              blending={THREE.AdditiveBlending} 
+            />
+          </mesh>
+        </Float>
       </group>
     </group>
   );

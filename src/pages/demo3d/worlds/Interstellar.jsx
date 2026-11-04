@@ -396,8 +396,8 @@ const Interstellar = ({ position, rotation, visible }) => {
       <CapitalShip position={[0, -120, -100]} />
       <FighterSwarm position={[0, -50, 0]} />
       
-      {/* Title & Logo Hologram - perfectly positioned in front of camera at Z=400 */}
-      <group position={[0, 120, 200]}>
+      {/* Title & Logo Hologram - elevated high above starfleet */}
+      <group position={[0, 260, 200]}>
         <mesh position={[0, 50, 0]}>
           <planeGeometry args={[180, 180]} />
           <meshBasicMaterial map={logoTex} transparent depthWrite={false} />

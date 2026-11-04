@@ -7,6 +7,26 @@ import * as THREE from 'three';
 import { CameraController, TimelineManager } from '../TimelineManager';
 import { useWaypointControls } from '../navigation/WaypointNavigator';
 import { WORLDS_DATA } from './MiniWorldsHub';
+import analytics from '../../../services/ComprehensiveAnalytics';
+
+const WORLD_ROUTES = {
+  'MindWave': '/mindwave',
+  'Icebreaker': '/icelogin',
+  'Interstellar': '/interstellar',
+  'Legal Eagle': '/legaleagle',
+  'Autopilot': '/autopilot',
+  'CloveH2O': 'https://cloveh2o.com',
+  'FantasyQuant': '/fantasyquant',
+  'Contango': '/contango',
+  'Sentaient': '/landing',
+  'Elevate': '/elevate',
+  'Sphinx': '/sphinx',
+  'Liquid': '/liquid',
+  'Maya': '/maya',
+  'PyRAmid': '/pyramid',
+  'Matrix': '/matrix',
+  'LightSpeed': '/lightspeed'
+};
 
 const WORLD_CONFIG = {
   'MindWave': {
@@ -40,15 +60,15 @@ const WORLD_CONFIG = {
     tags: ['Omnichannel Sync', 'Predictive Virality', 'Audience Scaling']
   },
   'CloveH2O': {
-    category: 'CELLULAR WELLNESS & HYDRATION OS',
+    category: 'BOTANICAL WELLNESS & FUNCTIONAL HYDRATION',
     index: '06 / 16',
     posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
-    tags: ['Precision Osmosis', 'Electrolyte Balance', 'Vitality Score']
+    tags: ['Organic Clove Extract', 'Bioactive Eugenol', 'Antioxidant Powerhouse', 'Digestive Vitality']
   },
   'FantasyQuant': {
     category: 'QUANTITATIVE SPORTS INTELLIGENCE',
     index: '07 / 16',
-    posStyle: { top: '80px', left: '44px', bottom: 'auto', right: 'auto', transform: 'none' },
+    posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Algorithmic Edge', 'Odds Arbitrage', 'Simulation Engine']
   },
   'Contango': {
@@ -58,16 +78,16 @@ const WORLD_CONFIG = {
     tags: ['Order Book Micro', 'Volatility Trading', 'Macro Liquidity']
   },
   'Sentaient': {
-    category: 'SOVEREIGN HUMANITY NETWORK',
+    category: 'AUTONOMOUS AI VENTURE STUDIO & REVENUE ENGINES',
     index: '09 / 16',
     posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
-    tags: ['Physical Presence', 'Kindred Souls', 'Real Reality']
+    tags: ['Autonomous AI Engines', 'Proprietary AI IP', 'Revenue Automation', 'Enterprise AI Swarms']
   },
   'Elevate': {
-    category: 'ALPINE AI & MOUNTAIN SURVIVAL OS',
+    category: 'BIG-MOUNTAIN SNOWBOARD GAME & ALPINE HUB',
     index: '10 / 16',
     posStyle: { top: '80px', right: '44px', bottom: 'auto', left: 'auto', transform: 'none' },
-    tags: ['Avalanche Radar', 'AI Gear Tuning', '4K GoPro Sync']
+    tags: ['3D Snowboard Game', 'Live Mountain Weather', 'Avalanche Safety Radar', 'Gear Optimization']
   },
   'Sphinx': {
     category: 'GLOBAL THREAT & DISASTER DEFENSE',
@@ -94,10 +114,10 @@ const WORLD_CONFIG = {
     tags: ['Market Arbitrage', 'Strategic Execution', 'Self-Operating Venture']
   },
   'Matrix': {
-    category: 'AUTONOMOUS AI ENGINEERING COLLECTIVE',
+    category: 'AUTONOMOUS AI SOFTWARE ENGINEERING LAB',
     index: '15 / 16',
     posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
-    tags: ['Production Code Gen', 'System Refactoring', 'Deep AI Research']
+    tags: ['Production Code Gen', 'Full-Stack Architecture', 'Autonomous Debugging', 'Deep Tech Research']
   },
   'LightSpeed': {
     category: 'AUTONOMOUS AI CTO & RUNTIME DEFENSE',
@@ -128,9 +148,29 @@ const HTMLStations = () => {
 
   useWaypointControls(scroll);
 
+  // Clean up any stale or orphaned duplicate portals from previous renders/HMR
+  useEffect(() => {
+    const existingPortals = document.querySelectorAll('.demo3d-portal-root');
+    if (existingPortals.length > 1) {
+      for (let i = 0; i < existingPortals.length - 1; i++) {
+        existingPortals[i].remove();
+      }
+    }
+  }, []);
+
   useFrame(() => {
-    const progress = window._warpProgress !== undefined ? window._warpProgress : scroll.offset;
+    const progress = (window._isTransitActive && window._warpProgress !== undefined) ? window._warpProgress : scroll.offset;
     
+    // Clean up any duplicate cards in document.body
+    const duplicateCards = document.querySelectorAll('.demo3d-side-dossier-card');
+    if (duplicateCards.length > 1) {
+      for (let i = 0; i < duplicateCards.length - 1; i++) {
+        const root = duplicateCards[i].closest('.demo3d-portal-root');
+        if (root) root.remove();
+        else duplicateCards[i].remove();
+      }
+    }
+
     // Back button visibility
     if (backRef.current) {
         const show = progress > 0.08;
@@ -159,12 +199,24 @@ const HTMLStations = () => {
                   tags: ['AI Autonomous', 'Real-Time Telemetry', 'Cloud Sync']
                 };
 
-                // Apply unique off-to-the-side position
-                overlayRef.current.style.top = conf.posStyle.top;
-                overlayRef.current.style.bottom = conf.posStyle.bottom;
-                overlayRef.current.style.left = conf.posStyle.left;
-                overlayRef.current.style.right = conf.posStyle.right;
-                overlayRef.current.style.transform = conf.posStyle.transform;
+                // Apply unique off-to-the-side position cleanly with property removal
+                if (conf.posStyle.top && conf.posStyle.top !== 'auto') {
+                  overlayRef.current.style.top = conf.posStyle.top;
+                  overlayRef.current.style.removeProperty('bottom');
+                } else {
+                  overlayRef.current.style.removeProperty('top');
+                  overlayRef.current.style.bottom = conf.posStyle.bottom || '40px';
+                }
+
+                if (conf.posStyle.left && conf.posStyle.left !== 'auto') {
+                  overlayRef.current.style.left = conf.posStyle.left;
+                  overlayRef.current.style.removeProperty('right');
+                } else {
+                  overlayRef.current.style.removeProperty('left');
+                  overlayRef.current.style.right = conf.posStyle.right || '44px';
+                }
+
+                overlayRef.current.style.transform = conf.posStyle.transform || 'none';
 
                 // Update Logo
                 if (logoImgRef.current) {
@@ -249,6 +301,7 @@ const HTMLStations = () => {
 
   const handleBack = (e) => {
     if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (window.clearActiveWorldPause) window.clearActiveWorldPause();
     ['icebreakerCaveLocked', 'icebreakerThawLocked', 'icebreakerTextLocked', 'mindwaveLocked', 'interstellarLocked', 'autopilotLocked', 'contangoLocked', 'swarmLocked', 'orbitalLocked'].forEach(k => { window[k] = false; });
     if (window._goToStation) {
       window._goToStation(0, 1800);
@@ -264,7 +317,7 @@ const HTMLStations = () => {
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 40 }}>
+    <div className="demo3d-portal-root" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 40 }}>
       
       {/* Dynamic Unique Position Side Dossier Card */}
       <div 
@@ -279,6 +332,7 @@ const HTMLStations = () => {
       >
         <div 
           ref={cardRef}
+          className="demo3d-side-dossier-card"
           style={{
             maxWidth: '430px',
             width: 'calc(100vw - 64px)',
@@ -386,6 +440,17 @@ const HTMLStations = () => {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
             <button 
               ref={btnRef}
+              onClick={() => {
+                if (activeWorldRef.current) {
+                  const route = WORLD_ROUTES[activeWorldRef.current] || '/';
+                  analytics.trackFeature(activeWorldRef.current, 'enter_experience_clicked', { target: route });
+                  if (route.startsWith('http')) {
+                    window.open(route, '_blank');
+                  } else {
+                    window.location.href = route;
+                  }
+                }
+              }}
               style={{
                 padding: '7px 18px',
                 borderRadius: '8px',

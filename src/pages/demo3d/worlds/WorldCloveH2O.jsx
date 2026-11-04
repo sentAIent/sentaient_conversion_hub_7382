@@ -175,40 +175,39 @@ const WorldCloveH2O = ({ position, rotation, visible }) => {
       <ambientLight intensity={0.5} color="#00aaff" />
       <pointLight color="#00ffff" intensity={4} distance={3000} position={[0, 500, -500]} />
 
-      {/* UI Elements */}
-      <group position={[0, 0, -300]}>
+      {/* UI Elements - Elevated Above Ocean & Waterfall */}
+      <group position={[0, 260, -400]}>
         {logoTexture && (
-          <mesh position={[0, 80, 0]}>
-            <planeGeometry args={[200, 200]} />
+          <mesh position={[0, 60, 0]}>
+            <planeGeometry args={[120, 120]} />
             <meshBasicMaterial map={logoTexture} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
           </mesh>
         )}
         
         <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-          position={[0, -50, 0]}
-          fontSize={60}
+          position={[0, -10, 0]}
+          fontSize={52}
           color="#ffffff"
-          outlineWidth={0.02}
-          outlineColor="#0044ff"
+          outlineWidth={1.8}
+          outlineColor="#0044aa"
           anchorX="center"
           anchorY="middle"
+          letterSpacing={0.1}
         >
           CLOVEH2O
         </Text>
-        
+
         <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-          position={[0, -110, 0]}
-          fontSize={24}
-          color="#ffffff"
-          outlineWidth={0.01}
-          outlineColor="#001133"
+          position={[0, -46, 0]}
+          fontSize={16}
+          color="#00ffff"
+          outlineWidth={0.8}
+          outlineColor="#001833"
           anchorX="center"
           anchorY="middle"
-          maxWidth={800}
-          textAlign="center"
-          lineHeight={1.5}
+          letterSpacing={0.12}
         >
-          An ocean of pure, refreshing data. Clean, sustainable, and transparent analytics.
+          BOTANICAL WELLNESS & FUNCTIONAL HYDRATION
         </Text>
       </group>
     </group>

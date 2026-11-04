@@ -172,37 +172,37 @@ const meltVertexShader = `
   uniform float uThaw;
   uniform float uTime;
   varying vec2 vUv;
+  varying vec3 vPosition;
   
   void main() {
     vUv = uv;
     vec3 pos = position;
     
-    // Dali melt effect:
-    // Cylinder local Z corresponds to World Y (because of Math.PI/2 X-rotation).
-    // We want it to sag downwards (negative local Z).
+    // In Three.js CylinderGeometry with rotation=[Math.PI/2, 0, 0]:
+    // pos.y is length along the tunnel (World Z)
+    // pos.x is cross-section width (World X)
+    // pos.z is cross-section height (World Y = -pos.z)
+    // Ceiling: pos.z = -120 (World Y = +120)
+    // Floor level: World Y = -20 (pos.z = +20)
     
-    float angle = atan(pos.y, pos.x);
-    // Add organic variation based on angle and position along the cylinder
-    float droopVariation = sin(angle * 8.0 + uTime * 2.0) * 0.5 + 0.5;
-    droopVariation += sin(pos.y * 0.05) * 0.5 + 0.5;
+    float angle = atan(-pos.z, pos.x);
     
-    // Ensure the minimum melt amount is large enough to flatten the entire cave!
-    // Top of the cave is pos.z = -120. Needs to reach +19. So meltAmount must be at least 140.
-    float meltAmount = uThaw * 500.0 * (0.4 + droopVariation * 0.6);
+    // Organic drooping waves along the ceiling and walls
+    float droop = sin(angle * 6.0 + uTime * 2.5) * 0.5 + 0.5;
+    droop += sin(pos.y * 0.04 + uTime * 1.5) * 0.3;
     
-    pos.z += meltAmount;
+    // Thermal downward melt displacement
+    float meltDisplacement = uThaw * 260.0 * (0.6 + droop * 0.4);
+    pos.z += meltDisplacement;
     
-    // Pool outwards exactly at the ocean surface level (World Y = -19)
-    // World Y = -19 means pos.z = 19.0
-    if (pos.z > 19.0) {
-       // Bulge outwards (local X and Y)
-       float bulge = (pos.z - 19.0) * 0.5 * uThaw;
-       vec2 dir = normalize(pos.xy);
-       pos.xy += dir * bulge;
-       // Clamp to ground level so it forms a puddle that blends into the ocean
-       pos.z = 19.0;
+    // Pool outwards upon hitting ground level (pos.z = 22.0)
+    if (pos.z > 22.0) {
+      float puddleSpread = (pos.z - 22.0) * 0.4 * uThaw;
+      pos.x += sign(pos.x + 0.0001) * puddleSpread;
+      pos.z = 22.0;
     }
     
+    vPosition = pos;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
   }
 `;
@@ -210,23 +210,35 @@ const meltVertexShader = `
 const meltFragmentShader = `
   uniform sampler2D tMap;
   uniform float uThaw;
+  uniform float uTime;
   varying vec2 vUv;
+  varying vec3 vPosition;
   
   void main() {
-    // Distort UVs as it melts
-    vec2 distortedUv = vUv;
-    distortedUv.y -= uThaw * 0.5; // Texture slides down
+    // Distort UVs as ice melts into sliding water drips
+    vec2 uv = vUv;
+    uv.y -= uThaw * 0.35 + sin(uv.x * 20.0 + uTime * 2.0) * 0.02 * uThaw;
     
-    vec4 texColor = texture2D(tMap, distortedUv);
+    vec4 texColor = texture2D(tMap, uv);
     
-    // Fade to vibrant electric blue with greens
-    vec3 waterColor = vec3(0.0, 0.95, 0.8);
-    vec3 finalColor = mix(texColor.rgb, waterColor, clamp(uThaw * 1.5, 0.0, 1.0));
+    // Glistening transition from cold frost blue to melting aqua liquid
+    vec3 iceColor = texColor.rgb;
+    vec3 liquidMelt = vec3(0.12, 0.88, 0.96);
+    vec3 finalColor = mix(iceColor, liquidMelt, clamp(uThaw * 1.4, 0.0, 1.0));
     
-    // We KEEP alpha at 1.0 so it forms a permanent flat ocean layer on the ground
-    float alpha = 1.0;
+    // Shimmering drips of melting water
+    float dripShimmer = sin(uv.y * 60.0 - uTime * 6.0) * 0.5 + 0.5;
+    finalColor += vec3(0.3, 0.7, 1.0) * (dripShimmer * uThaw * 0.6);
     
-    gl_FragColor = vec4(finalColor, alpha);
+    // Dissolve & evaporate:
+    // As uThaw progresses, the cavern walls dissolve completely to reveal the tropical beach
+    float dissolve = 1.0 - smoothstep(0.15, 0.92, uThaw);
+    
+    if (dissolve < 0.01) {
+      discard;
+    }
+    
+    gl_FragColor = vec4(finalColor, dissolve);
   }
 `;
 
@@ -276,16 +288,18 @@ const AbstractCavern = ({ startZ, endZ }) => {
           fragmentShader={meltFragmentShader}
           uniforms={uniforms}
           transparent={true}
+          depthWrite={false}
           side={THREE.BackSide}
         />
       </mesh>
-      <mesh position={[0, 0, 1300]}>
+      <mesh position={[0, 0, 1300]} rotation={[Math.PI / 2, 0, 0]}>
          <sphereGeometry args={[120, 64, 64]} />
          <shaderMaterial
             vertexShader={meltVertexShader}
             fragmentShader={meltFragmentShader}
             uniforms={uniforms}
             transparent={true}
+            depthWrite={false}
             side={THREE.BackSide}
          />
       </mesh>
@@ -423,21 +437,119 @@ const IslandEnvironment = ({ centerZ }) => {
   );
 };
 
-export const runIcebreakerMelt = () => {
+const preventInputEvent = (e) => {
+  if (e.cancelable) e.preventDefault();
+  e.stopPropagation();
+  if (typeof e.stopImmediatePropagation === 'function') {
+    e.stopImmediatePropagation();
+  }
+  return false;
+};
+
+let isInputLocked = false;
+
+export const lockIcebreakerInput = () => {
+  if (typeof document === 'undefined' || isInputLocked) return;
+  isInputLocked = true;
+
+  let blocker = document.getElementById('icebreaker-input-lock');
+  if (!blocker) {
+    blocker = document.createElement('div');
+    blocker.id = 'icebreaker-input-lock';
+    blocker.style.position = 'fixed';
+    blocker.style.top = '0';
+    blocker.style.left = '0';
+    blocker.style.width = '100vw';
+    blocker.style.height = '100vh';
+    blocker.style.zIndex = '999999';
+    blocker.style.pointerEvents = 'all';
+    blocker.style.cursor = 'wait';
+    blocker.style.userSelect = 'none';
+    blocker.style.touchAction = 'none';
+    blocker.style.background = 'transparent';
+    document.body.appendChild(blocker);
+  }
+
+  const events = ['wheel', 'touchmove', 'touchstart', 'touchend', 'pointerdown', 'pointermove', 'pointerup', 'mousedown', 'mousemove', 'mouseup', 'keydown'];
+  events.forEach((evt) => {
+    window.addEventListener(evt, preventInputEvent, { passive: false, capture: true });
+  });
+
+  if (window._scrollEl) {
+    window._scrollEl.style.overflow = 'hidden';
+  }
+};
+
+export const unlockIcebreakerInput = () => {
+  if (typeof document === 'undefined' || !isInputLocked) return;
+  isInputLocked = false;
+
+  const blocker = document.getElementById('icebreaker-input-lock');
+  if (blocker) blocker.remove();
+
+  const events = ['wheel', 'touchmove', 'touchstart', 'touchend', 'pointerdown', 'pointermove', 'pointerup', 'mousedown', 'mousemove', 'mouseup', 'keydown'];
+  events.forEach((evt) => {
+    window.removeEventListener(evt, preventInputEvent, { capture: true });
+  });
+
+  if (window._scrollEl) {
+    window._scrollEl.style.overflow = 'auto';
+  }
+};
+
+export const runIcebreakerMelt = (onComplete) => {
   if (window._isWorldActionActive) return;
-  window.icebreakerThaw = 0;
   window._isWorldActionActive = true;
+  window.icebreakerThawLocked = true;
+  window._icebreakerLockCamera = true;
+  window.icebreakerThaw = 0;
+
+  lockIcebreakerInput();
+
+  if (window._scrollEl) {
+    const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
+    if (maxScroll > 0) {
+      window._scrollEl.scrollTop = 0.131 * maxScroll;
+    }
+  }
+
+  // Phase 1: Camera stops in center where we see the ice cave for a few seconds (2.8s)
+  // Phase 2: Melts smoothly without needing to move the mouse (4.0s)
+  const PAUSE_MS = 2800;
+  const MELT_MS = 4000;
   const start = performance.now();
-  const dur = 4200;
+
   const step = (now) => {
-    const el = now - start;
-    const prog = Math.min(1.0, el / dur);
-    window.icebreakerThaw = 1 - Math.pow(1 - prog, 3);
-    if (prog < 1.0) {
+    const elapsed = now - start;
+
+    if (window._scrollEl) {
+      const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
+      if (maxScroll > 0) {
+        window._scrollEl.scrollTop = 0.131 * maxScroll;
+      }
+    }
+
+    if (elapsed < PAUSE_MS) {
+      // Frozen cave hold at focal point
+      window.icebreakerThaw = 0.0;
       requestAnimationFrame(step);
     } else {
-      window.icebreakerThaw = 1.0;
-      window._isWorldActionActive = false;
+      // Melting progression
+      const meltElapsed = elapsed - PAUSE_MS;
+      const prog = Math.min(1.0, meltElapsed / MELT_MS);
+      // Smooth cubic ease out
+      window.icebreakerThaw = 1.0 - Math.pow(1.0 - prog, 3);
+
+      if (prog < 1.0) {
+        requestAnimationFrame(step);
+      } else {
+        window.icebreakerThaw = 1.0;
+        window.icebreakerThawLocked = false;
+        window._icebreakerLockCamera = false;
+        window._isWorldActionActive = false;
+        unlockIcebreakerInput();
+        if (typeof onComplete === 'function') onComplete();
+      }
     }
   };
   requestAnimationFrame(step);
@@ -448,34 +560,53 @@ if (typeof window !== 'undefined') {
 
 const IcebreakerController = () => {
   const scroll = useScroll();
+  const stateRef = useRef({
+    triggered: false
+  });
+
   useEffect(() => {
     window.icebreakerThaw = window.icebreakerThaw || 0;
-  }, []);
+    window.icebreakerThawLocked = false;
+    window._icebreakerLockCamera = false;
+    if (scroll?.el) {
+      window._scrollEl = scroll.el;
+    }
+
+    return () => {
+      unlockIcebreakerInput();
+      window.icebreakerThawLocked = false;
+      window._icebreakerLockCamera = false;
+      window._isWorldActionActive = false;
+    };
+  }, [scroll]);
 
   useFrame(() => {
-    const p = window._warpProgress !== undefined ? window._warpProgress : scroll.offset;
-    if (p >= 0.125 && p <= 0.145 && window.icebreakerThaw === 0 && !window._isWorldActionActive) {
-      if (window.triggerIcebreakerMelt) window.triggerIcebreakerMelt();
+    if (scroll?.el && !window._scrollEl) {
+      window._scrollEl = scroll.el;
     }
-    if ((p < 0.08 || p > 0.18) && window.icebreakerThaw !== 0 && !window._isWorldActionActive) {
+
+    const p = (window._isTransitActive && window._warpProgress !== undefined) 
+      ? window._warpProgress 
+      : scroll.offset;
+
+    // Reset when far out of Icebreaker
+    if ((p < 0.08 || p > 0.17) && (stateRef.current.triggered || window.icebreakerThaw > 0)) {
+      stateRef.current.triggered = false;
       window.icebreakerThaw = 0;
+      window.icebreakerThawLocked = false;
+      window._icebreakerLockCamera = false;
+      window._isWorldActionActive = false;
+      unlockIcebreakerInput();
+      if (scroll?.el) scroll.el.style.overflow = 'auto';
     }
-    
 
-    
-
-
-
-
-    
-
-
-    
-
-    
-
-
+    // Trigger when user scrolls into Icebreaker pause zone (p between 0.118 and 0.145)
+    if (p >= 0.118 && p <= 0.145 && !stateRef.current.triggered && !window._isWorldActionActive && !window._isTransitActive) {
+      stateRef.current.triggered = true;
+      runIcebreakerMelt();
+    }
   });
+
   return null;
 };
 
@@ -497,20 +628,30 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <IcebreakerOcean position={[0, -20, centerZ]} />
       <IslandFloor position={[0, -20, centerZ]} />
       
-      {/* Text Details */}
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} 
-        position={[0, 60, centerZ - 500]} 
-        fontSize={25} 
+      {/* Text Details - Elevated High Above Island Campfire */}
+      <Text 
+        font="/fonts/Roboto.woff" 
+        fallbackFonts={[]} 
+        position={[0, 195, centerZ - 40]} 
+        fontSize={52} 
         color="#ffffff" 
-        outlineWidth={0.05} 
-        outlineColor="#00ffff" 
+        outlineWidth={1.5} 
+        outlineColor="#0077cc" 
+        anchorX="center"
+        anchorY="middle"
       >
         ICEBREAKER
       </Text>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} 
-        position={[0, 30, centerZ - 500]} 
-        fontSize={10} 
+      <Text 
+        font="/fonts/Roboto.woff" 
+        fallbackFonts={[]} 
+        position={[0, 155, centerZ - 40]} 
+        fontSize={20} 
         color="#00ffff" 
+        outlineWidth={1.0} 
+        outlineColor="#003366" 
+        anchorX="center"
+        anchorY="middle"
       >
         REAL CONTENT. REAL CONNECTIONS.
       </Text>
@@ -518,8 +659,8 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       {/* Central Holographic Fire / Nexus */}
       <DigitalFire position={[0, -20, centerZ]} />
       
-      {/* Holographic Logo Centerpiece */}
-      <HolographicLogo position={[0, 30, centerZ]} />
+      {/* Holographic Logo Centerpiece - Elevated Above Fire */}
+      <HolographicLogo position={[0, 130, centerZ]} />
       
       {/* Procedural Tropical Foliage */}
       <ProceduralPalmTrees radius={60} centerZ={centerZ} />
