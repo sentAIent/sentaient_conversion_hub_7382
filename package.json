@@ -101,12 +101,13 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build",
+    "build": "node ./scripts/netlify-build.js",
+    "build:vite": "NODE_OPTIONS=\"--max-old-space-size=8192\" vite build",
     "serve": "vite preview",
     "format:check": "prettier --check \"src/**/*.{js,jsx,css,md}\"",
     "format:fix": "prettier --write \"src/**/*.{js,jsx,css,md}\"",
     "lint": "eslint \"src/**/*.{js,jsx}\" --max-warnings 0",
-    "prepare": "husky install"
+    "prepare": "node -e \"if (!process.env.CI && !process.env.NETLIFY) { try { require('child_process').execSync('husky install'); } catch (e) {} }\""
   },
   "eslintConfig": {
     "extends": [
