@@ -1380,7 +1380,7 @@ const Scoreboard = () => {
 
       {/* Text on Main Screen */}
       <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 80, 15]} fontSize={isCelebration ? 64 : 70} color={isCelebration ? '#ffd700' : '#ffffff'} outlineWidth={0.02} outlineColor={isCelebration ? '#ff8800' : '#00ff00'} anchorX="center" anchorY="middle">
-        {isCelebration ? '★ ★ ★ TOUCHDOWN 49ERS! ★ ★ ★' : 'FANTASY QUANT'}
+        {isCelebration ? '*** TOUCHDOWN 49ERS! ***' : 'FANTASY QUANT'}
       </Text>
       <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 0, 15]} fontSize={35} color={isCelebration ? '#38bdf8' : '#00ffff'} outlineWidth={0.01} outlineColor="#0088ff" anchorX="center" anchorY="middle">
         {isCelebration ? 'MONTANA TO RICE: 42-YD TD PASS!' : 'PREDICTING: PLAY ACTION DEEP POST -> TOUCHDOWN'}
