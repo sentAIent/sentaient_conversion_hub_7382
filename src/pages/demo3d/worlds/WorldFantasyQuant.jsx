@@ -205,7 +205,7 @@ const createFootballFieldTexture = () => {
   const ctx = canvas.getContext('2d');
 
   // Fill outer perimeter sideline run-off turf
-  ctx.fillStyle = '#1e7e34';
+  ctx.fillStyle = '#14532d';
   ctx.fillRect(0, 0, 2048, 1024);
 
   const fieldX = 140;
@@ -220,13 +220,17 @@ const createFootballFieldTexture = () => {
   // Alternating 5-yard turf cut stripes (24 stripes total)
   const stripeW = fieldW / 24;
   for (let s = 0; s < 24; s++) {
-    ctx.fillStyle = s % 2 === 0 ? '#22c55e' : '#16a34a';
+    ctx.fillStyle = s % 2 === 0 ? '#1b803a' : '#14682e';
     ctx.fillRect(fieldX + s * stripeW, fieldY, stripeW, fieldH);
   }
 
-  // Endzones: Left Endzone in Deep Navy / Cyan
-  ctx.fillStyle = '#0369a1';
+  // Endzones: Left Endzone in 49ers Scarlet & Gold
+  ctx.fillStyle = '#991b1b';
   ctx.fillRect(fieldX, fieldY, zoneW, fieldH);
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(fieldX + 4, fieldY + 4, zoneW - 8, fieldH - 8);
+
   ctx.save();
   ctx.translate(fieldX + zoneW / 2, fieldY + fieldH / 2);
   ctx.rotate(-Math.PI / 2);
@@ -234,25 +238,38 @@ const createFootballFieldTexture = () => {
   ctx.font = 'bold 50px Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('FANTASY QUANT', 0, 0);
+  ctx.fillText('SAN FRANCISCO', 0, 0);
   ctx.restore();
 
-  // Endzones: Right Endzone in Emerald Green / Gold
-  ctx.fillStyle = '#059669';
+  // Endzones: Right Endzone in Championship Emerald & Gold
+  ctx.fillStyle = '#065f46';
   ctx.fillRect(fieldX + fieldW - zoneW, fieldY, zoneW, fieldH);
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(fieldX + fieldW - zoneW + 4, fieldY + 4, zoneW - 8, fieldH - 8);
+
   ctx.save();
   ctx.translate(fieldX + fieldW - zoneW / 2, fieldY + fieldH / 2);
   ctx.rotate(Math.PI / 2);
-  ctx.fillStyle = '#fde047';
-  ctx.font = 'bold 58px Arial, sans-serif';
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 56px Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('TOUCHDOWN', 0, 0);
   ctx.restore();
 
+  // Team coaching boxes on sidelines
+  ctx.fillStyle = '#166534';
+  ctx.fillRect(fieldX + zoneW, fieldY - 50, fieldW - 2 * zoneW, 40);
+  ctx.fillRect(fieldX + zoneW, fieldY + fieldH + 10, fieldW - 2 * zoneW, 40);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(fieldX + zoneW, fieldY - 50, fieldW - 2 * zoneW, 40);
+  ctx.strokeRect(fieldX + zoneW, fieldY + fieldH + 10, fieldW - 2 * zoneW, 40);
+
   // White boundary sideline & endline box
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 10;
+  ctx.lineWidth = 12;
   ctx.strokeRect(fieldX, fieldY, fieldW, fieldH);
 
   // Yard lines across the 100-yard playing field
@@ -271,7 +288,7 @@ const createFootballFieldTexture = () => {
     // 5-Yard intermediate chalk lines
     if (i < 10) {
       const midX = lineX + (fieldW - 2 * zoneW) / 20;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(midX, fieldY);
       ctx.lineTo(midX, fieldY + fieldH);
@@ -281,49 +298,70 @@ const createFootballFieldTexture = () => {
     // Yard Line Numbers
     const numText = yardNumbers[i];
     if (i > 0 && i < 10) {
-      ctx.font = 'bold 36px "Courier New", monospace';
+      ctx.font = 'bold 38px "Courier New", monospace';
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // Top numbers
+      // Top numbers with directional arrow
       ctx.save();
       ctx.translate(lineX, fieldY + 110);
       ctx.rotate(Math.PI);
       ctx.fillText(numText, 0, 0);
+      if (i !== 5) {
+        ctx.beginPath();
+        const arrowDir = i < 5 ? -1 : 1;
+        ctx.moveTo(arrowDir * 38, -10);
+        ctx.lineTo(arrowDir * 26, -18);
+        ctx.lineTo(arrowDir * 26, -2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+      }
       ctx.restore();
 
-      // Bottom numbers
+      // Bottom numbers with directional arrow
       ctx.fillText(numText, lineX, fieldY + fieldH - 110);
+      if (i !== 5) {
+        ctx.save();
+        ctx.translate(lineX, fieldY + fieldH - 110);
+        ctx.beginPath();
+        const arrowDir = i < 5 ? -1 : 1;
+        ctx.moveTo(arrowDir * 38, 0);
+        ctx.lineTo(arrowDir * 26, -8);
+        ctx.lineTo(arrowDir * 26, 8);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.restore();
+      }
     }
   }
 
   // Hash marks (every yard between 10-yard lines)
   ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
   const playW = fieldW - 2 * zoneW;
   for (let yd = 1; yd < 100; yd++) {
     if (yd % 5 === 0) continue;
     const hx = fieldX + zoneW + (yd * playW) / 100;
     
     ctx.beginPath();
-    ctx.moveTo(hx, fieldY + 5);
+    ctx.moveTo(hx, fieldY + 4);
     ctx.lineTo(hx, fieldY + 22);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(hx, fieldY + fieldH * 0.35 - 8);
-    ctx.lineTo(hx, fieldY + fieldH * 0.35 + 8);
+    ctx.moveTo(hx, fieldY + fieldH * 0.38 - 8);
+    ctx.lineTo(hx, fieldY + fieldH * 0.38 + 8);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(hx, fieldY + fieldH * 0.65 - 8);
-    ctx.lineTo(hx, fieldY + fieldH * 0.65 + 8);
+    ctx.moveTo(hx, fieldY + fieldH * 0.62 - 8);
+    ctx.lineTo(hx, fieldY + fieldH * 0.62 + 8);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(hx, fieldY + fieldH - 22);
-    ctx.lineTo(hx, fieldY + fieldH - 5);
+    ctx.lineTo(hx, fieldY + fieldH - 4);
     ctx.stroke();
   }
 
@@ -332,14 +370,19 @@ const createFootballFieldTexture = () => {
   const midY = fieldY + fieldH / 2;
   ctx.save();
   ctx.beginPath();
-  ctx.arc(midX, midY, 65, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(6, 20, 36, 0.75)';
+  ctx.arc(midX, midY, 68, 0, Math.PI * 2);
+  ctx.fillStyle = '#0f172a';
   ctx.fill();
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 6;
   ctx.stroke();
-  ctx.font = 'bold 36px Arial, sans-serif';
-  ctx.fillStyle = '#00ffff';
+  ctx.beginPath();
+  ctx.arc(midX, midY, 58, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.font = 'bold 42px Arial, sans-serif';
+  ctx.fillStyle = '#fbbf24';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('FQ', midX, midY);
@@ -347,6 +390,12 @@ const createFootballFieldTexture = () => {
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
   return tex;
 };
 
@@ -355,25 +404,27 @@ const FootballFieldSurface = () => {
   
   return (
     <group position={[0, -0.5, 0]}>
+      {/* Stadium-wide outer turf apron to fill gaps to the stands */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.3, 0]}>
+        <planeGeometry args={[1800, 1300]} />
+        <meshStandardMaterial color="#14532d" roughness={0.75} metalness={0.0} />
+      </mesh>
+
       {/* Solid Opaque Regulation Football Turf Plane */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[1100, 560]} />
         <meshStandardMaterial 
           map={fieldTex} 
-          roughness={0.45} 
-          metalness={0.08}
-          emissive="#166534"
-          emissiveMap={fieldTex}
-          emissiveIntensity={0.65}
+          roughness={0.65} 
+          metalness={0.0}
+          emissive="#0a3d1c"
+          emissiveIntensity={0.25}
           side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Quant Holographic Field Grid & Yard Highlights */}
-      <gridHelper args={[1100, 22, '#22c55e', '#15803d']} position={[0, 0.2, 0]} />
-
       {/* Turf Illumination Accent */}
-      <pointLight position={[0, 60, 0]} color="#22c55e" intensity={3.0} distance={1200} />
+      <pointLight position={[0, 80, 0]} color="#4ade80" intensity={4.0} distance={1500} />
 
       {/* Yellow Goal Posts (Uprights) at both ends */}
       {[-520, 520].map((gx, idx) => (
