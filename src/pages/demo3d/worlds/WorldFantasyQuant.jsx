@@ -198,266 +198,67 @@ const RealisticFootballPlayer = ({
   );
 };
 
-const createFootballFieldTexture = () => {
-  const canvas = document.createElement('canvas');
-  canvas.width = 2048;
-  canvas.height = 1024;
-  const ctx = canvas.getContext('2d');
-
-  // Fill outer perimeter sideline run-off turf
-  ctx.fillStyle = '#14532d';
-  ctx.fillRect(0, 0, 2048, 1024);
-
-  const fieldX = 140;
-  const fieldY = 120;
-  const fieldW = 1768;
-  const fieldH = 784;
-
-  // 12 equal sections: 10 yard increments (100 yds) + 2 endzones (10 yds each)
-  const numZones = 12;
-  const zoneW = fieldW / numZones;
-
-  // Alternating 5-yard turf cut stripes (24 stripes total)
-  const stripeW = fieldW / 24;
-  for (let s = 0; s < 24; s++) {
-    ctx.fillStyle = s % 2 === 0 ? '#1b803a' : '#14682e';
-    ctx.fillRect(fieldX + s * stripeW, fieldY, stripeW, fieldH);
-  }
-
-  // Endzones: Left Endzone in 49ers Scarlet & Gold
-  ctx.fillStyle = '#991b1b';
-  ctx.fillRect(fieldX, fieldY, zoneW, fieldH);
-  ctx.strokeStyle = '#fbbf24';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(fieldX + 4, fieldY + 4, zoneW - 8, fieldH - 8);
-
-  ctx.save();
-  ctx.translate(fieldX + zoneW / 2, fieldY + fieldH / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 50px Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('SAN FRANCISCO', 0, 0);
-  ctx.restore();
-
-  // Endzones: Right Endzone in Championship Emerald & Gold
-  ctx.fillStyle = '#065f46';
-  ctx.fillRect(fieldX + fieldW - zoneW, fieldY, zoneW, fieldH);
-  ctx.strokeStyle = '#fbbf24';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(fieldX + fieldW - zoneW + 4, fieldY + 4, zoneW - 8, fieldH - 8);
-
-  ctx.save();
-  ctx.translate(fieldX + fieldW - zoneW / 2, fieldY + fieldH / 2);
-  ctx.rotate(Math.PI / 2);
-  ctx.fillStyle = '#fbbf24';
-  ctx.font = 'bold 56px Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('TOUCHDOWN', 0, 0);
-  ctx.restore();
-
-  // Team coaching boxes on sidelines
-  ctx.fillStyle = '#166534';
-  ctx.fillRect(fieldX + zoneW, fieldY - 50, fieldW - 2 * zoneW, 40);
-  ctx.fillRect(fieldX + zoneW, fieldY + fieldH + 10, fieldW - 2 * zoneW, 40);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(fieldX + zoneW, fieldY - 50, fieldW - 2 * zoneW, 40);
-  ctx.strokeRect(fieldX + zoneW, fieldY + fieldH + 10, fieldW - 2 * zoneW, 40);
-
-  // White boundary sideline & endline box
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 12;
-  ctx.strokeRect(fieldX, fieldY, fieldW, fieldH);
-
-  // Yard lines across the 100-yard playing field
-  const yardNumbers = ['G', '10', '20', '30', '40', '50', '40', '30', '20', '10', 'G'];
-  for (let i = 0; i <= 10; i++) {
-    const lineX = fieldX + zoneW + (i * (fieldW - 2 * zoneW)) / 10;
-    
-    // Major 10-yard chalk line
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = i === 5 ? 8 : 6;
-    ctx.beginPath();
-    ctx.moveTo(lineX, fieldY);
-    ctx.lineTo(lineX, fieldY + fieldH);
-    ctx.stroke();
-
-    // 5-Yard intermediate chalk lines
-    if (i < 10) {
-      const midX = lineX + (fieldW - 2 * zoneW) / 20;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(midX, fieldY);
-      ctx.lineTo(midX, fieldY + fieldH);
-      ctx.stroke();
-    }
-
-    // Yard Line Numbers
-    const numText = yardNumbers[i];
-    if (i > 0 && i < 10) {
-      ctx.font = 'bold 38px "Courier New", monospace';
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-
-      // Top numbers with directional arrow
-      ctx.save();
-      ctx.translate(lineX, fieldY + 110);
-      ctx.rotate(Math.PI);
-      ctx.fillText(numText, 0, 0);
-      if (i !== 5) {
-        ctx.beginPath();
-        const arrowDir = i < 5 ? -1 : 1;
-        ctx.moveTo(arrowDir * 38, -10);
-        ctx.lineTo(arrowDir * 26, -18);
-        ctx.lineTo(arrowDir * 26, -2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // Bottom numbers with directional arrow
-      ctx.fillText(numText, lineX, fieldY + fieldH - 110);
-      if (i !== 5) {
-        ctx.save();
-        ctx.translate(lineX, fieldY + fieldH - 110);
-        ctx.beginPath();
-        const arrowDir = i < 5 ? -1 : 1;
-        ctx.moveTo(arrowDir * 38, 0);
-        ctx.lineTo(arrowDir * 26, -8);
-        ctx.lineTo(arrowDir * 26, 8);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-  }
-
-  // Hash marks (every yard between 10-yard lines)
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-  const playW = fieldW - 2 * zoneW;
-  for (let yd = 1; yd < 100; yd++) {
-    if (yd % 5 === 0) continue;
-    const hx = fieldX + zoneW + (yd * playW) / 100;
-    
-    ctx.beginPath();
-    ctx.moveTo(hx, fieldY + 4);
-    ctx.lineTo(hx, fieldY + 22);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(hx, fieldY + fieldH * 0.38 - 8);
-    ctx.lineTo(hx, fieldY + fieldH * 0.38 + 8);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(hx, fieldY + fieldH * 0.62 - 8);
-    ctx.lineTo(hx, fieldY + fieldH * 0.62 + 8);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(hx, fieldY + fieldH - 22);
-    ctx.lineTo(hx, fieldY + fieldH - 4);
-    ctx.stroke();
-  }
-
-  // 50-Yard Center Logo Shield
-  const midX = fieldX + fieldW / 2;
-  const midY = fieldY + fieldH / 2;
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(midX, midY, 68, 0, Math.PI * 2);
-  ctx.fillStyle = '#0f172a';
-  ctx.fill();
-  ctx.strokeStyle = '#fbbf24';
-  ctx.lineWidth = 6;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(midX, midY, 58, 0, Math.PI * 2);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.font = 'bold 42px Arial, sans-serif';
-  ctx.fillStyle = '#fbbf24';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('FQ', midX, midY);
-  ctx.restore();
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.wrapS = THREE.ClampToEdgeWrapping;
-  tex.wrapT = THREE.ClampToEdgeWrapping;
-  tex.generateMipmaps = true;
-  tex.minFilter = THREE.LinearMipmapLinearFilter;
-  tex.magFilter = THREE.LinearFilter;
-  tex.needsUpdate = true;
-  return tex;
-};
-
 const FootballFieldSurface = () => {
-  const fieldTex = useMemo(() => createFootballFieldTexture(), []);
+  const fieldTex = useLoader(THREE.TextureLoader, '/nfl_football_field.png');
+  fieldTex.colorSpace = THREE.SRGBColorSpace;
+  fieldTex.anisotropy = 16;
   
   return (
     <group position={[0, -0.5, 0]}>
-      {/* Stadium-wide outer turf apron to fill gaps to the stands */}
+      {/* Stadium-wide outer perimeter turf apron to fill gaps to the stands */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.3, 0]}>
-        <planeGeometry args={[1800, 1300]} />
-        <meshStandardMaterial color="#14532d" roughness={0.75} metalness={0.0} />
+        <planeGeometry args={[2400, 1800]} />
+        <meshStandardMaterial color="#144d24" roughness={0.85} metalness={0.0} />
       </mesh>
 
-      {/* Solid Opaque Regulation Football Turf Plane */}
+      {/* Authentic Regulation NFL Football Turf Plane (140 yds x 69.33 yds matching the 4096x2048 texture) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-        <planeGeometry args={[1100, 560]} />
+        <planeGeometry args={[1166.67, 577.75]} />
         <meshStandardMaterial 
           map={fieldTex} 
           roughness={0.65} 
           metalness={0.0}
-          emissive="#0a3d1c"
-          emissiveIntensity={0.25}
+          emissive="#062810"
+          emissiveIntensity={0.2}
           side={THREE.DoubleSide}
         />
       </mesh>
 
       {/* Turf Illumination Accent */}
-      <pointLight position={[0, 80, 0]} color="#4ade80" intensity={4.0} distance={1500} />
+      <pointLight position={[0, 90, 0]} color="#4ade80" intensity={4.5} distance={1600} />
 
-      {/* Yellow Goal Posts (Uprights) at both ends */}
-      {[-520, 520].map((gx, idx) => (
+      {/* Yellow Goal Posts (Uprights) at both back endzones (x = -500 and +500) */}
+      {[-500, 500].map((gx, idx) => (
         <group key={idx} position={[gx, 0, 0]} rotation={[0, idx === 0 ? Math.PI / 2 : -Math.PI / 2, 0]}>
-          <mesh position={[0, 30, 0]}>
-            <cylinderGeometry args={[2.2, 2.2, 60, 16]} />
+          <mesh position={[0, 25, 0]}>
+            <cylinderGeometry args={[2.2, 2.2, 50, 16]} />
             <meshStandardMaterial color="#fbbf24" metalness={0.85} roughness={0.2} />
           </mesh>
-          <mesh position={[0, 60, 0]} rotation={[0, 0, Math.PI / 2]}>
+          <mesh position={[0, 50, 0]} rotation={[0, 0, Math.PI / 2]}>
             <cylinderGeometry args={[2, 2, 55, 16]} />
             <meshStandardMaterial color="#fbbf24" metalness={0.85} roughness={0.2} />
           </mesh>
           <mesh position={[-26, 95, 0]}>
-            <cylinderGeometry args={[1.8, 1.8, 70, 16]} />
+            <cylinderGeometry args={[1.8, 1.8, 90, 16]} />
             <meshStandardMaterial color="#fbbf24" metalness={0.85} roughness={0.2} />
           </mesh>
           <mesh position={[26, 95, 0]}>
-            <cylinderGeometry args={[1.8, 1.8, 70, 16]} />
+            <cylinderGeometry args={[1.8, 1.8, 90, 16]} />
             <meshStandardMaterial color="#fbbf24" metalness={0.85} roughness={0.2} />
           </mesh>
         </group>
       ))}
 
-      {/* Orange Pylons at Endzone Corners */}
-      {[-500, -410, 410, 500].map((px, idx) => (
+      {/* Orange Pylons at Endzone Corners (x = -500, -416.7, 416.7, 500, z = +-222.2) */}
+      {[-500, -416.7, 416.7, 500].map((px, idx) => (
         <React.Fragment key={idx}>
-          <mesh position={[px, 4, 180]}>
-            <boxGeometry args={[3, 8, 3]} />
-            <meshStandardMaterial color="#ff5500" roughness={0.3} />
+          <mesh position={[px, 4, 222.2]}>
+            <boxGeometry args={[3.2, 8, 3.2]} />
+            <meshStandardMaterial color="#ff5500" roughness={0.3} emissive="#ff4400" emissiveIntensity={0.3} />
           </mesh>
-          <mesh position={[px, 4, -180]}>
-            <boxGeometry args={[3, 8, 3]} />
-            <meshStandardMaterial color="#ff5500" roughness={0.3} />
+          <mesh position={[px, 4, -222.2]}>
+            <boxGeometry args={[3.2, 8, 3.2]} />
+            <meshStandardMaterial color="#ff5500" roughness={0.3} emissive="#ff4400" emissiveIntensity={0.3} />
           </mesh>
         </React.Fragment>
       ))}
@@ -502,19 +303,19 @@ const BroadcastFieldGraphics = () => {
     <group position={[0, 0.15, 0]}>
       {/* Blue Line of Scrimmage at x = -30 */}
       <mesh position={[-30, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[3.2, 480]} />
+        <planeGeometry args={[3.2, 444.4]} />
         <meshBasicMaterial color="#00a8ff" transparent opacity={0.75} />
       </mesh>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[-30, 0.4, 215]} rotation={[-Math.PI / 2, 0, -Math.PI / 2]} fontSize={13} color="#00a8ff" anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[-30, 0.4, 210]} rotation={[-Math.PI / 2, 0, -Math.PI / 2]} fontSize={13} color="#00a8ff" anchorX="center" anchorY="middle">
         LINE OF SCRIMMAGE
       </Text>
 
       {/* Yellow 1st Down Line to Gain at x = 220 */}
       <mesh position={[220, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[3.6, 480]} />
+        <planeGeometry args={[3.6, 444.4]} />
         <meshBasicMaterial color="#ffd700" transparent opacity={0.88} />
       </mesh>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[220, 0.4, 215]} rotation={[-Math.PI / 2, 0, -Math.PI / 2]} fontSize={13} color="#ffd700" anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[220, 0.4, 210]} rotation={[-Math.PI / 2, 0, -Math.PI / 2]} fontSize={13} color="#ffd700" anchorX="center" anchorY="middle">
         1ST & 10 (LINE TO GAIN)
       </Text>
     </group>
@@ -1675,12 +1476,14 @@ const StadiumGeometry = () => {
     const tempObj = new THREE.Object3D();
     const tempColor = new THREE.Color();
 
+    // Fans wearing mostly 49ers Red and Gold shirts, sweaters, and tops (Sea of Red & Gold)
     const authenticApparel = [
-      '#00d4ff', '#0284c7', '#38bdf8', '#0369a1', // Electric Cyan & Pacific Blue (Montana/Rice home jerseys)
-      '#dc2626', '#b91c1c', '#ef4444',             // 49ers Scarlet / Crimson Red
-      '#f8fafc', '#e2e8f0', '#ffffff',             // White jerseys & rally gear
-      '#f59e0b', '#fbbf24',                         // Gold championship accents
-      '#0f172a', '#1e293b', '#334155', '#475569'  // Charcoal & Navy stadium jackets
+      '#b91c1c', '#dc2626', '#991b1b', '#ef4444', '#7f1d1d', // 49ers Scarlet & Crimson red tops
+      '#dc2626', '#b91c1c', '#991b1b', '#881337', '#be123c', // Rich red jerseys & sweaters
+      '#fbbf24', '#f59e0b', '#d97706', '#fcd34d',             // Bright 49ers Gold tops & hoodies
+      '#f59e0b', '#fbbf24', '#eab308',                         // Championship gold sweaters
+      '#ffffff', '#f8fafc',                                     // White rally shirts
+      '#1e293b'                                                 // Occasional dark stadium jacket
     ];
 
     const fanDataArray = new Float32Array(fanCount * 4);
