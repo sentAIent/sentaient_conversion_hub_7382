@@ -35,6 +35,13 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
   }
   clearActiveWorldPause();
   
+  // When warping away from or to Icebreaker, reset ice cave so it is frozen solid before entering
+  window.icebreakerThaw = 0.0;
+  window._icebreakerMeltState = 'idle';
+  window._icebreakerCam = null;
+  window._icebreakerLockCamera = false;
+  window.icebreakerThawLocked = false;
+  
   window._cancelWarp = false;
   window._isTransitActive = true;
   window._isProgrammaticScroll = true;

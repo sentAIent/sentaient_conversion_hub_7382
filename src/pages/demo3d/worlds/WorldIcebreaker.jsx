@@ -498,11 +498,27 @@ export const unlockIcebreakerInput = () => {
 };
 
 export const runIcebreakerMelt = (onComplete) => {
+  if (window._icebreakerMeltState === 'running' || window._icebreakerMeltState === 'completed') {
+    if (typeof onComplete === 'function') onComplete();
+    return;
+  }
   if (window._isWorldActionActive) return;
+
+  window._icebreakerMeltState = 'running';
   window._isWorldActionActive = true;
   window.icebreakerThawLocked = true;
   window._icebreakerLockCamera = true;
   window.icebreakerThaw = 0;
+
+  // Initialize camera at wide cavern entrance view
+  window._icebreakerCam = {
+    active: true,
+    x: 0,
+    y: -3980,
+    z: -1680,
+    rx: 0,
+    ry: 0
+  };
 
   lockIcebreakerInput();
 
@@ -513,13 +529,19 @@ export const runIcebreakerMelt = (onComplete) => {
     }
   }
 
-  // Phase 1: Camera stops in center where we see the ice cave for a few seconds (2.8s)
-  // Phase 2: Melts smoothly without needing to move the mouse (4.0s)
-  const PAUSE_MS = 2800;
-  const MELT_MS = 4000;
+  // Phase 1: Camera stops in center where we see the ice cave for 2.0s
+  // Phase 2: Melts smoothly without needing to move the mouse (3.2s)
+  // Phase 3: Automatic smooth camera zoom-in toward the dancing people on the island (2.6s)
+  const PAUSE_MS = 2000;
+  const MELT_MS = 3200;
+  const ZOOM_MS = 2600;
   const start = performance.now();
 
+  const easeOutCubic = (t) => 1.0 - Math.pow(1.0 - t, 3);
+  const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1.0 - Math.pow(-2 * t + 2, 3) / 2);
+
   const step = (now) => {
+    if (window._icebreakerMeltState !== 'running') return;
     const elapsed = now - start;
 
     if (window._scrollEl) {
@@ -530,26 +552,51 @@ export const runIcebreakerMelt = (onComplete) => {
     }
 
     if (elapsed < PAUSE_MS) {
-      // Frozen cave hold at focal point
+      // Phase 1: Frozen cave hold at entrance focal point
       window.icebreakerThaw = 0.0;
+      window._icebreakerCam = { active: true, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 };
       requestAnimationFrame(step);
-    } else {
-      // Melting progression
+    } else if (elapsed < PAUSE_MS + MELT_MS) {
+      // Phase 2: Melting progression
       const meltElapsed = elapsed - PAUSE_MS;
       const prog = Math.min(1.0, meltElapsed / MELT_MS);
-      // Smooth cubic ease out
-      window.icebreakerThaw = 1.0 - Math.pow(1.0 - prog, 3);
+      window.icebreakerThaw = easeOutCubic(prog);
+      window._icebreakerCam = { active: true, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 };
+      requestAnimationFrame(step);
+    } else if (elapsed < PAUSE_MS + MELT_MS + ZOOM_MS) {
+      // Phase 3: Automatic smooth camera zoom-in toward campfire and dancing people
+      window.icebreakerThaw = 1.0;
+      const zoomElapsed = elapsed - PAUSE_MS - MELT_MS;
+      const prog = Math.min(1.0, zoomElapsed / ZOOM_MS);
+      const easedZoom = easeInOutCubic(prog);
 
-      if (prog < 1.0) {
-        requestAnimationFrame(step);
-      } else {
-        window.icebreakerThaw = 1.0;
-        window.icebreakerThawLocked = false;
-        window._icebreakerLockCamera = false;
-        window._isWorldActionActive = false;
-        unlockIcebreakerInput();
-        if (typeof onComplete === 'function') onComplete();
-      }
+      // Glide from entrance [0, -3980, -1680] to island people [0, -4000, -2060]
+      window._icebreakerCam = {
+        active: true,
+        x: 0,
+        y: -3980 + (-4000 - -3980) * easedZoom,
+        z: -1680 + (-2060 - -1680) * easedZoom,
+        rx: 0 + (-0.06 - 0) * easedZoom,
+        ry: 0
+      };
+      requestAnimationFrame(step);
+    } else {
+      // Phase 4: Completed - keep fully thawed and zoomed in on people
+      window.icebreakerThaw = 1.0;
+      window._icebreakerCam = {
+        active: true,
+        x: 0,
+        y: -4000,
+        z: -2060,
+        rx: -0.06,
+        ry: 0
+      };
+      window._icebreakerMeltState = 'completed';
+      window.icebreakerThawLocked = false;
+      window._icebreakerLockCamera = false;
+      window._isWorldActionActive = false;
+      unlockIcebreakerInput();
+      if (typeof onComplete === 'function') onComplete();
     }
   };
   requestAnimationFrame(step);
@@ -560,23 +607,18 @@ if (typeof window !== 'undefined') {
 
 const IcebreakerController = () => {
   const scroll = useScroll();
-  const stateRef = useRef({
-    triggered: false
-  });
 
   useEffect(() => {
-    window.icebreakerThaw = window.icebreakerThaw || 0;
-    window.icebreakerThawLocked = false;
-    window._icebreakerLockCamera = false;
+    if (!window._icebreakerMeltState) {
+      window._icebreakerMeltState = 'idle';
+      window.icebreakerThaw = 0;
+    }
     if (scroll?.el) {
       window._scrollEl = scroll.el;
     }
 
     return () => {
       unlockIcebreakerInput();
-      window.icebreakerThawLocked = false;
-      window._icebreakerLockCamera = false;
-      window._isWorldActionActive = false;
     };
   }, [scroll]);
 
@@ -589,21 +631,43 @@ const IcebreakerController = () => {
       ? window._warpProgress 
       : scroll.offset;
 
-    // Reset when far out of Icebreaker
-    if ((p < 0.08 || p > 0.17) && (stateRef.current.triggered || window.icebreakerThaw > 0)) {
-      stateRef.current.triggered = false;
-      window.icebreakerThaw = 0;
-      window.icebreakerThawLocked = false;
-      window._icebreakerLockCamera = false;
-      window._isWorldActionActive = false;
-      unlockIcebreakerInput();
-      if (scroll?.el) scroll.el.style.overflow = 'auto';
+    // Exit & re-freeze: as soon as user leaves the Icebreaker cavern
+    // (p < 0.098 enters plunge tunnel; p > 0.148 enters sound wormhole)
+    if (p < 0.098 || p > 0.148) {
+      if (window._icebreakerMeltState !== 'idle' || window.icebreakerThaw > 0 || window._icebreakerCam) {
+        window._icebreakerMeltState = 'idle';
+        window.icebreakerThaw = 0.0;
+        window.icebreakerThawLocked = false;
+        window._icebreakerLockCamera = false;
+        window._isWorldActionActive = false;
+        if (window._icebreakerCam) {
+          window._icebreakerCam.active = false;
+          window._icebreakerCam = null;
+        }
+        unlockIcebreakerInput();
+        if (scroll?.el) scroll.el.style.overflow = 'auto';
+      }
+    }
+
+    // While completed, maintain thawed state and seamlessly hand camera back when scrolling away
+    if (window._icebreakerMeltState === 'completed') {
+      window.icebreakerThaw = 1.0;
+      if (window._icebreakerCam) {
+        if (p < 0.118 || p > 0.144) {
+          window._icebreakerCam.active = false;
+        } else {
+          window._icebreakerCam.active = true;
+        }
+      }
     }
 
     // Trigger when user scrolls into Icebreaker pause zone (p between 0.118 and 0.145)
-    if (p >= 0.118 && p <= 0.145 && !stateRef.current.triggered && !window._isWorldActionActive && !window._isTransitActive) {
-      stateRef.current.triggered = true;
-      runIcebreakerMelt();
+    if (p >= 0.118 && p <= 0.145) {
+      if (!window._icebreakerMeltState || window._icebreakerMeltState === 'idle') {
+        if (!window._isWorldActionActive && !window._isTransitActive) {
+          runIcebreakerMelt();
+        }
+      }
     }
   });
 

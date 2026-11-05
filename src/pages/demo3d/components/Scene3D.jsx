@@ -78,10 +78,10 @@ const WORLD_CONFIG = {
     tags: ['Order Book Micro', 'Volatility Trading', 'Macro Liquidity']
   },
   'Sentaient': {
-    category: 'AUTONOMOUS AI VENTURE STUDIO & REVENUE ENGINES',
+    category: 'AUTONOMOUS AI VENTURE STUDIO & MULTI-INDUSTRY LAB',
     index: '09 / 16',
     posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
-    tags: ['Autonomous AI Engines', 'Proprietary AI IP', 'Revenue Automation', 'Enterprise AI Swarms']
+    tags: ['Multi-Industry AI', 'FinTech & Quant', 'LegalTech Defense', 'BioTech & Wellness', 'Autonomous CTO']
   },
   'Elevate': {
     category: 'BIG-MOUNTAIN SNOWBOARD GAME & ALPINE HUB',

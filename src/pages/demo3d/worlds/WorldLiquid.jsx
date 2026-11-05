@@ -12,7 +12,7 @@ export default function WorldLiquid({ position, visible }) {
   const coreRef = useRef();
 
   // Load official Liquid logo
-  const logoTex = useLoader(THREE.TextureLoader, '/liquid_logo_final.png');
+  const logoTex = useLoader(THREE.TextureLoader, '/liquid_logo_bold_v7.png');
   logoTex.colorSpace = THREE.SRGBColorSpace;
 
   const coinCount = 1800;

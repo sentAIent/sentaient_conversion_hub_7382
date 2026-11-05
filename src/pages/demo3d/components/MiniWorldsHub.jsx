@@ -1,26 +1,60 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useScroll, Html, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import ToroidalSentaientCore from './ToroidalSentaientCore';
 
 const LogoMesh = ({ url, scaleX, scaleY }) => {
   const texture = useTexture(url);
   return (
     <mesh scale={[70 * scaleX, 70 * scaleY, 1]} position={[0, 0, 0]}>
       <planeGeometry args={[1, 1]} />
-      <meshBasicMaterial map={texture} transparent={false} alphaTest={0.5} depthWrite side={THREE.DoubleSide} toneMapped={false} />
+      <meshBasicMaterial map={texture} transparent={true} alphaTest={0.05} depthWrite={false} side={THREE.DoubleSide} toneMapped={false} />
     </mesh>
   );
 };
 
-const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0 }) => {
+let _sharedGlowTex = null;
+const getHolographicGlowTexture = () => {
+  if (_sharedGlowTex) return _sharedGlowTex;
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+  grad.addColorStop(0.25, 'rgba(255, 255, 255, 0.95)');
+  grad.addColorStop(0.50, 'rgba(255, 255, 255, 0.60)');
+  grad.addColorStop(0.75, 'rgba(255, 255, 255, 0.22)');
+  grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 128, 128);
+  _sharedGlowTex = new THREE.CanvasTexture(canvas);
+  return _sharedGlowTex;
+};
+
+const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0 }) => {
   const meshRef = useRef();
+  const glowGroupRef = useRef();
   const containerRef = useRef();
   const isHovered = hoveredWorld === name;
   const isDimmed = hoveredWorld !== null && !isHovered;
-  const len = Math.hypot(position[0], position[1]) || 1;
-  const inwardX = -position[0] / len;
-  const inwardY = -position[1] / len;
+  
+  // Position card popup off to the side (outside the ring, never on top of the logos)
+  const isRightSide = position[0] >= 0;
+  const sideSign = isRightSide ? 1 : -1;
+  const cardOffsetX = sideSign * (130 + 55 * itemScale + 25);
+  // Strictly clamp Y so cards at the top and bottom never render off-screen or behind the header
+  const targetCardY = Math.max(safeMinCardY, Math.min(safeMaxCardY, position[1]));
+  const cardOffsetY = targetCardY - position[1];
+
+  const glowTexture = useMemo(() => getHolographicGlowTexture(), []);
+  const scaleX = Array.isArray(logoScale) ? logoScale[0] : (typeof logoScale === 'number' ? logoScale : 1.0);
+  const scaleY = Array.isArray(logoScale) ? logoScale[1] : 1.0;
+  const baseDim = 74 * itemScale;
+  const glowW = Math.max(baseDim, baseDim * scaleX);
+  const glowH = Math.max(baseDim, baseDim * scaleY);
 
   React.useLayoutEffect(() => {
     if (containerRef.current) {
@@ -28,7 +62,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
       while (el && el !== document.body) {
         if (el.classList && el.classList.contains('mini-world-wrapper')) {
           el.style.setProperty('z-index', isHovered ? '99999999' : '50', 'important');
-          el.style.setProperty('pointer-events', 'none', 'important');
+          el.style.setProperty('pointer-events', isHovered ? 'auto' : 'none', 'important');
           break;
         }
         el = el.parentElement;
@@ -44,6 +78,12 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
       
       const targetScale = isHovered ? 1.5 : 1.0;
       meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+
+      // Keep camera-facing holographic glow aura locked in vertical bobbing & hover scale
+      if (glowGroupRef.current) {
+        glowGroupRef.current.position.y = meshRef.current.position.y;
+        glowGroupRef.current.scale.copy(meshRef.current.scale);
+      }
     }
   });
 
@@ -79,25 +119,55 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
     return <group scale={3.0 * itemScale}>{getPrimitiveLogo(name, color, isHovered)}</group>;
   };
 
-  // Calculate a perfectly complimentary color for the circular base
-  const compColor = React.useMemo(() => {
-    if (ringColor) return new THREE.Color(ringColor);
-    const c = new THREE.Color(color);
-    const hsl = {};
-    c.getHSL(hsl);
-    // Shift hue by 180 degrees (0.5), boost saturation slightly, and ensure it stays bright/appealing
-    return new THREE.Color().setHSL((hsl.h + 0.5) % 1.0, Math.min(1.0, hsl.s * 1.2), Math.max(0.5, hsl.l));
-  }, [color, ringColor]);
-
   return (
     <group position={position}>
+      {/* Camera-Facing Pronounced Holographic Glow Aura (Remains behind logo throughout 360° spin) */}
+      <group ref={glowGroupRef} position={[0, 0, -4]}>
+        {glowTexture && (
+          <>
+            {/* Layer 1: High-Intensity Luminous Core Backlight */}
+            <mesh scale={[glowW * 1.45, glowH * 1.45, 1]}>
+              <planeGeometry args={[1, 1]} />
+              <meshBasicMaterial
+                map={glowTexture}
+                color="#ffffff"
+                transparent
+                opacity={(name === 'Liquid' ? 0.0 : 1.0) * (isHovered ? 0.95 : (isDimmed ? 0.35 : 0.65)) * glowMultiplier}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+
+            {/* Layer 2: Vibrant Brand-Color Holographic Aura */}
+            <mesh scale={[glowW * 2.1, glowH * 2.1, 1]}>
+              <planeGeometry args={[1, 1]} />
+              <meshBasicMaterial
+                map={glowTexture}
+                color={color}
+                transparent
+                opacity={(isHovered ? 1.0 : (isDimmed ? 0.45 : 0.88)) * glowMultiplier}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+
+            {/* Layer 3: Expansive Atmospheric Deep Bloom */}
+            <mesh scale={[glowW * 3.1, glowH * 3.1, 1]}>
+              <planeGeometry args={[1, 1]} />
+              <meshBasicMaterial
+                map={glowTexture}
+                color={color}
+                transparent
+                opacity={(isHovered ? 0.65 : (isDimmed ? 0.20 : 0.42)) * glowMultiplier}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+          </>
+        )}
+      </group>
+
       <group ref={meshRef} onClick={handleClick}>
-        {/* Wormhole Base / Portal */}
-        <mesh position={[0, -35 * itemScale, 0]} rotation={[-Math.PI/2, 0, 0]} scale={itemScale} onClick={handleClick}>
-          <ringGeometry args={[20, 35, 32]} />
-          <meshBasicMaterial color={compColor} side={THREE.DoubleSide} />
-        </mesh>
-        
         {/* Holographic Mini World Preview Diorama */}
         <group
           onPointerOver={(e) => { e.stopPropagation(); onHoverStart(); document.body.style.cursor = 'pointer'; }}
@@ -114,50 +184,11 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
         </group>
       </group>
       
-      {/* Label */}
-      <Html 
-        position={[0, -50 * itemScale, 0]} 
-        center 
-        zIndexRange={[50, 50]}
-        wrapperClass="mini-world-label"
-      >
-        <div 
-          onPointerEnter={(e) => { e.stopPropagation(); onHoverStart(); document.body.style.cursor = 'pointer'; }}
-          onPointerLeave={(e) => { e.stopPropagation(); onHoverEnd(); document.body.style.cursor = 'auto'; }}
-          onClick={handleClick}
-          style={{
-            cursor: 'pointer',
-            userSelect: 'none',
-            opacity: isHovered ? 0.35 : (isDimmed ? 0.25 : 1),
-            transition: 'opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            whiteSpace: 'nowrap',
-            pointerEvents: 'auto'
-          }}
-        >
-          <div style={{
-            color: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.75)',
-            fontFamily: "'Space Grotesk', 'Inter', -apple-system, sans-serif",
-            fontSize: '14px',
-            fontWeight: '800',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            textShadow: isHovered 
-              ? `0 0 16px ${color}, 0 2px 10px rgba(0,0,0,0.9)` 
-              : '0px 2px 10px rgba(0,0,0,0.8)',
-            textAlign: 'center',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            transform: isHovered ? 'scale(1.08)' : 'scale(1)'
-          }}>
-            {name}
-          </div>
-        </div>
-      </Html>
 
-      {/* Inward Radial Popup Card */}
+      {/* Lateral Outer Popup Card (Off to the side, outside the ring, never on top of logos) */}
       {description && isHovered && (
         <Html 
-          position={[inwardX * 105, inwardY * 105, 40]} 
+          position={[cardOffsetX, cardOffsetY, 40]} 
           center 
           zIndexRange={[99999999, 99999999]}
           wrapperClass="mini-world-wrapper hovered-world"
@@ -165,6 +196,8 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
           <div 
             ref={containerRef}
             className="mini-world-card"
+            onMouseEnter={(e) => { e.stopPropagation(); onHoverStart(); document.body.style.cursor = 'pointer'; }}
+            onMouseLeave={(e) => { e.stopPropagation(); onHoverEnd(); document.body.style.cursor = 'auto'; }}
             onPointerEnter={(e) => { e.stopPropagation(); onHoverStart(); document.body.style.cursor = 'pointer'; }}
             onPointerLeave={(e) => { e.stopPropagation(); onHoverEnd(); document.body.style.cursor = 'auto'; }}
             onClick={handleClick}
@@ -179,16 +212,31 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               boxShadow: `0 16px 45px rgba(0, 0, 0, 0.95), 0 0 30px ${color}44`,
               cursor: 'pointer',
               userSelect: 'none',
-              textAlign: 'center',
+              textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               gap: '6px',
               animation: 'popupFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
               zIndex: 99999999,
               pointerEvents: 'auto',
               position: 'relative'
             }}>
+            {/* Seamless hover bridge so mouse never loses focus when moving between logo and card */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '-25px',
+                bottom: '-25px',
+                left: isRightSide ? '-60px' : 'auto',
+                right: !isRightSide ? '-60px' : 'auto',
+                width: '65px',
+                pointerEvents: 'auto',
+                background: 'transparent'
+              }}
+              onMouseEnter={(e) => { e.stopPropagation(); onHoverStart(); }}
+              onPointerEnter={(e) => { e.stopPropagation(); onHoverStart(); }}
+            />
               <div style={{
                 fontSize: '11px',
                 fontWeight: 800,
@@ -226,21 +274,30 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               }}>
                 {description}
               </div>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                fontSize: '10px',
-                fontWeight: 800,
-                letterSpacing: '0.1em',
-                color: color,
-                textTransform: 'uppercase',
-                textShadow: `0 0 10px ${color}aa`,
-                marginTop: '4px',
-                pointerEvents: 'none'
-              }}>
+              <div 
+                onClick={(e) => { e.stopPropagation(); handleClick(e); }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  letterSpacing: '0.1em',
+                  color: color,
+                  textTransform: 'uppercase',
+                  textShadow: `0 0 10px ${color}aa`,
+                  marginTop: '8px',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  background: `${color}18`,
+                  border: `1px solid ${color}66`,
+                  cursor: 'pointer',
+                  pointerEvents: 'auto',
+                  transition: 'all 0.18s ease'
+                }}
+              >
                 <span>ENTER WORLD</span>
-                <span style={{ fontSize: '11px' }}>→</span>
+                <span style={{ fontSize: '12px' }}>→</span>
               </div>
           </div>
         </Html>
@@ -289,12 +346,12 @@ export const getPrimitiveLogo = (name, color, hovered) => {
     case 'Liquid': return <group scale={0.9} rotation={[0.6, 0.3, 0]}><mesh><sphereGeometry args={[15, 32, 32]} />{outerMatHighContrast}</mesh><mesh scale={0.7}><sphereGeometry args={[15, 16, 16]} />{innerMatHighContrast}</mesh></group>;
     case 'LightSpeed': return <group scale={0.7} rotation={[0.8, 0.5, 0]}><mesh rotation={[Math.PI/2, 0, 0]}><cylinderGeometry args={[15, 15, 40, 16]} />{outerMat}</mesh><mesh><octahedronGeometry args={[5]} />{innerMat}</mesh></group>;
     
-    case 'MindWave': return <group scale={0.8} rotation={[0.8, 0.4, 0]}><mesh><icosahedronGeometry args={[20, 1]} />{outerMat}</mesh><mesh scale={0.6}><icosahedronGeometry args={[20, 1]} />{innerMat}</mesh></group>;
+    case 'MindWave': return <group scale={0.96} rotation={[0.8, 0.4, 0]}><mesh><icosahedronGeometry args={[20, 1]} />{outerMat}</mesh><mesh scale={0.6}><icosahedronGeometry args={[20, 1]} />{innerMat}</mesh></group>;
     case 'Icebreaker': return <group scale={0.7} rotation={[0.8, 0.5, 0]}><mesh><dodecahedronGeometry args={[18, 0]} />{outerMat}</mesh><mesh scale={0.6}><octahedronGeometry args={[18]} />{innerMat}</mesh></group>;
     case 'Interstellar': return <group scale={0.5} rotation={[0.8, 0.6, 0]}><mesh><torusKnotGeometry args={[15, 5, 100, 16]} />{outerMat}</mesh></group>;
     case 'Legal Eagle': return <group scale={0.8} rotation={[0.8, 0.5, 0]}><mesh><boxGeometry args={[20, 30, 20]} />{outerMat}</mesh><mesh scale={0.6}><boxGeometry args={[20, 30, 20]} />{innerMat}</mesh></group>;
     case 'Autopilot': return <group scale={0.6} rotation={[0.8, 0.4, 0]}><mesh rotation={[Math.PI/2, 0, 0]}><coneGeometry args={[15, 40, 3]} />{outerMat}</mesh><mesh rotation={[Math.PI/2, 0, 0]} position={[0, -10, 0]}><sphereGeometry args={[8, 16, 16]} />{innerMat}</mesh></group>;
-    case 'CloveH2O': return <group scale={0.8} rotation={[0.8, 0.4, 0]}><mesh><sphereGeometry args={[20, 16, 16]} />{outerMat}</mesh><mesh><sphereGeometry args={[10, 16, 16]} />{innerMat}</mesh></group>;
+    case 'CloveH2O': return <group scale={0.96} rotation={[0.8, 0.4, 0]}><mesh><sphereGeometry args={[20, 16, 16]} />{outerMat}</mesh><mesh><sphereGeometry args={[10, 16, 16]} />{innerMat}</mesh></group>;
     case 'FantasyQuant': return <group scale={0.8} rotation={[0.8, 0.5, 0]}><mesh rotation={[Math.PI/4, 0, 0]}><cylinderGeometry args={[10, 10, 40, 16]} />{outerMatHighContrast}</mesh><mesh><sphereGeometry args={[6, 16, 16]} />{innerMatHighContrast}</mesh></group>;
     case 'Contango': return <group scale={0.8} rotation={[0.8, 0.5, 0]}><mesh><dodecahedronGeometry args={[20, 0]} />{outerMat}</mesh><mesh scale={0.6}><dodecahedronGeometry args={[20, 0]} />{innerMat}</mesh></group>;
     case 'Sentaient': return <group scale={0.6} rotation={[0.8, 0.4, 0]}><mesh><torusGeometry args={[20, 5, 16, 32]} />{outerMat}</mesh><mesh><sphereGeometry args={[10, 16, 16]} />{innerMat}</mesh></group>;
@@ -304,9 +361,9 @@ export const getPrimitiveLogo = (name, color, hovered) => {
 };
 
 export const WORLDS_DATA = [
-  { name: 'Sentaient', startP: 0.485, p: 0.50, endP: 0.51, color: '#60A9FF', ringColor: '#FF8800', logoUrl: '/sentaient_logo_final.png', logoScale: [1.692, 0.315], summary: 'Proprietary AI Revenue Drivers & Autonomous Agent Ecosystem', description: 'The foundational intelligence nexus powering next-generation autonomous platforms. Engineering proprietary AI agents, self-operating revenue engines, and enterprise intelligence systems.' },
-  { name: 'CloveH2O', startP: 0.32, p: 0.36, endP: 0.37, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.0, 1.0], summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.' },
-  { name: 'MindWave', startP: 0.02, p: 0.040, endP: 0.06, color: '#4AA1FE', ringColor: '#FF2A6D', logoUrl: '/mindwave-logo-light.png', logoScale: [1.0, 1.0], summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.' },
+  { name: 'Sentaient', startP: 0.485, p: 0.50, endP: 0.51, color: '#60A9FF', ringColor: '#FF8800', logoUrl: '/sentaient_logo_final.png', logoScale: [1.692, 0.315], summary: 'Autonomous AI Venture Studio & Multi-Industry Revenue Engines', description: 'The foundational intelligence nexus engineering proprietary autonomous platforms across FinTech, LegalTech, Health & BioTech, Defense, and Enterprise Cloud.' },
+  { name: 'CloveH2O', startP: 0.32, p: 0.36, endP: 0.37, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.44, 1.44], summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.' },
+  { name: 'MindWave', startP: 0.02, p: 0.040, endP: 0.06, color: '#4AA1FE', ringColor: '#FF2A6D', logoUrl: '/mindwave-logo-light.png', logoScale: [1.44, 1.44], summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.' },
   { name: 'Icebreaker', startP: 0.10, p: 0.135, endP: 0.16, color: '#00F0FF', ringColor: '#FF6600', logoUrl: '/icebreaker_logo.png', logoScale: [1.0, 1.0], summary: 'Real Content. Real Human Connections.', description: 'Thaw the social ice. Transform superficial online interactions into vibrant, authentic real-world connections and spontaneous events.' },
   { name: 'Interstellar', startP: 0.16, p: 0.21, endP: 0.22, color: '#FF3F00', ringColor: '#00FFFF', logoUrl: '/interstellar_logo_final.png', logoScale: [1.17, 1.17], summary: 'Galactic Strategy & Space Conquest', description: 'Command deep-space starfleets, conquer uncharted solar systems, extract stellar resources, and build an invincible galactic empire.' },
   { name: 'Elevate', startP: 0.520, p: 0.550, endP: 0.570, color: '#38BDF8', ringColor: '#FF8000', logoUrl: '/elevate_logo_final.png', logoScale: [1.365, 0.81], summary: '3D Freeride Snowboard Action with Live Mountain Weather, Snow Conditions & Gear Intelligence', description: 'Drop into high-stakes mountain freeriding with thrilling 3D snowboarding action, paired with a complete mountain companion that delivers real-time weather, live snowpack conditions, avalanche safety radar, and personalized gear optimization.' },
@@ -315,7 +372,7 @@ export const WORLDS_DATA = [
   { name: 'Legal Eagle', startP: 0.23, p: 0.255, endP: 0.265, color: '#A855F7', ringColor: '#FBBF24', logoUrl: '/legal_eagle_logo.png', logoScale: [1.032, 1.0], summary: 'Autonomous AI Legal Intelligence & Contract Defense', description: 'Audit contracts in seconds with eagle-eyed AI precision. Detect hidden liabilities, mitigate legal risks, and auto-draft favorable clauses.' },
   { name: 'Maya', startP: 0.705, p: 0.725, endP: 0.745, color: '#818CF8', ringColor: '#FB7185', logoUrl: '/maya_logo_final.png', logoScale: [1.222, 1.0], summary: 'Empathetic AI Avatar & 24/7 Enterprise Representative', description: 'Engage customers around the clock with life-like conversational AI avatars for autonomous sales, compassionate support, and personal growth.' },
   { name: 'LightSpeed', startP: 0.910, p: 0.93, endP: 0.99, color: '#00A3FF', ringColor: '#FFC800', logoUrl: '/lightspeed_logo_gold.png', logoScale: [0.829, 1.0], summary: 'Autonomous AI CTO & Enterprise Cyber-Defense', description: 'Deploy a self-healing cloud infrastructure protected by zero-trust cyber defense, sub-10ms global edge routing, and 99.999% SLA uptime.' },
-  { name: 'Liquid', startP: 0.645, p: 0.665, endP: 0.685, color: '#00FF88', ringColor: '#A855F7', logoUrl: '/liquid_logo_final.png', logoScale: [1.0, 1.0], summary: 'Autonomous Accounting, Tax Intelligence & Token Forge', description: 'Distill enterprise financial complexity into instant clarity with automated tax liability calculation, live P&L auditing, and smart token minting.' },
+  { name: 'Liquid', startP: 0.645, p: 0.665, endP: 0.685, color: '#00FF88', ringColor: '#A855F7', logoUrl: '/liquid_logo_bold_v7.png', logoScale: [1.25, 1.25], glowMultiplier: 0.5, summary: 'Autonomous Accounting, Tax Intelligence & Token Forge', description: 'Distill enterprise financial complexity into instant clarity with automated tax liability calculation, live P&L auditing, and smart token minting.' },
   { name: 'Contango', startP: 0.44, p: 0.47, endP: 0.475, color: '#22C55E', ringColor: '#FF7A00', logoUrl: '/assets/images/contango_quant_logo_new.png', logoScale: [1.0, 0.526], summary: 'Algorithmic Trading & High-Frequency Market Intelligence', description: 'Master market volatility with automated quant strategies, order book microstructure analytics, and macro liquidity tracking.' },
   { name: 'PyRAmid', startP: 0.770, p: 0.79, endP: 0.82, color: '#00E5FF', ringColor: '#C084FC', logoUrl: '/pyramid_logo_final.png', logoScale: [1.005, 1.0], summary: 'Autonomous Business Ops Brain & Strategic Execution', description: 'Harness an AI executive that scans markets for high-margin opportunities, designs end-to-end strategic playbooks, and executes autonomously.' },
   { name: 'Matrix', startP: 0.840, p: 0.865, endP: 0.900, color: '#00FF44', ringColor: '#D946EF', logoUrl: '/matrix_logo_bright.png', logoScale: [1.522, 0.363], summary: 'Autonomous Production Code Generation, Full-Stack Architecture & Deep Technical Research', description: 'Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors complex codebases, and conducts deep end-to-end debugging—leveraging technical research capabilities to parse complex documentation and frontier frameworks.' },
@@ -337,54 +394,80 @@ export default function MiniWorldsHub({ visible = true }) {
     if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); }
     hoverTimeoutRef.current = setTimeout(() => {
       setHoveredWorld((curr) => (curr === name ? null : curr));
-    }, 220);
+    }, 600);
   };
   
-  const [winSize, setWinSize] = useState(() => ({
-    w: typeof window !== 'undefined' ? window.innerWidth : 1200,
-    h: typeof window !== 'undefined' ? window.innerHeight : 800
-  }));
-  const lastSizeRef = useRef({ w: 0, h: 0 });
-  useEffect(() => {
-    const onResize = () => setWinSize({ w: window.innerWidth, h: window.innerHeight });
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-  const worlds = WORLDS_DATA;
+  const { size, viewport, camera } = useThree();
+  const worlds = useMemo(() => WORLDS_DATA.filter(w => w.name !== 'Sentaient'), []);
+
+  // Real-time camera frustum viewport at Z = -500 (distance = 510 from camera Z = 10)
+  const currentViewport = viewport.getCurrentViewport(camera, [0, 0, -500]);
+  const visibleW = currentViewport.width;
+  const visibleH = currentViewport.height;
+
+  // Screen edge safety padding
+  const safePadY = 40;
+  const safePadX = 45;
+  const maxRadiusY = (visibleH / 2) - safePadY;
+  const maxRadiusX = (visibleW / 2) - safePadX;
+
+  const dynamicRadius = Math.max(150, Math.min(maxRadiusX * 0.88, maxRadiusY * 0.85));
+  const itemScale = Math.max(0.65, Math.min(1.05, dynamicRadius / 220));
+
+  // Pure geometric vertical center in the window
+  const hubCenterY = 0;
+
+  // Safe vertical bounds in 3D units so popup card is dynamically clamped and never cut off by header or bottom edge
+  const screenH = size.height || 900;
+  const safeTopPx = 80 + 15 + 140; // header (80px) + gap (15px) + card half-height (140px)
+  const safeBottomPx = 25 + 140;   // bottom gap (25px) + card half-height (140px)
+  const safeMaxCardY = visibleH * (0.5 - safeTopPx / screenH);
+  const safeMinCardY = visibleH * (safeBottomPx / screenH - 0.5);
 
   useFrame(() => {
-    if (typeof window !== 'undefined') {
-      const w = window.innerWidth, h = window.innerHeight;
-      if (w !== lastSizeRef.current.w || h !== lastSizeRef.current.h) {
-        lastSizeRef.current = { w, h };
-        setWinSize({ w, h });
-      }
-    }
     const p = (window._isTransitActive && window._warpProgress !== undefined) ? window._warpProgress : (scroll ? scroll.offset : 0);
     const shouldShow = visible && p < 0.025;
     if (shouldShow !== showHub) {
       setShowHub(shouldShow);
     }
-    if (groupRef.current) groupRef.current.visible = shouldShow;
+    if (groupRef.current) {
+      groupRef.current.visible = shouldShow;
+      groupRef.current.position.y = hubCenterY;
+    }
   });
 
   if (!visible || !showHub) return null;
 
-  const curW = winSize.w || 1200, curH = winSize.h || 800;
-  const visibleH = 2 * 510 * Math.tan((75 * Math.PI / 180) / 2);
-  const visibleW = visibleH * (curW / (curH || 1));
-  const headerWorldH = visibleH * (64 / curH);
-  const safeMarginY = Math.max(headerWorldH + 25, 80);
-  const hubCenterY = 0;
-  const dynamicRadius = Math.min((visibleW * 0.86) / 2, (visibleH / 2) - safeMarginY) * 0.92;
-  const itemScale = Math.max(0.65, Math.min(1.05, dynamicRadius / 280));
-  
   const numWorlds = worlds.length;
+
+  const appPositions = worlds.map((w, idx) => {
+    const progress = idx / numWorlds;
+    const angle = progress * Math.PI * 2 + Math.PI / 2;
+    return {
+      name: w.name,
+      x: Math.cos(angle) * dynamicRadius,
+      y: Math.sin(angle) * dynamicRadius,
+      color: w.color
+    };
+  });
 
   return (
     // Group centered dynamically in available safe vertical space below header
     <group ref={groupRef} position={[0, hubCenterY, -500]}>
       <pointLight position={[0, 0, 100]} intensity={2} color="#ffffff" />
+
+      {/* Central SentAIent Toroidal Field Core */}
+      <ToroidalSentaientCore
+        dynamicRadius={dynamicRadius}
+        itemScale={itemScale}
+        appPositions={appPositions}
+        hoveredWorld={hoveredWorld}
+        onClick={() => {
+          if (window._goToStation) {
+            window._goToStation(1, 2400);
+          }
+        }}
+      />
       
       {worlds.map((w, idx) => {
         // Distribute worlds in a perfect ellipse/oval around the screen perimeter
@@ -419,6 +502,9 @@ export default function MiniWorldsHub({ visible = true }) {
             scrollEl={scroll.el}
             hoveredWorld={hoveredWorld}
             itemScale={itemScale}
+            safeMaxCardY={safeMaxCardY}
+            safeMinCardY={safeMinCardY}
+            glowMultiplier={w.glowMultiplier !== undefined ? w.glowMultiplier : 1.0}
             onHoverStart={() => handleHoverStart(w.name)}
             onHoverEnd={() => handleHoverEnd(w.name)}
           />

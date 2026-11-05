@@ -216,7 +216,18 @@ export const CameraController = () => {
     let finalPosX = targetPos.x;
     let finalPosY = targetPos.y;
     let finalPosZ = targetPos.z;
+    let targetRotX = targetPos.rx;
+    let targetRotY = targetPos.ry;
     let chaseBlend = 0;
+
+    // Smooth Icebreaker Island Zoom-Cam Integration
+    if (window._icebreakerCam && window._icebreakerCam.active) {
+      finalPosX = window._icebreakerCam.x;
+      finalPosY = window._icebreakerCam.y;
+      finalPosZ = window._icebreakerCam.z;
+      targetRotX = window._icebreakerCam.rx;
+      targetRotY = window._icebreakerCam.ry;
+    }
     
     if (window._elevateChaseCam && window._elevateChaseCam.active && window._elevateChaseCam.blend > 0) {
       chaseBlend = window._elevateChaseCam.blend;
@@ -227,7 +238,7 @@ export const CameraController = () => {
     
     if (window._snapCamera) {
       state.camera.position.set(finalPosX, finalPosY, finalPosZ);
-      tempEuler.set(targetPos.rx, targetPos.ry, 0);
+      tempEuler.set(targetRotX, targetRotY, 0);
       tempQuat.setFromEuler(tempEuler);
       if (chaseBlend > 0 && window._elevateChaseCam) {
         tempQuat.slerp(window._elevateChaseCam.quat, chaseBlend);
@@ -240,7 +251,7 @@ export const CameraController = () => {
       state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, finalPosZ, 0.2);
       
       // Use slerp for rotations for smoother pitching
-      tempEuler.set(targetPos.rx, targetPos.ry, 0);
+      tempEuler.set(targetRotX, targetRotY, 0);
       tempQuat.setFromEuler(tempEuler);
       if (chaseBlend > 0 && window._elevateChaseCam) {
         tempQuat.slerp(window._elevateChaseCam.quat, chaseBlend);
@@ -392,11 +403,28 @@ export const TimelineManager = () => {
       // Reset visited flag when user has scrolled far enough away from the world's center
       WORLD_PAUSE_STATIONS.forEach((st) => {
         if (visitedPauseWorldsRef.current[st.id]) {
-          if (Math.abs(scrollP - st.p) > 0.045) {
+          const resetDist = st.id === 'icebreaker' ? 0.025 : 0.045;
+          if (Math.abs(scrollP - st.p) > resetDist) {
             visitedPauseWorldsRef.current[st.id] = false;
           }
         }
       });
+
+      // If user has left the Icebreaker world, ensure the ice cave comes back frozen solid
+      // and state is idle so it replays cleanly upon re-entry
+      if (scrollP < 0.098 || scrollP > 0.148) {
+        if (window._icebreakerMeltState && window._icebreakerMeltState !== 'idle') {
+          window._icebreakerMeltState = 'idle';
+          window.icebreakerThaw = 0.0;
+          window.icebreakerThawLocked = false;
+          window._icebreakerLockCamera = false;
+          window._isWorldActionActive = false;
+          if (window._icebreakerCam) {
+            window._icebreakerCam.active = false;
+            window._icebreakerCam = null;
+          }
+        }
+      }
 
       // Check if user has entered any world's pause zone
       for (let i = 0; i < WORLD_PAUSE_STATIONS.length; i++) {
