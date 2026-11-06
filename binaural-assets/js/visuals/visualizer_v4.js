@@ -642,6 +642,11 @@ static CYMATIC_PATTERNS = [
             if (this.isLowPower || this.currentLodLevel === 'low') {
                 visibleLength = Math.floor(visibleLength * 0.4); 
             }
+            if (stream.isTextMode) {
+                const wLen = stream.wordLength || 9;
+                const reps = Math.max(1, Math.round(visibleLength / wLen));
+                visibleLength = Math.max(wLen, reps * wLen);
+            }
 
             if (stream.y - (visibleLength * stream.size) > canvas.height * 1.5) {
                 stream.y = 0;
@@ -654,8 +659,8 @@ static CYMATIC_PATTERNS = [
                 lastSize = stream.size;
             }
 
-            // Draw only every 2nd character in extreme low power to save 50% fillText calls
-            const step = (this.isLowPower && this.currentLodLevel === 'low') ? 2 : 1;
+            // Draw only every 2nd character in extreme low power to save 50% fillText calls (never skip text mode characters)
+            const step = (!stream.isTextMode && this.isLowPower && this.currentLodLevel === 'low') ? 2 : 1;
 
             for (let i = 0; i < visibleLength && i < stream.chars.length; i += step) {
                 if (!stream.isTextMode && Math.random() < 0.02) {
@@ -2864,12 +2869,12 @@ static CYMATIC_PATTERNS = [
         const cellW = size / cols;
         const cellH = size / rows;
 
-        let textToSpell = "🪷MINDWAVE";
+        let textToSpell = "MINDWAVE";
         const logicMode = config.logicMode;
         const customText = config.customText;
 
         if ((logicMode === 'custom' || logicMode === 'txt')) {
-            textToSpell = "🪷" + (customText && customText.length > 0 ? customText : "WELCOME TO MINDWAVE");
+            textToSpell = (customText && customText.length > 0 ? customText : "WELCOME TO MINDWAVE");
         } else if (logicMode === 'random' || logicMode === 'rnd' || logicMode === 'matrix' || logicMode === 'int' || logicMode === 'interstellar') {
             textToSpell = "";
         }
@@ -3193,7 +3198,7 @@ static CYMATIC_PATTERNS = [
             const config = this.cyberConfig;
             const isSpecial = (config.logicMode === 'mindwave' || config.logicMode === 'mw' || config.logicMode === 'custom' || config.logicMode === 'txt');
             const isCyber = (config.logicMode === 'matrix' || config.logicMode === 'int' || config.logicMode === 'interstellar');
-            const specialText = ((config.logicMode === 'custom' || config.logicMode === 'txt') && config.customText) ? "🪷" + config.customText : "MINDWAVE";
+            const specialText = ((config.logicMode === 'custom' || config.logicMode === 'txt') && config.customText) ? config.customText : "MINDWAVE";
             const specialLen = specialText.length;
             // In matrix mode, streams are less uniform
             const streamOffset = isCyber ? Math.random() * 100 : 0;
@@ -4494,6 +4499,7 @@ static CYMATIC_PATTERNS = [
             if (isTextMode && textToSpell.length > 0) {
                 // To spell Normal (Top-to-Bottom) where chars[0] leads at the bottom:
                 const wordChars = [...textToSpell].reverse();
+                stream.wordLength = wordChars.length;
                 for (let c = 0; c < MAX_BUFFER; c++) {
                     stream.chars.push(wordChars[c % wordChars.length]);
                 }
