@@ -1798,3 +1798,61 @@ export function connectCustomAudio(audioElement) {
     }
 }
 window.connectCustomAudio = connectCustomAudio;
+
+// --- SLEEP & AUTO-SHUTOFF TIMER WITH GENTLE FADE ---
+let sleepTimerId = null;
+let sleepTimerEndTime = null;
+let sleepTimerOriginalVolume = null;
+
+export function startSleepTimer(minutes, onTick, onComplete) {
+    cancelSleepTimer();
+    if (!minutes || minutes <= 0) return;
+    const durationMs = minutes * 60 * 1000;
+    sleepTimerEndTime = Date.now() + durationMs;
+    sleepTimerOriginalVolume = (state && state.masterVolume !== undefined) ? state.masterVolume : 0.8;
+    console.log(`[SleepTimer] Started for ${minutes} min (ends at ${new Date(sleepTimerEndTime).toLocaleTimeString()})`);
+    
+    sleepTimerId = setInterval(() => {
+        const remainingMs = sleepTimerEndTime - Date.now();
+        const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+        if (typeof onTick === 'function') onTick(remainingSeconds);
+        window.dispatchEvent(new CustomEvent('mw-sleep-timer-tick', { detail: { remainingSeconds } }));
+        
+        if (remainingSeconds <= 30 && remainingSeconds > 0) {
+            const fadeFactor = remainingSeconds / 30;
+            const targetVol = (sleepTimerOriginalVolume || 0.8) * fadeFactor;
+            if (state.masterGain && state.audioCtx) {
+                state.masterGain.gain.setValueAtTime(Math.max(0.001, targetVol), state.audioCtx.currentTime);
+            }
+        }
+        if (remainingMs <= 0) {
+            cancelSleepTimer();
+            console.log('[SleepTimer] Completed. Fading out and stopping audio.');
+            stopAudio(false);
+            if (typeof onComplete === 'function') onComplete();
+            window.dispatchEvent(new CustomEvent('mw-sleep-timer-complete'));
+        }
+    }, 1000);
+}
+
+export function cancelSleepTimer() {
+    if (sleepTimerId) {
+        clearInterval(sleepTimerId);
+        sleepTimerId = null;
+    }
+    if (sleepTimerOriginalVolume !== null && state.masterGain && state.audioCtx) {
+        state.masterGain.gain.setValueAtTime(sleepTimerOriginalVolume, state.audioCtx.currentTime);
+    }
+    sleepTimerEndTime = null;
+    sleepTimerOriginalVolume = null;
+    window.dispatchEvent(new CustomEvent('mw-sleep-timer-cancelled'));
+}
+
+export function getRemainingSleepTime() {
+    if (!sleepTimerEndTime) return 0;
+    return Math.max(0, Math.ceil((sleepTimerEndTime - Date.now()) / 1000));
+}
+
+window.startSleepTimer = startSleepTimer;
+window.cancelSleepTimer = cancelSleepTimer;
+window.getRemainingSleepTime = getRemainingSleepTime;

@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Share Soundscape
+    // 2. Share Soundscape (Native Mobile Share Sheet + Clipboard Fallback)
     const shareBtn = document.getElementById('shareSoundscapeBtn');
     if (shareBtn) {
         shareBtn.addEventListener('click', () => {
@@ -180,12 +180,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 const shareParam = `${state.baseFrequency}_${state.beatFrequency}_${state.activePresetType || 'custom'}`;
                 const shareUrl = new URL(window.location.href);
                 shareUrl.searchParams.set('share', shareParam);
-                
-                navigator.clipboard.writeText(shareUrl.toString()).then(() => {
-                    const originalText = shareBtn.innerHTML;
-                    shareBtn.innerHTML = `<span class="flex-1 text-left text-[var(--accent)]">Link Copied!</span>`;
-                    setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
-                });
+                const shareTitle = `MindWave: ${state.baseFrequency}Hz / ${state.beatFrequency}Hz Entrainment`;
+                const shareText = `🎧 Listen to this customized ${state.baseFrequency}Hz binaural beat soundscape on MindWave:`;
+
+                const fallbackCopy = () => {
+                    navigator.clipboard.writeText(shareUrl.toString()).then(() => {
+                        const originalText = shareBtn.innerHTML;
+                        shareBtn.innerHTML = `<span class="flex-1 text-left text-[var(--accent)]">Link Copied!</span>`;
+                        setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
+                    }).catch(() => {});
+                };
+
+                if (navigator.share) {
+                    navigator.share({ title: shareTitle, text: shareText, url: shareUrl.toString() })
+                        .catch(err => { if (err.name !== 'AbortError') fallbackCopy(); });
+                } else {
+                    fallbackCopy();
+                }
             });
         });
     }

@@ -3202,6 +3202,51 @@ function hideDisclaimerModal() {
         els.disclaimerModal.classList.add('hidden');
     }
 }
+window.showDisclaimerModal = showDisclaimerModal;
+
+// --- SLEEP TIMER UI CONTROLLER ---
+window.setSleepTimerMinutes = function(mins, btn) {
+    const statusEl = document.getElementById('sleepTimerStatus');
+    const cancelBtn = document.getElementById('cancelSleepTimerBtn');
+    const pills = document.querySelectorAll('#sleepTimerPills button');
+    pills.forEach(p => {
+        p.classList.remove('bg-[var(--accent)]/20', 'border-[var(--accent)]', 'text-white');
+        p.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+    });
+    if (btn) {
+        btn.classList.remove('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+        btn.classList.add('bg-[var(--accent)]/20', 'border-[var(--accent)]', 'text-white');
+    }
+    if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+    const formatTime = (secs) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    };
+
+    if (window.startSleepTimer) {
+        window.startSleepTimer(mins, (remainingSecs) => {
+            if (statusEl) statusEl.textContent = formatTime(remainingSecs);
+        }, () => {
+            window.stopSleepTimerUI();
+        });
+    }
+    if (statusEl) statusEl.textContent = `${mins}:00`;
+};
+
+window.stopSleepTimerUI = function() {
+    const statusEl = document.getElementById('sleepTimerStatus');
+    const cancelBtn = document.getElementById('cancelSleepTimerBtn');
+    const pills = document.querySelectorAll('#sleepTimerPills button');
+    pills.forEach(p => {
+        p.classList.remove('bg-[var(--accent)]/20', 'border-[var(--accent)]', 'text-white');
+        p.classList.add('bg-white/5', 'border-white/10', 'text-[var(--text-muted)]');
+    });
+    if (cancelBtn) cancelBtn.classList.add('hidden');
+    if (statusEl) statusEl.textContent = 'Off';
+    if (window.cancelSleepTimer) window.cancelSleepTimer();
+};
 
 // --- MODE TOGGLE SETUP ---
 const MODE_DESCRIPTIONS = {
