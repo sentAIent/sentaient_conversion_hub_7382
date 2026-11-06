@@ -9,6 +9,7 @@ interface SettingsPanelProps {
   updateSettings: (s: Partial<UserSettings>) => void;
   currentViewState: LocationState;
   onJumpTo: (loc: LocationState) => void;
+  onOpenAdminReputation?: () => void;
 }
 
 export default function SettingsPanel({ isOpen, onClose, settings, updateSettings, currentViewState, onJumpTo }: SettingsPanelProps) {
@@ -36,7 +37,7 @@ export default function SettingsPanel({ isOpen, onClose, settings, updateSetting
   };
 
   return (
-    <div className="absolute top-0 right-0 h-screen w-full sm:w-96 max-w-[100vw] bg-black/90 border-l border-cyan-900/50 p-6 z-50 text-white font-mono shadow-[-10px_0_30px_rgba(8,145,178,0.2)] backdrop-blur-md overflow-y-auto">
+    <div className="fixed top-0 right-0 h-full max-h-screen w-full sm:w-96 max-w-[100vw] bg-black/90 border-l border-cyan-900/50 p-6 z-50 text-white font-mono shadow-[-10px_0_30px_rgba(8,145,178,0.2)] backdrop-blur-md overflow-y-auto">
       <div className="flex justify-between items-center mb-6 border-b border-cyan-900/50 pb-2">
         <h2 className="text-xl font-bold text-cyan-400 tracking-widest">SYSTEM SETTINGS</h2>
         <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">✕</button>
@@ -173,20 +174,38 @@ export default function SettingsPanel({ isOpen, onClose, settings, updateSetting
                 {Math.round((settings.cursor?.opacity ?? 1.0) * 100)}%
               </span>
             </div>
-            <input
-              type="range"
-              min="0.2"
-              max="1.0"
-              step="0.05"
-              value={settings.cursor?.opacity ?? 1.0}
-              onChange={(e) => updateSettings({
-                cursor: {
-                  ...(settings.cursor || { shape: 'sun', color: '#00e5ff' }),
-                  opacity: parseFloat(e.target.value)
-                }
-              })}
-              className="w-full accent-cyan-500 bg-gray-800 h-1.5 rounded cursor-pointer"
-            />
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[0.25, 0.5, 0.75, 1.0].map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => updateSettings({ cursor: { ...(settings.cursor || { shape: 'sun', color: '#00e5ff' }), opacity: val } })}
+                  className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-colors ${
+                    Math.abs((settings.cursor?.opacity ?? 1.0) - val) < 0.05
+                      ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold'
+                      : 'bg-black/40 border-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {Math.round(val * 100)}%
+                </button>
+              ))}
+              <div className="flex items-center gap-1 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ cursor: { ...(settings.cursor || { shape: 'sun', color: '#00e5ff' }), opacity: Math.max(0.2, Math.round(((settings.cursor?.opacity ?? 1.0) - 0.1) * 10) / 10) } })}
+                  className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-gray-900 border border-gray-700 text-gray-300 hover:text-cyan-300"
+                >
+                  -10%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ cursor: { ...(settings.cursor || { shape: 'sun', color: '#00e5ff' }), opacity: Math.min(1.0, Math.round(((settings.cursor?.opacity ?? 1.0) + 0.1) * 10) / 10) } })}
+                  className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-gray-900 border border-gray-700 text-gray-300 hover:text-cyan-300"
+                >
+                  +10%
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

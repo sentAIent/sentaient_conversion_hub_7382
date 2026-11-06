@@ -5,9 +5,10 @@ import { confirmCommunityReport, reportEntityRemoval } from '../lib/communityRep
 interface SurveillancePopupCardProps {
   properties: any;
   onOpenReportModal?: (props: any) => void;
+  onOpenLiveFeed?: (props: any) => void;
 }
 
-export function SurveillancePopupCard({ properties, onOpenReportModal }: SurveillancePopupCardProps) {
+export function SurveillancePopupCard({ properties, onOpenReportModal, onOpenLiveFeed }: SurveillancePopupCardProps) {
   const p = properties || {};
   const vendorKey: CameraVendor = (p.vendor as CameraVendor) || 'cctv';
   const vendorConfig = VENDOR_PALETTE[vendorKey] || VENDOR_PALETTE.cctv;

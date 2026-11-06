@@ -32,6 +32,8 @@ export interface NeighborhoodProfile {
 
 export interface CityCrimeData {
   city: string;
+  centerLat?: number;
+  centerLon?: number;
   neighborhoods: NeighborhoodProfile[];
   incidents: CrimeIncident[];
   totalIncidents: number;
@@ -85,6 +87,26 @@ export const PRESET_METRO_NEIGHBORHOODS: Record<string, NeighborhoodProfile[]> =
     { name: 'Sunnyside / South Park', city: 'Houston', state: 'TX', country: 'USA', lat: 29.664, lon: -95.362, radiusKm: 2.5, safetyScore: 22, riskLevel: 'CRITICAL', violentCrimeIndex: 360, propertyCrimeIndex: 240, topIncidents: ['Aggravated Assault', 'Weapons Violations', 'Robbery'], tacticalNotes: 'Frequent violent incident reports; transit caution advised.' },
     { name: 'Downtown / Midtown', city: 'Houston', state: 'TX', country: 'USA', lat: 29.754, lon: -95.367, radiusKm: 1.8, safetyScore: 55, riskLevel: 'MODERATE', violentCrimeIndex: 120, propertyCrimeIndex: 210, topIncidents: ['Vehicle Theft', 'Larceny', 'Burglary'], tacticalNotes: 'Commercial hub with elevated auto break-ins.' },
     { name: 'The Heights', city: 'Houston', state: 'TX', country: 'USA', lat: 29.799, lon: -95.398, radiusKm: 2.2, safetyScore: 84, riskLevel: 'LOW', violentCrimeIndex: 38, propertyCrimeIndex: 95, topIncidents: ['Bicycle Theft', 'Catalytic Converter Theft'], tacticalNotes: 'Established residential zone with active community patrol.' }
+  ],
+  'seattle': [
+    { name: 'Pioneer Square / Chinatown', city: 'Seattle', state: 'WA', country: 'USA', lat: 47.601, lon: -122.333, radiusKm: 1.5, safetyScore: 38, riskLevel: 'HIGH', violentCrimeIndex: 260, propertyCrimeIndex: 310, topIncidents: ['Assault', 'Larceny', 'Narcotics'], tacticalNotes: '3rd Ave transit corridor exhibits elevated street altercations.' },
+    { name: 'Capitol Hill', city: 'Seattle', state: 'WA', country: 'USA', lat: 47.625, lon: -122.321, radiusKm: 1.8, safetyScore: 62, riskLevel: 'MODERATE', violentCrimeIndex: 110, propertyCrimeIndex: 215, topIncidents: ['Vehicle Prowl', 'Nightlife Disputes', 'Burglary'], tacticalNotes: 'Dense nightlife area; heightened vehicle break-ins along Broadway.' },
+    { name: 'Ballard', city: 'Seattle', state: 'WA', country: 'USA', lat: 47.668, lon: -122.384, radiusKm: 2.2, safetyScore: 82, riskLevel: 'LOW', violentCrimeIndex: 45, propertyCrimeIndex: 120, topIncidents: ['Property Trespass', 'Bicycle Theft'], tacticalNotes: 'Active maritime and residential district with low violent crime rate.' }
+  ],
+  'denver': [
+    { name: 'LoDo / Ballpark / Downtown', city: 'Denver', state: 'CO', country: 'USA', lat: 39.754, lon: -104.997, radiusKm: 1.8, safetyScore: 48, riskLevel: 'ELEVATED', violentCrimeIndex: 180, propertyCrimeIndex: 290, topIncidents: ['Vehicle Theft', 'Motor Vehicle Prowl', 'Assault'], tacticalNotes: 'High vehicle theft density near Union Station & Coors Field.' },
+    { name: 'Capitol Hill / Colfax', city: 'Denver', state: 'CO', country: 'USA', lat: 39.739, lon: -104.978, radiusKm: 1.6, safetyScore: 54, riskLevel: 'ELEVATED', violentCrimeIndex: 165, propertyCrimeIndex: 240, topIncidents: ['Theft from Motor Vehicle', 'Robbery', 'Narcotics'], tacticalNotes: 'Colfax Ave transit corridor has recurring foot-traffic incidents.' },
+    { name: 'Cherry Creek', city: 'Denver', state: 'CO', country: 'USA', lat: 39.718, lon: -104.953, radiusKm: 2.0, safetyScore: 89, riskLevel: 'LOW', violentCrimeIndex: 30, propertyCrimeIndex: 90, topIncidents: ['Bicycle Theft', 'Retail Larceny'], tacticalNotes: 'Affluent shopping and residential district; high security presence.' }
+  ],
+  'dallas': [
+    { name: 'Deep Ellum / Downtown', city: 'Dallas', state: 'TX', country: 'USA', lat: 32.783, lon: -96.786, radiusKm: 1.6, safetyScore: 46, riskLevel: 'ELEVATED', violentCrimeIndex: 210, propertyCrimeIndex: 280, topIncidents: ['Aggravated Assault', 'Vehicle Burglary', 'Weapons Violations'], tacticalNotes: 'Main St nightlife corridor post-02:00 requires heightened vigilance.' },
+    { name: 'Oak Cliff', city: 'Dallas', state: 'TX', country: 'USA', lat: 32.742, lon: -96.824, radiusKm: 2.4, safetyScore: 42, riskLevel: 'ELEVATED', violentCrimeIndex: 230, propertyCrimeIndex: 195, topIncidents: ['Robbery', 'Assault', 'Stolen Vehicle'], tacticalNotes: 'Historic residential-commercial sector with pocketed risk variations.' },
+    { name: 'Uptown / Highland Park', city: 'Dallas', state: 'TX', country: 'USA', lat: 32.802, lon: -96.801, radiusKm: 2.2, safetyScore: 86, riskLevel: 'LOW', violentCrimeIndex: 35, propertyCrimeIndex: 110, topIncidents: ['Vehicle Break-ins', 'Bicycle Theft'], tacticalNotes: 'Dense residential midrises with proactive private and city security.' }
+  ],
+  'atlanta': [
+    { name: 'Downtown / Five Points', city: 'Atlanta', state: 'GA', country: 'USA', lat: 33.754, lon: -84.391, radiusKm: 1.8, safetyScore: 40, riskLevel: 'HIGH', violentCrimeIndex: 250, propertyCrimeIndex: 310, topIncidents: ['Robbery', 'Larceny from Auto', 'Aggravated Assault'], tacticalNotes: 'MARTA transit transfer hub has elevated daytime pickpocketing and night incidents.' },
+    { name: 'Midtown', city: 'Atlanta', state: 'GA', country: 'USA', lat: 33.785, lon: -84.384, radiusKm: 2.0, safetyScore: 68, riskLevel: 'MODERATE', violentCrimeIndex: 95, propertyCrimeIndex: 185, topIncidents: ['Auto Burglary', 'Larceny', 'Altercations'], tacticalNotes: 'Tech Square & Peachtree St corridor; secure parked vehicle interiors.' },
+    { name: 'Buckhead', city: 'Atlanta', state: 'GA', country: 'USA', lat: 33.841, lon: -84.379, radiusKm: 2.5, safetyScore: 78, riskLevel: 'MODERATE', violentCrimeIndex: 75, propertyCrimeIndex: 160, topIncidents: ['Vehicle Theft', 'High-End Retail Larceny'], tacticalNotes: 'Commercial luxury corridor with occasional targeted vehicle break-ins.' }
   ]
 };
 
@@ -254,6 +276,8 @@ export function generateCityCrimeData(cityName: string, targetLat = 38.907, targ
 
   return {
     city: cityName,
+    centerLat: targetLat,
+    centerLon: targetLon,
     neighborhoods: profiles,
     incidents: allIncidents,
     totalIncidents: allIncidents.length,

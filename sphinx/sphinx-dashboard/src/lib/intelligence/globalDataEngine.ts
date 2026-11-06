@@ -22,7 +22,7 @@ export class GlobalDataEngine {
   private static isLocalEnvironment(): boolean {
     if (typeof window === 'undefined') return false;
     if (Date.now() < this.localServerDownUntil) return false;
-    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    return window.location.port === '3117';
   }
 
   private static markLocalServerFailed(): void {
@@ -112,7 +112,10 @@ export class GlobalDataEngine {
 
     // Tier 2: NASA EONET Global Natural Events API
     try {
-      const res = await fetch('https://eonet.gsfc.nasa.gov/api/v3/events?limit=40&days=7');
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch('https://eonet.gsfc.nasa.gov/api/v3/events?limit=40&days=7', { signal: controller.signal });
+      clearTimeout(timer);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.events)) {

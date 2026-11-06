@@ -10,6 +10,9 @@ export interface AvoidanceOptions {
   avoidFloodedAreas?: boolean;
   avoidCrimeAreas?: boolean;
   avoidToxicPlumes?: boolean;
+  avoidWildfires?: boolean;
+  avoidChemicalSpray?: boolean;
+  avoidDamBreach?: boolean;
 }
 
 export interface ThreatAuditScorecard {

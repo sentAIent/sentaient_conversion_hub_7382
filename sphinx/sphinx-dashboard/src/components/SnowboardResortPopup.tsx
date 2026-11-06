@@ -1,5 +1,6 @@
 import React from 'react';
 import { Popup } from 'react-map-gl';
+import { ResortPisteEngine } from '../lib/routing/resortPisteEngine';
 
 export interface SnowboardResortPopupProps {
   resort: any;
@@ -18,6 +19,7 @@ export const SnowboardResortPopup: React.FC<SnowboardResortPopupProps> = ({
   const lat = Number(resort.lat);
 
   if (isNaN(lng) || isNaN(lat)) return null;
+  const pisteStats = ResortPisteEngine.getStatsForLocation(lat, lng);
 
   return (
     <Popup
@@ -59,7 +61,15 @@ export const SnowboardResortPopup: React.FC<SnowboardResortPopupProps> = ({
           </div>
           <div className="flex justify-between items-center text-[11px] py-0.5">
             <span className="text-gray-400">Trails & Lifts:</span>
-            <span className="text-gray-200">{resort.runs ? `${resort.runs} runs` : (resort.downhillKm ? `${resort.downhillKm} km slopes` : 'Piste network')} • {resort.lifts ? `${resort.lifts} lifts` : 'Active lifts'}</span>
+            <span className="text-gray-200">
+              {pisteStats.runs > 0 ? (
+                <span>
+                  <strong className="text-cyan-300">{pisteStats.runs} pistes</strong> ({pisteStats.easy}🟢 {pisteStats.intermediate}🟦 {pisteStats.advanced}◆ {pisteStats.expert}◆◆) • <strong className="text-amber-300">{pisteStats.lifts} 🚡</strong>
+                </span>
+              ) : (
+                `${resort.runs ? `${resort.runs} runs` : (resort.downhillKm ? `${resort.downhillKm} km slopes` : 'Piste network')} • ${resort.lifts ? `${resort.lifts} lifts` : 'Active lifts'}`
+              )}
+            </span>
           </div>
           {resort.nightRiding && (
             <div className="flex items-center gap-1 text-[10px] text-indigo-300 bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-800/40">

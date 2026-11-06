@@ -22,7 +22,7 @@ export function BaseDefensePanel({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="absolute top-20 right-6 w-80 bg-black/90 border border-red-900 shadow-[0_0_20px_rgba(255,0,0,0.4)] backdrop-blur-md rounded-lg p-4 font-mono text-red-400 z-50">
+    <div className="fixed top-20 right-3 sm:right-6 w-full max-w-[min(340px,calc(100vw-24px))] bg-black/90 border border-red-900 shadow-[0_0_20px_rgba(255,0,0,0.4)] backdrop-blur-md rounded-lg p-4 font-mono text-red-400 z-50">
       <div className="flex justify-between items-center border-b border-red-900 pb-2 mb-4">
         <h2 className="font-bold tracking-widest text-lg">BASE DEFENSE</h2>
         <button onClick={onClose} className="hover:text-white transition-colors">✕</button>

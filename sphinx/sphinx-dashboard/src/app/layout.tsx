@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Sphinx OSINT",
   },
+  manifest: "/manifest.json",
   formatDetection: {
     telephone: false,
   },

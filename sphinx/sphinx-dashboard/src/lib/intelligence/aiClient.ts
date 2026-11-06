@@ -6,6 +6,8 @@ import { getCityCrimeData, CityCrimeData } from './crimeEngine';
 import { isCameraQuery, generateCameraIntelligence } from './cameraIntelQuery';
 import { generateDeepResearchDossier } from './deepResearchEngine';
 import { generateHistoricalWeatherAIReport, searchWeatherLocations, HistoricalWeatherSummary } from './historicalWeatherEngine';
+import { isConstitutionalQuery, generateConstitutionalAIReport } from './constitutionalDatabase';
+import { isLegalDefenseQuery, generateLegalDefenseResponse } from './legalDefenseEngine';
 
 export interface MapContext {
   center: { lat: number; lon: number };
@@ -27,7 +29,7 @@ export interface MapContext {
 }
 
 export interface MapAction {
-  type: 'FLY_TO' | 'LOAD_CRIME' | 'HIGHLIGHT_ZONE';
+  type: 'FLY_TO' | 'LOAD_CRIME' | 'HIGHLIGHT_ZONE' | 'SIMULATE_DAM_BREACH' | 'SIMULATE_DISASTER' | string;
   payload: any;
 }
 
@@ -99,6 +101,16 @@ async function synthesizeClientAIResponse(
   // Check if query is about historical weather, temps, rain/snow accum, wind
   if (isHistoricalWeatherQuery(lower)) {
     return handleHistoricalWeatherAIQuery(query, lower, mapContext, isDeepResearch);
+  }
+
+  // Check if query is about constitutional law, state/territory constitutions, amendments
+  if (isConstitutionalQuery(lower)) {
+    return generateConstitutionalAIReport(query, isDeepResearch);
+  }
+
+  // Check if query is about traffic stop, police encounter, legal defense, tickets
+  if (isLegalDefenseQuery(lower)) {
+    return generateLegalDefenseResponse(query, mapContext, isDeepResearch);
   }
 
   // Check if query is about airplane / aircraft crashes by day of week

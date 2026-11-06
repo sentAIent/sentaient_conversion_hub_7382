@@ -1,0 +1,56 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.074,
+          33.4484
+        ]
+      },
+      "properties": {
+        "id": "strike-01",
+        "time": 1793660024639,
+        "peak_current_ka": 24.5,
+        "polarity": "+",
+        "type": "Cloud-to-Ground (CG)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -95.3698,
+          29.7604
+        ]
+      },
+      "properties": {
+        "id": "strike-02",
+        "time": 1793660099640,
+        "peak_current_ka": -18.2,
+        "polarity": "-",
+        "type": "Intra-Cloud (IC)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -80.1918,
+          25.7617
+        ]
+      },
+      "properties": {
+        "id": "strike-03",
+        "time": 1793660064640,
+        "peak_current_ka": 31,
+        "polarity": "+",
+        "type": "Cloud-to-Ground (CG)"
+      }
+    }
+  ]
+}

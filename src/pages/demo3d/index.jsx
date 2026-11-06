@@ -14,7 +14,7 @@ const ReturnToHubButton = () => {
       const p = (window._isTransitActive && window._warpProgress !== undefined)
         ? window._warpProgress 
         : (window._currentProgress || 0);
-      setVisible(p > 0.05);
+      setVisible(p >= 0.02);
       animId = requestAnimationFrame(check);
     };
     animId = requestAnimationFrame(check);

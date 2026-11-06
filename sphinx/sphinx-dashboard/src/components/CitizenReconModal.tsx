@@ -80,7 +80,7 @@ export const CitizenReconModal: React.FC<CitizenReconModalProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
     >
       <div 
-        className="w-full max-w-md bg-black border border-cyan-800/80 rounded-2xl shadow-[0_0_40px_rgba(6,182,212,0.3)] overflow-hidden flex flex-col font-mono text-xs text-white"
+        className="w-full max-w-md max-h-[92vh] overflow-y-auto custom-scrollbar bg-black border border-cyan-800/80 rounded-2xl shadow-[0_0_40px_rgba(6,182,212,0.3)] flex flex-col font-mono text-xs text-white"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -155,14 +155,35 @@ export const CitizenReconModal: React.FC<CitizenReconModalProps> = ({
                   <label className="text-gray-400 uppercase font-bold text-[10px]">Lens Azimuth (Bearing)</label>
                   <span className="text-cyan-400 font-bold">{azimuth}°</span>
                 </div>
-                <input 
-                  type="range"
-                  min="0"
-                  max="360"
-                  value={azimuth}
-                  onChange={e => setAzimuth(parseInt(e.target.value))}
-                  className="w-full accent-cyan-400"
-                />
+                <div className="flex items-center gap-1 flex-wrap">
+                  {[
+                    { label: 'N', deg: 0 },
+                    { label: 'E', deg: 90 },
+                    { label: 'S', deg: 180 },
+                    { label: 'W', deg: 270 }
+                  ].map((c) => (
+                    <button
+                      key={c.label}
+                      type="button"
+                      onClick={() => setAzimuth(c.deg)}
+                      className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-colors ${azimuth === c.deg ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold' : 'bg-black/40 border-gray-800 text-gray-400 hover:text-white'}`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                  <div className="flex items-center gap-1 ml-auto">
+                    {[-15, -5, 5, 15].map((delta) => (
+                      <button
+                        key={delta}
+                        type="button"
+                        onClick={() => setAzimuth((prev) => (prev + delta + 360) % 360)}
+                        className="px-1.5 py-0.5 text-[9px] font-mono rounded bg-gray-900 border border-gray-700 text-gray-300 hover:text-cyan-300"
+                      >
+                        {delta > 0 ? `+${delta}°` : `${delta}°`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 

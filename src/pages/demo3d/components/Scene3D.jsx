@@ -438,6 +438,33 @@ const HTMLStations = () => {
 
           {/* Action Bar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={handleBack}
+                aria-label="Back to Hub"
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  color: '#94a3b8',
+                  fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
+              >
+                <span>←</span>
+                <span>HUB</span>
+              </button>
             <button 
               ref={btnRef}
               onClick={() => {
@@ -474,6 +501,7 @@ const HTMLStations = () => {
               <span>ENTER EXPERIENCE</span>
               <span style={{ fontSize: '12px' }}>→</span>
             </button>
+            </div>
             <span style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.35)', fontWeight: 600, letterSpacing: '0.06em' }}>SCROLL TO FLY ↓</span>
           </div>
         </div>

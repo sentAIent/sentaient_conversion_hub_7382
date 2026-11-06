@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { CursorSettings } from '../lib/useSettings';
 
 export const CURSOR_SHAPES: Record<string, {
@@ -94,42 +94,23 @@ export const CURSOR_SHAPES: Record<string, {
 };
 
 export function CustomCursor({ settings }: { settings?: CursorSettings }) {
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  const shape = settings?.shape || 'sun';
+  const color = settings?.color || '#00e5ff';
+  const secondary = settings?.secondaryColor || '#fb7185';
+  const opacity = settings?.opacity ?? 1.0;
 
-    let styleTag = document.getElementById('sphinx-custom-cursor-style') as HTMLStyleElement | null;
-    if (!styleTag) {
-      styleTag = document.createElement('style');
-      styleTag.id = 'sphinx-custom-cursor-style';
-      document.head.appendChild(styleTag);
-    }
-
-    const shape = settings?.shape || 'sun';
-    const color = settings?.color || '#00e5ff';
-    const secondary = settings?.secondaryColor || '#fb7185';
-    const opacity = settings?.opacity ?? 1.0;
-
-    if (shape === 'default') {
-      styleTag.textContent = '';
-      return;
-    }
+  const css = useMemo(() => {
+    if (shape === 'default') return '';
 
     let cursorUrl = '';
-
     if (shape === 'sun2') {
       cursorUrl = `url('/tribal-sun-cursor.png') 16 16, auto`;
     } else {
       const generator = CURSOR_SHAPES[shape]?.create;
-      if (!generator) {
-        styleTag.textContent = '';
-        return;
-      }
+      if (!generator) return '';
 
       const svg = generator(color, secondary);
-      if (!svg) {
-        styleTag.textContent = '';
-        return;
-      }
+      if (!svg) return '';
 
       let finalSvg = svg;
       if (opacity !== 1.0) {
@@ -139,7 +120,7 @@ export function CustomCursor({ settings }: { settings?: CursorSettings }) {
       cursorUrl = `url("data:image/svg+xml,${encodeURIComponent(finalSvg)}") 16 16, auto`;
     }
 
-    styleTag.textContent = `
+    return `
       html, body, a, button, [role="button"], input, select, textarea, .cursor-pointer, .maplibregl-canvas, .maplibregl-canvas-container {
         cursor: ${cursorUrl} !important;
       }
@@ -151,13 +132,7 @@ export function CustomCursor({ settings }: { settings?: CursorSettings }) {
       .cursor-grabbing { cursor: grabbing !important; }
       .cursor-crosshair { cursor: crosshair !important; }
     `;
+  }, [shape, color, secondary, opacity]);
 
-    return () => {
-      if (styleTag) {
-        styleTag.textContent = '';
-      }
-    };
-  }, [settings?.shape, settings?.color, settings?.secondaryColor, settings?.opacity]);
-
-  return null;
+  return <style id="sphinx-custom-cursor-style" dangerouslySetInnerHTML={{ __html: css }} />;
 }

@@ -127,7 +127,10 @@ export function DirectionsPanel({
     avoidClosedRoads: true,
     avoidFloodedAreas: true,
     avoidCrimeAreas: false,
-    avoidToxicPlumes: true
+    avoidToxicPlumes: true,
+    avoidWildfires: true,
+    avoidChemicalSpray: true,
+    avoidDamBreach: true
   });
 
   // Selected Alternative Route
@@ -845,6 +848,45 @@ export function DirectionsPanel({
               >
                 <span>☣️ Toxic Plume Cones</span>
                 {avoidanceOptions.avoidToxicPlumes && <Check size={11} className="text-purple-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidWildfires')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidWildfires 
+                    ? 'bg-orange-950/80 border-orange-400 text-orange-200 font-bold shadow-[0_0_8px_rgba(249,115,22,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🔥 Active Wildfires</span>
+                {avoidanceOptions.avoidWildfires && <Check size={11} className="text-orange-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidChemicalSpray')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidChemicalSpray 
+                    ? 'bg-emerald-950/80 border-emerald-400 text-emerald-200 font-bold shadow-[0_0_8px_rgba(16,185,129,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🧪 Chemical Spray Zones</span>
+                {avoidanceOptions.avoidChemicalSpray && <Check size={11} className="text-emerald-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidDamBreach')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidDamBreach 
+                    ? 'bg-cyan-950/80 border-cyan-400 text-cyan-200 font-bold shadow-[0_0_8px_rgba(6,182,212,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🌊 Dam Breach Basins</span>
+                {avoidanceOptions.avoidDamBreach && <Check size={11} className="text-cyan-400" />}
               </button>
             </div>
           )}

@@ -5,6 +5,8 @@ import { CityCrimeData, NeighborhoodProfile, PRESET_METRO_NEIGHBORHOODS, getCity
 
 interface CityCrimePanelProps {
   activeCityCrime: CityCrimeData | null;
+  currentCoords?: { lat: number; lon: number };
+  onPinpointCurrentView?: () => void;
   onSelectCity: (city: string, lat?: number, lon?: number) => void;
   onSelectNeighborhood: (neighborhood: NeighborhoodProfile) => void;
   onToggleCrimeLayer: () => void;
@@ -30,6 +32,8 @@ const POPULAR_METROS = [
 
 export const CityCrimePanel: React.FC<CityCrimePanelProps> = ({
   activeCityCrime,
+  currentCoords,
+  onPinpointCurrentView,
   onSelectCity,
   onSelectNeighborhood,
   onToggleCrimeLayer,
@@ -131,7 +135,7 @@ export const CityCrimePanel: React.FC<CityCrimePanelProps> = ({
   return (
     <div 
       data-testid="city-crime-panel"
-      className="fixed inset-y-0 right-0 sm:right-6 sm:top-16 sm:bottom-6 z-40 w-full sm:w-[460px] sm:max-w-[calc(100vw-1.5rem)] sm:max-h-[calc(100vh-5rem)] bg-black/95 border-l sm:border border-red-900/60 sm:rounded-2xl shadow-[0_0_50px_rgba(239,68,68,0.3)] backdrop-blur-2xl flex flex-col font-mono text-white text-xs overflow-hidden animate-in slide-in-from-right duration-200"
+      className="fixed inset-y-0 right-0 sm:right-6 sm:top-16 sm:bottom-6 z-40 w-full sm:w-[min(460px,calc(100vw-2rem))] sm:max-h-[calc(100vh-5rem)] bg-black/95 border-l sm:border border-red-900/60 sm:rounded-2xl shadow-[0_0_50px_rgba(239,68,68,0.3)] backdrop-blur-2xl flex flex-col font-mono text-white text-xs overflow-hidden animate-in slide-in-from-right duration-200"
     >
       {/* Header */}
       <div className="p-4 bg-gradient-to-r from-red-950/80 via-black to-slate-900 border-b border-red-900/60 flex items-center justify-between shrink-0">
@@ -140,13 +144,17 @@ export const CityCrimePanel: React.FC<CityCrimePanelProps> = ({
             <ShieldAlert size={20} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h2 className="text-sm font-bold text-white tracking-wider">CRIME & THREAT INTEL</h2>
-              <span data-testid="crime-panel-city-pill" className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-950 text-red-300 border border-red-800">
-                {currentCityName.toUpperCase()}
+              <span data-testid="crime-panel-city-pill" className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-950 text-red-300 border border-red-800 flex items-center gap-1">
+                <MapPin size={10} className="text-red-400 shrink-0" />
+                <span>{currentCityName.toUpperCase()}</span>
+              </span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/50 text-red-300 font-semibold uppercase">
+                {currentCoords ? `${currentCoords.lat.toFixed(2)}°, ${currentCoords.lon.toFixed(2)}°` : 'VIEW FOCUS'}
               </span>
             </div>
-            <p className="text-[10px] text-gray-400">Neighborhood risk scoring & incident heatmaps</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">Pinpointed to central map focus • Neighborhood risk scoring</p>
           </div>
         </div>
         <button 
@@ -209,6 +217,18 @@ export const CityCrimePanel: React.FC<CityCrimePanelProps> = ({
 
         {/* Quick Metro Pills */}
         <div className="flex items-center gap-1.5 text-[10px] pt-1 overflow-x-auto scrollbar-none flex-nowrap py-0.5 max-w-full">
+          {onPinpointCurrentView && (
+            <button
+              type="button"
+              data-testid="btn-pinpoint-view"
+              onClick={onPinpointCurrentView}
+              title="Pinpoint crime intelligence to central map focus"
+              className="px-2 py-0.5 rounded-full border border-red-500/60 bg-red-950 hover:bg-red-900 text-red-200 font-bold transition-all shrink-0 flex items-center gap-1 shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+            >
+              <MapPin size={10} className="text-red-400" />
+              <span>PINPOINT VIEW</span>
+            </button>
+          )}
           <span className="text-gray-500 font-bold uppercase shrink-0">METROS:</span>
           {POPULAR_METROS.map(m => (
             <button

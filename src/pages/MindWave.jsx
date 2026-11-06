@@ -43,6 +43,19 @@ const MindWave = () => {
                 <meta property="og:type" content="website" />
             </Helmet>
 
+            {/* Return to Hub Floating Button */}
+            <div className="fixed top-4 left-4 z-[9999]">
+                <a
+                    href="/"
+                    aria-label="Return to SentAIent Hub"
+                    className="group flex items-center gap-2 px-3.5 py-1.5 bg-black/85 hover:bg-black border border-white/20 hover:border-[#60a9ff] text-white/80 hover:text-white rounded-full font-mono text-xs tracking-wider backdrop-blur-md shadow-lg transition-all duration-200 active:scale-95 no-underline cursor-pointer"
+                >
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#60a9ff] animate-pulse"></span>
+                    <span className="transition-transform duration-200 group-hover:-translate-x-0.5 text-xs leading-none">←</span>
+                    <span className="font-bold">HUB</span>
+                </a>
+            </div>
+
             {/* Fullscreen MindWave App Iframe */}
             <div className="fixed top-0 left-0 w-full h-full">
                 <iframe

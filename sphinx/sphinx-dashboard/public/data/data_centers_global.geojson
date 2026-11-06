@@ -1,0 +1,489 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "dc-01",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV Hyperscale",
+        "name": "AWS us-east-1 Hyperscale Cluster (Data Center Alley)",
+        "operator": "Amazon Web Services",
+        "location": "Ashburn, VA",
+        "power_mw": 450,
+        "tier": "Tier IV Hyperscale",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -77.4874,
+          39.0438
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-02",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV IBX",
+        "name": "Equinix DC1 - DC15 Internet Exchange Campus",
+        "operator": "Equinix",
+        "location": "Ashburn, VA",
+        "power_mw": 280,
+        "tier": "Tier IV IBX",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -77.4608,
+          39.0232
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-03",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Classified / Hardened SCIF",
+        "name": "NSA Utah Cryptologic Computing Facility (Bumblehive)",
+        "operator": "National Security Agency",
+        "location": "Bluffdale, UT",
+        "power_mw": 65,
+        "tier": "Classified / Hardened SCIF",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.9328,
+          40.4284
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-04",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV Hyperscale",
+        "name": "Google Silicon Valley Mega-Campus",
+        "operator": "Google Cloud Platform",
+        "location": "Mountain View, CA",
+        "power_mw": 180,
+        "tier": "Tier IV Hyperscale",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.0841,
+          37.422
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-05",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier III+",
+        "name": "Vantage Data Centers Santa Clara Campus",
+        "operator": "Vantage / Cloud Hyperscalers",
+        "location": "Santa Clara, CA",
+        "power_mw": 142,
+        "tier": "Tier III+",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.9552,
+          37.3541
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-06",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV 100% Renewable",
+        "name": "Meta Prineville Renewable Data Center Campus",
+        "operator": "Meta Infrastructure",
+        "location": "Prineville, OR",
+        "power_mw": 320,
+        "tier": "Tier IV 100% Renewable",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.8345,
+          44.3001
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-07",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV Hyperscale",
+        "name": "Google Council Bluffs Computing Campus",
+        "operator": "Google Cloud Platform",
+        "location": "Council Bluffs, IA",
+        "power_mw": 300,
+        "tier": "Tier IV Hyperscale",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -95.8642,
+          41.223
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-08",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV Hydro-Powered",
+        "name": "Microsoft Quincy Columbia River Hydro-Cloud Campus",
+        "operator": "Microsoft Azure",
+        "location": "Quincy, WA",
+        "power_mw": 260,
+        "tier": "Tier IV Hydro-Powered",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.8526,
+          47.2343
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-09",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "National Lab HPC",
+        "name": "Oak Ridge Frontier Exascale Supercomputing Center",
+        "operator": "US Dept of Energy / ORNL",
+        "location": "Oak Ridge, TN",
+        "power_mw": 40,
+        "tier": "National Lab HPC",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.3101,
+          35.9312
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-10",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "National Lab HPC",
+        "name": "Argonne Aurora Supercomputing Complex",
+        "operator": "US Dept of Energy / ANL",
+        "location": "Lemont, IL",
+        "power_mw": 60,
+        "tier": "National Lab HPC",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -87.98,
+          41.71
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-11",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV Renewable",
+        "name": "Apple Mesa Mega-Data Center & Solar Field",
+        "operator": "Apple Inc.",
+        "location": "Mesa, AZ",
+        "power_mw": 150,
+        "tier": "Tier IV Renewable",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.6664,
+          33.3062
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-12",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier III+ Carrier-Neutral",
+        "name": "Digital Realty Dallas Metro Campus",
+        "operator": "Digital Realty",
+        "location": "Addison / Dallas, TX",
+        "power_mw": 120,
+        "tier": "Tier III+ Carrier-Neutral",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -96.8292,
+          32.9618
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-13",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Classified Defense DoD",
+        "name": "NSA Texas Cryptologic Center (Medina Base)",
+        "operator": "National Security Agency",
+        "location": "San Antonio, TX",
+        "power_mw": 50,
+        "tier": "Classified Defense DoD",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -98.6186,
+          29.3875
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-14",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Financial Liquidity Exchange",
+        "name": "Equinix LD4 / LD5 Slough Trading Hub",
+        "operator": "Equinix UK",
+        "location": "Slough, United Kingdom",
+        "power_mw": 110,
+        "tier": "Financial Liquidity Exchange",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.6015,
+          51.5126
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-15",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV Transatlantic Hub",
+        "name": "AWS Grange Castle Hyper-Campus",
+        "operator": "Amazon Web Services",
+        "location": "Dublin, Ireland",
+        "power_mw": 200,
+        "tier": "Tier IV Transatlantic Hub",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -6.4428,
+          53.3244
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-16",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Europe Continental Core IX",
+        "name": "Interxion / Digital Realty Frankfurt Campus (DE-CIX)",
+        "operator": "Digital Realty Europe",
+        "location": "Frankfurt, Germany",
+        "power_mw": 250,
+        "tier": "Europe Continental Core IX",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.742,
+          50.119
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-17",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Asia-Pacific Financial Gateway",
+        "name": "Equinix TY2 / TY11 Tokyo Hyperscale Hub",
+        "operator": "Equinix Japan",
+        "location": "Tokyo, Japan",
+        "power_mw": 180,
+        "tier": "Asia-Pacific Financial Gateway",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.752,
+          35.619
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-18",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "ASEAN Core Submarine Landing IX",
+        "name": "Singtel / Telin Jurong Data Center Hub",
+        "operator": "Singtel / Telin",
+        "location": "Jurong, Singapore",
+        "power_mw": 160,
+        "tier": "ASEAN Core Submarine Landing IX",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.7126,
+          1.3329
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-19",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV Certified",
+        "name": "NextDC S1 / S2 Sydney Cloud Campus",
+        "operator": "NextDC",
+        "location": "Sydney, Australia",
+        "power_mw": 90,
+        "tier": "Tier IV Certified",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          151.185,
+          -33.805
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-20",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Tier IV Wind-Powered",
+        "name": "Microsoft Cheyenne Zero-Carbon Cloud Campus",
+        "operator": "Microsoft Azure",
+        "location": "Cheyenne, WY",
+        "power_mw": 135,
+        "tier": "Tier IV Wind-Powered",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -104.8202,
+          41.1399
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-21",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Nuclear Weapons Simulation",
+        "name": "Los Alamos National Security Computing Complex",
+        "operator": "US Dept of Energy / LANL",
+        "location": "Los Alamos, NM",
+        "power_mw": 35,
+        "tier": "Nuclear Weapons Simulation",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -106.287,
+          35.845
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dc-22",
+      "properties": {
+        "type": "data_center",
+        "category": "Data Center",
+        "sub_type": "Top Secret / Sensitive Compartmented",
+        "name": "AWS Secret Commercial Cloud Services (C2S) Hub",
+        "operator": "Amazon Web Services / CIA",
+        "location": "Reston / Herndon, VA",
+        "power_mw": 80,
+        "tier": "Top Secret / Sensitive Compartmented",
+        "status": "Active"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -77.357,
+          38.9586
+        ]
+      }
+    }
+  ]
+}
