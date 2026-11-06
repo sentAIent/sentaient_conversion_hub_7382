@@ -359,7 +359,6 @@ export default function MiniWorldsHub({ visible = true }) {
   const groupRef = useRef();
   const [hoveredWorld, setHoveredWorld] = useState(null);
   const hoverTimeoutRef = useRef(null);
-  const [showHub, setShowHub] = useState(true);
 
   const handleHoverStart = (name) => {
     if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null; }
@@ -402,16 +401,13 @@ export default function MiniWorldsHub({ visible = true }) {
   useFrame(() => {
     const p = (window._isTransitActive && window._warpProgress !== undefined) ? window._warpProgress : (scroll ? scroll.offset : 0);
     const shouldShow = visible && p < 0.025;
-    if (shouldShow !== showHub) {
-      setShowHub(shouldShow);
-    }
     if (groupRef.current) {
       groupRef.current.visible = shouldShow;
       groupRef.current.position.y = hubCenterY;
     }
   });
 
-  if (!visible || !showHub) return null;
+  if (!visible) return null;
 
   const numWorlds = worlds.length;
 
