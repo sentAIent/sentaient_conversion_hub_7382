@@ -274,31 +274,6 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               }}>
                 {description}
               </div>
-              <div 
-                onClick={(e) => { e.stopPropagation(); handleClick(e); }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  letterSpacing: '0.1em',
-                  color: color,
-                  textTransform: 'uppercase',
-                  textShadow: `0 0 10px ${color}aa`,
-                  marginTop: '8px',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  background: `${color}18`,
-                  border: `1px solid ${color}66`,
-                  cursor: 'pointer',
-                  pointerEvents: 'auto',
-                  transition: 'all 0.18s ease'
-                }}
-              >
-                <span>ENTER WORLD</span>
-                <span style={{ fontSize: '12px' }}>→</span>
-              </div>
           </div>
         </Html>
       )}
