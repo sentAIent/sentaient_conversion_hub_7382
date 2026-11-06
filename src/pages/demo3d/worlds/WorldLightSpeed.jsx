@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Sparkles } from '@react-three/drei';
+import { useFrame, useLoader } from '@react-three/fiber';
+import { Sparkles, Text, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Custom GLSL shader for the glowing hexagonal Zero-Trust cyber shield
@@ -50,6 +50,10 @@ export default function WorldLightSpeed({ position, visible }) {
   const edgeTorusRef = useRef();
   const packetsRef = useRef();
   const threatsRef = useRef();
+
+  // Load official LightSpeed golden cyber emblem
+  const logoTex = useLoader(THREE.TextureLoader, '/lightspeed_logo_gold.png');
+  logoTex.colorSpace = THREE.SRGBColorSpace;
 
   const packetCount = 48;
   const threatCount = 18;
@@ -397,6 +401,56 @@ export default function WorldLightSpeed({ position, visible }) {
             </group>
           );
         })}
+      </group>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 5. CENTERPIECE: LIGHTSPEED TITLE & LOGO ABOVE ANIMATION        */}
+      {/* ------------------------------------------------------------- */}
+      <group position={[0, 500, -380]}>
+        {/* Floating Gold LightSpeed Emblem */}
+        <Float speed={1.8} rotationIntensity={0.05} floatIntensity={0.3}>
+          <mesh position={[0, 110, 0]}>
+            <planeGeometry args={[140, 169]} />
+            <meshBasicMaterial 
+              map={logoTex} 
+              transparent 
+              depthWrite={false} 
+              blending={THREE.AdditiveBlending} 
+            />
+          </mesh>
+        </Float>
+
+        {/* Main Title: LIGHTSPEED */}
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[0, 0, 10]}
+          fontSize={56}
+          color="#ffffff"
+          outlineWidth={1.8}
+          outlineColor="#0066cc"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.08}
+        >
+          LIGHTSPEED
+        </Text>
+
+        {/* Subtitle: AUTONOMOUS AI CTO & RUNTIME DEFENSE */}
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[0, -36, 10]}
+          fontSize={18}
+          color="#38bdf8"
+          outlineWidth={1.0}
+          outlineColor="#0f172a"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.12}
+        >
+          AUTONOMOUS AI CTO & RUNTIME DEFENSE
+        </Text>
       </group>
 
     </group>

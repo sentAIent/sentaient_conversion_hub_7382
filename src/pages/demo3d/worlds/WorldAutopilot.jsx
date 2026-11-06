@@ -128,40 +128,39 @@ const WorldAutopilot = ({ position, rotation, visible }) => {
       <pointLight color="#00ffcc" intensity={3} distance={2000} position={[-500, 500, -500]} />
       <pointLight color="#ff00ff" intensity={3} distance={2000} position={[500, 500, 500]} />
 
-      {/* UI Elements */}
-      <group position={[0, 0, -300]}>
+      {/* UI Elements - Elevated Above Animations */}
+      <group position={[0, 260, -400]}>
         {logoTexture && (
-          <mesh position={[0, 100, 0]}>
-            <planeGeometry args={[250, 250]} />
+          <mesh position={[0, 60, 0]}>
+            <planeGeometry args={[120, 120]} />
             <meshBasicMaterial map={logoTexture} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
           </mesh>
         )}
         
         <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-          position={[0, -40, 0]}
-          fontSize={60}
+          position={[0, -10, 0]}
+          fontSize={52}
           color="#ffffff"
-          outlineWidth={0.02}
-          outlineColor="#00ffcc"
+          outlineWidth={1.8}
+          outlineColor="#006655"
           anchorX="center"
           anchorY="middle"
+          letterSpacing={0.1}
         >
           AUTOPILOT
         </Text>
         
         <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-          position={[0, -100, 0]}
-          fontSize={24}
-          color="#ffffff"
-          outlineWidth={0.01}
-          outlineColor="#003344"
+          position={[0, -46, 0]}
+          fontSize={16}
+          color="#00ffcc"
+          outlineWidth={0.8}
+          outlineColor="#002233"
           anchorX="center"
           anchorY="middle"
-          maxWidth={800}
-          textAlign="center"
-          lineHeight={1.5}
+          letterSpacing={0.12}
         >
-          Fully autonomous marketing pipelines. Generates content, schedules campaigns, and optimizes spend.
+          ENTERPRISE SOCIAL MARKETING AGENT
         </Text>
       </group>
     </group>

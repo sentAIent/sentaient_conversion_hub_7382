@@ -90,42 +90,36 @@ const skyFragmentShader = `
 `;
 
 const HologramText = ({ position, visible }) => {
-  
-  
   return (
     <group visible={visible} position={position}>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-        position={[0, 40, 0]}
-        fontSize={24}
-        color="#051024"
-        outlineWidth={0.02}
-        outlineColor="#ffffff"
+      {/* MindWave Title - Large & Prominent */}
+      <Text 
+        font="/fonts/Roboto.woff" 
+        fallbackFonts={[]}
+        position={[0, 72, 0]}
+        fontSize={56}
+        color="#ffffff"
+        outlineWidth={1.5}
+        outlineColor="#0284c7"
         anchorX="center"
         anchorY="middle"
       >
         MINDWAVE
       </Text>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-        position={[0, 20, 0]}
-        fontSize={8}
-        color="#051024"
-        outlineWidth={0.02}
+
+      {/* Subtitle */}
+      <Text 
+        font="/fonts/Roboto.woff" 
+        fallbackFonts={[]}
+        position={[0, 42, 0]}
+        fontSize={22}
+        color="#202733"
+        outlineWidth={0.6}
         outlineColor="#ffffff"
         anchorX="center"
         anchorY="middle"
       >
         Intelligent Health & Wellness
-      </Text>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-        position={[0, 8, 0]}
-        fontSize={6}
-        color="#0a1930"
-        outlineWidth={0.01}
-        outlineColor="#ffffff"
-        anchorX="center"
-        anchorY="middle"
-      >
-        Tune your frequency.
       </Text>
     </group>
   );
@@ -197,30 +191,28 @@ const WorldMindWave = ({ position, visible }) => {
     if (waterMaterialRef.current) {
       waterMaterialRef.current.uniforms.uTime.value = time;
       
-      // Calculate how close the camera is to the centerZ
-      // Camera is roughly at state.camera.position.z
+      // Maintain full cymatic standing waves while viewing MindWave
       const distToCenter = Math.abs(state.camera.position.z - centerZ);
-      const maxDist = 1000;
-      // 1 at center, 0 at edges
-      let intensity = 1.0 - Math.min(distToCenter / maxDist, 1.0);
-      // Smooth it
-      intensity = Math.pow(intensity, 2.0);
-      
+      let intensity = 1.0;
+      if (distToCenter > 600) {
+        intensity = Math.max(0.0, 1.0 - (distToCenter - 600) / 400);
+      }
       waterMaterialRef.current.uniforms.uScrollProgress.value = intensity;
     }
     
-    // Float and pulse logo
+    const sunScale = 1.0 + Math.sin(time * 3) * 0.05;
+
+    // Float and pulse logo nestled inside sun's inner circle
     if (logoRef.current) {
-      logoRef.current.position.y = -7 + Math.sin(time * 2) * 2;
-      const scale = 1.0 + Math.sin(time * 4) * 0.05;
-      logoRef.current.scale.set(scale, scale, 1);
+      logoRef.current.position.y = 168 + Math.sin(time * 2) * 2;
+      logoRef.current.position.x = -1.2;
+      logoRef.current.scale.set(sunScale, sunScale, 1);
       logoRef.current.rotation.y = 0; // Keep facing camera
     }
     
     if (sunRef.current) {
-      sunRef.current.position.y = 125 + Math.sin(time * 2) * 2;
+      sunRef.current.position.y = 170 + Math.sin(time * 2) * 2;
       sunRef.current.rotation.z = time * 0.1;
-      const sunScale = 1.0 + Math.sin(time * 3) * 0.05;
       sunRef.current.scale.set(sunScale, sunScale, 1);
     }
   });
@@ -256,7 +248,7 @@ const WorldMindWave = ({ position, visible }) => {
       
       {/* Tribal Sun glowing behind logo */}
       {sunTex && (
-        <mesh ref={sunRef} position={[0, -10, -85]}>
+        <mesh ref={sunRef} position={[0, 170, -85]}>
           <planeGeometry args={[140, 140]} />
           <meshBasicMaterial 
             map={sunTex} 
@@ -270,10 +262,10 @@ const WorldMindWave = ({ position, visible }) => {
         </mesh>
       )}
 
-      {/* MindWave Logo (Floating above center) */}
+      {/* MindWave Logo (Nestled perfectly inside tribal sun inner circle) */}
       {logoTex && (
-        <mesh ref={logoRef} position={[0, -10, -80]}>
-          <planeGeometry args={[80, 80]} />
+        <mesh ref={logoRef} position={[-1.2, 168, -80]}>
+          <planeGeometry args={[165, 165]} />
           <meshBasicMaterial 
             map={logoTex} 
             transparent={true} 
@@ -284,8 +276,8 @@ const WorldMindWave = ({ position, visible }) => {
         </mesh>
       )}
       
-      {/* Hologram Description */}
-      <HologramText position={[0, -5, -80]} visible={true} />
+      {/* Hologram Description - Elevated Above Water */}
+      <HologramText position={[0, 20, -80]} visible={true} />
       
       {/* Hologram Guide */}
       <HologramGuide appId="mindwave" position={[40, 0, -40]} />

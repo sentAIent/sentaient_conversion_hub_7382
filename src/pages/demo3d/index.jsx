@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header';
 import Scene3D from './components/Scene3D';
 import { goToStation } from './navigation/WaypointNavigator';
+import FeedbackModal from '../../components/analytics/FeedbackModal';
 
 const ReturnToHubButton = () => {
   const [visible, setVisible] = useState(false);
@@ -10,7 +11,7 @@ const ReturnToHubButton = () => {
   useEffect(() => {
     let animId;
     const check = () => {
-      const p = window._warpProgress !== undefined 
+      const p = (window._isTransitActive && window._warpProgress !== undefined)
         ? window._warpProgress 
         : (window._currentProgress || 0);
       setVisible(p > 0.05);
@@ -83,6 +84,8 @@ const Demo3DHome = () => {
         <Scene3D />
       </div>
 
+      {/* Interactive User Feedback Widget */}
+      <FeedbackModal currentApp="3D Space Experience" />
     </div>
   );
 };

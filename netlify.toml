@@ -4,6 +4,9 @@
 
 [build.environment]
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+  NETLIFY_USE_NPM_CI = "false"
+  NODE_VERSION = "22"
+  NPM_FLAGS = "--legacy-peer-deps --ignore-scripts"
 
 [[redirects]]
   from = "/icebreaker"

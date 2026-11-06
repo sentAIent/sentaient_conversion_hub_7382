@@ -267,26 +267,12 @@ const CourtroomBackground = () => {
   bgTex.colorSpace = THREE.SRGBColorSpace;
   
   return (
-    <group>
-      {/* Curved background */}
-      <mesh position={[0, 0, -2500]}>
-        <planeGeometry args={[8000, 4500]} />
-        <meshBasicMaterial map={bgTex} depthWrite={false} transparent opacity={0.3} />
+    <group position={[0, 40, -1250]}>
+      {/* High-Resolution Futuristic Courtroom Panoramic Stage */}
+      <mesh position={[0, 0, 0]}>
+        <planeGeometry args={[4400, 2450]} />
+        <meshBasicMaterial map={bgTex} side={THREE.DoubleSide} />
       </mesh>
-      
-      {/* Brutalist Megastructure Pillars */}
-      {[-1, 1].map((side, i) => (
-        <mesh key={i} position={[side * 800, 0, -1000]}>
-          <boxGeometry args={[400, 4000, 400]} />
-          <meshStandardMaterial color="#050505" metalness={0.9} roughness={0.2} />
-        </mesh>
-      ))}
-      {[-1, 1].map((side, i) => (
-        <mesh key={i+2} position={[side * 1400, 0, -1500]}>
-          <boxGeometry args={[600, 4000, 600]} />
-          <meshStandardMaterial color="#030303" metalness={0.9} roughness={0.3} />
-        </mesh>
-      ))}
     </group>
   );
 };
@@ -307,25 +293,15 @@ const BrutalistOverlord = ({ logoTex }) => {
   });
 
   return (
-    <group position={[0, -100, -800]}>
-      {/* Massive Bench Monolith */}
-      <mesh position={[0, -200, 0]}>
-        <boxGeometry args={[1200, 600, 400]} />
-        <meshStandardMaterial color="#020202" metalness={1} roughness={0.1} />
-      </mesh>
-      <mesh position={[0, 150, 0]}>
-        <boxGeometry args={[800, 100, 300]} />
-        <meshStandardMaterial color="#050505" metalness={0.8} roughness={0.2} />
-      </mesh>
-      
-      {/* AI Judge (Legal Eagle Logo) */}
-      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5}>
-        <mesh position={[0, 400, 0]}>
-          <planeGeometry args={[400, 400]} />
+    <group position={[0, 160, -650]}>
+      {/* AI Autonomous Judge Hologram (Floating Above Courtroom Bench) */}
+      <Float speed={2} rotationIntensity={0.12} floatIntensity={0.35}>
+        <mesh position={[0, 180, 0]}>
+          <planeGeometry args={[260, 260]} />
           <meshBasicMaterial map={logoTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
         </mesh>
-        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 150, 0]} fontSize={100} color="#00ffff" anchorX="center" anchorY="middle" outlineWidth={2} outlineColor="#004488">
-            LEGAL EAGLE
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 8, 0]} fontSize={56} color="#00ffff" anchorX="center" anchorY="middle" outlineWidth={1.5} outlineColor="#003366">
+          LEGAL EAGLE
         </Text>
       </Float>
     </group>
@@ -338,9 +314,10 @@ const LegalEagle = ({ position, rotation, visible }) => {
 
   return (
     <group visible={visible} position={position} rotation={rotation}>
-      <ambientLight intensity={0.2} />
-      <directionalLight position={[0, 1000, 1000]} intensity={1.5} color="#00ffff" />
-      <pointLight position={[0, 500, -400]} intensity={2.0} color="#0044ff" distance={2000} />
+      <ambientLight intensity={0.4} color="#0d1527" />
+      <directionalLight position={[0, 1000, 800]} intensity={2.0} color="#00ffff" />
+      <pointLight position={[0, 200, -500]} intensity={14} color="#f59e0b" distance={1600} />
+      <pointLight position={[0, 400, -800]} intensity={16} color="#00ffff" distance={1800} />
       
       <CourtroomBackground />
       <BrutalistOverlord logoTex={logoTex} />

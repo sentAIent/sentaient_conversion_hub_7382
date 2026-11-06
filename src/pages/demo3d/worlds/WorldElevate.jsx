@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Text, Sparkles } from '@react-three/drei';
+import { useFrame, useLoader } from '@react-three/fiber';
+import { Text, Sparkles, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Procedural Alpine Pine Tree Component
@@ -458,6 +458,9 @@ function createNaturalCliffButtressGeometry(width = 160, height = 320, depth = 3
 }
 
 export default function WorldElevate({ position = [0, -11750, -33000], visible }) {
+  // Load official Elevate logo
+  const logoTex = useLoader(THREE.TextureLoader, '/elevate_logo_final.png');
+  logoTex.colorSpace = THREE.SRGBColorSpace;
   // Procedural sculpted mountain geometry with realistic snow & granite shading
   const mountainGeom = useMemo(() => createAlpineMountainGeometry(), []);
   const summitMassifGeom = useMemo(() => createAlaskanMassifRidgeGeometry(3200, 1600, 1100, 6, 1.5), []);
@@ -3139,91 +3142,52 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
       </group>
 
       {/* ========================================================= */}
-      {/* 8. AAA HOLOGRAPHIC TYPOGRAPHY BLADE (Floating Above Trees on Right Flank) */}
+      {/* 8. CENTERPIECE: ELEVATE LOGO & TITLE ABOVE ANIMATION        */}
       {/* ========================================================= */}
-      <group position={[245, 90, -950]} rotation={[0, -0.78, 0]} scale={0.55}>
-        <mesh position={[0, 0, -2]}>
-          <planeGeometry args={[240, 190]} />
-          <meshStandardMaterial 
-            color="#040b17" 
-            transparent 
-            opacity={0.88} 
-            roughness={0.15} 
-            metalness={0.9} 
-          />
-        </mesh>
+      <group position={[0, 260, -1020]}>
+        {/* Floating Elevate Emblem */}
+        <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
+          <mesh position={[0, 52, 0]}>
+            <planeGeometry args={[115, 68]} />
+            <meshBasicMaterial 
+              map={logoTex} 
+              transparent 
+              depthWrite={false} 
+              blending={THREE.AdditiveBlending} 
+            />
+          </mesh>
+        </Float>
 
-        <lineSegments>
-          <edgesGeometry args={[new THREE.PlaneGeometry(240, 190)]} />
-          <lineBasicMaterial color="#38bdf8" linewidth={2} />
-        </lineSegments>
-
+        {/* Elevate Title */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[-105, 75, 0]}
-          fontSize={8.5}
-          color="#38bdf8"
-          letterSpacing={0.12}
-          anchorX="left"
-          anchorY="middle"
-        >
-          EXP // 10  ◈  ALPINE AI & ACTION SPORTS OS
-        </Text>
-
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-105, 42, 0]}
-          fontSize={36}
+          position={[0, 0, 0]}
+          fontSize={48}
           color="#ffffff"
-          outlineWidth={1.2}
+          outlineWidth={1.8}
           outlineColor="#0369a1"
-          anchorX="left"
+          anchorX="center"
           anchorY="middle"
+          letterSpacing={0.12}
         >
           ELEVATE
         </Text>
 
+        {/* Subtitle */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[-105, 8, 0]}
-          fontSize={10.5}
+          position={[0, -36, 0]}
+          fontSize={15}
           color="#38bdf8"
-          maxWidth={210}
-          lineHeight={1.3}
-          anchorX="left"
+          outlineWidth={0.8}
+          outlineColor="#040b17"
+          anchorX="center"
           anchorY="middle"
+          letterSpacing={0.14}
         >
-          AUTONOMOUS ALPINE TELEMETRY & AVALANCHE SURVIVAL
-        </Text>
-
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-105, -38, 0]}
-          fontSize={9}
-          color="#e0f2fe"
-          maxWidth={210}
-          lineHeight={1.45}
-          anchorX="left"
-          anchorY="middle"
-        >
-          Conquer the most extreme big-mountain terrain with real-time avalanche radar, descent trajectory optimization, and automated 4K action camera highlight tracking.
-        </Text>
-
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-105, -80, 0]}
-          fontSize={7.8}
-          color="#f97316"
-          letterSpacing={0.05}
-          anchorX="left"
-          anchorY="middle"
-        >
-          [ ◈ HELI-DROP CERTIFIED  ◈ CLIFF AIR METRICS  ◈ ZERO-FEAR ]
+          BIG-MOUNTAIN SNOWBOARD GAME & ALPINE HUB
         </Text>
       </group>
     </group>

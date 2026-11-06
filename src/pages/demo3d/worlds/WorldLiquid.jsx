@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Text, Sparkles } from '@react-three/drei';
+import { useFrame, useLoader } from '@react-three/fiber';
+import { Text, Sparkles, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 export default function WorldLiquid({ position, visible }) {
@@ -10,6 +10,10 @@ export default function WorldLiquid({ position, visible }) {
   const ring2Ref = useRef();
   const ring3Ref = useRef();
   const coreRef = useRef();
+
+  // Load official Liquid logo
+  const logoTex = useLoader(THREE.TextureLoader, '/liquid_logo_bold_v7.png');
+  logoTex.colorSpace = THREE.SRGBColorSpace;
 
   const coinCount = 1800;
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -183,98 +187,52 @@ export default function WorldLiquid({ position, visible }) {
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 5. 3D HOLOGRAPHIC TYPOGRAPHY BLADE (CLEANLY OFF TO THE SIDE)  */}
+      {/* 5. CENTERPIECE: LIQUID LOGO & TITLE ABOVE ANIMATION           */}
       {/* ------------------------------------------------------------- */}
-      <group position={[-540, 100, -580]} rotation={[0, Math.PI / 10, 0]}>
-        {/* Holographic Frosted Obsidian Blade Backing with generous padding */}
-        <mesh position={[150, -10, -2]}>
-          <planeGeometry args={[300, 260]} />
-          <meshStandardMaterial 
-            color="#0b0802" 
-            transparent 
-            opacity={0.52} 
-            roughness={0.12} 
-            metalness={0.92} 
-            side={THREE.DoubleSide} 
-          />
-        </mesh>
-        {/* Glowing Gold Top Rail */}
-        <mesh position={[150, 120, 0]}>
-          <boxGeometry args={[302, 3, 2]} />
-          <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={3.2} />
-        </mesh>
+      <group position={[0, 420, -550]}>
+        {/* Floating Liquid Emblem */}
+        <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
+          <mesh position={[0, 70, 0]}>
+            <planeGeometry args={[110, 110]} />
+            <meshBasicMaterial 
+              map={logoTex} 
+              transparent 
+              depthWrite={false} 
+              blending={THREE.AdditiveBlending} 
+            />
+          </mesh>
+        </Float>
 
-        {/* Category Badge */}
+        {/* Liquid Title */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[20, 92, 0]}
-          fontSize={11}
-          color="#ffd700"
-          letterSpacing={0.12}
-          anchorX="left"
-          anchorY="middle"
-        >
-          EXP // 12  ◈  FINANCIAL INTELLIGENCE
-        </Text>
-
-        {/* World Name Title */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[20, 50, 0]}
-          fontSize={46}
+          position={[0, 0, 0]}
+          fontSize={52}
           color="#ffffff"
-          outlineWidth={1.5}
-          outlineColor="#443000"
-          anchorX="left"
+          outlineWidth={1.8}
+          outlineColor="#b45309"
+          anchorX="center"
           anchorY="middle"
+          letterSpacing={0.12}
         >
           LIQUID
         </Text>
 
-        {/* Value Proposition Headline */}
+        {/* Subtitle */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[20, 8, 0]}
-          fontSize={13.5}
-          color="#ffaa00"
-          maxWidth={260}
-          lineHeight={1.3}
-          anchorX="left"
-          anchorY="middle"
-        >
-          AUTONOMOUS ACCOUNTING, TAX INTELLIGENCE & TOKEN FORGE
-        </Text>
-
-        {/* System Capability Description */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[20, -50, 0]}
-          fontSize={11}
-          color="#fef08a"
-          maxWidth={260}
-          lineHeight={1.45}
-          anchorX="left"
-          anchorY="middle"
-        >
-          Distill enterprise financial complexity into instant clarity with automated tax liability calculation, live P&L auditing, and smart token minting.
-        </Text>
-
-        {/* Telemetry Pills */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[20, -105, 0]}
-          fontSize={9.5}
+          position={[0, -42, 0]}
+          fontSize={16}
           color="#ffd700"
-          letterSpacing={0.05}
-          anchorX="left"
+          outlineWidth={0.8}
+          outlineColor="#0b0802"
+          anchorX="center"
           anchorY="middle"
+          letterSpacing={0.12}
         >
-          [ ◈ TAX AUDIT  ◈ LIVE LEDGER  ◈ SMART TOKEN ]
+          FINANCIAL INTELLIGENCE & TAX FORGE
         </Text>
       </group>
     </group>

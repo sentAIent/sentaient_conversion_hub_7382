@@ -24,7 +24,7 @@ const ContangoOldPage = () => {
       <div style={{ position: 'absolute', top: 20, left: 20, color: '#00ff00', fontFamily: 'monospace', zIndex: 10 }}>
         <h2>Old Contango Quant (Rollercoaster)</h2>
         <p>Use mouse to rotate and zoom.</p>
-        <a href="/landing3d" style={{ color: '#00ffff', textDecoration: 'underline' }}>Back to Main 3D Demo</a>
+        <a href="/" style={{ color: '#00ffff', textDecoration: 'underline' }}>Back to Main 3D Demo</a>
       </div>
     </div>
   );

@@ -103,8 +103,8 @@ const RollercoasterCarAndHUD = ({ worldPosition }) => {
         </mesh>
       </group>
 
-      {/* Hovering Hologram HUD */}
-      <group position={[0, 5, -50]}>
+      {/* Hovering Hologram HUD - Elevated Near Top Frame */}
+      <group position={[0, 18, -50]}>
 
         {/* The Logo */}
         <mesh position={[0, 15, 0]}>

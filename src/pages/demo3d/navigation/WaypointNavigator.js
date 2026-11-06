@@ -1,25 +1,26 @@
 // WaypointNavigator.js
 // Discrete waypoint transit engine for controlled cinematic 3D navigation
 import { useEffect } from 'react';
+import { WORLD_PAUSE_STATIONS, startWorldPause, clearActiveWorldPause } from './WorldPauseManager';
 
 export const STATIONS = [
   { id: 'hub', name: 'Home Hub', p: 0.000, duration: 2000 },
-  { id: 'mindwave', name: 'MindWave', p: 0.040, duration: 2000 },
-  { id: 'icebreaker', name: 'Icebreaker', p: 0.135, duration: 2800 },
-  { id: 'interstellar', name: 'Interstellar', p: 0.210, duration: 2200 },
-  { id: 'legal', name: 'Legal Eagle', p: 0.255, duration: 2000 },
-  { id: 'autopilot', name: 'Autopilot', p: 0.300, duration: 2000 },
-  { id: 'clove', name: 'CloveH2O', p: 0.350, duration: 2000 },
-  { id: 'fantasy', name: 'FantasyQuant', p: 0.420, duration: 3000 },
-  { id: 'contango', name: 'Contango', p: 0.470, duration: 2200 },
-  { id: 'sentaient', name: 'Sentaient', p: 0.500, duration: 2000 },
-  { id: 'elevate', name: 'Elevate', p: 0.550, duration: 2200 },
-  { id: 'sphinx', name: 'Sphinx', p: 0.605, duration: 2200 },
-  { id: 'liquid', name: 'Liquid', p: 0.665, duration: 2200 },
-  { id: 'maya', name: 'Maya', p: 0.725, duration: 2200 },
-  { id: 'pyramid', name: 'PyRAmid', p: 0.795, duration: 2200 },
-  { id: 'matrix', name: 'Matrix', p: 0.865, duration: 2200 },
-  { id: 'lightspeed', name: 'LightSpeed', p: 0.940, duration: 2500 }
+  { id: 'mindwave', name: 'MindWave', p: 0.038, duration: 2000 },
+  { id: 'icebreaker', name: 'Icebreaker', p: 0.131, duration: 2800 },
+  { id: 'interstellar', name: 'Interstellar', p: 0.200, duration: 2200 },
+  { id: 'legal', name: 'Legal Eagle', p: 0.248, duration: 2000 },
+  { id: 'autopilot', name: 'Autopilot', p: 0.293, duration: 2000 },
+  { id: 'clove', name: 'CloveH2O', p: 0.345, duration: 2000 },
+  { id: 'fantasy', name: 'FantasyQuant', p: 0.413, duration: 3000 },
+  { id: 'contango', name: 'Contango', p: 0.463, duration: 2200 },
+  { id: 'sentaient', name: 'Sentaient', p: 0.495, duration: 2000 },
+  { id: 'elevate', name: 'Elevate', p: 0.548, duration: 2200 },
+  { id: 'sphinx', name: 'Sphinx', p: 0.610, duration: 2200 },
+  { id: 'liquid', name: 'Liquid', p: 0.668, duration: 2200 },
+  { id: 'maya', name: 'Maya', p: 0.728, duration: 2200 },
+  { id: 'pyramid', name: 'PyRAmid', p: 0.803, duration: 2200 },
+  { id: 'matrix', name: 'Matrix', p: 0.873, duration: 2200 },
+  { id: 'lightspeed', name: 'LightSpeed', p: 0.945, duration: 2500 }
 ];
 
 let activeAnimId = null;
@@ -32,9 +33,18 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
     cancelAnimationFrame(activeAnimId);
     activeAnimId = null;
   }
+  clearActiveWorldPause();
+  
+  // When warping away from or to Icebreaker, reset ice cave so it is frozen solid before entering
+  window.icebreakerThaw = 0.0;
+  window._icebreakerMeltState = 'idle';
+  window._icebreakerCam = null;
+  window._icebreakerLockCamera = false;
+  window.icebreakerThawLocked = false;
   
   window._cancelWarp = false;
   window._isTransitActive = true;
+  window._isProgrammaticScroll = true;
   
   const startP = window._warpProgress !== undefined 
     ? window._warpProgress 
@@ -52,6 +62,8 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
   const step = (now) => {
     if (window._cancelWarp) {
       window._isTransitActive = false;
+      window._warpProgress = undefined;
+      window._isProgrammaticScroll = false;
       activeAnimId = null;
       return;
     }
@@ -78,17 +90,34 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
     if (t < 1.0) {
       activeAnimId = requestAnimationFrame(step);
     } else {
-      window._warpProgress = endP;
+      if (window._scrollEl) {
+        const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
+        if (maxScroll > 0) {
+          window._isProgrammaticScroll = true;
+          window._scrollEl.scrollTop = endP * maxScroll;
+        }
+        window._scrollEl.style.overflow = 'auto';
+      }
       window._currentStationIndex = clampedIndex;
       activeAnimId = null;
-      if (window._scrollEl) window._scrollEl.style.overflow = 'auto';
+      window._warpProgress = undefined;
+      window._isProgrammaticScroll = false;
       if (targetStation.id === 'icebreaker') {
         window._isTransitActive = true;
-        if (window.triggerIcebreakerMelt) window.triggerIcebreakerMelt();
-        setTimeout(() => { window._isTransitActive = false; }, 4500);
+        if (window.triggerIcebreakerMelt) {
+          window.triggerIcebreakerMelt(() => {
+            window._isTransitActive = false;
+          });
+        }
+        setTimeout(() => { window._isTransitActive = false; }, 8500);
+      } else if (targetStation.id !== 'hub') {
+        window._isTransitActive = false;
+        const pauseStation = WORLD_PAUSE_STATIONS.find(s => s.id === targetStation.id);
+        if (pauseStation) {
+          startWorldPause(pauseStation);
+        }
       } else {
-        window._isTransitActive = true;
-        setTimeout(() => { window._isTransitActive = false; }, 1000);
+        window._isTransitActive = false;
       }
       if (typeof onComplete === 'function') onComplete();
     }
@@ -100,26 +129,27 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
 export const stepStation = (direction) => {
   if (window._isTransitActive || window._isWorldActionActive) return;
   
-  let currentIdx = window._currentStationIndex;
-  
-  // If index is undefined or out of sync, determine closest station by current progress
-  if (currentIdx === undefined || currentIdx === null) {
-    const curP = window._warpProgress !== undefined 
-      ? window._warpProgress 
-      : (window._currentProgress !== undefined ? window._currentProgress : 0);
-    let closestDist = Infinity;
-    let closestIdx = 0;
-    STATIONS.forEach((s, idx) => {
-      const dist = Math.abs(s.p - curP);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestIdx = idx;
-      }
-    });
-    currentIdx = closestIdx;
+  const curP = (window._isTransitActive && window._warpProgress !== undefined)
+    ? window._warpProgress 
+    : (window._currentProgress !== undefined ? window._currentProgress : 0);
+    
+  let closestDist = Infinity;
+  let closestIdx = 0;
+  STATIONS.forEach((s, idx) => {
+    const dist = Math.abs(s.p - curP);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestIdx = idx;
+    }
+  });
+
+  let nextIdx = closestIdx;
+  if (direction > 0) {
+    nextIdx = curP >= STATIONS[closestIdx].p - 0.008 ? closestIdx + 1 : closestIdx;
+  } else {
+    nextIdx = curP <= STATIONS[closestIdx].p + 0.008 ? closestIdx - 1 : closestIdx;
   }
-  
-  const nextIdx = currentIdx + (direction > 0 ? 1 : -1);
+  nextIdx = Math.max(0, Math.min(STATIONS.length - 1, nextIdx));
   goToStation(nextIdx);
 };
 
@@ -140,6 +170,14 @@ export const useWaypointControls = (scroll) => {
     }
     let lastWheelTime = 0;
     const onWheel = (e) => {
+      if (!window._isProgrammaticScroll && window._warpProgress !== undefined) {
+        window._warpProgress = undefined;
+        window._isTransitActive = false;
+        if (activeAnimId) {
+          cancelAnimationFrame(activeAnimId);
+          activeAnimId = null;
+        }
+      }
       if (Math.abs(e.deltaY) < 15) return;
       if (e.target.closest && (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('.scrollable-modal'))) return;
       e.preventDefault();
@@ -147,6 +185,19 @@ export const useWaypointControls = (scroll) => {
       if (now - lastWheelTime < 380) return;
       lastWheelTime = now;
       if (window._stepStation) window._stepStation(e.deltaY > 0 ? 1 : -1);
+    };
+
+    const onScroll = () => {
+      if (!window._isProgrammaticScroll) {
+        if (window._warpProgress !== undefined) {
+          window._warpProgress = undefined;
+          window._isTransitActive = false;
+          if (activeAnimId) {
+            cancelAnimationFrame(activeAnimId);
+            activeAnimId = null;
+          }
+        }
+      }
     };
 
     const onKeyDown = (e) => {
@@ -161,9 +212,15 @@ export const useWaypointControls = (scroll) => {
     };
     const el = scroll?.el || window;
     el.addEventListener('wheel', onWheel, { passive: false });
+    if (scroll?.el) {
+      scroll.el.addEventListener('scroll', onScroll, { passive: true });
+    }
     window.addEventListener('keydown', onKeyDown);
     return () => {
       el.removeEventListener('wheel', onWheel);
+      if (scroll?.el) {
+        scroll.el.removeEventListener('scroll', onScroll);
+      }
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [scroll]);

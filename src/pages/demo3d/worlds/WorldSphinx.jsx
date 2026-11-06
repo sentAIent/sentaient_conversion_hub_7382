@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { Text, Sparkles } from '@react-three/drei';
+import React, { useMemo, useRef } from 'react';
+import { useFrame, useLoader } from '@react-three/fiber';
+import { Text, Sparkles, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ===========================================================================
@@ -316,6 +317,37 @@ const PharaonicHead = () => {
         <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.82} metalness={0.02} />
       </mesh>
 
+      {/* Luminous Golden Pharaonic Eyes (Brighter Royal Gold) */}
+      {[-1, 1].map((side, i) => (
+        <group key={`gold-eye-${i}`} position={[side * 7.6, 4.4, 16.7]} rotation={[0, 0, side * -0.04]}>
+          {/* Luminous Gold Almond Eyeball */}
+          <mesh scale={[1.35, 0.72, 0.4]}>
+            <sphereGeometry args={[2.1, 18, 14]} />
+            <meshStandardMaterial 
+              color="#ffd700" 
+              emissive="#f59e0b" 
+              emissiveIntensity={1.3} 
+              roughness={0.25} 
+              metalness={0.85} 
+            />
+          </mesh>
+
+          {/* Pharaonic Amber-Gold Pupil & Iris Depth */}
+          <mesh position={[0, 0, 0.7]} scale={[0.55, 0.7, 0.2]}>
+            <sphereGeometry args={[1.0, 14, 12]} />
+            <meshStandardMaterial 
+              color="#78350f" 
+              emissive="#ffd700" 
+              emissiveIntensity={0.6} 
+              roughness={0.2} 
+            />
+          </mesh>
+
+          {/* Subtle Warm Divine Eye Illumination */}
+          <pointLight intensity={3.0} distance={35} color="#ffd700" />
+        </group>
+      ))}
+
       {/* Royal Kohl Eyeliner Cosmetic Bands (Ancient Egyptian Sculpture Accent) */}
       {[-1, 1].map((side, i) => (
         <group key={`eyeliner-${i}`} position={[side * 7.6, 4.8, 17.5]} rotation={[0, 0, side * -0.05]}>
@@ -329,36 +361,6 @@ const PharaonicHead = () => {
           </mesh>
         </group>
       ))}
-
-      {/* Royal Braided Ceremonial Osiride Beard (from Hatshepsut Sphinx & Ancient Giza) */}
-      <group position={[0, -23.5, 17.6]}>
-        {/* Burnished Gold Chin Fastener Strap */}
-        <mesh position={[0, 0.5, -0.4]}>
-          <boxGeometry args={[7.4, 2.0, 4.2]} />
-          <meshStandardMaterial color={GOLD_24K} metalness={0.65} roughness={0.35} />
-        </mesh>
-        {/* Braided Limestone Column Shaft */}
-        <mesh position={[0, -18, -0.2]} rotation={[0.03, 0, 0]}>
-          <boxGeometry args={[6.4, 34, 4.0]} />
-          <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.85} />
-        </mesh>
-        {/* Braided Horizontal Flutes / Rings */}
-        {Array.from({ length: 11 }).map((_, i) => (
-          <mesh key={`beard-ring-${i}`} position={[0, -2.8 - i * 2.8, 1.8]}>
-            <cylinderGeometry args={[3.2, 3.2, 1.2, 12]} rotation={[0, 0, Math.PI / 2]} />
-            <meshStandardMaterial 
-              color={i % 2 === 0 ? GOLD_24K : LIMESTONE_SHADOW} 
-              roughness={0.6} 
-              metalness={i % 2 === 0 ? 0.55 : 0.05} 
-            />
-          </mesh>
-        ))}
-        {/* Curled Forward Base Tip */}
-        <mesh position={[0, -35.2, 0.4]} rotation={[0.3, 0, 0]}>
-          <sphereGeometry args={[3.2, 16, 12]} scale={[1, 0.8, 1.1]} />
-          <meshStandardMaterial color={GOLD_24K} metalness={0.65} roughness={0.35} />
-        </mesh>
-      </group>
 
       {/* Prominent Classical Pharaonic Limestone Ears (Flanking Cheeks) */}
       {[-1, 1].map((side, i) => (
@@ -458,13 +460,6 @@ const LeonineBody = () => {
         <meshStandardMaterial color={LIMESTONE_BASE} roughness={0.85} />
       </mesh>
 
-      {/* Horizontal Weathered Limestone Erosion Strata Ledges Across Chest & Neck (Member II Bedrock) */}
-      {[46, 58, 70, 82, 94, 106, 118].map((cy, idx) => (
-        <mesh key={`chest-strata-${idx}`} position={[0, cy, 46]} rotation={[0.26, 0, 0]}>
-          <cylinderGeometry args={[58 + idx * 3.5, 63 + idx * 3.5, 7.5, 28, 1, false, 0, Math.PI]} />
-          <meshStandardMaterial color={idx % 2 === 0 ? LIMESTONE_SHADOW : LIMESTONE_WARM} roughness={0.92} />
-        </mesh>
-      ))}
 
       {/* Main Elongated Leonine Torso (Receding gracefully back) */}
       <mesh position={[0, 12, -120]} rotation={[Math.PI / 2, 0, 0]}>
@@ -551,29 +546,6 @@ const LeonineBody = () => {
         </group>
       ))}
 
-      {/* Royal Dream Stela of Thutmose IV Between the Paws */}
-      <group position={[0, -18, 175]}>
-        {/* Weathered Red Granite Slab */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[42, 95, 8]} />
-          <meshStandardMaterial color="#3f3325" roughness={0.75} metalness={0.2} />
-        </mesh>
-        {/* Rounded Stela Top Arch */}
-        <mesh position={[0, 47.5, 0]}>
-          <cylinderGeometry args={[21, 21, 8, 24, 1, false, 0, Math.PI]} />
-          <meshStandardMaterial color="#3f3325" roughness={0.75} metalness={0.2} />
-        </mesh>
-        {/* Ancient Hieroglyphic Tablet */}
-        <mesh position={[0, 5, 4.4]}>
-          <planeGeometry args={[36, 95]} />
-          <meshStandardMaterial color="#261c12" emissive={GOLD_24K} emissiveIntensity={0.25} metalness={0.4} roughness={0.6} />
-        </mesh>
-        {/* Winged Sun Disk of Horus at Top of Stela */}
-        <mesh position={[0, 44, 4.6]}>
-          <circleGeometry args={[8, 24]} />
-          <meshStandardMaterial color={GOLD_24K} emissive={GOLD_24K} emissiveIntensity={0.6} />
-        </mesh>
-      </group>
 
       {/* Monumental Stepped Limestone Plinth */}
       <group position={[0, -78, -30]}>
@@ -634,9 +606,321 @@ const GreatPyramidsHorizon = () => {
 };
 
 // ---------------------------------------------------------------------------
+// 3.5 ANCIENT MONUMENTAL TEMPLE FIRE BRAZIERS (LIVING FLAME & EMBERS)
+// ---------------------------------------------------------------------------
+function createOrganicFlameGeometry(radius = 11, height = 44, radialSegments = 16, heightSegments = 14) {
+  const geo = new THREE.ConeGeometry(radius, height, radialSegments, heightSegments, true);
+  geo.translate(0, height / 2, 0);
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const normalizedY = Math.max(0, Math.min(1, v.y / height));
+    // Teardrop flare at 25-30% height, sharp licking tip at top
+    const flare = Math.sin(normalizedY * Math.PI) * 1.35 * Math.pow(1 - normalizedY * 0.65, 0.6);
+    v.x *= flare;
+    v.z *= flare;
+    const curveOffset = Math.sin(normalizedY * Math.PI * 1.5) * (normalizedY * normalizedY * 3.2);
+    v.z += curveOffset;
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function GrandTempleBrazier({ position = [0, 0, 0], scale = 1.0, phaseOffset = 0 }) {
+  const flameGroupRef = useRef();
+  const flameCoreRef = useRef();
+  const flameTongueLeftRef = useRef();
+  const flameTongueRightRef = useRef();
+  const lightRef = useRef();
+  const glowHaloRef = useRef();
+  const embersRef = useRef();
+
+  const flameGeo = useMemo(() => createOrganicFlameGeometry(10.5, 42, 16, 12), []);
+  const coreFlameGeo = useMemo(() => createOrganicFlameGeometry(6.2, 28, 14, 10), []);
+  const tongueGeo = useMemo(() => createOrganicFlameGeometry(5.5, 26, 12, 8), []);
+
+  const emberData = useMemo(() => {
+    const count = 38;
+    const positions = new Float32Array(count * 3);
+    const speeds = new Float32Array(count);
+    const wander = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const rad = Math.random() * 8.5;
+      positions[i * 3 + 0] = Math.cos(angle) * rad;
+      positions[i * 3 + 1] = 68 + Math.random() * 85;
+      positions[i * 3 + 2] = Math.sin(angle) * rad;
+      speeds[i] = 16 + Math.random() * 26;
+      wander[i] = Math.random() * Math.PI * 2;
+    }
+    return { count, positions, speeds, wander };
+  }, []);
+
+  useFrame((state, delta) => {
+    const t = state.clock.getElapsedTime() + phaseOffset;
+
+    // Multi-harmonic flickering & turbulent draft
+    if (flameGroupRef.current) {
+      const stretchY = 1 + Math.sin(t * 8.5) * 0.12 + Math.sin(t * 19.3) * 0.06;
+      const swayX = Math.sin(t * 3.8) * 0.08 + Math.sin(t * 11.2) * 0.04;
+      const swayZ = Math.cos(t * 4.2) * 0.08 + Math.sin(t * 13.7) * 0.04;
+      flameGroupRef.current.scale.set(1 + swayX * 0.5, stretchY, 1 + swayZ * 0.5);
+      flameGroupRef.current.rotation.y = Math.sin(t * 2.2) * 0.2;
+      flameGroupRef.current.rotation.z = Math.sin(t * 4.6) * 0.06;
+      flameGroupRef.current.rotation.x = Math.cos(t * 5.1) * 0.05;
+    }
+
+    if (flameCoreRef.current) {
+      const coreFlicker = 1 + Math.sin(t * 14.5) * 0.08 + Math.sin(t * 27.1) * 0.05;
+      flameCoreRef.current.scale.set(coreFlicker, coreFlicker, coreFlicker);
+    }
+
+    if (flameTongueLeftRef.current) {
+      flameTongueLeftRef.current.rotation.z = Math.sin(t * 7.2) * 0.18 + 0.15;
+      flameTongueLeftRef.current.scale.y = 0.9 + Math.sin(t * 12.0) * 0.18;
+    }
+
+    if (flameTongueRightRef.current) {
+      flameTongueRightRef.current.rotation.z = -Math.sin(t * 8.1) * 0.18 - 0.15;
+      flameTongueRightRef.current.scale.y = 0.9 + Math.cos(t * 13.5) * 0.18;
+    }
+
+    if (glowHaloRef.current) {
+      const haloScale = 1 + Math.sin(t * 6.5) * 0.14 + Math.sin(t * 15.2) * 0.08;
+      glowHaloRef.current.scale.set(haloScale, haloScale * 1.15, haloScale);
+    }
+
+    if (lightRef.current) {
+      // Atmospheric dynamic firelight flicker
+      lightRef.current.intensity = 22 + Math.sin(t * 9.4) * 4.5 + Math.sin(t * 21.7) * 3.0 + Math.sin(t * 37.1) * 1.6;
+    }
+
+    // Updraft ember particles drifting in desert breeze
+    if (embersRef.current) {
+      const posAttr = embersRef.current.geometry.attributes.position;
+      const arr = posAttr.array;
+      for (let i = 0; i < emberData.count; i++) {
+        const idx = i * 3;
+        arr[idx + 1] += emberData.speeds[i] * delta;
+        arr[idx + 0] += Math.sin(t * 2.5 + emberData.wander[i]) * 0.28;
+        arr[idx + 2] += Math.cos(t * 2.8 + emberData.wander[i]) * 0.28;
+
+        // Reset particle to cauldron hearth bed
+        if (arr[idx + 1] > 165) {
+          const angle = Math.random() * Math.PI * 2;
+          const rad = Math.random() * 8.5;
+          arr[idx + 0] = Math.cos(angle) * rad;
+          arr[idx + 1] = 68 + Math.random() * 6;
+          arr[idx + 2] = Math.sin(angle) * rad;
+        }
+      }
+      posAttr.needsUpdate = true;
+    }
+  });
+
+  return (
+    <group position={position} scale={scale}>
+      {/* 1. MONUMENTAL CARVED EGYPTIAN LIMESTONE PEDESTAL */}
+      {/* Lower Stepped Foundation Plinth */}
+      <mesh position={[0, 4, 0]}>
+        <boxGeometry args={[34, 8, 34]} />
+        <meshStandardMaterial color={LIMESTONE_SHADOW} roughness={0.92} />
+      </mesh>
+      {/* Upper Stepped Plinth */}
+      <mesh position={[0, 11, 0]}>
+        <boxGeometry args={[28, 6, 28]} />
+        <meshStandardMaterial color={LIMESTONE_BASE} roughness={0.85} />
+      </mesh>
+      {/* Torus Molding Base Ring */}
+      <mesh position={[0, 15, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[13.5, 2.2, 12, 24]} />
+        <meshStandardMaterial color={LIMESTONE_BASE} roughness={0.8} />
+      </mesh>
+      {/* Fluted Weathered Pedestal Shaft */}
+      <mesh position={[0, 36, 0]}>
+        <cylinderGeometry args={[11, 13.5, 40, 20]} />
+        <meshStandardMaterial color={LIMESTONE_BASE} roughness={0.78} />
+      </mesh>
+      {/* Royal 24K Gold Leaf Collar Ring */}
+      <mesh position={[0, 56.5, 0]}>
+        <cylinderGeometry args={[13.8, 13.8, 3.2, 24]} />
+        <meshStandardMaterial color={GOLD_24K} metalness={0.92} roughness={0.18} emissive={GOLD_24K} emissiveIntensity={0.25} />
+      </mesh>
+      {/* Traditional Egyptian Cavetto Cornice Capital */}
+      <mesh position={[0, 61.5, 0]}>
+        <cylinderGeometry args={[20.5, 12.5, 8, 24]} />
+        <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.75} />
+      </mesh>
+
+      {/* 2. ORNATE HAMMERED TEMPLE BRONZE CAULDRON */}
+      {/* Flared Bronze Cauldron Basin */}
+      <mesh position={[0, 69, 0]}>
+        <cylinderGeometry args={[22.5, 14, 15, 24]} />
+        <meshStandardMaterial color="#6c3310" metalness={0.88} roughness={0.28} />
+      </mesh>
+      {/* Heavy Cast Bronze Rolled Rim Lip */}
+      <mesh position={[0, 76.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[22.6, 2.2, 14, 32]} />
+        <meshStandardMaterial color="#78350f" metalness={0.9} roughness={0.25} />
+      </mesh>
+      {/* 3 Lion-Paw Cast Bronze Tripod Struts */}
+      {[0, (2 * Math.PI) / 3, (4 * Math.PI) / 3].map((ang, i) => (
+        <group key={i} rotation={[0, ang, 0]}>
+          <mesh position={[16, 64.5, 0]} rotation={[0, 0, -0.3]}>
+            <boxGeometry args={[4.2, 14, 3.8]} />
+            <meshStandardMaterial color="#55260b" metalness={0.85} roughness={0.35} />
+          </mesh>
+          {/* Lion Paw Foot Clasping Cornice */}
+          <mesh position={[18.5, 59, 0]}>
+            <sphereGeometry args={[3.2, 12, 10]} />
+            <meshStandardMaterial color="#55260b" metalness={0.85} roughness={0.35} />
+          </mesh>
+        </group>
+      ))}
+      {/* Heavy Cast Hanging Temple Rings on Cauldron Sides */}
+      {[-24.2, 24.2].map((rx, i) => (
+        <mesh key={i} position={[rx, 72, 0]} rotation={[0, Math.PI / 2, 0]}>
+          <torusGeometry args={[3.8, 1.2, 10, 20]} />
+          <meshStandardMaterial color="#451a03" metalness={0.92} roughness={0.3} />
+        </mesh>
+      ))}
+
+      {/* 3. SMOLDERING CHARCOAL & ACACIA WOOD FUEL BED */}
+      <mesh position={[0, 72, 0]}>
+        <cylinderGeometry args={[20, 13, 6, 20]} />
+        <meshStandardMaterial color="#1c1917" roughness={0.95} />
+      </mesh>
+      {/* Glowing Hot Ember Coals Clustered in Bed */}
+      {[
+        { pos: [-6, 73.8, -4], r: 3.8 },
+        { pos: [5, 74.0, 5], r: 4.2 },
+        { pos: [-4, 74.2, 5], r: 3.5 },
+        { pos: [6, 73.9, -5], r: 4.0 },
+        { pos: [0, 74.5, 0], r: 4.8 },
+      ].map((ember, i) => (
+        <mesh key={i} position={ember.pos}>
+          <dodecahedronGeometry args={[ember.r, 0]} />
+          <meshStandardMaterial
+            color="#ea580c"
+            emissive="#ef4444"
+            emissiveIntensity={3.2}
+            roughness={0.4}
+          />
+        </mesh>
+      ))}
+
+      {/* 4. MULTI-LAYER LIVING FLAME SCULPTURE */}
+      <group ref={flameGroupRef} position={[0, 74, 0]}>
+        {/* Main Golden-Amber Flame Tongue */}
+        <mesh geometry={flameGeo}>
+          <meshStandardMaterial
+            color="#f59e0b"
+            emissive="#f59e0b"
+            emissiveIntensity={3.5}
+            roughness={0.15}
+            transparent
+            opacity={0.94}
+          />
+        </mesh>
+
+        {/* Secondary Lapping Flame Tongue (Left) */}
+        <mesh ref={flameTongueLeftRef} geometry={tongueGeo} position={[-4, 2, -2]}>
+          <meshStandardMaterial
+            color="#fb923c"
+            emissive="#ea580c"
+            emissiveIntensity={2.8}
+            roughness={0.2}
+            transparent
+            opacity={0.88}
+          />
+        </mesh>
+
+        {/* Secondary Lapping Flame Tongue (Right) */}
+        <mesh ref={flameTongueRightRef} geometry={tongueGeo} position={[4, 2, 2]}>
+          <meshStandardMaterial
+            color="#f97316"
+            emissive="#ea580c"
+            emissiveIntensity={2.8}
+            roughness={0.2}
+            transparent
+            opacity={0.88}
+          />
+        </mesh>
+
+        {/* Incandescent White-Hot Flame Core */}
+        <mesh ref={flameCoreRef} geometry={coreFlameGeo} position={[0, 1, 0]}>
+          <meshStandardMaterial
+            color="#ffffff"
+            emissive="#fef08a"
+            emissiveIntensity={5.2}
+            roughness={0.05}
+          />
+        </mesh>
+
+        {/* Volumetric Flame Heat Halo with Additive Blending */}
+        <mesh ref={glowHaloRef} position={[0, 20, 0]}>
+          <sphereGeometry args={[18, 16, 16]} />
+          <meshBasicMaterial
+            color="#fbbf24"
+            transparent
+            opacity={0.24}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
+
+      {/* 5. CONVECTIVE SWIRLING EMBER SPARKS FOUNTAIN */}
+      <points ref={embersRef}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            count={emberData.count}
+            array={emberData.positions}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          size={4.8}
+          color="#ffedd5"
+          transparent
+          opacity={0.85}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </points>
+
+      {/* 6. DYNAMIC DANCING FIRELIGHT CAST */}
+      <pointLight
+        ref={lightRef}
+        position={[0, 88, 0]}
+        color="#f59e0b"
+        distance={750}
+        decay={2}
+        intensity={22}
+      />
+      {/* Broad Warm Hearth Ambiance Light */}
+      <pointLight
+        position={[0, 110, 0]}
+        color="#ea580c"
+        distance={950}
+        decay={2}
+        intensity={14}
+      />
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // 4. MAIN WORLD SPHINX SCENE COMPONENT
 // ---------------------------------------------------------------------------
 export default function WorldSphinx({ position, visible }) {
+  // Load official Sphinx emblem
+  const logoTex = useLoader(THREE.TextureLoader, '/sphinx_logo_final.png');
+  logoTex.colorSpace = THREE.SRGBColorSpace;
+
   if (!visible) return null;
 
   return (
@@ -653,8 +937,6 @@ export default function WorldSphinx({ position, visible }) {
       {/* Warm Golden Torch Spotlight illuminating the monumental chest & paws */}
       <pointLight position={[0, 80, -520]} intensity={18} distance={1100} color="#f59e0b" />
       <pointLight position={[0, 160, -460]} intensity={28} distance={900} color="#ffedd5" />
-      <pointLight position={[-180, -40, -480]} intensity={10} distance={600} color="#ea580c" />
-      <pointLight position={[180, -40, -480]} intensity={10} distance={600} color="#ea580c" />
 
       {/* Atmospheric Desert Starlight & Golden Sand Particles */}
       <Sparkles count={700} scale={[1900, 700, 1800]} size={6} speed={0.4} opacity={0.5} color="#ffd700" position={[0, 100, -700]} />
@@ -686,25 +968,19 @@ export default function WorldSphinx({ position, visible }) {
         </mesh>
       ))}
 
-      {/* Monumental Stone Fire Braziers Framing the Approach Way */}
-      {[-240, 240].map((bx, idx) => (
-        <group key={idx} position={[bx, -175, -450]}>
-          {/* Carved Limestone Pedestal */}
-          <mesh position={[0, 24, 0]}>
-            <cylinderGeometry args={[11, 15, 48, 16]} />
-            <meshStandardMaterial color={LIMESTONE_BASE} roughness={0.8} />
-          </mesh>
-          {/* Bronze Fire Basin */}
-          <mesh position={[0, 50, 0]}>
-            <cylinderGeometry args={[18, 9, 14, 16]} />
-            <meshStandardMaterial color="#78350f" metalness={0.85} roughness={0.3} />
-          </mesh>
-          {/* Living Flame Core */}
-          <mesh position={[0, 60, 0]}>
-            <sphereGeometry args={[8.5, 16, 16]} />
-            <meshStandardMaterial color="#f97316" emissive="#ea580c" emissiveIntensity={3.5} />
-          </mesh>
-        </group>
+      {/* Ancient Pharaonic Grand Fire Braziers Framing the Causeway */}
+      {[
+        { pos: [-240, -188, -440], scale: 1.05, phase: 0.0 },
+        { pos: [240, -188, -440], scale: 1.05, phase: 1.8 },
+        { pos: [-315, -188, -600], scale: 1.15, phase: 3.4 },
+        { pos: [315, -188, -600], scale: 1.15, phase: 5.1 },
+      ].map((b, idx) => (
+        <GrandTempleBrazier
+          key={idx}
+          position={b.pos}
+          scale={b.scale}
+          phaseOffset={b.phase}
+        />
       ))}
 
       {/* ------------------------------------------------------------- */}
@@ -720,99 +996,52 @@ export default function WorldSphinx({ position, visible }) {
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 4. HOLOGRAPHIC TYPOGRAPHY BLADE (CLEANLY FRAMED ON LEFT FLANK) */}
+      {/* 4. CENTERPIECE: SPHINX LOGO & TITLE ABOVE ANIMATION           */}
       {/* ------------------------------------------------------------- */}
-      <group position={[-520, 80, -560]} rotation={[0, Math.PI / 9, 0]}>
-        {/* Holographic Obsidian Glass Blade Backing */}
-        <mesh position={[140, -10, -2]}>
-          <planeGeometry args={[280, 240]} />
-          <meshStandardMaterial 
-            color="#0b0804" 
-            transparent 
-            opacity={0.65} 
-            roughness={0.15} 
-            metalness={0.9} 
-            side={THREE.DoubleSide} 
-          />
-        </mesh>
-        
-        {/* Burnished 24K Gold Top Rail */}
-        <mesh position={[140, 110, 0]}>
-          <boxGeometry args={[282, 3.5, 2]} />
-          <meshStandardMaterial color={GOLD_24K} emissive={GOLD_24K} emissiveIntensity={2.0} />
-        </mesh>
+      <group position={[0, 380, -680]}>
+        {/* Floating Sphinx Emblem */}
+        <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
+          <mesh position={[0, 68, 0]}>
+            <planeGeometry args={[120, 94]} />
+            <meshBasicMaterial 
+              map={logoTex} 
+              transparent 
+              depthWrite={false} 
+              blending={THREE.AdditiveBlending} 
+            />
+          </mesh>
+        </Float>
 
-        {/* Category Header */}
+        {/* Sphinx Title */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[16, 84, 0]}
-          fontSize={10}
-          color="#38bdf8"
-          letterSpacing={0.12}
-          anchorX="left"
-          anchorY="middle"
-        >
-          EXP // 11  ◈  PERIMETER DEFENSE & RADAR
-        </Text>
-
-        {/* World Name Title */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[16, 44, 0]}
-          fontSize={44}
+          position={[0, 0, 0]}
+          fontSize={52}
           color="#ffffff"
-          outlineWidth={1.5}
-          outlineColor="#451a03"
-          anchorX="left"
+          outlineWidth={1.8}
+          outlineColor="#78350f"
+          anchorX="center"
           anchorY="middle"
+          letterSpacing={0.12}
         >
           SPHINX
         </Text>
 
-        {/* Headline */}
+        {/* Subtitle */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[16, 4, 0]}
-          fontSize={12.5}
-          color={GOLD_24K}
-          maxWidth={245}
-          lineHeight={1.3}
-          anchorX="left"
+          position={[0, -42, 0]}
+          fontSize={16}
+          color="#f59e0b"
+          outlineWidth={0.8}
+          outlineColor="#0b0804"
+          anchorX="center"
           anchorY="middle"
+          letterSpacing={0.14}
         >
-          AUTONOMOUS PERIMETER SECURITY & GLOBAL RADAR
-        </Text>
-
-        {/* Description */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[16, -50, 0]}
-          fontSize={10.5}
-          color="#fef3c7"
-          maxWidth={245}
-          lineHeight={1.45}
-          anchorX="left"
-          anchorY="middle"
-        >
-          Safeguard critical infrastructure with a timeless autonomous sentinel that neutralizes multi-vector security threats with impenetrable perimeter defense.
-        </Text>
-
-        {/* Telemetry Indicator */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[16, -100, 0]}
-          fontSize={9}
-          color="#38bdf8"
-          letterSpacing={0.06}
-          anchorX="left"
-          anchorY="middle"
-        >
-          [ ◈ 100% DEFLECTION  ◈ ZERO-IMPACT RESISTANCE ]
+          GLOBAL THREAT & DISASTER DEFENSE
         </Text>
       </group>
     </group>

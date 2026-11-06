@@ -1,132 +1,85 @@
 import React, { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Sparkles } from '@react-three/drei';
+import { useFrame, useLoader } from '@react-three/fiber';
+import { Sparkles, Float, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Custom GLSL shader for the shimmering golden caustic reflecting pool
-const poolVertexShader = `
-  varying vec2 vUv;
-  varying vec3 vWorldPosition;
-  uniform float uTime;
-  
-  void main() {
-    vUv = uv;
-    vec3 pos = position;
-    // Subtle physical surface undulation
-    pos.z += sin(pos.x * 0.04 + uTime * 1.5) * cos(pos.y * 0.04 + uTime * 1.2) * 1.8;
-    vWorldPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-  }
-`;
-
-const poolFragmentShader = `
-  varying vec2 vUv;
-  varying vec3 vWorldPosition;
-  uniform float uTime;
-  
-  void main() {
-    vec2 center = vec2(0.5, 0.5);
-    float dist = distance(vUv, center);
-    
-    // Golden caustic interference rings radiating from the pyramid reflection
-    float c1 = sin(dist * 60.0 - uTime * 2.5);
-    float c2 = cos((vUv.x - 0.5) * 80.0 + uTime * 1.8);
-    float c3 = sin((vUv.y - 0.5) * 70.0 - uTime * 2.0);
-    float caustics = clamp((c1 * 0.5 + c2 * 0.25 + c3 * 0.25) * 1.5, 0.0, 1.0);
-    
-    // Deep midnight obsidian water base
-    vec3 waterBase = vec3(0.015, 0.01, 0.03);
-    // Molten sovereign gold highlight
-    vec3 goldHighlight = vec3(1.0, 0.78, 0.25);
-    // Deep amethyst atmospheric rim
-    vec3 purpleHaze = vec3(0.28, 0.1, 0.45);
-    
-    vec3 color = mix(waterBase, purpleHaze, dist * 1.2);
-    color += goldHighlight * (caustics * 0.55);
-    
-    // Soft vignette at edges of pool
-    float edgeAlpha = smoothstep(0.5, 0.35, dist);
-    
-    gl_FragColor = vec4(color, edgeAlpha * 0.92);
-  }
-`;
+// ===========================================================================
+// WORLD PYRAMID: Autonomous Business Ops Brain & Strategic Execution Engine
+// Translucent Crystalline Cyber-Pyramid with Quantum Brain Core, Pulsed
+// Synaptic Circuitry, Apex Transmission Orb, and Strategic Market Execution HUD.
+// ===========================================================================
 
 export default function WorldPyramid({ position, visible }) {
-  const poolShaderRef = useRef();
-  const apexCoreRef = useRef();
-  const ring1Ref = useRef();
-  const ring2Ref = useRef();
-  const ring3Ref = useRef();
-  const opportunityPrismsRef = useRef();
-  const lightBeaconRef = useRef();
+  const pyramidGroupRef = useRef();
+  const brainCoreRef = useRef();
+  const apexOrbRef = useRef();
+  const waveArcsRef = useRef();
+  const circuitsRef = useRef();
+  const beaconRef = useRef();
 
-  const prismCount = 20;
-  const dummy = useMemo(() => new THREE.Object3D(), []);
+  // Load official high-res PyRAmid emblem
+  const logoTex = useLoader(THREE.TextureLoader, '/pyramid_logo_final.png');
+  logoTex.colorSpace = THREE.SRGBColorSpace;
 
-  // Pre-generate opportunity data vectors (scanned market yields)
-  const prismData = useMemo(() => {
-    const list = [];
-    for (let i = 0; i < prismCount; i++) {
-      list.push({
-        xOffset: (Math.random() - 0.5) * 90,
-        baseY: 20 + Math.random() * 40,
-        speed: 0.35 + Math.random() * 0.5,
-        phase: Math.random() * Math.PI * 2,
-        rotSpeed: 0.6 + Math.random() * 1.2,
-        scale: 6 + Math.random() * 7
+  // Synaptic neural circuit traces on the motherboard floor
+  const circuitBranches = useMemo(() => {
+    const branches = [];
+    const count = 32;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2;
+      const r1 = 30 + (i % 4) * 15;
+      const r2 = 140 + (i % 5) * 35;
+      branches.push({
+        x1: Math.cos(angle) * r1,
+        z1: Math.sin(angle) * r1,
+        x2: Math.cos(angle) * r2,
+        z2: Math.sin(angle) * r2,
+        color: i % 3 === 0 ? '#00e5ff' : (i % 3 === 1 ? '#c084fc' : '#ffd700'),
+        width: (i % 2 === 0 ? 2.5 : 1.5)
       });
     }
-    return list;
+    return branches;
   }, []);
-
-  const poolUniforms = useMemo(() => ({
-    uTime: { value: 0 }
-  }), []);
 
   useFrame((state) => {
     if (!visible) return;
     const t = state.clock.getElapsedTime();
 
-    // 1. Update reflecting pool caustics
-    if (poolShaderRef.current) {
-      poolShaderRef.current.uniforms.uTime.value = t;
+    // Subtle breathing float of the entire pyramid monument
+    if (pyramidGroupRef.current) {
+      pyramidGroupRef.current.position.y = Math.sin(t * 0.8) * 4;
     }
 
-    // 2. Apex Autonomous Business Core (Eye of RA) Levitation & Rotation
-    if (apexCoreRef.current) {
-      apexCoreRef.current.position.y = 220 + Math.sin(t * 1.4) * 6;
-      apexCoreRef.current.rotation.y = t * 0.4;
-      apexCoreRef.current.rotation.z = Math.sin(t * 0.8) * 0.08;
+    // 1. Quantum AI Brain Core Levitation & Biological Rhythm Pulse
+    if (brainCoreRef.current) {
+      const pulse = 1.0 + Math.sin(t * 3.0) * 0.08 + Math.sin(t * 6.0) * 0.03;
+      brainCoreRef.current.scale.set(pulse, pulse, pulse);
+      brainCoreRef.current.rotation.y = t * 0.35;
+      brainCoreRef.current.rotation.x = Math.sin(t * 0.5) * 0.1;
     }
 
-    // 3. Counter-rotating precision telemetry rings
-    if (ring1Ref.current) ring1Ref.current.rotation.y = -t * 0.6;
-    if (ring2Ref.current) ring2Ref.current.rotation.x = t * 0.5;
-    if (ring3Ref.current) ring3Ref.current.rotation.z = -t * 0.4;
-
-    // 4. Upward market telemetry laser beacon modulation
-    if (lightBeaconRef.current) {
-      lightBeaconRef.current.material.opacity = 0.35 + Math.sin(t * 4.0) * 0.12;
+    // 2. Apex Consciousness Orb Pulsing
+    if (apexOrbRef.current) {
+      apexOrbRef.current.rotation.y = t * 0.6;
     }
 
-    // 5. Floating Opportunity Prisms along the Grand Obsidian Avenue
-    if (opportunityPrismsRef.current) {
-      for (let i = 0; i < prismCount; i++) {
-        const item = prismData[i];
-        const progress = ((t * 0.18 * item.speed + item.phase) % 1.0);
-        
-        // Glide from pyramid base (-600 Z) toward camera (-180 Z)
-        const z = -650 + progress * 500;
-        const y = -180 + item.baseY + Math.sin(t * 2.0 + i) * 8;
-        const x = item.xOffset + Math.sin(t * 1.5 + i) * 12;
+    // 3. Expanding Wireless Thought Transmission Wave Arcs
+    if (waveArcsRef.current) {
+      waveArcsRef.current.children.forEach((child, idx) => {
+        const speed = 1.2;
+        const progress = ((t * speed + idx * 0.33) % 1.0);
+        const s = 1.0 + progress * 1.8;
+        child.scale.set(s, s, s);
+        if (child.material) {
+          child.material.opacity = (1.0 - progress) * 0.85;
+        }
+      });
+    }
 
-        dummy.position.set(x, y, z);
-        dummy.rotation.set(t * item.rotSpeed, t * item.rotSpeed * 0.7, i);
-        dummy.scale.setScalar(item.scale);
-        dummy.updateMatrix();
-        opportunityPrismsRef.current.setMatrixAt(i, dummy.matrix);
-      }
-      opportunityPrismsRef.current.instanceMatrix.needsUpdate = true;
+    // 4. Vertical Market Opportunity Photon Beacon
+    if (beaconRef.current) {
+      beaconRef.current.material.opacity = 0.4 + Math.sin(t * 3.5) * 0.18;
+      beaconRef.current.rotation.y = t * 0.2;
     }
   });
 
@@ -134,249 +87,234 @@ export default function WorldPyramid({ position, visible }) {
 
   return (
     <group position={position}>
-      {/* Sovereign Twilight Lighting: Deep Cosmic Desert Atmosphere */}
-      <ambientLight intensity={0.3} color="#180b2b" />
-      <directionalLight position={[0, 950, -200]} intensity={3.8} color="#ffd480" />
-      <directionalLight position={[-850, 400, 200]} intensity={1.8} color="#c084fc" />
-      <directionalLight position={[850, 200, 200]} intensity={1.4} color="#00e5ff" />
-      <pointLight position={[0, 220, -750]} intensity={22} distance={1800} color="#ffaa00" />
-      <pointLight position={[0, -180, -380]} intensity={8} distance={900} color="#ffd700" />
+      {/* --- Cosmic Cyber-Egyptian Lighting --- */}
+      <ambientLight intensity={0.4} color="#080414" />
+      <directionalLight position={[600, 900, 400]} intensity={3.5} color="#00e5ff" />
+      <directionalLight position={[-600, 800, -300]} intensity={2.8} color="#c084fc" />
+      <pointLight position={[0, 160, -650]} intensity={24} distance={1600} color="#00e5ff" />
+      <pointLight position={[0, 80, -650]} intensity={20} distance={1200} color="#c084fc" />
+      <pointLight position={[0, 310, -650]} intensity={18} distance={900} color="#a855f7" />
 
-      {/* Infinite Cosmic Desert Dunes Ground Plane */}
-      <mesh position={[0, -220, -500]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[5000, 5000, 40, 40]} />
-        <meshStandardMaterial 
-          color="#080410" 
-          roughness={0.85} 
-          metalness={0.15} 
-        />
+      {/* Deep Cybernetic Obsidian Reflective Ground Plane */}
+      <mesh position={[0, -220, -650]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[4600, 4600]} />
+        <meshStandardMaterial color="#030206" roughness={0.12} metalness={0.92} />
       </mesh>
 
-      {/* Atmospheric Sovereign Golden Embers & Stardust */}
-      <Sparkles 
-        count={700} 
-        scale={[2200, 1000, 2200]} 
-        size={14} 
-        speed={0.5} 
-        opacity={0.65} 
-        color="#fbbf24" 
-        position={[0, 100, -600]} 
-      />
-      <Sparkles 
-        count={350} 
-        scale={[1400, 700, 1400]} 
-        size={18} 
-        speed={0.3} 
-        opacity={0.55} 
-        color="#c084fc" 
-        position={[0, 180, -600]} 
-      />
+      {/* High-Tech Motherboard Hex Grid Base */}
+      <mesh position={[0, -218, -650]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1400, 1400]} />
+        <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.12} />
+      </mesh>
+
+      {/* Atmospheric Quantum Particles */}
+      <Sparkles count={800} scale={[1800, 800, 1800]} size={12} speed={0.4} opacity={0.65} color="#00e5ff" position={[0, 80, -650]} />
+      <Sparkles count={450} scale={[1200, 600, 1200]} size={14} speed={0.5} opacity={0.6} color="#c084fc" position={[0, 120, -650]} />
+      <Sparkles count={250} scale={[900, 500, 900]} size={16} speed={0.3} opacity={0.7} color="#ffd700" position={[0, 200, -650]} />
 
       {/* ------------------------------------------------------------- */}
-      {/* 1. THE MONUMENTAL OBSIDIAN & ELECTRUM STEPPED CITADEL */}
+      {/* 1. THE MONUMENTAL CRYSTALLINE CYBER-PYRAMID                  */}
       {/* ------------------------------------------------------------- */}
-      <group position={[0, -220, -780]}>
-        
-        {/* Tier 1 (Grand Base Tier) */}
-        <mesh position={[0, 45, 0]}>
-          <boxGeometry args={[580, 90, 580]} />
-          <meshStandardMaterial color="#0a0c16" roughness={0.18} metalness={0.92} />
-        </mesh>
-        {/* Electrum Inlaid Border Tier 1 */}
-        <mesh position={[0, 90, 0]}>
-          <boxGeometry args={[582, 3, 582]} />
-          <meshStandardMaterial color="#fbbf24" emissive="#d97706" emissiveIntensity={1.4} metalness={0.95} roughness={0.1} />
-        </mesh>
+      <group ref={pyramidGroupRef} position={[0, -20, -650]}>
 
-        {/* Tier 2 */}
-        <mesh position={[0, 125, 0]}>
-          <boxGeometry args={[450, 70, 450]} />
-          <meshStandardMaterial color="#080a13" roughness={0.18} metalness={0.92} />
-        </mesh>
-        {/* Electrum Inlaid Border Tier 2 */}
-        <mesh position={[0, 160, 0]}>
-          <boxGeometry args={[452, 3, 452]} />
-          <meshStandardMaterial color="#fbbf24" emissive="#d97706" emissiveIntensity={1.4} metalness={0.95} roughness={0.1} />
-        </mesh>
-
-        {/* Tier 3 */}
-        <mesh position={[0, 195, 0]}>
-          <boxGeometry args={[320, 70, 320]} />
-          <meshStandardMaterial color="#06080f" roughness={0.18} metalness={0.92} />
-        </mesh>
-        {/* Electrum Inlaid Border Tier 3 */}
-        <mesh position={[0, 230, 0]}>
-          <boxGeometry args={[322, 3, 322]} />
-          <meshStandardMaterial color="#fbbf24" emissive="#d97706" emissiveIntensity={1.4} metalness={0.95} roughness={0.1} />
-        </mesh>
-
-        {/* Tier 4 (Apex Platform of Autonomous Strategy) */}
-        <mesh position={[0, 260, 0]}>
-          <boxGeometry args={[190, 60, 190]} />
-          <meshStandardMaterial color="#05060c" roughness={0.15} metalness={0.95} />
-        </mesh>
-        {/* Polished Gold Capstone Rim */}
-        <mesh position={[0, 290, 0]}>
-          <boxGeometry args={[192, 4, 192]} />
-          <meshStandardMaterial color="#ffd700" emissive="#b45309" emissiveIntensity={2.0} metalness={0.98} roughness={0.08} />
-        </mesh>
-
-        {/* Vertical Lapis Lazuli Energy Conduits Pulsing Up the Pyramid Faces */}
-        {[-290, 290].map((xOffset, idx) => (
-          <mesh key={`cx-${idx}`} position={[xOffset, 145, 0]}>
-            <boxGeometry args={[4, 290, 4]} />
-            <meshBasicMaterial color="#00f0ff" />
+        {/* Stepped Cybernetic Pedestal Base (Obsidian & Electrum) */}
+        <group position={[0, -160, 0]}>
+          <mesh position={[0, 12, 0]}>
+            <boxGeometry args={[460, 24, 460]} />
+            <meshStandardMaterial color="#06060c" roughness={0.2} metalness={0.9} />
           </mesh>
-        ))}
-        {[-290, 290].map((zOffset, idx) => (
-          <mesh key={`cz-${idx}`} position={[0, 145, zOffset]}>
-            <boxGeometry args={[4, 290, 4]} />
-            <meshBasicMaterial color="#00f0ff" />
+          <mesh position={[0, 30, 0]}>
+            <boxGeometry args={[410, 14, 410]} />
+            <meshStandardMaterial color="#0a0a14" roughness={0.15} metalness={0.92} />
           </mesh>
-        ))}
-      </group>
+          {/* Glowing Electrum Inlay Band */}
+          <mesh position={[0, 38, 0]}>
+            <boxGeometry args={[412, 2.5, 412]} />
+            <meshStandardMaterial color="#ffd700" emissive="#f59e0b" emissiveIntensity={2.0} metalness={0.9} />
+          </mesh>
 
-      {/* ------------------------------------------------------------- */}
-      {/* 2. THE EYE OF RA: AUTONOMOUS BUSINESS BRAIN AT THE APEX */}
-      {/* ------------------------------------------------------------- */}
-      <group position={[0, 95, -780]}>
-        
-        {/* Levitation Group */}
-        <group ref={apexCoreRef}>
-          {/* Radiant Quantum Singularity Sun */}
-          <mesh>
-            <dodecahedronGeometry args={[38, 0]} />
-            <meshStandardMaterial 
-              color="#ffffff" 
-              emissive="#fbbf24" 
-              emissiveIntensity={4.8} 
-              metalness={0.9} 
-              roughness={0.05} 
-            />
-          </mesh>
-          <pointLight color="#ffd000" intensity={28} distance={750} />
-
-          {/* Crystalline Electrum Geometric Exo-Shell */}
-          <mesh>
-            <icosahedronGeometry args={[50, 0]} />
-            <meshStandardMaterial 
-              color="#fbbf24" 
-              emissive="#d97706" 
-              emissiveIntensity={1.8} 
-              metalness={0.98} 
-              roughness={0.12} 
-              wireframe={true} 
-            />
-          </mesh>
+          {/* Radiating Synaptic Motherboard Circuit Traces */}
+          <group ref={circuitsRef} position={[0, 38.5, 0]}>
+            {circuitBranches.map((b, i) => (
+              <line key={i}>
+                <bufferGeometry attach="geometry">
+                  <bufferAttribute
+                    attach="attributes-position"
+                    count={2}
+                    array={new Float32Array([b.x1, 0, b.z1, b.x2, 0, b.z2])}
+                    itemSize={3}
+                  />
+                </bufferGeometry>
+                <lineBasicMaterial attach="material" color={b.color} linewidth={b.width} transparent opacity={0.75} />
+              </line>
+            ))}
+          </group>
         </group>
 
-        {/* Multi-Axis Counter-Rotating Sovereign Telemetry Rings */}
-        <group ref={ring1Ref}>
-          <mesh rotation={[Math.PI / 4, 0, 0]}>
-            <torusGeometry args={[95, 2.2, 16, 90]} />
-            <meshStandardMaterial color="#f59e0b" emissive="#b45309" emissiveIntensity={2.8} metalness={0.95} />
-          </mesh>
-        </group>
-        <group ref={ring2Ref}>
-          <mesh rotation={[-Math.PI / 4, Math.PI / 3, 0]}>
-            <torusGeometry args={[125, 1.8, 16, 90]} />
-            <meshStandardMaterial color="#00e5ff" emissive="#0284c7" emissiveIntensity={2.5} metalness={0.95} />
-          </mesh>
-        </group>
-        <group ref={ring3Ref}>
-          <mesh rotation={[Math.PI / 6, -Math.PI / 4, 0]}>
-            <torusGeometry args={[155, 1.5, 16, 90]} />
-            <meshStandardMaterial color="#c084fc" emissive="#7e22ce" emissiveIntensity={2.2} metalness={0.95} />
-          </mesh>
-        </group>
-
-        {/* Upward Macro-Market Strategic Laser Conduit */}
-        <mesh ref={lightBeaconRef} position={[0, 480, 0]}>
-          <cylinderGeometry args={[2.5, 6, 960, 16]} />
-          <meshBasicMaterial 
-            color="#ffd700" 
+        {/* Crystalline Translucent 4-Sided Pyramid Shell */}
+        <mesh position={[0, 20, 0]} rotation={[0, Math.PI / 4, 0]}>
+          <cylinderGeometry args={[0, 240, 320, 4, 1]} />
+          <meshPhysicalMaterial 
+            color="#e0f7fa" 
+            emissive="#00e5ff" 
+            emissiveIntensity={0.35} 
             transparent 
-            opacity={0.4} 
-            blending={THREE.AdditiveBlending} 
+            opacity={0.38} 
+            roughness={0.08} 
+            metalness={0.1} 
+            transmission={0.88} 
+            ior={1.52} 
+            side={THREE.DoubleSide} 
             depthWrite={false} 
           />
         </mesh>
+
+        {/* Luminous Cyan Edge Ribs Framing the Pyramid */}
+        <mesh position={[0, 20, 0]} rotation={[0, Math.PI / 4, 0]}>
+          <cylinderGeometry args={[0, 241, 321, 4, 1]} />
+          <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.65} />
+        </mesh>
+
+        {/* ------------------------------------------------------------- */}
+        {/* 2. THE QUANTUM AI BRAIN CORE (INSIDE PYRAMID CENTER)         */}
+        {/* ------------------------------------------------------------- */}
+        <group ref={brainCoreRef} position={[0, 20, 0]}>
+          {/* Pulsing Crystalline AI Brain Housing */}
+          <mesh>
+            <dodecahedronGeometry args={[44, 1]} />
+            <meshStandardMaterial 
+              color="#581c87" 
+              emissive="#c084fc" 
+              emissiveIntensity={2.8} 
+              roughness={0.15} 
+              metalness={0.85} 
+            />
+          </mesh>
+
+          {/* Inner Glowing Neural Synapse Core */}
+          <mesh>
+            <sphereGeometry args={[26, 24, 24]} />
+            <meshStandardMaterial color="#ffffff" emissive="#00e5ff" emissiveIntensity={4.5} />
+          </mesh>
+
+          {/* Surrounding Gyroscopic Quantum Logic Rings */}
+          <mesh rotation={[Math.PI / 3, 0, 0]}>
+            <torusGeometry args={[65, 2.2, 16, 64]} />
+            <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={3.0} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 3, Math.PI / 4, 0]}>
+            <torusGeometry args={[78, 2.0, 16, 64]} />
+            <meshStandardMaterial color="#ffd700" emissive="#f59e0b" emissiveIntensity={2.5} />
+          </mesh>
+          <mesh rotation={[0, Math.PI / 2, Math.PI / 4]}>
+            <torusGeometry args={[92, 1.8, 16, 64]} />
+            <meshStandardMaterial color="#c084fc" emissive="#a855f7" emissiveIntensity={2.2} />
+          </mesh>
+
+          <pointLight color="#00e5ff" intensity={18} distance={450} />
+        </group>
+
+        {/* ------------------------------------------------------------- */}
+        {/* 3. APEX CONSCIOUSNESS ORB & THOUGHT TRANSMISSION WAVES        */}
+        {/* ------------------------------------------------------------- */}
+        <group position={[0, 185, 0]}>
+          {/* Levitating Apex Purple/Indigo Spherical Transmitter */}
+          <mesh ref={apexOrbRef}>
+            <sphereGeometry args={[22, 32, 32]} />
+            <meshStandardMaterial 
+              color="#3b0764" 
+              emissive="#a855f7" 
+              emissiveIntensity={3.2} 
+              metalness={0.9} 
+              roughness={0.1} 
+            />
+          </mesh>
+          <pointLight color="#c084fc" intensity={14} distance={400} />
+
+          {/* Radial Wireless Thought Transmission Wave Arcs */}
+          <group ref={waveArcsRef}>
+            {[1, 2, 3].map((w) => (
+              <mesh key={w} rotation={[Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[28 + w * 12, 32 + w * 12, 32, 1, -Math.PI / 3, (2 * Math.PI) / 3]} />
+                <meshBasicMaterial color="#00e5ff" transparent opacity={0.6} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+              </mesh>
+            ))}
+          </group>
+
+          {/* Vertical Photon Execution Beam shooting into deep space */}
+          <mesh ref={beaconRef} position={[0, 600, 0]}>
+            <cylinderGeometry args={[2.5, 9, 1200, 16]} />
+            <meshBasicMaterial color="#00e5ff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
+          </mesh>
+        </group>
+
+        {/* 4 Monumental Obelisks Guarding the 4 Perimeter Coordinates */}
+        {[
+          [-280, -280],
+          [280, -280],
+          [-280, 280],
+          [280, 280]
+        ].map(([ox, oz], idx) => (
+          <group key={idx} position={[ox, -80, oz]}>
+            {/* Tapered Obelisk Shaft */}
+            <mesh position={[0, 75, 0]}>
+              <cylinderGeometry args={[5, 12, 150, 4]} rotation={[0, Math.PI / 4, 0]} />
+              <meshStandardMaterial color="#090a14" roughness={0.2} metalness={0.9} />
+            </mesh>
+            {/* Pyramidion Gold Cap */}
+            <mesh position={[0, 160, 0]}>
+              <coneGeometry args={[6.5, 18, 4]} rotation={[0, Math.PI / 4, 0]} />
+              <meshStandardMaterial color="#ffd700" emissive="#f59e0b" emissiveIntensity={3.0} metalness={0.95} />
+            </mesh>
+            <pointLight position={[0, 165, 0]} color="#ffd700" intensity={4} distance={200} />
+          </group>
+        ))}
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 3. SHIMMERING OBSIDIAN REFLECTING POOL WITH CAUSTIC SHADER */}
+      {/* 4. FLOATING OFFICIAL PYRAMID EMBLEM & TITLE                   */}
       {/* ------------------------------------------------------------- */}
-      <mesh position={[0, -217, -420]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[260, 460, 32, 32]} />
-        <shaderMaterial 
-          ref={poolShaderRef}
-          vertexShader={poolVertexShader}
-          fragmentShader={poolFragmentShader}
-          uniforms={poolUniforms}
-          transparent={true}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-
-      {/* Pool Basin Border Framing */}
-      <mesh position={[0, -218, -420]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[272, 472]} />
-        <meshStandardMaterial color="#fbbf24" emissive="#d97706" emissiveIntensity={0.8} metalness={0.95} roughness={0.15} />
-      </mesh>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 4. FLOATING OPPORTUNITY PRISMS (HIGH-YIELD BUSINESS NODES) */}
-      {/* ------------------------------------------------------------- */}
-      <instancedMesh ref={opportunityPrismsRef} args={[null, null, prismCount]}>
-        <octahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial 
-          color="#ffffff" 
-          emissive="#ffd700" 
-          emissiveIntensity={3.2} 
-          roughness={0.08} 
-          metalness={0.96} 
-        />
-      </instancedMesh>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 5. TWIN GUARDIAN PYLONS OF STRATEGY & AUTONOMOUS EXECUTION */}
-      {/* ------------------------------------------------------------- */}
-      {[-210, 210].map((xOffset, idx) => (
-        <group key={`pylon-${idx}`} position={[xOffset, -220, -420]}>
-          {/* Tapered Monolith Shaft */}
-          <mesh position={[0, 120, 0]}>
-            <cylinderGeometry args={[10, 18, 240, 4]} />
-            <meshStandardMaterial 
-              color="#070912" 
-              roughness={0.15} 
-              metalness={0.92} 
-            />
+      <group position={[0, 310, -450]}>
+        {/* Floating High-Res PyRAmid Logo Icon (Sleek & Scaled) */}
+        <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
+          <mesh position={[0, 50, 0]}>
+            <planeGeometry args={[75, 75]} />
+            <meshBasicMaterial map={logoTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
           </mesh>
-          {/* Lapis Vertical Beacon Inlay */}
-          <mesh position={[0, 120, 10.5]}>
-            <planeGeometry args={[2, 236]} />
-            <meshBasicMaterial color="#00e5ff" />
-          </mesh>
-          {/* Electrum Pyramidion Capstone */}
-          <mesh position={[0, 252, 0]}>
-            <coneGeometry args={[11, 26, 4]} />
-            <meshStandardMaterial 
-              color="#ffd700" 
-              emissive="#d97706" 
-              emissiveIntensity={3.2} 
-              metalness={0.98} 
-              roughness={0.08} 
-            />
-          </mesh>
-          <pointLight 
-            position={[0, 255, 0]} 
-            color="#ffd000" 
-            intensity={6} 
-            distance={320} 
-          />
-        </group>
-      ))}
+        </Float>
 
+        {/* PyRAmid Title Text */}
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[0, -10, 0]}
+          fontSize={44}
+          color="#ffffff"
+          outlineWidth={1.5}
+          outlineColor="#3b0764"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.12}
+        >
+          PyRAmid
+        </Text>
+
+        {/* Subtitle Badge */}
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[0, -42, 0]}
+          fontSize={15}
+          color="#00e5ff"
+          outlineWidth={0.8}
+          outlineColor="#090a14"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.16}
+        >
+          AUTONOMOUS BUSINESS OPS BRAIN
+        </Text>
+      </group>
     </group>
   );
 }
