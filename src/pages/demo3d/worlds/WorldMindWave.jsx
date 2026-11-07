@@ -204,8 +204,8 @@ const WorldMindWave = ({ position, visible }) => {
 
     // Float and pulse logo nestled inside sun's inner circle
     if (logoRef.current) {
-      logoRef.current.position.y = 168 + Math.sin(time * 2) * 2;
-      logoRef.current.position.x = -1.2;
+      logoRef.current.position.y = 170 + Math.sin(time * 2) * 2;
+      logoRef.current.position.x = 0;
       logoRef.current.scale.set(sunScale, sunScale, 1);
       logoRef.current.rotation.y = 0; // Keep facing camera
     }
@@ -264,14 +264,13 @@ const WorldMindWave = ({ position, visible }) => {
 
       {/* MindWave Logo (Nestled perfectly inside tribal sun inner circle) */}
       {logoTex && (
-        <mesh ref={logoRef} position={[-1.2, 168, -80]}>
-          <planeGeometry args={[165, 165]} />
+        <mesh ref={logoRef} position={[0, 170, -80]}>
+          <planeGeometry args={[64, 64]} />
           <meshBasicMaterial 
             map={logoTex} 
             transparent={true} 
             side={THREE.DoubleSide} 
             depthWrite={false}
-            blending={THREE.AdditiveBlending}
           />
         </mesh>
       )}
