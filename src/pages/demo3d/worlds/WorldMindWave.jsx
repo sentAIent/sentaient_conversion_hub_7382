@@ -90,39 +90,7 @@ const skyFragmentShader = `
 `;
 
 const HologramText = ({ position, visible }) => {
-  return (
-    <group visible={visible} position={position}>
-      {/* MindWave Title - Large & Prominent */}
-      <Text 
-        font="/fonts/Roboto.woff" 
-        fallbackFonts={[]}
-        position={[0, 72, 0]}
-        fontSize={56}
-        color="#ffffff"
-        outlineWidth={1.5}
-        outlineColor="#0284c7"
-        anchorX="center"
-        anchorY="middle"
-      >
-        MINDWAVE
-      </Text>
-
-      {/* Subtitle */}
-      <Text 
-        font="/fonts/Roboto.woff" 
-        fallbackFonts={[]}
-        position={[0, 42, 0]}
-        fontSize={22}
-        color="#202733"
-        outlineWidth={0.6}
-        outlineColor="#ffffff"
-        anchorX="center"
-        anchorY="middle"
-      >
-        Intelligent Health & Wellness
-      </Text>
-    </group>
-  );
+  return null;
 };
 
 const WorldMindWave = ({ position, visible }) => {
@@ -204,14 +172,14 @@ const WorldMindWave = ({ position, visible }) => {
 
     // Float and pulse logo nestled inside sun's inner circle
     if (logoRef.current) {
-      logoRef.current.position.y = 170 + Math.sin(time * 2) * 2;
+      logoRef.current.position.y = 260 + Math.sin(time * 2) * 2;
       logoRef.current.position.x = 0;
       logoRef.current.scale.set(sunScale, sunScale, 1);
       logoRef.current.rotation.y = 0; // Keep facing camera
     }
     
     if (sunRef.current) {
-      sunRef.current.position.y = 170 + Math.sin(time * 2) * 2;
+      sunRef.current.position.y = 260 + Math.sin(time * 2) * 2;
       sunRef.current.rotation.z = time * 0.1;
       sunRef.current.scale.set(sunScale, sunScale, 1);
     }
@@ -249,7 +217,7 @@ const WorldMindWave = ({ position, visible }) => {
       {/* Tribal Sun glowing behind logo */}
       {sunTex && (
         <mesh ref={sunRef} position={[0, 260, -85]}>
-          <planeGeometry args={[210, 210]} />
+          <planeGeometry args={[315, 315]} />
           <meshBasicMaterial 
             map={sunTex} 
             transparent={true} 
@@ -265,7 +233,7 @@ const WorldMindWave = ({ position, visible }) => {
       {/* MindWave Logo (Nestled perfectly inside tribal sun inner circle) */}
       {logoTex && (
         <mesh ref={logoRef} position={[0, 260, -80]}>
-          <planeGeometry args={[95, 95]} />
+          <planeGeometry args={[143, 143]} />
           <meshBasicMaterial 
             map={logoTex} 
             transparent={true} 
@@ -274,9 +242,6 @@ const WorldMindWave = ({ position, visible }) => {
           />
         </mesh>
       )}
-      
-      {/* Hologram Description - Elevated Above Water */}
-      <HologramText position={[0, 20, -80]} visible={true} />
       
       {/* Hologram Guide */}
       <HologramGuide appId="mindwave" position={[40, 0, -40]} />
