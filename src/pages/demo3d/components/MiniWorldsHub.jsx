@@ -422,6 +422,10 @@ export default function MiniWorldsHub({ visible = true }) {
     };
   });
 
+  const ringBandWidth = 50 * itemScale;
+  const ringInnerR = Math.max(10, dynamicRadius - ringBandWidth);
+  const ringOuterR = dynamicRadius + ringBandWidth;
+
   return (
     // Group centered dynamically in available safe vertical space below header
     <group ref={groupRef} position={[0, hubCenterY, -500]}>
@@ -439,6 +443,73 @@ export default function MiniWorldsHub({ visible = true }) {
           }
         }}
       />
+      
+      {/* Darker Holographic Contrast Ring Behind Ring of Logos */}
+      <group position={[0, 0, -8]}>
+        {/* Soft Ambient Cyan/Navy Bloom */}
+        <mesh position={[0, 0, -0.5]}>
+          <ringGeometry args={[ringInnerR - 6, ringOuterR + 6, 128]} />
+          <meshBasicMaterial
+            color="#002244"
+            transparent={true}
+            opacity={0.4}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Primary Dark Obsidian Contrast Band */}
+        <mesh position={[0, 0, 0]}>
+          <ringGeometry args={[ringInnerR, ringOuterR, 128]} />
+          <meshBasicMaterial
+            color="#030712"
+            transparent={true}
+            opacity={0.82}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Outer Cyan Cyber Laser Rim */}
+        <mesh position={[0, 0, 0.2]}>
+          <ringGeometry args={[ringOuterR - 1.2, ringOuterR + 1.2, 128]} />
+          <meshBasicMaterial
+            color="#00e5ff"
+            transparent={true}
+            opacity={0.5}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Inner Electric Blue Cyber Laser Rim */}
+        <mesh position={[0, 0, 0.2]}>
+          <ringGeometry args={[ringInnerR - 1.2, ringInnerR + 1.2, 128]} />
+          <meshBasicMaterial
+            color="#0088ff"
+            transparent={true}
+            opacity={0.5}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Subtle Central Orbit Track Wire */}
+        <mesh position={[0, 0, 0.1]}>
+          <ringGeometry args={[dynamicRadius - 0.6, dynamicRadius + 0.6, 128]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent={true}
+            opacity={0.16}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
       
       {worlds.map((w, idx) => {
         // Distribute worlds in a perfect ellipse/oval around the screen perimeter
