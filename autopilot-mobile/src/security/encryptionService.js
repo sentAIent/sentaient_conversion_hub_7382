@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+import crypto from 'crypto';
 
 /**
  * AES-256 Encryption & Decryption Service
@@ -63,19 +63,14 @@ export class EncryptionService {
     }
 
     const keyToUse = this._resolveKey(secretKey, false);
-    const key = CryptoJS.SHA256(keyToUse);
+    const key = crypto.createHash('sha256').update(keyToUse, 'utf8').digest();
+    const iv = crypto.randomBytes(16);
 
-    // Random 16-byte (128-bit) Initialization Vector
-    const iv = CryptoJS.lib.WordArray.random(16);
-    const ivHex = iv.toString(CryptoJS.enc.Hex);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    let cipherTextHex = cipher.update(plainText, 'utf8', 'hex');
+    cipherTextHex += cipher.final('hex');
 
-    const encrypted = CryptoJS.AES.encrypt(plainText, key, {
-      iv: iv,
-      mode: CryptoJS.mode.CBC,
-      padding: CryptoJS.pad.Pkcs7
-    });
-
-    const cipherTextHex = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
+    const ivHex = iv.toString('hex');
     return `${ivHex}:${cipherTextHex}`;
   }
 
@@ -110,37 +105,23 @@ export class EncryptionService {
     }
 
     try {
-      const key = CryptoJS.SHA256(keyToUse);
-      const iv = CryptoJS.enc.Hex.parse(ivHex);
+      const key = crypto.createHash('sha256').update(keyToUse, 'utf8').digest();
+      const iv = Buffer.from(ivHex, 'hex');
 
-      const ciphertextWordArray = CryptoJS.enc.Hex.parse(cipherTextHex);
-      const ciphertextBase64 = CryptoJS.enc.Base64.stringify(ciphertextWordArray);
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+      let decrypted = decipher.update(cipherTextHex, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
 
-      const decrypted = CryptoJS.AES.decrypt(ciphertextBase64, key, {
-        iv: iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7
-      });
+      // Verify re-encryption integrity to detect ciphertext tampering
+      const verifyCipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+      let verifyHex = verifyCipher.update(decrypted, 'utf8', 'hex');
+      verifyHex += verifyCipher.final('hex');
 
-      if (!decrypted || decrypted.sigBytes < 0) {
+      if (verifyHex.toLowerCase() !== cipherTextHex.toLowerCase()) {
         return null;
       }
 
-      const utf8Result = decrypted.toString(CryptoJS.enc.Utf8);
-
-      // Re-encrypt utf8Result to verify ciphertext integrity (detect tampering)
-      const reEncrypted = CryptoJS.AES.encrypt(utf8Result, key, {
-        iv: iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7
-      });
-      const reEncryptedHex = reEncrypted.ciphertext.toString(CryptoJS.enc.Hex);
-
-      if (reEncryptedHex.toLowerCase() !== cipherTextHex.toLowerCase()) {
-        return null; // Payload was corrupted or tampered
-      }
-
-      return utf8Result;
+      return decrypted;
     } catch (err) {
       if (err.message && err.message.includes('No decryption key provided')) {
         throw err;

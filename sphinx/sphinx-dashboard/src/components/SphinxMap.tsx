@@ -84,6 +84,10 @@ const PinThreatRadarModal = dynamic(() => import('./PinThreatRadarModal').then(m
 const InfrastructureCascadeModal = dynamic(() => import('./InfrastructureCascadeModal').then(m => m.InfrastructureCascadeModal), { ssr: false });
 import { ALL_CURATED_LOCATIONS } from '../lib/geo/curatedLocations';
 
+if (typeof window !== 'undefined') {
+  registerElevationHeatmapProtocol(maplibregl);
+}
+
 function getNearestCuratedArea(lat: number, lon: number): string | null {
   let closestName: string | null = null;
   let minDistanceSq = 0.25; // within ~30-40km
@@ -596,6 +600,7 @@ export default function SphinxMap() {
   const [legendScale, setLegendScale] = useState(1);
   const [legendPos, setLegendPos] = useState<{ x: number; y: number } | null>(null);
   const [legendSize, setLegendSize] = useState<{ width: number; height: number }>({ width: 360, height: 460 });
+  const [isLegendCustomHeight, setIsLegendCustomHeight] = useState(false);
   const [isDraggingLegend, setIsDraggingLegend] = useState(false);
   const [isResizingLegend, setIsResizingLegend] = useState(false);
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; startX: number; startY: number } | null>(null);
@@ -614,12 +619,12 @@ export default function SphinxMap() {
         if (!prev) return null;
         return {
           x: Math.min(Math.max(8, prev.x), Math.max(8, w - 280)),
-          y: Math.min(Math.max(52, prev.y), Math.max(52, h - 140))
+          y: Math.min(Math.max(52, prev.y), Math.max(52, h - 64))
         };
       });
       setLegendSize(prev => ({
         width: Math.min(Math.max(260, prev.width), Math.max(280, w - 24)),
-        height: Math.min(Math.max(200, prev.height), Math.max(220, h - 140))
+        height: Math.min(Math.max(200, prev.height), Math.max(220, h - 64))
       }));
       try {
         mapRef.current?.resize();
@@ -675,7 +680,7 @@ export default function SphinxMap() {
   const currentLegendPos = useMemo(() => {
     if (legendPos) {
       const maxX = Math.max(8, windowDimensions.width - legendSize.width - 8);
-      const maxY = Math.max(88, windowDimensions.height - legendSize.height - 140);
+      const maxY = Math.max(88, windowDimensions.height - legendSize.height - 64);
       return {
         x: Math.min(Math.max(8, legendPos.x), maxX),
         y: Math.min(Math.max(88, legendPos.y), maxY)
@@ -752,7 +757,7 @@ export default function SphinxMap() {
         const rawY = dragStartRef.current.startY + dy;
 
         const maxX = Math.max(8, windowDimensions.width - legendSize.width - 8);
-        const maxY = Math.max(52, windowDimensions.height - legendSize.height - 140);
+        const maxY = Math.max(52, windowDimensions.height - legendSize.height - 64);
 
         setLegendPos({
           x: Math.min(Math.max(8, rawX), maxX),
@@ -768,9 +773,10 @@ export default function SphinxMap() {
         );
         const newH = Math.min(
           Math.max(200, resizeStartRef.current.startH + dy),
-          Math.max(200, windowDimensions.height - currentLegendPos.y - 140)
+          Math.max(200, windowDimensions.height - currentLegendPos.y - 64)
         );
 
+        setIsLegendCustomHeight(true);
         setLegendSize({ width: newW, height: newH });
       }
     };
@@ -2007,7 +2013,7 @@ export default function SphinxMap() {
             <Layer
               id="topography-raster-layer"
               type="raster"
-              beforeId="geofence-fill"
+              beforeId="geofence-line"
               paint={{ 'raster-opacity': (topoProvider === 'elevation_heatmap') ? (topoOpacity ?? 0.85) : ((!settings.layers.satellite && topoProvider !== 'usgs_relief') ? 1.0 : (topoOpacity ?? 0.85)) }}
             />
           </Source>
@@ -5094,9 +5100,11 @@ export default function SphinxMap() {
             left: `${currentLegendPos.x}px`,
             top: `${currentLegendPos.y}px`,
             width: `${legendSize.width}px`,
-            height: `${Math.min(legendSize.height, Math.max(180, windowDimensions.height - currentLegendPos.y - 140))}px`,
+            height: isLegendCustomHeight
+              ? `${Math.min(legendSize.height, Math.max(180, windowDimensions.height - currentLegendPos.y - 64))}px`
+              : `${Math.max(180, windowDimensions.height - currentLegendPos.y - 64)}px`,
             maxWidth: 'calc(100vw - 16px)',
-            maxHeight: `calc(100vh - ${currentLegendPos.y + 140}px)`,
+            maxHeight: `calc(100vh - ${currentLegendPos.y + 64}px)`,
             minWidth: '260px',
             minHeight: '180px'
           }}
@@ -5121,7 +5129,7 @@ export default function SphinxMap() {
             {legendPos && (
               <button 
                 type="button"
-                onClick={() => setLegendPos(null)}
+                onClick={() => { setLegendPos(null); setIsLegendCustomHeight(false); }}
                 className="text-[10px] text-gray-400 hover:text-cyan-300 transition-colors bg-cyan-950/40 hover:bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-900/60 whitespace-nowrap"
                 title="Reset Data Points position to default"
               >
@@ -6076,106 +6084,6 @@ export default function SphinxMap() {
               </span>
             </div>
 
-            {/* Elevation Hypsometric Heatmap Ramp & Quick Toggle */}
-            {!isLegendCollapsed && (
-              settings.layers.elevation_topography ? (
-                <div className="ml-7 mr-1 mb-2 p-2 rounded-lg bg-slate-950/90 border border-emerald-500/30 text-[10px] font-mono shadow-inner select-none">
-                  <div className="flex items-center justify-between text-slate-300 font-semibold mb-1">
-                    <span className="flex items-center gap-1 text-emerald-400">
-                      <span>🏔️</span>
-                      <span>Elevation Heatmap Ramp</span>
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-950 border border-emerald-600/60 text-emerald-300 font-bold">ACTIVE</span>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setIsTopoModalOpen(true); }}
-                        className="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[9px] font-bold"
-                        title="Configure elevation tile provider, opacity, and alpine peaks"
-                      >
-                        CONTROLLER
-                      </button>
-                    </div>
-                  </div>
-                  {/* Visual Color Gradient Bar */}
-                  <div className="h-2 rounded-full w-full my-1 border border-white/10" style={{
-                    background: 'linear-gradient(to right, #06b6d4 0%, #10b981 12%, #84cc16 22%, #eab308 34%, #f97316 46%, #ef4444 60%, #ec4899 74%, #a855f7 86%, #cbd5e1 93%, #ffffff 100%)'
-                  }} />
-                  {/* Elevation Milestones */}
-                  <div className="flex justify-between text-[8px] sm:text-[9px] text-slate-400 px-0.5 mt-0.5 font-mono">
-                    <span>&lt;0&apos;</span>
-                    <span>2k&apos;</span>
-                    <span>4.5k&apos;</span>
-                    <span>8k&apos;</span>
-                    <span>13k&apos;</span>
-                    <span>19k&apos;</span>
-                    <span>24k&apos;</span>
-                    <span className="text-white font-bold">29k&apos;</span>
-                  </div>
-                  {/* Hypsometric Tier Legend Chips */}
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-2 text-[9px]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#06b6d4' }} />
-                      <span className="text-slate-300 truncate">Depression (&lt;0&apos;)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#10b981' }} />
-                      <span className="text-slate-300 truncate">Lowlands (0–500&apos;)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#84cc16' }} />
-                      <span className="text-slate-300 truncate">Plains (500–2,000&apos;)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#eab308' }} />
-                      <span className="text-slate-300 truncate">Foothills (2k–4.5k&apos;)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#f97316' }} />
-                      <span className="text-slate-300 truncate">Plateau (4.5k–8k&apos;)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#ef4444' }} />
-                      <span className="text-slate-300 truncate">Montane (8k–13k&apos;)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#ec4899' }} />
-                      <span className="text-slate-300 truncate">Alpine (13k–19k&apos;)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#a855f7' }} />
-                      <span className="text-slate-300 truncate">Glacial (19k–24k&apos;)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#cbd5e1' }} />
-                      <span className="text-slate-300 truncate">Himalayan (24k–26k&apos;)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0 border border-slate-400" style={{ backgroundColor: '#ffffff' }} />
-                      <span className="text-white font-bold truncate">Everest Peak (29k&apos;)</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="ml-7 mr-1 mb-2 p-2 rounded-lg bg-slate-950/70 border border-slate-800 text-[10px] font-mono shadow-inner select-none flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-slate-400">
-                    <span>🏔️</span>
-                    <span className="font-semibold text-slate-300">Elevation Heatmap</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-900 border border-slate-700 text-slate-400 font-bold">DISABLED</span>
-                  </div>
-                  <button
-                    type="button"
-                    data-testid="sidebar-enable-elevation-heatmap"
-                    onClick={(e) => { e.stopPropagation(); toggleLayer('elevation_topography'); }}
-                    className="px-2 py-0.5 rounded bg-emerald-950/90 hover:bg-emerald-900 text-emerald-300 border border-emerald-600/60 text-[9px] font-bold transition-all shadow-[0_0_8px_rgba(52,211,153,0.3)]"
-                    title="Turn on elevation heatmap and hypsometric relief"
-                  >
-                    TOGGLE ON
-                  </button>
-                </div>
-              )
-            )}
-
             <div title={DATA_POINTS_TOOLTIPS['medicinal_flora']} className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.medicinal_flora ? 'opacity-50' : ''}`} onClick={() => toggleLayer('medicinal_flora')} onMouseEnter={() => setHoveredLegendLayer('medicinal_flora')} onMouseLeave={() => setHoveredLegendLayer(null)}>
               <span className="flex items-center gap-3">
                 <button type="button" data-testid="toggle-medicinal-flora-layer" className={settings.layers.medicinal_flora ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
@@ -6247,6 +6155,102 @@ export default function SphinxMap() {
           </svg>
         </div>
       </div>
+      )}
+      
+      {/* Standalone Elevation Heatmap Legend Widget */}
+      {settings.layers.elevation_topography && (
+        <div
+          data-testid="elevation-heatmap-widget"
+          style={{
+            bottom: '64px',
+            left: !isLegendCollapsed 
+              ? `${Math.max(16, currentLegendPos.x + legendSize.width + 12)}px`
+              : (windowDimensions.width < 640 ? '8px' : '16px'),
+            right: windowDimensions.width < 640 ? '8px' : '16px'
+          }}
+          className="fixed z-20 bg-black/90 border border-emerald-500/40 px-3 py-1.5 rounded-xl text-white font-mono shadow-[0_0_25px_rgba(16,185,129,0.25)] backdrop-blur-md pointer-events-auto select-none transition-all duration-200 flex flex-col gap-1"
+        >
+          {/* Top Line: Title + Controls on left, Full-Width Gradient Ramp + Milestones on right */}
+          <div className="flex items-center gap-3 w-full">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-emerald-400 font-bold text-xs tracking-wider flex items-center gap-1">
+                <span>🏔️</span>
+                <span className="hidden sm:inline">ELEVATION HEATMAP</span>
+                <span className="sm:hidden">ELEV</span>
+              </span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-600/60 text-emerald-300 font-bold">ACTIVE</span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setIsTopoModalOpen(true); }}
+                className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-[9px] font-bold transition-colors cursor-pointer"
+                title="Configure elevation tile provider, opacity, and alpine peaks"
+              >
+                CONTROLLER
+              </button>
+            </div>
+
+            {/* Visual Color Gradient Bar & Milestones */}
+            <div className="flex-1 flex flex-col justify-center min-w-[140px]">
+              <div className="h-2 rounded-full w-full border border-white/10" style={{
+                background: 'linear-gradient(to right, #06b6d4 0%, #10b981 12%, #84cc16 22%, #eab308 34%, #f97316 46%, #ef4444 60%, #ec4899 74%, #a855f7 86%, #cbd5e1 93%, #ffffff 100%)'
+              }} />
+              <div className="flex justify-between text-[8px] text-slate-400 px-0.5 font-mono leading-none mt-0.5">
+                <span>&lt;0&apos;</span>
+                <span>2k&apos;</span>
+                <span>4.5k&apos;</span>
+                <span>8k&apos;</span>
+                <span>13k&apos;</span>
+                <span>19k&apos;</span>
+                <span>24k&apos;</span>
+                <span className="text-white font-bold">29k&apos;</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Line: Sleek horizontal row of all 10 elevation category chips */}
+          <div className="flex items-center justify-between gap-1 overflow-x-auto text-[8px] sm:text-[9px] pt-1 border-t border-emerald-900/40 scrollbar-none whitespace-nowrap">
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#06b6d4' }} />
+              <span className="text-slate-300">&lt;0&apos; Depression</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#10b981' }} />
+              <span className="text-slate-300">0-500&apos; Lowlands</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#84cc16' }} />
+              <span className="text-slate-300">500-2k&apos; Plains</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#eab308' }} />
+              <span className="text-slate-300">2k-4.5k&apos; Foothills</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#f97316' }} />
+              <span className="text-slate-300">4.5k-8k&apos; Plateau</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#ef4444' }} />
+              <span className="text-slate-300">8k-13k&apos; Montane</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#ec4899' }} />
+              <span className="text-slate-300">13k-19k&apos; Alpine</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#a855f7' }} />
+              <span className="text-slate-300">19k-24k&apos; Glacial</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#cbd5e1' }} />
+              <span className="text-slate-300">24k-26k&apos; Himalayan</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full shrink-0 border border-slate-400" style={{ backgroundColor: '#ffffff' }} />
+              <span className="text-white font-bold">29k&apos; Everest Peak</span>
+            </div>
+          </div>
+        </div>
       )}
       
       

@@ -168,25 +168,25 @@ export function registerElevationHeatmapProtocol(maplibregl: any): void {
 
       ctx.putImageData(imgData, 0, 0);
 
-      try {
-        const coloredBitmap = await createImageBitmap(canvas);
-        return { data: coloredBitmap };
-      } catch (bmpErr) {
-        if (typeof canvas.convertToBlob === 'function') {
-          const blob = await canvas.convertToBlob({ type: 'image/png' });
-          const buf = await blob.arrayBuffer();
-          return { data: buf };
-        } else if (typeof canvas.toBlob === 'function') {
-          const blob: any = await new Promise(res => canvas.toBlob(res, 'image/png'));
-          const buf = await blob.arrayBuffer();
-          return { data: buf };
-        }
-        throw bmpErr;
+      let buf: ArrayBuffer;
+      if (typeof canvas.convertToBlob === 'function') {
+        const blob = await canvas.convertToBlob({ type: 'image/png' });
+        buf = await blob.arrayBuffer();
+      } else if (typeof canvas.toBlob === 'function') {
+        const blob: any = await new Promise((res, rej) => {
+          canvas.toBlob((b: any) => b ? res(b) : rej(new Error('toBlob failed')), 'image/png');
+        });
+        buf = await blob.arrayBuffer();
+      } else {
+        throw new Error('Canvas convertToBlob/toBlob not available');
       }
+
+      return { data: buf };
     } catch (err: any) {
       if (err.name === 'AbortError') {
         throw err;
       }
+      console.warn('[ElevationHeatmapProtocol] Tile render error:', err);
       // Minimal valid 1x1 transparent PNG buffer fallback
       const transparentPng = new Uint8Array([
         0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
