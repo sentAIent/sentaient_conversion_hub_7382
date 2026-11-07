@@ -56,6 +56,8 @@ import { SnowboardResortPopup } from './SnowboardResortPopup';
 import { ResortPisteEngine } from '../lib/routing/resortPisteEngine';
 const CommunityReportModal = dynamic(() => import('./CommunityReportModal').then(m => m.CommunityReportModal), { ssr: false });
 const AdminReputationModal = dynamic(() => import('./AdminReputationModal'), { ssr: false });
+const TacticalAudioWidget = dynamic(() => import('./TacticalAudioWidget').then(m => m.TacticalAudioWidget), { ssr: false });
+import { SphinxBinauralEngine } from '../lib/audio/SphinxBinauralEngine';
 import { loadLocalCommunityReports, buildCommunityReportsGeoJson, CommunityReport } from '../lib/communityReports';
 import { ChemicalSprayingEngine } from '../lib/intelligence/chemicalSprayingEngine';
 const ChemicalSprayingModal = dynamic(() => import('./ChemicalSprayingModal').then(m => m.ChemicalSprayingModal), { ssr: false });
@@ -196,6 +198,127 @@ const DATA_POINTS_TOOLTIPS: Record<string, string> = {
   strategic_facilities: "Strategic Energy & Defense Facilities: Strategic Petroleum Reserve (SPR) salt caverns, mega crude oil refineries, ISFSI spent nuclear fuel dry casks, and PAVE PAWS early warning radars."
 };
 
+export interface MissionPreset {
+  id: string;
+  name: string;
+  icon: string;
+  category: string;
+  description: string;
+  basemap: 'street' | 'dark' | 'satellite';
+  layers: Partial<Record<string, boolean>>;
+}
+
+export const MISSION_PRESETS: MissionPreset[] = [
+  {
+    id: 'airspace',
+    name: 'Airspace & SIGINT',
+    icon: '✈️',
+    category: 'Aviation',
+    description: 'High-altitude situational tracking with tactical dark canvas, live ADS-B aircraft, radar sweeps, and lightning.',
+    basemap: 'dark',
+    layers: {
+      aircraft: true,
+      radars: true,
+      aviation: true,
+      power: true,
+      lightning: true,
+      wind_hud: true,
+      cell_towers: true,
+      weather_radar: false,
+      wildfires: false,
+      dams: false,
+      campsites: false,
+      trails: false,
+      snowboard_trails: false
+    }
+  },
+  {
+    id: 'maritime',
+    name: 'Maritime & Subsea',
+    icon: '🚢',
+    category: 'Naval Recon',
+    description: 'Oceanic monitoring with tactical dark canvas, live AIS vessels, submarine fiber cables, and coastal stations.',
+    basemap: 'dark',
+    layers: {
+      vessels: true,
+      submarine_cables: true,
+      radars: true,
+      weather_stations: true,
+      aircraft: false,
+      power: false,
+      trails: false,
+      dams: false,
+      wildfires: false
+    }
+  },
+  {
+    id: 'disaster',
+    name: 'Wildfire & Disaster',
+    icon: '🔥',
+    category: 'Crisis Response',
+    description: 'Satellite thermal mapping with live wildfire perimeters, fire spread models, seismic alerts, and hospitals.',
+    basemap: 'satellite',
+    layers: {
+      wildfires: true,
+      fire_spread_forecast: true,
+      disasters: true,
+      earthquakes: true,
+      emergency: true,
+      hospitals: true,
+      weather_radar: true,
+      weather_clouds: true,
+      aircraft: false,
+      vessels: false
+    }
+  },
+  {
+    id: 'topo_recon',
+    name: 'High-Relief Topo Recon',
+    icon: '🏔️',
+    category: 'Terrain Analysis',
+    description: 'Hypsometric elevation heatmap over Esri World Street cartography with alpine peaks, lakes, and public lands.',
+    basemap: 'street',
+    layers: {
+      elevation_topography: true,
+      trails: true,
+      public_lands: true,
+      springs: true,
+      dams: true,
+      labels: true,
+      aircraft: false,
+      vessels: false
+    }
+  },
+  {
+    id: 'all_osint',
+    name: 'Full Spectrum OSINT',
+    icon: '🌐',
+    category: 'Comprehensive',
+    description: 'Complete multi-domain surveillance with all live sensors, satellites, aircraft, vessels, and infrastructure.',
+    basemap: 'dark',
+    layers: {
+      aircraft: true,
+      vessels: true,
+      cell_towers: true,
+      springs: true,
+      disasters: true,
+      earthquakes: true,
+      power: true,
+      aviation: true,
+      emergency: true,
+      cameras: true,
+      data_centers: true,
+      radars: true,
+      public_lands: true,
+      submarine_cables: true,
+      wildfires: true,
+      lightning: true,
+      labels: true,
+      elevation_topography: true
+    }
+  }
+];
+
 const INTERACTIVE_LAYER_IDS = [
   'custom-pin-layer', 'custom-pin-label-layer', 'cell-tower-cluster', 'spring-cluster',
   'snowboard-resorts-cluster', 'aircraft-layer', 'cell-tower-layer', 'spring-layer',
@@ -316,6 +439,31 @@ export default function SphinxMap() {
   const [selectedCrimeNeighborhood, setSelectedCrimeNeighborhood] = useState<NeighborhoodProfile | null>(null);
   const [crimeFocusCoords, setCrimeFocusCoords] = useState<{ lat: number; lon: number } | null>(null);
   const lastCrimeLocationRef = useRef<{ lat: number; lon: number; cityName: string } | null>(null);
+
+  const [showTacticalAudio, setShowTacticalAudio] = useState(false);
+  const [showMissionPresets, setShowMissionPresets] = useState(false);
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
+  const [isAudioEnginePlaying, setIsAudioEnginePlaying] = useState(false);
+
+  useEffect(() => {
+    const unsub = SphinxBinauralEngine.subscribe(() => {
+      setIsAudioEnginePlaying(SphinxBinauralEngine.getState().isPlaying);
+    });
+    return () => unsub();
+  }, []);
+
+  const applyMissionPreset = (preset: MissionPreset) => {
+    setActivePresetId(preset.id);
+    updateSettings({
+      basemap_mode: preset.basemap,
+      layers: {
+        ...settings.layers,
+        ...preset.layers,
+        satellite: preset.basemap === 'satellite'
+      }
+    });
+    setShowMissionPresets(false);
+  };
 
   useEffect(() => {
     let ws: WebSocket | null = null;
@@ -664,8 +812,8 @@ export default function SphinxMap() {
 
   const dockScale = useMemo(() => {
     const w = windowDimensions.width;
-    if (w < 480) {
-      return Math.max(0.65, Math.min(1, (w - 16) / 460));
+    if (w < 600) {
+      return Math.max(0.68, Math.min(1, (w - 16) / 540));
     }
     return 1;
   }, [windowDimensions.width]);
@@ -6224,8 +6372,8 @@ export default function SphinxMap() {
         <div
           data-testid="elevation-heatmap-widget"
           style={{
-            bottom: '64px',
-            left: !isLegendCollapsed 
+            bottom: windowDimensions.width < 640 ? '58px' : '64px',
+            left: (windowDimensions.width >= 640 && !isLegendCollapsed)
               ? `${Math.max(16, currentLegendPos.x + legendSize.width + 12)}px`
               : (windowDimensions.width < 640 ? '8px' : '16px'),
             right: windowDimensions.width < 640 ? '8px' : '16px'
@@ -6464,6 +6612,81 @@ export default function SphinxMap() {
             {(headerTier === 'standard' || headerTier === 'compact') && <span className="font-bold">AI</span>}
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
             <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(6,182,212,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">LAUNCH SPHINX AI INTELLIGENCE ASSISTANT</span>
+          </button>
+
+          {/* Mission Presets Dropdown */}
+          <div className="relative shrink-0">
+            <button 
+              type="button"
+              data-testid="hud-btn-mission-presets"
+              onClick={() => setShowMissionPresets(!showMissionPresets)}
+              className={`relative group px-2 sm:px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 shrink-0 ${
+                showMissionPresets || activePresetId
+                  ? 'bg-purple-950/90 border-purple-400 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.5)]'
+                  : 'bg-black/85 border-cyan-800/80 text-cyan-300 hover:bg-cyan-950/80 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
+              }`}
+              title="Tactical Mission Presets (Airspace, Maritime, Disaster, Topo Recon, Full Spectrum)"
+            >
+              <span>🎯</span>
+              {(headerTier === 'full' || headerTier === 'standard') && (
+                <span className="font-bold">
+                  {activePresetId ? MISSION_PRESETS.find(p => p.id === activePresetId)?.name.split(' ')[0] : 'PRESETS'}
+                </span>
+              )}
+              <span className="text-[10px] text-purple-300">▼</span>
+              <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-purple-300 border border-purple-500/70 shadow-[0_0_12px_rgba(168,85,247,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">TACTICAL MISSION PRESETS</span>
+            </button>
+
+            {showMissionPresets && (
+              <div className="absolute top-full mt-2 right-0 w-72 bg-black/95 border border-purple-500/80 rounded-xl shadow-[0_4px_25px_rgba(168,85,247,0.4)] backdrop-blur-md p-2 font-mono text-xs z-50 space-y-1">
+                <div className="text-[10px] font-bold text-purple-300 px-2 py-1 uppercase tracking-wider flex justify-between border-b border-purple-900/60">
+                  <span>SITUATIONAL MISSION PROFILES</span>
+                  <button onClick={() => setShowMissionPresets(false)} className="text-gray-400 hover:text-white">✕</button>
+                </div>
+                {MISSION_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => applyMissionPreset(preset)}
+                    className={`w-full text-left p-2 rounded flex flex-col gap-0.5 transition-all border ${
+                      activePresetId === preset.id
+                        ? 'bg-purple-950/80 border-purple-400 text-white font-bold'
+                        : 'bg-black/40 border-gray-900 hover:bg-neutral-900/80 hover:border-gray-700 text-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold flex items-center gap-1.5 text-xs text-purple-200">
+                        <span>{preset.icon}</span> {preset.name}
+                      </span>
+                      <span className="text-[9px] uppercase px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800">
+                        {preset.basemap}
+                      </span>
+                    </div>
+                    <span className="text-[9px] text-gray-400 line-clamp-2">{preset.description}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Tactical Audio & Binaural Launcher */}
+          <button 
+            type="button"
+            data-testid="hud-btn-tactical-audio"
+            onClick={() => setShowTacticalAudio(!showTacticalAudio)}
+            className={`relative group px-2 sm:px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all font-mono text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 shrink-0 ${
+              showTacticalAudio || isAudioEnginePlaying
+                ? 'bg-cyan-950/90 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.6)]'
+                : 'bg-black/85 border-cyan-800/80 text-cyan-300 hover:bg-cyan-950/80 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
+            }`}
+            title="Tactical Audio & Binaural Entrainment Engine (40Hz Gamma, 7.83Hz Schumann, Sub-Bass Drone)"
+          >
+            <span>🎧</span>
+            {(headerTier === 'full' || headerTier === 'standard') && <span className="font-bold">AUDIO</span>}
+            {isAudioEnginePlaying && (
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+            )}
+            <span className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(6,182,212,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">TACTICAL BINAURAL & AUDIO HUD</span>
           </button>
 
           {/* Threats Overview */}
@@ -7243,6 +7466,10 @@ export default function SphinxMap() {
         viewportBbox={currentBbox}
       />
 
+      {showTacticalAudio && (
+        <TacticalAudioWidget onClose={() => setShowTacticalAudio(false)} />
+      )}
+
       {showCityCrimePanel && (
         <CityCrimePanel
           activeCityCrime={activeCityCrime}
@@ -7322,7 +7549,7 @@ export default function SphinxMap() {
           transform: dockScale < 1 ? `scale(${dockScale})` : undefined,
           transformOrigin: 'bottom center'
         }}
-        className="fixed bottom-2 sm:bottom-2.5 left-0 right-0 mx-auto w-fit max-w-[calc(100vw-16px)] z-50 flex flex-nowrap items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5 lg:gap-2 bg-black/95 p-1 sm:p-1.5 lg:p-2 rounded-xl border border-cyan-900/80 shadow-[0_4px_30px_rgba(0,0,0,0.95)] backdrop-blur-md font-mono text-[10px] sm:text-xs pointer-events-auto transition-all duration-150 overflow-visible"
+        className="fixed bottom-2 sm:bottom-2.5 left-0 right-0 mx-auto w-fit max-w-[calc(100vw-12px)] sm:max-w-[calc(100vw-16px)] z-50 flex flex-nowrap items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5 lg:gap-2 bg-black/95 p-1 sm:p-1.5 lg:p-2 rounded-xl border border-cyan-900/80 shadow-[0_4px_30px_rgba(0,0,0,0.95)] backdrop-blur-md font-mono text-[10px] sm:text-xs pointer-events-auto transition-all duration-150 overflow-x-auto no-scrollbar touch-pan-x"
       >
         <button 
           type="button"
