@@ -58,8 +58,8 @@ export default function ToroidalSentaientCore({
   // 1. HORN / DIPOLE TORUS PARAMETRIC SCALING
   // Dynamically scaled in lockstep with dynamicRadius for perfect clearance
   // --------------------------------------------------------------------------
-  const maxOuterR = Math.max(70, Math.min(125, dynamicRadius * 0.50));
-  const neckR = 6.0; // tight central hourglass vortex throat
+  const maxOuterR = Math.max(70, Math.min(125, dynamicRadius * 0.50)) * 1.3;
+  const neckR = 6.0 * 1.3; // tight central hourglass vortex throat
   const R0 = (maxOuterR + neckR) / 2; // major circle center
   const r0 = (maxOuterR - neckR) / 2; // minor circle radius
   const H0 = maxOuterR * 0.38;        // oblate height
@@ -502,7 +502,7 @@ export default function ToroidalSentaientCore({
   });
 
   // Native aspect ratio of /sentaient_logo_final.png (840 x 156 = 5.385 : 1)
-  const emblemW = 140 * itemScale;
+  const emblemW = 140 * itemScale * 1.3;
   const emblemH = emblemW / (840 / 156);
 
   return (
@@ -618,7 +618,7 @@ export default function ToroidalSentaientCore({
 
           {/* Central Singularity Tokamak Ring (Image 2 - Glowing Hot Waist Ring) */}
           <mesh position={[0, 0, 0]}>
-            <torusGeometry args={[neckR + 3.5, 1.8, 16, 48]} />
+            <torusGeometry args={[neckR + 3.5 * 1.3, 1.8 * 1.3, 16, 48]} />
             <meshBasicMaterial
               color="#ff2277"
               transparent
@@ -627,7 +627,7 @@ export default function ToroidalSentaientCore({
             />
           </mesh>
           <mesh position={[0, 0, 0]}>
-            <torusGeometry args={[neckR + 6.0, 1.0, 14, 48]} />
+            <torusGeometry args={[neckR + 6.0 * 1.3, 1.0 * 1.3, 14, 48]} />
             <meshBasicMaterial
               color="#00ffff"
               transparent
@@ -651,7 +651,7 @@ export default function ToroidalSentaientCore({
 
           {/* Central Singularity Spindle Core Beam */}
           <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[2.5, 7.5, H0 * 1.9, 20, 1, true]} />
+            <cylinderGeometry args={[2.5 * 1.3, 7.5 * 1.3, H0 * 1.9, 20, 1, true]} />
             <meshBasicMaterial
               color="#00e5ff"
               transparent
@@ -702,7 +702,7 @@ export default function ToroidalSentaientCore({
               />
             </bufferGeometry>
             <pointsMaterial
-              size={9.0}
+              size={11.7}
               vertexColors
               transparent
               opacity={0.96}
@@ -753,7 +753,7 @@ export default function ToroidalSentaientCore({
             />
           </bufferGeometry>
           <pointsMaterial
-            size={7.0}
+            size={9.1}
             vertexColors
             transparent
             opacity={0.92}
@@ -769,7 +769,7 @@ export default function ToroidalSentaientCore({
       {/* ------------------------------------------------------------------ */}
       <group position={[0, 0, 15]}>
         {/* Core Singularity White Spark */}
-        <mesh scale={0.16}>
+        <mesh scale={0.208}>
           <sphereGeometry args={[25, 12, 12]} />
           <meshBasicMaterial color="#ffffff" />
         </mesh>
