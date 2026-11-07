@@ -724,7 +724,7 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <DigitalFire position={[0, -20, centerZ]} />
       
       {/* Holographic Logo Centerpiece - Elevated Above Fire */}
-      <HolographicLogo position={[0, 75, centerZ]} />
+      <HolographicLogo position={[0, 55, centerZ]} />
       
       {/* Procedural Tropical Foliage */}
       <ProceduralPalmTrees radius={60} centerZ={centerZ} />
