@@ -111,6 +111,7 @@ export interface UserSettings {
     strategic_facilities: boolean;
     [key: string]: boolean | undefined;
   };
+  basemap_mode?: 'street' | 'dark' | 'satellite';
   satellite_provider?: 'hd_arcgis' | 'nasa_viirs' | 'nasa_modis' | 'goes_live';
   tier?: 'free' | 'pro' | 'sovereign';
   clustering_enabled: boolean;
@@ -192,6 +193,7 @@ const DEFAULT_SETTINGS: UserSettings = {
     water_aqueducts: false,
     strategic_facilities: false,
   },
+  basemap_mode: 'street',
   satellite_provider: 'hd_arcgis',
   tier: 'free',
   clustering_enabled: true,
@@ -215,6 +217,7 @@ export function useSettings() {
           return {
             ...DEFAULT_SETTINGS,
             ...parsed,
+            basemap_mode: parsed.basemap_mode || (parsed.layers?.satellite ? 'satellite' : 'street'),
             layers: { ...DEFAULT_SETTINGS.layers, ...(parsed.layers || {}) },
             cursor: { ...DEFAULT_SETTINGS.cursor, ...(parsed.cursor || {}) }
           };
@@ -273,6 +276,7 @@ export function useSettings() {
             saved_locations: data.saved_locations || [],
             custom_pins: data.custom_pins || [],
             default_timeframe: data.default_timeframe,
+            basemap_mode: data.basemap_mode || (data.layers?.satellite ? 'satellite' : 'street'),
             layers: { ...DEFAULT_SETTINGS.layers, ...(data.layers || {}) },
             clustering_enabled: data.clustering_enabled ?? DEFAULT_SETTINGS.clustering_enabled,
             cursor: { ...DEFAULT_SETTINGS.cursor, ...(data.cursor || {}) }

@@ -1832,6 +1832,10 @@ export default function SphinxMap() {
     );
   }
 
+  const isSatellite = settings.basemap_mode === 'satellite' || (!settings.basemap_mode && !!settings.layers.satellite);
+  const isDarkCanvas = settings.basemap_mode === 'dark';
+  const isStreetMap = settings.basemap_mode === 'street' || (!settings.basemap_mode && !settings.layers.satellite);
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <Map
@@ -1963,15 +1967,12 @@ export default function SphinxMap() {
             <Layer id="current-geofence-line" type="line" paint={{ 'line-color': '#4ade80', 'line-width': 2 }} />
           </Source>
         )}
-        {!settings.layers.satellite && (
+        {isStreetMap && (
           <Source
             id="street-map"
             type="raster"
             tiles={[
-              'https://a.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png',
-              'https://b.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png',
-              'https://c.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png',
-              'https://d.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png'
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'
             ]}
             tileSize={256}
             maxzoom={19}
@@ -1980,7 +1981,36 @@ export default function SphinxMap() {
           </Source>
         )}
 
-        {settings.layers.satellite && (
+        {isDarkCanvas && (
+          <>
+            <Source
+              id="dark-canvas-map"
+              type="raster"
+              tiles={[
+                'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
+              ]}
+              tileSize={256}
+              maxzoom={16}
+            >
+              <Layer id="dark-canvas-layer" type="raster" beforeId="geofence-fill" />
+            </Source>
+            {settings.layers.labels && (
+              <Source
+                id="dark-canvas-labels"
+                type="raster"
+                tiles={[
+                  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'
+                ]}
+                tileSize={256}
+                maxzoom={16}
+              >
+                <Layer id="dark-canvas-labels-layer" type="raster" beforeId="geofence-fill" paint={{ 'raster-opacity': 0.95 }} />
+              </Source>
+            )}
+          </>
+        )}
+
+        {isSatellite && (
           <Source
             key={settings.satellite_provider || 'hd_arcgis'}
             id="satellite-imagery"
@@ -2014,7 +2044,7 @@ export default function SphinxMap() {
               id="topography-raster-layer"
               type="raster"
               beforeId="geofence-line"
-              paint={{ 'raster-opacity': (topoProvider === 'elevation_heatmap') ? (topoOpacity ?? 0.85) : ((!settings.layers.satellite && topoProvider !== 'usgs_relief') ? 1.0 : (topoOpacity ?? 0.85)) }}
+              paint={{ 'raster-opacity': (topoProvider === 'elevation_heatmap') ? (topoOpacity ?? 0.85) : ((isStreetMap && topoProvider !== 'usgs_relief') ? 1.0 : (topoOpacity ?? 0.85)) }}
             />
           </Source>
         )}
@@ -2066,7 +2096,7 @@ export default function SphinxMap() {
           </>
         )}
 
-        {settings.layers.labels && settings.layers.satellite && (
+        {settings.layers.labels && isSatellite && (
           <>
             <Source
               id="map-roads-labels"
@@ -5745,20 +5775,52 @@ export default function SphinxMap() {
               {renderLayerBadge(visibleCounts.lightning, 'lightning', 'text-yellow-400')}
             </div>
 
-            <div title={DATA_POINTS_TOOLTIPS['satellite']} className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.satellite ? 'opacity-70' : ''}`} onClick={() => toggleLayer('satellite')} onMouseEnter={() => setHoveredLegendLayer('satellite')} onMouseLeave={() => setHoveredLegendLayer(null)}>
+            <div title="Toggle or switch base map style" className="flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors" onClick={() => {
+              const nextMode = isStreetMap ? 'dark' : isDarkCanvas ? 'satellite' : 'street';
+              updateSettings({ basemap_mode: nextMode, layers: { ...settings.layers, satellite: nextMode === 'satellite' } });
+            }} onMouseEnter={() => setHoveredLegendLayer('satellite')} onMouseLeave={() => setHoveredLegendLayer(null)}>
               <span className="flex items-center gap-3">
-                <button className={settings.layers.satellite ? "text-white shrink-0" : "text-gray-400 hover:text-white shrink-0"}>
-                  {settings.layers.satellite ? <Eye size={16} /> : <EyeOff size={16} />}
-                </button>
-                <span className="text-cyan-400 font-bold text-sm leading-none shrink-0 w-4 text-center">🛰️</span>
-                {!isLegendCollapsed && <span className="whitespace-nowrap">Base: {settings.layers.satellite ? 'Satellite' : 'Street (Default)'}</span>}
+                <span className="text-cyan-400 font-bold text-sm leading-none shrink-0 w-4 text-center">{isDarkCanvas ? '🌌' : isSatellite ? '🛰️' : '🗺️'}</span>
+                {!isLegendCollapsed && <span className="whitespace-nowrap">Base Map Style</span>}
               </span>
-              <span className="text-cyan-400 font-bold ml-2 text-[10px] bg-cyan-950 px-1.5 py-0.5 rounded border border-cyan-800">
-                {settings.layers.satellite ? (settings.satellite_provider === 'nasa_viirs' ? 'VIIRS' : settings.satellite_provider === 'nasa_modis' ? 'MODIS' : settings.satellite_provider === 'goes_live' ? 'GOES LIVE' : 'HD SATELLITE') : 'STREET'}
+              <span className={`font-bold ml-2 text-[10px] px-1.5 py-0.5 rounded border ${isDarkCanvas ? 'text-indigo-300 bg-indigo-950 border-indigo-800' : isSatellite ? 'text-sky-300 bg-sky-950 border-sky-800' : 'text-cyan-300 bg-cyan-950 border-cyan-800'}`}>
+                {isDarkCanvas ? 'TACTICAL DARK' : isSatellite ? (settings.satellite_provider === 'nasa_viirs' ? 'VIIRS' : settings.satellite_provider === 'nasa_modis' ? 'MODIS' : settings.satellite_provider === 'goes_live' ? 'GOES LIVE' : 'HD SATELLITE') : 'STREET'}
               </span>
             </div>
 
-            {settings.layers.satellite && !isLegendCollapsed && (
+            {!isLegendCollapsed && (
+              <div className="flex flex-wrap gap-1 pl-7 pt-1 pb-1">
+                <button
+                  type="button"
+                  data-testid="basemap-mode-street"
+                  onClick={(e) => { e.stopPropagation(); updateSettings({ basemap_mode: 'street', layers: { ...settings.layers, satellite: false } }); }}
+                  className={`text-[9px] px-1.5 py-0.5 rounded font-mono border ${isStreetMap ? 'bg-cyan-900 text-cyan-200 border-cyan-400 font-bold' : 'bg-black/40 text-gray-400 border-gray-700 hover:text-white'}`}
+                  title="Esri World Street Cartography"
+                >
+                  STREET
+                </button>
+                <button
+                  type="button"
+                  data-testid="basemap-mode-dark"
+                  onClick={(e) => { e.stopPropagation(); updateSettings({ basemap_mode: 'dark', layers: { ...settings.layers, satellite: false } }); }}
+                  className={`text-[9px] px-1.5 py-0.5 rounded font-mono border ${isDarkCanvas ? 'bg-indigo-900 text-indigo-200 border-indigo-400 font-bold' : 'bg-black/40 text-gray-400 border-gray-700 hover:text-white'}`}
+                  title="Esri Dark Gray Canvas (High Contrast Tactical Base)"
+                >
+                  TACTICAL DARK
+                </button>
+                <button
+                  type="button"
+                  data-testid="basemap-mode-satellite"
+                  onClick={(e) => { e.stopPropagation(); updateSettings({ basemap_mode: 'satellite', layers: { ...settings.layers, satellite: true } }); }}
+                  className={`text-[9px] px-1.5 py-0.5 rounded font-mono border ${isSatellite ? 'bg-sky-900 text-sky-200 border-sky-400 font-bold' : 'bg-black/40 text-gray-400 border-gray-700 hover:text-white'}`}
+                  title="Satellite Imagery"
+                >
+                  SATELLITE
+                </button>
+              </div>
+            )}
+
+            {isSatellite && !isLegendCollapsed && (
               <div className="flex flex-wrap gap-1 pl-7 pt-1 pb-1">
                 <button
                   type="button"
@@ -7265,18 +7327,28 @@ export default function SphinxMap() {
         <button 
           type="button"
           data-testid="btn-street-map"
-          onClick={() => updateSettings({ layers: { ...settings.layers, satellite: false } })}
-          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${!settings.layers.satellite ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'text-gray-400 hover:text-white'}`}
-          title="Switch base map to OpenStreetMap cartography"
+          onClick={() => updateSettings({ basemap_mode: 'street', layers: { ...settings.layers, satellite: false } })}
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${isStreetMap ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'text-gray-400 hover:text-white'}`}
+          title="Switch base map to Esri World Street cartography"
         >
           <span>🗺️</span> <span className="hidden 2xl:inline">STREET MAP</span><span className="hidden md:inline 2xl:hidden">STREET</span>
-          <span className="pointer-events-none absolute bottom-full mb-2 left-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">SWITCH BASE MAP TO OPENSTREETMAP CARTOGRAPHY</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 left-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">SWITCH BASE MAP TO ESRI WORLD STREET CARTOGRAPHY</span>
+        </button>
+        <button 
+          type="button"
+          data-testid="btn-dark-map"
+          onClick={() => updateSettings({ basemap_mode: 'dark', layers: { ...settings.layers, satellite: false } })}
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${isDarkCanvas ? 'bg-indigo-950 border border-indigo-400 text-indigo-300 font-bold shadow-[0_0_10px_rgba(129,140,248,0.4)]' : 'text-gray-400 hover:text-white'}`}
+          title="Switch base map to Esri Dark Gray Canvas (tactical high contrast)"
+        >
+          <span>🌌</span> <span className="hidden 2xl:inline">TACTICAL DARK</span><span className="hidden md:inline 2xl:hidden">DARK</span>
+          <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-indigo-300 border border-indigo-500/70 shadow-[0_0_12px_rgba(129,140,248,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">SWITCH BASE MAP TO ESRI DARK GRAY CANVAS (HIGH CONTRAST)</span>
         </button>
         <button 
           type="button"
           data-testid="btn-satellite-map"
-          onClick={() => updateSettings({ layers: { ...settings.layers, satellite: true } })}
-          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${settings.layers.satellite ? 'bg-sky-950 border border-sky-400 text-sky-300 font-bold shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-gray-400 hover:text-white'}`}
+          onClick={() => updateSettings({ basemap_mode: 'satellite', layers: { ...settings.layers, satellite: true } })}
+          className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${isSatellite ? 'bg-sky-950 border border-sky-400 text-sky-300 font-bold shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-gray-400 hover:text-white'}`}
           title="Switch base map to high-resolution true-color satellite imagery"
         >
           <span>🛰️</span> <span className="hidden 2xl:inline">SATELLITE</span><span className="hidden md:inline 2xl:hidden">SAT</span>
