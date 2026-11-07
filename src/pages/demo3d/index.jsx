@@ -14,7 +14,7 @@ const ReturnToHubButton = () => {
       const p = (window._isTransitActive && window._warpProgress !== undefined)
         ? window._warpProgress 
         : (window._currentProgress || 0);
-      setVisible(p > 0.05);
+      setVisible(p > 0.025);
       animId = requestAnimationFrame(check);
     };
     animId = requestAnimationFrame(check);
@@ -60,6 +60,13 @@ const ReturnToHubButton = () => {
 };
 
 const Demo3DHome = () => {
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="relative w-screen h-screen bg-gradient-to-b from-[#0a0a1a] to-[#020205] font-sans text-white overflow-hidden">
       <Helmet>
