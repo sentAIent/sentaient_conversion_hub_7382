@@ -812,8 +812,24 @@ export default function SphinxMap() {
 
   const dockScale = useMemo(() => {
     const w = windowDimensions.width;
-    if (w < 600) {
-      return Math.max(0.68, Math.min(1, (w - 16) / 540));
+    let targetWidth = 1060;
+    if (w < 640) {
+      targetWidth = 470;
+    } else if (w < 768) {
+      targetWidth = 620;
+    } else if (w < 1024) {
+      targetWidth = 780;
+    } else if (w < 1280) {
+      targetWidth = 940;
+    } else if (w < 1536) {
+      targetWidth = 1060;
+    } else {
+      targetWidth = 1180;
+    }
+
+    const availableWidth = w - 24;
+    if (availableWidth < targetWidth) {
+      return Math.max(0.60, Math.min(1, availableWidth / targetWidth));
     }
     return 1;
   }, [windowDimensions.width]);
@@ -7543,14 +7559,15 @@ export default function SphinxMap() {
         onClose={() => setIsConstitutionalModalOpen(false)}
       />
 
-      <div 
-        data-testid="bottom-tactical-dock" 
-        style={{
-          transform: dockScale < 1 ? `scale(${dockScale})` : undefined,
-          transformOrigin: 'bottom center'
-        }}
-        className="fixed bottom-2 sm:bottom-2.5 left-0 right-0 mx-auto w-fit max-w-[calc(100vw-12px)] sm:max-w-[calc(100vw-16px)] z-50 flex flex-nowrap items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5 lg:gap-2 bg-black/95 p-1 sm:p-1.5 lg:p-2 rounded-xl border border-cyan-900/80 shadow-[0_4px_30px_rgba(0,0,0,0.95)] backdrop-blur-md font-mono text-[10px] sm:text-xs pointer-events-auto transition-all duration-150 overflow-x-auto no-scrollbar touch-pan-x"
-      >
+      <div className="fixed bottom-2 sm:bottom-2.5 left-0 right-0 z-50 flex justify-center pointer-events-none px-1.5 sm:px-2">
+        <div 
+          data-testid="bottom-tactical-dock" 
+          style={{
+            transform: dockScale < 1 ? `scale(${dockScale})` : undefined,
+            transformOrigin: 'bottom center'
+          }}
+          className="pointer-events-auto flex flex-nowrap items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5 lg:gap-2 bg-black/95 p-1 sm:p-1.5 lg:p-2 rounded-xl border border-cyan-900/80 shadow-[0_4px_30px_rgba(0,0,0,0.95)] backdrop-blur-md font-mono text-[10px] sm:text-xs shrink-0 select-none whitespace-nowrap transition-transform duration-150"
+        >
         <button 
           type="button"
           data-testid="btn-street-map"
@@ -7592,7 +7609,7 @@ export default function SphinxMap() {
           className={`relative group px-1.5 sm:px-2.5 py-1 sm:py-1.5 font-mono text-[10px] sm:text-xs tracking-wider rounded transition-all flex items-center gap-1 sm:gap-1.5 shrink-0 ${settings.layers.elevation_topography ? 'bg-emerald-950 border border-emerald-400 text-emerald-300 font-bold shadow-[0_0_10px_rgba(52,211,153,0.4)]' : 'text-gray-400 hover:text-white'}`}
           title="Toggle Elevation & Topography overlay across the entire map"
         >
-          <span>🏔️</span> <span className="hidden sm:inline">ELEVATION</span>
+          <span>🏔️</span> <span className="hidden xl:inline">ELEVATION</span><span className="hidden sm:inline xl:hidden">ELEV</span>
           <span className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-emerald-300 border border-emerald-500/70 shadow-[0_0_12px_rgba(52,211,153,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">TOGGLE TOPOGRAPHY & ELEVATION OVERLAY (INDEPENDENT OF BASE MAP)</span>
         </button>
         <div className="h-4 sm:h-5 w-px bg-cyan-900/60 mx-0.5 shrink-0" />
@@ -7666,7 +7683,7 @@ export default function SphinxMap() {
         >
           <Compass size={13} className={`transition-transform duration-300 ${currentBearing !== 0 ? 'text-cyan-400' : 'text-gray-400'}`} style={{ transform: `rotate(${-currentBearing}deg)` }} />
           <span>{currentBearing !== 0 ? `${(360 + (currentBearing % 360)) % 360}°` : ''}</span>
-          <span className="hidden lg:inline">{currentBearing === 0 ? 'NORTH' : ''}</span>
+          <span className="hidden xl:inline">{currentBearing === 0 ? 'NORTH' : ''}</span>
           <span className="pointer-events-none absolute bottom-full mb-2 right-0 sm:left-1/2 sm:-translate-x-1/2 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(34,211,238,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
             {currentBearing !== 0 ? `RESET NORTH (${(360 + (currentBearing % 360)) % 360}°) [RIGHT-DRAG TO ROTATE ANY DIRECTION]` : 'ALIGNED NORTH (RIGHT-DRAG TO ROTATE ANY DIRECTION)'}
           </span>
@@ -7721,7 +7738,7 @@ export default function SphinxMap() {
           title="Submit a crowdsourced report for a camera, tower, road closure, spring, or hazard (Elevates after 3 vouches)"
         >
           <span>📢</span>
-          <span className="hidden lg:inline">REPORT</span>
+          <span className="hidden xl:inline">REPORT</span>
           <span className="pointer-events-none absolute bottom-full mb-2 right-0 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-emerald-300 border border-emerald-500/70 shadow-[0_0_12px_rgba(16,185,129,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">SUBMIT CROWDSOURCED FIELD INTEL REPORT</span>
         </button>
         <div className="h-4 sm:h-5 w-px bg-cyan-900/60 mx-0.5 shrink-0" />
@@ -7733,7 +7750,7 @@ export default function SphinxMap() {
           title="Data & Analytics Limitations: Statutory disclosures, sensor revisit latency, heuristic boundaries & expat defense"
         >
           <span>⚖️</span>
-          <span className="hidden 2xl:inline">DISCLAIMERS</span><span className="hidden lg:inline 2xl:hidden">DISC</span>
+          <span className="hidden 2xl:inline">DISCLAIMERS</span><span className="hidden xl:inline 2xl:hidden">DISC</span>
           <span className="pointer-events-none absolute bottom-full mb-2 right-0 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-amber-300 border border-amber-500/70 shadow-[0_0_12px_rgba(245,158,11,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">VIEW SENSOR LIMITATIONS & STATUTORY DISCLAIMERS</span>
         </button>
         <div className="h-4 sm:h-5 w-px bg-cyan-900/60 mx-0.5 shrink-0" />
@@ -7752,12 +7769,19 @@ export default function SphinxMap() {
           title="Pin Threat Radar: Proximity hazard detection for custom survival caches, safehouses & refuges"
         >
           <span>{threatRadarSummary.threatenedPins > 0 ? '🚨' : '🛡️'}</span>
-          <span className="hidden lg:inline">{threatRadarSummary.threatenedPins > 0 ? `THREATS (${threatRadarSummary.threatenedPins})` : `RADAR (${threatRadarSummary.totalPins})`}</span>
+          <span className="hidden xl:inline">{threatRadarSummary.threatenedPins > 0 ? `THREATS (${threatRadarSummary.threatenedPins})` : `RADAR (${threatRadarSummary.totalPins})`}</span>
+          <span className="hidden sm:inline xl:hidden">{threatRadarSummary.threatenedPins > 0 ? 'THREATS' : 'RADAR'}</span>
+          {threatRadarSummary.threatenedPins > 0 && (
+            <span className="sm:hidden px-1 rounded-full bg-red-600 text-white font-bold text-[8px] leading-tight">
+              {threatRadarSummary.threatenedPins}
+            </span>
+          )}
           <span className="pointer-events-none absolute bottom-full mb-2 right-0 whitespace-nowrap rounded bg-black/95 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider text-cyan-300 border border-cyan-500/70 shadow-[0_0_12px_rgba(6,182,212,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
             {threatRadarSummary.threatenedPins > 0 ? `${threatRadarSummary.threatenedPins} PINS THREATENED — OPEN RADAR` : 'SCAN PROXIMITY HAZARDS FOR CUSTOM PINS & REFUGES'}
           </span>
         </button>
       </div>
+    </div>
 
       {pinCreationMode && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, backdropFilter: 'blur(4px)' }}>
