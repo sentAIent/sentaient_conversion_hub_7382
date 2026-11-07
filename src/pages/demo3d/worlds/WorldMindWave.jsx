@@ -137,8 +137,9 @@ const WorldMindWave = ({ position, visible }) => {
   
   useEffect(() => {
     window.mindwaveLocked = false;
-    new THREE.TextureLoader().load('/mindwave-logo.png', (tex) => {
+    new THREE.TextureLoader().load(`/mindwave-lotus-clean.png?v=${Date.now()}`, (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
       setLogoTex(tex);
     });
     new THREE.TextureLoader().load('/tribal-sun.png', (tex) => {
