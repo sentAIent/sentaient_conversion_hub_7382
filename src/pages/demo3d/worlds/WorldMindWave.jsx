@@ -271,6 +271,7 @@ const WorldMindWave = ({ position, visible }) => {
             transparent={true} 
             side={THREE.DoubleSide} 
             depthWrite={false}
+            blending={THREE.AdditiveBlending}
           />
         </mesh>
       )}
