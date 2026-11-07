@@ -36,7 +36,14 @@ const HolographicLogo = ({ position }) => {
   return (
     <mesh ref={meshRef} position={position}>
       <planeGeometry args={[40, 40]} />
-      <meshBasicMaterial map={logoTex} transparent={true} opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
+      <meshBasicMaterial 
+        map={logoTex} 
+        transparent={true} 
+        opacity={0} 
+        depthWrite={false} 
+        side={THREE.DoubleSide} 
+        toneMapped={false}
+      />
     </mesh>
   );
 };
