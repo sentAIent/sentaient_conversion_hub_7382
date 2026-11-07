@@ -696,7 +696,7 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <Text 
         font="/fonts/Roboto.woff" 
         fallbackFonts={[]} 
-        position={[0, 160, centerZ - 40]} 
+        position={[0, 140, centerZ - 40]} 
         fontSize={52} 
         color="#ffffff" 
         outlineWidth={1.5} 
@@ -709,7 +709,7 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <Text 
         font="/fonts/Roboto.woff" 
         fallbackFonts={[]} 
-        position={[0, 120, centerZ - 40]} 
+        position={[0, 100, centerZ - 40]} 
         fontSize={20} 
         color="#00ffff" 
         outlineWidth={1.0} 
@@ -724,7 +724,7 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <DigitalFire position={[0, -20, centerZ]} />
       
       {/* Holographic Logo Centerpiece - Elevated Above Fire */}
-      <HolographicLogo position={[0, 95, centerZ]} />
+      <HolographicLogo position={[0, 75, centerZ]} />
       
       {/* Procedural Tropical Foliage */}
       <ProceduralPalmTrees radius={60} centerZ={centerZ} />
