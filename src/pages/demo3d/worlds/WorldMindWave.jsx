@@ -248,8 +248,8 @@ const WorldMindWave = ({ position, visible }) => {
       
       {/* Tribal Sun glowing behind logo */}
       {sunTex && (
-        <mesh ref={sunRef} position={[0, 170, -85]}>
-          <planeGeometry args={[140, 140]} />
+        <mesh ref={sunRef} position={[0, 260, -85]}>
+          <planeGeometry args={[210, 210]} />
           <meshBasicMaterial 
             map={sunTex} 
             transparent={true} 
@@ -264,14 +264,13 @@ const WorldMindWave = ({ position, visible }) => {
 
       {/* MindWave Logo (Nestled perfectly inside tribal sun inner circle) */}
       {logoTex && (
-        <mesh ref={logoRef} position={[0, 170, -80]}>
-          <planeGeometry args={[64, 64]} />
+        <mesh ref={logoRef} position={[0, 260, -80]}>
+          <planeGeometry args={[95, 95]} />
           <meshBasicMaterial 
             map={logoTex} 
             transparent={true} 
             side={THREE.DoubleSide} 
             depthWrite={false}
-            blending={THREE.AdditiveBlending}
           />
         </mesh>
       )}
