@@ -173,7 +173,7 @@ const HTMLStations = () => {
 
     // Back button visibility
     if (backRef.current) {
-        const show = progress > 0.08;
+        const show = progress > 0.015;
         backRef.current.style.opacity = show ? '1' : '0';
         backRef.current.style.pointerEvents = show ? 'auto' : 'none';
         backRef.current.style.transform = show ? 'translateY(0px)' : 'translateY(-10px)';
@@ -473,6 +473,36 @@ const HTMLStations = () => {
             >
               <span>ENTER EXPERIENCE</span>
               <span style={{ fontSize: '12px' }}>→</span>
+            </button>
+            <button
+              onClick={handleBack}
+              style={{
+                padding: '7px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.08)',
+                color: '#e2e8f0',
+                fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              }}
+            >
+              <span>← HUB</span>
             </button>
             <span style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.35)', fontWeight: 600, letterSpacing: '0.06em' }}>SCROLL TO FLY ↓</span>
           </div>

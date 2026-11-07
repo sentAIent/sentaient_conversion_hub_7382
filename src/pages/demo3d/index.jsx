@@ -13,8 +13,10 @@ const ReturnToHubButton = () => {
     const check = () => {
       const p = (window._isTransitActive && window._warpProgress !== undefined)
         ? window._warpProgress 
-        : (window._currentProgress || 0);
-      setVisible(p > 0.025);
+        : (window._worldPauseLockProgress !== undefined && window._worldPauseLockProgress !== null)
+          ? window._worldPauseLockProgress
+          : (window._currentProgress || 0);
+      setVisible(p > 0.015);
       animId = requestAnimationFrame(check);
     };
     animId = requestAnimationFrame(check);
@@ -26,6 +28,7 @@ const ReturnToHubButton = () => {
       e.preventDefault();
       e.stopPropagation();
     }
+    if (window.clearActiveWorldPause) window.clearActiveWorldPause();
     ['icebreakerCaveLocked', 'icebreakerThawLocked', 'icebreakerTextLocked', 'mindwaveLocked', 'interstellarLocked', 'autopilotLocked', 'contangoLocked', 'swarmLocked', 'orbitalLocked'].forEach(k => { 
       window[k] = false; 
     });
@@ -39,7 +42,7 @@ const ReturnToHubButton = () => {
 
   return (
     <div 
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-all duration-300"
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-[10000000] pointer-events-none transition-all duration-300"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translate(-50%, 0)' : 'translate(-50%, -10px)',
