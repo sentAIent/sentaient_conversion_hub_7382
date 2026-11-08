@@ -232,7 +232,7 @@ export function useSettings() {
     let isMounted = true;
     async function loadSettings() {
       try {
-        const isLocal = typeof window !== 'undefined' && window.location.port === '3117';
+        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         if (!isLocal) return;
 
         const pRes = await fetch('http://127.0.0.1:3117/api/profile/pins', { signal: AbortSignal.timeout(300) });
@@ -312,7 +312,7 @@ export function useSettings() {
       return nextSettings;
     });
 
-    if (updates.custom_pins && typeof window !== 'undefined' && window.location.port === '3117') {
+    if (updates.custom_pins && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
       try {
         fetch('http://127.0.0.1:3117/api/profile/sync', {
           method: 'POST',

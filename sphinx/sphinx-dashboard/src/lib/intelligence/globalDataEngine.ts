@@ -22,7 +22,7 @@ export class GlobalDataEngine {
   private static isLocalEnvironment(): boolean {
     if (typeof window === 'undefined') return false;
     if (Date.now() < this.localServerDownUntil) return false;
-    return window.location.port === '3117';
+    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   }
 
   private static markLocalServerFailed(): void {

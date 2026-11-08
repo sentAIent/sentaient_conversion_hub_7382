@@ -468,7 +468,7 @@ export default function SphinxMap() {
   useEffect(() => {
     let ws: WebSocket | null = null;
     let isCancelled = false;
-    const isLocal = typeof window !== 'undefined' && window.location.port === '3117';
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     if (!isLocal) return;
     try {
       ws = new WebSocket('ws://localhost:3117');
@@ -1005,7 +1005,7 @@ export default function SphinxMap() {
         }
       })
       .catch(() => {
-        const isLocal = typeof window !== 'undefined' && window.location.port === '3117';
+        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         if (!isLocal) return;
         fetch('http://127.0.0.1:3117/api/osint/weather-radar')
           .then(res => res.json())
@@ -1054,17 +1054,19 @@ export default function SphinxMap() {
 
   const loadWatchtowerData = useCallback(async () => {
     if (!bboxRef.current) return;
-    const isLocal = typeof window !== 'undefined' && window.location.port === '3117';
-    if (!isLocal) return;
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const map = mapRef.current?.getMap();
     
     ResilientDataClient.fetchWithFallback<any>(
-      `http://127.0.0.1:3117/api/osint/celltowers?bbox=${bboxRef.current}`,
+      isLocal ? `http://127.0.0.1:3117/api/osint/celltowers?bbox=${bboxRef.current}` : '/sphinx/data/cell_towers.geojson',
       '/sphinx/data/watchtower_baseline.json',
-      { timeoutMs: 350 }
+      { timeoutMs: 600 }
     ).then(data => {
-      if (data?.features && Array.isArray(data.features)) setCellTowerFeatures(data.features);
-      else if (data?.celltowers?.features) setCellTowerFeatures(data.celltowers.features);
+      if (data?.features && Array.isArray(data.features) && data.features.length > 0) {
+        setCellTowerFeatures(data.features);
+      } else if (data?.celltowers?.features && Array.isArray(data.celltowers.features) && data.celltowers.features.length > 0) {
+        setCellTowerFeatures(data.celltowers.features);
+      }
     }).catch(() => {});
 
     if (fetchingOverpassRef.current) {
@@ -1100,6 +1102,7 @@ export default function SphinxMap() {
       try {
         const baseline = await fetch('/sphinx/data/watchtower_baseline.json').then(r => r.json());
         if (baseline) {
+          if (baseline.celltowers?.features) setCellTowerFeatures(baseline.celltowers.features);
           if (baseline.springs?.features) setSpringFeatures(baseline.springs.features);
           if (baseline.power?.features) setPowerFeatures(baseline.power.features);
           if (baseline.aviation?.features) setAviationFeatures(baseline.aviation.features);
@@ -1274,7 +1277,7 @@ export default function SphinxMap() {
     try {
       let data: any = null;
       try {
-        const isLocal = typeof window !== 'undefined' && window.location.port === '3117';
+        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         if (isLocal) {
           const coreRes = await fetch(`http://127.0.0.1:3117/api/osint/weather-forecast?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}`);
           if (coreRes.ok) data = await coreRes.json();
