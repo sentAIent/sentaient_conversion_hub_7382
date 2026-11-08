@@ -577,25 +577,25 @@ export const runIcebreakerMelt = (onComplete) => {
       const prog = Math.min(1.0, zoomElapsed / ZOOM_MS);
       const easedZoom = easeInOutCubic(prog);
 
-      // Glide from entrance [0, -3980, -1680] to island people [0, -4000, -2060]
+      // Glide from entrance up and forward to look down at people around fire at 33-35 degree angle
       window._icebreakerCam = {
         active: true,
         x: 0,
-        y: -3980 + (-4000 - -3980) * easedZoom,
-        z: -1680 + (-2060 - -1680) * easedZoom,
-        rx: 0 + (-0.06 - 0) * easedZoom,
+        y: -3980 + (-3840 - -3980) * easedZoom,
+        z: -1680 + (-2010 - -1680) * easedZoom,
+        rx: 0 + (-0.58 - 0) * easedZoom,
         ry: 0
       };
       requestAnimationFrame(step);
     } else {
-      // Phase 4: Completed - keep fully thawed and zoomed in on people
+      // Phase 4: Completed - keep fully thawed, elevated, looking down on people at 33-35 degree angle
       window.icebreakerThaw = 1.0;
       window._icebreakerCam = {
         active: true,
         x: 0,
-        y: -4000,
-        z: -2060,
-        rx: -0.06,
+        y: -3840,
+        z: -2010,
+        rx: -0.58,
         ry: 0
       };
       window._icebreakerMeltState = 'completed';
@@ -703,7 +703,8 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <Text 
         font="/fonts/Roboto.woff" 
         fallbackFonts={[]} 
-        position={[0, 140, centerZ - 40]} 
+        position={[0, 118, centerZ - 40]} 
+        rotation={[-0.45, 0, 0]}
         fontSize={52} 
         color="#ffffff" 
         outlineWidth={1.5} 
@@ -716,7 +717,8 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <Text 
         font="/fonts/Roboto.woff" 
         fallbackFonts={[]} 
-        position={[0, 100, centerZ - 40]} 
+        position={[0, 84, centerZ - 40]} 
+        rotation={[-0.45, 0, 0]}
         fontSize={20} 
         color="#00ffff" 
         outlineWidth={1.0} 
@@ -731,7 +733,7 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <DigitalFire position={[0, -20, centerZ]} />
       
       {/* Holographic Logo Centerpiece - Elevated Above Fire */}
-      <HolographicLogo position={[0, 55, centerZ]} />
+      <HolographicLogo position={[0, 50, centerZ]} />
       
       {/* Procedural Tropical Foliage */}
       <ProceduralPalmTrees radius={60} centerZ={centerZ} />
