@@ -1053,21 +1053,29 @@ export default function SphinxMap() {
   }, [geofences]);
 
   const loadWatchtowerData = useCallback(async () => {
-    if (!bboxRef.current) return;
     const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const map = mapRef.current?.getMap();
     
+    const towerEndpoint = (isLocal && bboxRef.current)
+      ? `http://127.0.0.1:3117/api/osint/celltowers?bbox=${bboxRef.current}`
+      : '/sphinx/data/cell_towers.geojson';
+
     ResilientDataClient.fetchWithFallback<any>(
-      isLocal ? `http://127.0.0.1:3117/api/osint/celltowers?bbox=${bboxRef.current}` : '/sphinx/data/cell_towers.geojson',
-      '/sphinx/data/watchtower_baseline.json',
-      { timeoutMs: 600 }
+      towerEndpoint,
+      '/sphinx/data/cell_towers.geojson',
+      { timeoutMs: 800 }
     ).then(data => {
       if (data?.features && Array.isArray(data.features) && data.features.length > 0) {
         setCellTowerFeatures(data.features);
       } else if (data?.celltowers?.features && Array.isArray(data.celltowers.features) && data.celltowers.features.length > 0) {
         setCellTowerFeatures(data.celltowers.features);
       }
-    }).catch(() => {});
+    }).catch(() => {
+      fetch('/sphinx/data/cell_towers.geojson')
+        .then(r => r.ok ? r.json() : fetch('/data/cell_towers.geojson').then(r2 => r2.ok ? r2.json() : null))
+        .then(d => { if (d?.features) setCellTowerFeatures(d.features); })
+        .catch(() => {});
+    });
 
     if (fetchingOverpassRef.current) {
       return;
@@ -1184,6 +1192,11 @@ export default function SphinxMap() {
         fetch('/sphinx/data/landing_points.geojson')
           .then(r => r.json())
           .then(d => setLandingPointFeatures(d.features || []))
+          .catch(() => {});
+
+        fetch('/sphinx/data/cell_towers.geojson')
+          .then(r => r.ok ? r.json() : fetch('/data/cell_towers.geojson').then(r2 => r2.ok ? r2.json() : null))
+          .then(d => { if (d && d.features && d.features.length > 0) setCellTowerFeatures(d.features); })
           .catch(() => {});
 
         setTimeout(() => {
@@ -1465,6 +1478,11 @@ export default function SphinxMap() {
     updateCityCrimeForLocation(viewState.latitude, viewState.longitude);
 
     // Instant offline-first baseline hydration: guarantees zero counters show 0 on boot
+    fetch('/sphinx/data/cell_towers.geojson')
+      .then(r => r.ok ? r.json() : fetch('/data/cell_towers.geojson').then(r2 => r2.ok ? r2.json() : null))
+      .then(d => { if (d && d.features && d.features.length > 0) setCellTowerFeatures(d.features); })
+      .catch(() => {});
+
     ResilientDataClient.getWatchtowerBaseline().then(b => {
       if (!b) return;
       if (b.celltowers?.features) setCellTowerFeatures(prev => prev.length === 0 ? b.celltowers.features : prev);
@@ -2062,6 +2080,7 @@ export default function SphinxMap() {
             bImg.src = 'data:image/svg+xml;charset=utf-8,<svg width="24" height="24" viewBox="0 0 24 24" fill="%23ffffff" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15 9H9L12 2zm-8 9h16l-3 9H7l-3-9z"/></svg>';
           }
           updateBbox();
+          loadWatchtowerData();
           try {
             map.dragPan?.enable();
             map.scrollZoom?.enable();
@@ -2093,6 +2112,7 @@ export default function SphinxMap() {
           (window as any).moveDebounce = setTimeout(() => {
             loadHighPriorityData();
             loadMediumPriorityData();
+            loadWatchtowerData();
             if (evt?.viewState) {
               updateWeatherVector(evt.viewState.latitude, evt.viewState.longitude);
               setAuditResult(GlobalDataEngine.auditViewport(evt.viewState.latitude, evt.viewState.longitude, {
@@ -2478,8 +2498,7 @@ export default function SphinxMap() {
               filter={['has', 'point_count']}
               layout={{
                 'text-field': '{point_count_abbreviated}',
-                'text-size': 12,
-                'text-font': ['Open Sans Regular']
+                'text-size': 11
               }}
               paint={{ 'text-color': '#ffffff' }}
             />
@@ -2489,11 +2508,11 @@ export default function SphinxMap() {
               type="circle" 
               filter={['!', ['has', 'point_count']]}
               paint={{ 
-                'circle-radius': ['case', ['==', ['get', 'is_physical'], true], 6, 4], 
-                'circle-color': ['case', ['==', ['get', 'is_physical'], true], '#ff00ff', '#a855f7'], 
+                'circle-radius': 5.5, 
+                'circle-color': '#d946ef', 
                 'circle-stroke-color': '#ffffff', 
-                'circle-stroke-width': ['case', ['==', ['get', 'is_physical'], true], 2, 0.5],
-                'circle-opacity': ['case', ['==', ['get', 'is_physical'], true], 1.0, 0.4]
+                'circle-stroke-width': 1.5,
+                'circle-opacity': getOpacity('cell_towers', 0.95)
               }} 
             />
           </Source>
@@ -2526,8 +2545,7 @@ export default function SphinxMap() {
               filter={['has', 'point_count']}
               layout={{
                 'text-field': '{point_count_abbreviated}',
-                'text-size': 12,
-                'text-font': ['Open Sans Regular']
+                'text-size': 11
               }}
               paint={{ 'text-color': '#ffffff' }}
             />
