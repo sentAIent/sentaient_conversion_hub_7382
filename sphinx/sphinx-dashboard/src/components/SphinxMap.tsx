@@ -812,24 +812,24 @@ export default function SphinxMap() {
 
   const dockScale = useMemo(() => {
     const w = windowDimensions.width;
-    let targetWidth = 1060;
+    let targetWidth = 1260;
     if (w < 640) {
-      targetWidth = 470;
+      targetWidth = 580;
     } else if (w < 768) {
-      targetWidth = 620;
+      targetWidth = 740;
     } else if (w < 1024) {
-      targetWidth = 780;
+      targetWidth = 960;
     } else if (w < 1280) {
-      targetWidth = 940;
+      targetWidth = 1140;
     } else if (w < 1536) {
-      targetWidth = 1060;
+      targetWidth = 1220;
     } else {
-      targetWidth = 1180;
+      targetWidth = 1280;
     }
 
-    const availableWidth = w - 24;
+    const availableWidth = w - 16;
     if (availableWidth < targetWidth) {
-      return Math.max(0.60, Math.min(1, availableWidth / targetWidth));
+      return Math.max(0.52, Math.min(1, availableWidth / targetWidth));
     }
     return 1;
   }, [windowDimensions.width]);
@@ -1185,13 +1185,13 @@ export default function SphinxMap() {
       if (!staticDataLoadedRef.current) {
         staticDataLoadedRef.current = true;
         fetch('/sphinx/data/submarine_cables.geojson')
-          .then(r => r.json())
-          .then(d => setCableFeatures(d.features || []))
+          .then(r => r.ok ? r.json() : fetch('/data/submarine_cables.geojson').then(r2 => r2.ok ? r2.json() : null))
+          .then(d => { if (d && d.features) setCableFeatures(d.features); })
           .catch(() => {});
 
         fetch('/sphinx/data/landing_points.geojson')
-          .then(r => r.json())
-          .then(d => setLandingPointFeatures(d.features || []))
+          .then(r => r.ok ? r.json() : fetch('/data/landing_points.geojson').then(r2 => r2.ok ? r2.json() : null))
+          .then(d => { if (d && d.features) setLandingPointFeatures(d.features); })
           .catch(() => {});
 
         fetch('/sphinx/data/cell_towers.geojson')
@@ -1978,8 +1978,9 @@ export default function SphinxMap() {
     }
     if (url.includes('demotiles.maplibre.org/font/')) {
       const sanitized = url.replace(/\/font\/([^/]+)\//, (_, fontstack) => {
-        const primary = decodeURIComponent(fontstack).split(',')[0].trim();
-        const resolved = 'Open Sans Semibold';
+        const primary = decodeURIComponent(fontstack).split(',')[0].trim().toLowerCase();
+        const isBold = primary.includes('bold');
+        const resolved = isBold ? 'Noto Sans Bold' : 'Noto Sans Regular';
         return `/font/${encodeURIComponent(resolved)}/`;
       });
       return { url: sanitized };
@@ -2767,7 +2768,7 @@ export default function SphinxMap() {
               type="symbol"
               layout={{
                 'text-field': ['get', 'label'],
-                'text-font': ['Open Sans Regular'],
+                'text-font': ['Noto Sans Regular'],
                 'text-size': 11,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
@@ -2848,7 +2849,7 @@ export default function SphinxMap() {
               filter={['==', ['get', 'isLabel'], true]}
               layout={{
                 'text-field': ['get', 'labelText'],
-                'text-font': ['Open Sans Regular'],
+                'text-font': ['Noto Sans Regular'],
                 'text-size': 10,
                 'text-allow-overlap': true,
                 'text-ignore-placement': true,
@@ -3148,7 +3149,7 @@ export default function SphinxMap() {
             minzoom={3}
             layout={{
               'text-field': ['get', 'name'],
-              'text-font': ['Open Sans Bold'],
+              'text-font': ['Noto Sans Bold'],
               'text-size': [
                 'interpolate',
                 ['linear'],
@@ -3187,14 +3188,14 @@ export default function SphinxMap() {
               id="weather-isobars-label"
               type="symbol"
               filter={['==', ['get', 'kind'], 'isobar']}
-              layout={{ 'symbol-placement': 'line', 'text-field': ['get', 'label'], 'text-size': 10, 'text-font': ['Open Sans Regular'] }}
+              layout={{ 'symbol-placement': 'line', 'text-field': ['get', 'label'], 'text-size': 10, 'text-font': ['Noto Sans Regular'] }}
               paint={{ 'text-color': '#e2e8f0', 'text-halo-color': '#020617', 'text-halo-width': 1.5 }}
             />
             <Layer
               id="weather-pressure-centers"
               type="symbol"
               filter={['==', ['get', 'kind'], 'pressure_center']}
-              layout={{ 'text-field': ['concat', ['get', 'centerType'], '\n', ['to-string', ['get', 'pressureHpa']], ' hPa'], 'text-size': 13, 'text-font': ['Open Sans Bold'], 'text-allow-overlap': true }}
+              layout={{ 'text-field': ['concat', ['get', 'centerType'], '\n', ['to-string', ['get', 'pressureHpa']], ' hPa'], 'text-size': 13, 'text-font': ['Noto Sans Bold'], 'text-allow-overlap': true }}
               paint={{ 'text-color': ['get', 'color'], 'text-halo-color': '#020617', 'text-halo-width': 2 }}
             />
           </Source>
@@ -3210,7 +3211,7 @@ export default function SphinxMap() {
             </Source>
             <Source id="atmospheric-radar-stations-source" type="geojson" data={atmosphericRadarPayload.stations}>
               <Layer id="atmospheric-radar-point" type="circle" paint={{ 'circle-radius': 8, 'circle-color': ['get', 'color'], 'circle-stroke-width': 2.5, 'circle-stroke-color': '#ffffff', 'circle-opacity': 0.95 }} />
-              <Layer id="atmospheric-radar-label" type="symbol" layout={{ 'text-field': ['concat', ['get', 'icon'], ' ', ['get', 'name']], 'text-size': 11, 'text-offset': [0, 1.4], 'text-anchor': 'top', 'text-font': ['Open Sans Bold'] }} paint={{ 'text-color': '#ffffff', 'text-halo-color': '#020617', 'text-halo-width': 1.8 }} />
+              <Layer id="atmospheric-radar-label" type="symbol" layout={{ 'text-field': ['concat', ['get', 'icon'], ' ', ['get', 'name']], 'text-size': 11, 'text-offset': [0, 1.4], 'text-anchor': 'top', 'text-font': ['Noto Sans Bold'] }} paint={{ 'text-color': '#ffffff', 'text-halo-color': '#020617', 'text-halo-width': 1.8 }} />
             </Source>
           </>
         )}
@@ -3278,7 +3279,7 @@ export default function SphinxMap() {
                   'text-size': 10, 
                   'text-offset': [0, 1.3], 
                   'text-anchor': 'top', 
-                  'text-font': ['Open Sans Bold'] 
+                  'text-font': ['Noto Sans Bold'] 
                 }} 
                 paint={{ 
                   'text-color': '#ffffff', 
@@ -3328,7 +3329,7 @@ export default function SphinxMap() {
                   11, 13.5,
                   14, 15
                 ],
-                'text-font': ['Open Sans Bold'],
+                'text-font': ['Noto Sans Bold'],
                 'text-letter-spacing': 0.1,
                 'text-transform': 'uppercase',
                 'text-allow-overlap': true,
@@ -3367,7 +3368,7 @@ export default function SphinxMap() {
                 'text-size': 10.5,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Bold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#ffffff',
@@ -3408,7 +3409,7 @@ export default function SphinxMap() {
                 'symbol-placement': 'line',
                 'text-field': ['concat', '🌐 ', ['get', 'name']],
                 'text-size': 10,
-                'text-font': ['Open Sans Bold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#c084fc',
@@ -3442,7 +3443,7 @@ export default function SphinxMap() {
                 'text-size': 10,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Bold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#fecaca',
@@ -3476,7 +3477,7 @@ export default function SphinxMap() {
                 'text-size': 9.5,
                 'text-offset': [0, 1.3],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Bold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#ccfbf1',
@@ -3510,7 +3511,7 @@ export default function SphinxMap() {
                 'text-size': 10,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Semibold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#f472b6',
@@ -3544,7 +3545,7 @@ export default function SphinxMap() {
                 'text-size': 9.5,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Semibold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#6ee7b7',
@@ -3578,7 +3579,7 @@ export default function SphinxMap() {
                 'text-size': 10,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Semibold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#fbbf24',
@@ -3612,7 +3613,7 @@ export default function SphinxMap() {
                 'text-size': 10,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Semibold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#93c5fd',
@@ -3665,7 +3666,7 @@ export default function SphinxMap() {
                   'text-size': 9.5,
                   'text-offset': [0, 1.3],
                   'text-anchor': 'top',
-                  'text-font': ['Open Sans Semibold']
+                  'text-font': ['Noto Sans Bold']
                 }}
                 paint={{
                   'text-color': '#e0f2fe',
@@ -3723,7 +3724,7 @@ export default function SphinxMap() {
                 'text-size': 10,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Semibold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#7dd3fc',
@@ -3757,7 +3758,7 @@ export default function SphinxMap() {
                 'text-size': 9.5,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Semibold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#f8fafc',
@@ -3796,7 +3797,7 @@ export default function SphinxMap() {
                 'text-size': 9.5,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Semibold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#a7f3d0',
@@ -3835,7 +3836,7 @@ export default function SphinxMap() {
                 'text-size': 9.5,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Semibold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#fef08a',
@@ -3876,7 +3877,7 @@ export default function SphinxMap() {
                 'symbol-placement': 'line-center',
                 'text-field': ['concat', '⛽ ', ['get', 'name']],
                 'text-size': 10,
-                'text-font': ['Open Sans Bold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#fef08a',
@@ -3917,7 +3918,7 @@ export default function SphinxMap() {
                 'symbol-placement': 'line-center',
                 'text-field': ['concat', '💧 ', ['get', 'name']],
                 'text-size': 10,
-                'text-font': ['Open Sans Bold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#a5f3fc',
@@ -3951,7 +3952,7 @@ export default function SphinxMap() {
                 'text-size': 9.5,
                 'text-offset': [0, 1.4],
                 'text-anchor': 'top',
-                'text-font': ['Open Sans Semibold']
+                'text-font': ['Noto Sans Bold']
               }}
               paint={{
                 'text-color': '#ffffff',
@@ -7580,7 +7581,7 @@ export default function SphinxMap() {
         onClose={() => setIsConstitutionalModalOpen(false)}
       />
 
-      <div className="fixed bottom-2 sm:bottom-2.5 left-0 right-0 z-50 flex justify-center pointer-events-none px-1.5 sm:px-2">
+      <div className="fixed bottom-2 sm:bottom-2.5 left-0 right-0 z-50 flex justify-center pointer-events-none px-1 sm:px-2 max-w-full">
         <div 
           data-testid="bottom-tactical-dock" 
           style={{

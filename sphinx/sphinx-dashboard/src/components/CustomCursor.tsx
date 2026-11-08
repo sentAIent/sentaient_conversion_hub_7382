@@ -101,7 +101,7 @@ export function CustomCursor({ settings }: { settings?: CursorSettings }) {
 
   const css = useMemo(() => {
     if (shape === 'default') {
-      return `html, body, a, button, [role="button"], input, select, textarea, .cursor-pointer, .maplibregl-canvas, .maplibregl-canvas-container { cursor: auto !important; }`;
+      return `*, *::before, *::after { cursor: auto !important; }`;
     }
 
     let cursorUrl = '';
@@ -123,16 +123,16 @@ export function CustomCursor({ settings }: { settings?: CursorSettings }) {
     }
 
     return `
-      html, body, a, button, [role="button"], input, select, textarea, .cursor-pointer, .maplibregl-canvas, .maplibregl-canvas-container {
+      *, *::before, *::after {
         cursor: ${cursorUrl} !important;
       }
-      .cursor-ns-resize { cursor: ns-resize !important; }
-      .cursor-ew-resize { cursor: ew-resize !important; }
-      .cursor-nwse-resize { cursor: nwse-resize !important; }
-      .cursor-nesw-resize { cursor: nesw-resize !important; }
-      .cursor-grab { cursor: grab !important; }
-      .cursor-grabbing { cursor: grabbing !important; }
-      .cursor-crosshair { cursor: crosshair !important; }
+      .cursor-ns-resize, .cursor-ns-resize * { cursor: ns-resize !important; }
+      .cursor-ew-resize, .cursor-ew-resize * { cursor: ew-resize !important; }
+      .cursor-nwse-resize, .cursor-nwse-resize * { cursor: nwse-resize !important; }
+      .cursor-nesw-resize, .cursor-nesw-resize * { cursor: nesw-resize !important; }
+      .cursor-grab, .cursor-grab * { cursor: grab !important; }
+      .cursor-grabbing, .cursor-grabbing * { cursor: grabbing !important; }
+      .cursor-crosshair, .cursor-crosshair * { cursor: crosshair !important; }
     `;
   }, [shape, color, secondary, opacity]);
 

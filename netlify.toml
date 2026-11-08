@@ -59,14 +59,12 @@
 [[redirects]]
   from = "/autopilot"
   to = "https://sentaient-autopilot-hub.netlify.app/autopilot/"
-  status = 200
-  force = true
+  status = 301
 
 [[redirects]]
   from = "/autopilot/*"
   to = "https://sentaient-autopilot-hub.netlify.app/autopilot/:splat"
-  status = 200
-  force = true
+  status = 301
 
 [[redirects]]
   from = "/sphinx"
