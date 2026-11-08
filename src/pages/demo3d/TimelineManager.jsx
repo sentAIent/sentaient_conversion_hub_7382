@@ -125,19 +125,19 @@ export const SCROLL_TIMELINE = [
 
   // Sentaient Finale
   { p: 0.485, x: 0, y: -11750, z: -28050, rx: 0, ry: 0 }, 
-  { p: 0.490, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // Arrive Sentaient
-  { p: 0.500, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // PAUSE Sentaient
+  { p: 0.492, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // Arrive Sentaient
+  { p: 0.518, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // PAUSE Sentaient (Hold steady to view animation)
+  { p: 0.528, x: 0, y: -11750, z: -31000, rx: 0, ry: 0 }, // Exit Sentaient into Elevate
 
   // Elevate (Center at Z=-33000)
-  { p: 0.520, x: 0, y: -11750, z: -31000, rx: 0, ry: 0 },
   { p: 0.540, x: 0, y: -11750, z: -33000, rx: 0, ry: 0 }, // Arrive Elevate
   { p: 0.555, x: 0, y: -11750, z: -33000, rx: 0, ry: 0 }, // PAUSE Elevate
   { p: 0.570, x: 0, y: -11750, z: -34000, rx: 0, ry: 0 }, // Fly through
   
-  // Sphinx (Center at Z=-37000, Camera holds at Z=-36250, 750 units clearance)
+  // Sphinx (Center at Z=-37000, Camera holds at Z=-36480, zoomed in slightly)
   { p: 0.580, x: 0, y: -11750, z: -35000, rx: 0, ry: 0 },
-  { p: 0.600, x: 0, y: -11750, z: -36250, rx: 0, ry: 0 }, // Arrive Sphinx
-  { p: 0.620, x: 0, y: -11750, z: -36250, rx: 0, ry: 0 }, // PAUSE Sphinx
+  { p: 0.600, x: 0, y: -11750, z: -36480, rx: 0, ry: 0 }, // Arrive Sphinx (Zoomed in slightly)
+  { p: 0.620, x: 0, y: -11750, z: -36480, rx: 0, ry: 0 }, // PAUSE Sphinx (Zoomed in slightly)
   { p: 0.630, x: 0, y: -11750, z: -38000, rx: 0, ry: 0 },
   
   // Liquid (Center at Z=-41750, Camera holds at Z=-40600, zoomed out 400 units to clear Return to Hub button)
@@ -357,8 +357,8 @@ export const TimelineManager = () => {
       fantasy: p >= 0.408 && p < 0.440,
       w_contango: p >= 0.440 && p < 0.460,
       contango: p >= 0.460 && p < 0.485,
-      w_sentaient: p >= 0.485 && p < 0.495,
-      sentaient: p >= 0.495 && p < 0.520,
+      w_sentaient: p >= 0.475 && p < 0.492,
+      sentaient: p >= 0.485 && p < 0.535,
       w_elevate: p >= 0.520 && p < 0.540,
       elevate: p >= 0.535 && p < 0.575,
       w_sphinx: p >= 0.570 && p < 0.590,

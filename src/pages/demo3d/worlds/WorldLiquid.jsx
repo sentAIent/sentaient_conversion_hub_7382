@@ -178,12 +178,6 @@ export default function WorldLiquid({ position, visible }) {
         </mesh>
 
         <pointLight color="#ffd700" intensity={18} distance={800} />
-
-        {/* Vertical Data Column */}
-        <mesh position={[0, 320, 0]}>
-          <cylinderGeometry args={[3, 3, 750, 16]} />
-          <meshBasicMaterial color="#ffd700" transparent opacity={0.6} blending={THREE.AdditiveBlending} />
-        </mesh>
       </group>
 
       {/* ------------------------------------------------------------- */}

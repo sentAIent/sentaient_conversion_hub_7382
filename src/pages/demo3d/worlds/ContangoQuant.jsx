@@ -103,20 +103,20 @@ const RollercoasterCarAndHUD = ({ worldPosition }) => {
         </mesh>
       </group>
 
-      {/* Hovering Hologram HUD - Elevated Near Top Frame */}
-      <group position={[0, 18, -50]}>
+      {/* Hovering Hologram HUD - Compact & Elegantly Scaled */}
+      <group position={[0, 16, -50]}>
 
-        {/* The Logo */}
-        <mesh position={[0, 15, 0]}>
-          <planeGeometry args={[40, 20]} />
+        {/* The Logo (Scaled Down) */}
+        <mesh position={[0, 9, 0]}>
+          <planeGeometry args={[22, 11]} />
           <meshBasicMaterial map={texture} transparent opacity={0.9} depthWrite={false} />
         </mesh>
 
-        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -2, 0]} fontSize={6} color="#ffffff" anchorX="center" outlineWidth={0.05} outlineColor="#000000">
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -1, 0]} fontSize={3.8} color="#ffffff" anchorX="center" outlineWidth={0.04} outlineColor="#000000">
           CONTANGO QUANT
         </Text>
         
-        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -9, 0]} fontSize={3} color="#ffffff" anchorX="center" opacity={0.9} transparent>
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -5.5, 0]} fontSize={1.9} color="#ffffff" anchorX="center" opacity={0.9} transparent>
           Quant Trading Systems
         </Text>
       </group>

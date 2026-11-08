@@ -75,12 +75,6 @@ export default function WorldPyramid({ position, visible }) {
         }
       });
     }
-
-    // 4. Vertical Market Opportunity Photon Beacon
-    if (beaconRef.current) {
-      beaconRef.current.material.opacity = 0.4 + Math.sin(t * 3.5) * 0.18;
-      beaconRef.current.rotation.y = t * 0.2;
-    }
   });
 
   if (!visible) return null;
@@ -240,12 +234,6 @@ export default function WorldPyramid({ position, visible }) {
               </mesh>
             ))}
           </group>
-
-          {/* Vertical Photon Execution Beam shooting into deep space */}
-          <mesh ref={beaconRef} position={[0, 600, 0]}>
-            <cylinderGeometry args={[2.5, 9, 1200, 16]} />
-            <meshBasicMaterial color="#00e5ff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
-          </mesh>
         </group>
 
         {/* 4 Monumental Obelisks Guarding the 4 Perimeter Coordinates */}

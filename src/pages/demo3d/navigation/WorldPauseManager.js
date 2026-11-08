@@ -12,7 +12,7 @@ export const WORLD_PAUSE_STATIONS = [
   { id: 'clove', name: 'CloveH2O', p: 0.345, triggerMin: 0.328, triggerMax: 0.360, duration: 2500 },
   { id: 'fantasy', name: 'FantasyQuant', p: 0.413, triggerMin: 0.403, triggerMax: 0.422, duration: 2500 },
   { id: 'contango', name: 'Contango', p: 0.463, triggerMin: 0.453, triggerMax: 0.470, duration: 2500 },
-  { id: 'sentaient', name: 'sentAIent', p: 0.495, triggerMin: 0.488, triggerMax: 0.502, duration: 2500 },
+  { id: 'sentaient', name: 'sentAIent', p: 0.505, triggerMin: 0.490, triggerMax: 0.520, duration: 4000 },
   { id: 'elevate', name: 'Elevate', p: 0.548, triggerMin: 0.538, triggerMax: 0.558, duration: 2500 },
   { id: 'sphinx', name: 'Sphinx', p: 0.610, triggerMin: 0.598, triggerMax: 0.622, duration: 2500 },
   { id: 'liquid', name: 'Liquid', p: 0.668, triggerMin: 0.658, triggerMax: 0.678, duration: 2500 },

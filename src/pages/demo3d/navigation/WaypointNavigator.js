@@ -13,7 +13,7 @@ export const STATIONS = [
   { id: 'clove', name: 'CloveH2O', p: 0.345, duration: 2000 },
   { id: 'fantasy', name: 'FantasyQuant', p: 0.413, duration: 3000 },
   { id: 'contango', name: 'Contango', p: 0.463, duration: 2200 },
-  { id: 'sentaient', name: 'Sentaient', p: 0.495, duration: 2000 },
+  { id: 'sentaient', name: 'Sentaient', p: 0.505, duration: 2400 },
   { id: 'elevate', name: 'Elevate', p: 0.548, duration: 2200 },
   { id: 'sphinx', name: 'Sphinx', p: 0.610, duration: 2200 },
   { id: 'liquid', name: 'Liquid', p: 0.668, duration: 2200 },
