@@ -140,10 +140,10 @@ export const SCROLL_TIMELINE = [
   { p: 0.620, x: 0, y: -11750, z: -36250, rx: 0, ry: 0 }, // PAUSE Sphinx
   { p: 0.630, x: 0, y: -11750, z: -38000, rx: 0, ry: 0 },
   
-  // Liquid (Center at Z=-41750, Camera holds at Z=-41000, 750 units clearance)
+  // Liquid (Center at Z=-41750, Camera holds at Z=-40600, zoomed out 400 units to clear Return to Hub button)
   { p: 0.640, x: 0, y: -11750, z: -39000, rx: 0, ry: 0 },
-  { p: 0.660, x: 0, y: -11750, z: -41000, rx: 0, ry: 0 },
-  { p: 0.675, x: 0, y: -11750, z: -41000, rx: 0, ry: 0 }, // PAUSE Liquid at 750 units clearance
+  { p: 0.660, x: 0, y: -11750, z: -40600, rx: 0, ry: 0 },
+  { p: 0.675, x: 0, y: -11750, z: -40600, rx: 0, ry: 0 }, // PAUSE Liquid (Zoomed out 400 units)
   { p: 0.690, x: 0, y: -11750, z: -42500, rx: 0, ry: 0 },
   
   // Maya (Center at Z=-45750, Camera holds at Z=-45000, 750 units clearance)
