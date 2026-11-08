@@ -73,9 +73,10 @@ export const SCROLL_TIMELINE = [
   
   // Pull out of the dive into Icebreaker (Center at Z=-2275)
   { p: 0.105, x: 0, y: -3980, z: -1550, rx: 0, ry: 0 }, // Level out into Icebreaker cavern
-  { p: 0.120, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 }, // Arrive Icebreaker (Zoomed out 600 units)
-  { p: 0.142, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 }, // PAUSE Icebreaker (Thaw triggers at p=0.135)
-  { p: 0.155, x: 0, y: -3980, z: -3250, rx: 0, ry: 0 }, // Exit Icebreaker into wormhole
+  { p: 0.120, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 }, // Arrive Icebreaker cave entrance
+  { p: 0.131, x: 0, y: -3840, z: -2010, rx: -0.58, ry: 0 }, // Thawed / looking down at fire & people at 33deg
+  { p: 0.145, x: 0, y: -3840, z: -2010, rx: -0.58, ry: 0 }, // Hold looking down at fire & people
+  { p: 0.155, x: 0, y: -3980, z: -3250, rx: 0, ry: 0 }, // Seamless forward flight past fire into sound wormhole
   
   // Soundwaves Wormhole 
   { p: 0.160, x: 0, y: -3980, z: -4000, rx: 0, ry: 0 },
@@ -410,9 +411,8 @@ export const TimelineManager = () => {
         }
       });
 
-      // If user has left the Icebreaker world, ensure the ice cave comes back frozen solid
-      // and state is idle so it replays cleanly upon re-entry
-      if (scrollP < 0.098 || scrollP > 0.148) {
+      // Reset Icebreaker state only if user scrolls all the way back before plunge tunnel (scrollP < 0.070)
+      if (scrollP < 0.070) {
         if (window._icebreakerMeltState && window._icebreakerMeltState !== 'idle') {
           window._icebreakerMeltState = 'idle';
           window.icebreakerThaw = 0.0;

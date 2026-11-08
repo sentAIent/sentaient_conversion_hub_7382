@@ -275,8 +275,11 @@ const AbstractCavern = ({ startZ, endZ }) => {
   }, [uniforms]);
 
   useFrame((state) => {
+    const thaw = window.icebreakerThaw || 0;
+    if (meshRef.current) {
+      meshRef.current.visible = thaw < 0.99;
+    }
     if (materialRef.current) {
-      const thaw = window.icebreakerThaw || 0;
       uniforms.uThaw.value = thaw;
       uniforms.uTime.value = state.clock.elapsedTime;
     }
@@ -356,18 +359,23 @@ const IslandFloor = ({ position }) => {
 };
 
 const IceCavernFloor = ({ position }) => {
+  const meshRef = useRef();
   const materialRef = useRef();
   
   useFrame(() => {
+    const thaw = window.icebreakerThaw || 0;
+    if (meshRef.current) {
+      meshRef.current.visible = thaw < 0.98;
+    }
     if (materialRef.current) {
-      const thaw = window.icebreakerThaw || 0;
-      materialRef.current.opacity = 1.0 - Math.pow(thaw, 2);
+      materialRef.current.opacity = Math.max(0, 1.0 - Math.pow(thaw, 2));
       materialRef.current.transparent = true;
+      materialRef.current.depthWrite = thaw < 0.05;
     }
   });
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={position}>
+    <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={position}>
       <planeGeometry args={[1000, 3000]} />
       <meshStandardMaterial ref={materialRef} color="#001133" roughness={0.1} metalness={0.8} />
     </mesh>
@@ -587,16 +595,12 @@ export const runIcebreakerMelt = (onComplete) => {
       };
       requestAnimationFrame(step);
     } else {
-      // Phase 4: Completed - keep fully thawed, elevated, looking down on people at 33-35 degree angle
+      // Phase 4: Completed - keep fully thawed, hand off to master timeline at elevated campfire position
       window.icebreakerThaw = 1.0;
-      window._icebreakerCam = {
-        active: true,
-        x: 0,
-        y: -3840,
-        z: -2010,
-        rx: -0.58,
-        ry: 0
-      };
+      if (window._icebreakerCam) {
+        window._icebreakerCam.active = false;
+        window._icebreakerCam = null;
+      }
       window._icebreakerMeltState = 'completed';
       window.icebreakerThawLocked = false;
       window._icebreakerLockCamera = false;
@@ -637,10 +641,9 @@ const IcebreakerController = () => {
       ? window._warpProgress 
       : scroll.offset;
 
-    // Exit & re-freeze: as soon as user leaves the Icebreaker cavern
-    // Only reset if NOT currently executing the melt or camera zoom sequence
+    // Reset only if user scrolls all the way back before plunge tunnel entry (p < 0.070)
     if (!window.icebreakerThawLocked && !window._icebreakerLockCamera && window._icebreakerMeltState !== 'running') {
-      if (p < 0.098 || p > 0.155) {
+      if (p < 0.070) {
         if (window._icebreakerMeltState !== 'idle' || window.icebreakerThaw > 0 || window._icebreakerCam) {
           window._icebreakerMeltState = 'idle';
           window.icebreakerThaw = 0.0;
@@ -657,20 +660,13 @@ const IcebreakerController = () => {
       }
     }
 
-    // While completed, maintain thawed state and keep camera in elevated position while within Icebreaker zone
+    // While completed, maintain thawed state
     if (window._icebreakerMeltState === 'completed') {
       window.icebreakerThaw = 1.0;
-      if (window._icebreakerCam) {
-        if (p < 0.100 || p > 0.155) {
-          window._icebreakerCam.active = false;
-        } else {
-          window._icebreakerCam.active = true;
-        }
-      }
     }
 
-    // Automatically trigger melt sequence when user is in Icebreaker pause zone (p between 0.115 and 0.145)
-    if (p >= 0.115 && p <= 0.145) {
+    // Automatically trigger melt sequence when user is in Icebreaker pause zone (p between 0.118 and 0.142)
+    if (p >= 0.118 && p <= 0.142) {
       if (!window._icebreakerMeltState || window._icebreakerMeltState === 'idle') {
         runIcebreakerMelt();
       }
