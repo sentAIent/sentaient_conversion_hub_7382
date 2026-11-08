@@ -509,7 +509,6 @@ export const runIcebreakerMelt = (onComplete) => {
     if (typeof onComplete === 'function') onComplete();
     return;
   }
-  if (window._isWorldActionActive) return;
 
   window._icebreakerMeltState = 'running';
   window._isWorldActionActive = true;
@@ -639,28 +638,30 @@ const IcebreakerController = () => {
       : scroll.offset;
 
     // Exit & re-freeze: as soon as user leaves the Icebreaker cavern
-    // (p < 0.098 enters plunge tunnel; p > 0.148 enters sound wormhole)
-    if (p < 0.098 || p > 0.148) {
-      if (window._icebreakerMeltState !== 'idle' || window.icebreakerThaw > 0 || window._icebreakerCam) {
-        window._icebreakerMeltState = 'idle';
-        window.icebreakerThaw = 0.0;
-        window.icebreakerThawLocked = false;
-        window._icebreakerLockCamera = false;
-        window._isWorldActionActive = false;
-        if (window._icebreakerCam) {
-          window._icebreakerCam.active = false;
-          window._icebreakerCam = null;
+    // Only reset if NOT currently executing the melt or camera zoom sequence
+    if (!window.icebreakerThawLocked && !window._icebreakerLockCamera && window._icebreakerMeltState !== 'running') {
+      if (p < 0.098 || p > 0.155) {
+        if (window._icebreakerMeltState !== 'idle' || window.icebreakerThaw > 0 || window._icebreakerCam) {
+          window._icebreakerMeltState = 'idle';
+          window.icebreakerThaw = 0.0;
+          window.icebreakerThawLocked = false;
+          window._icebreakerLockCamera = false;
+          window._isWorldActionActive = false;
+          if (window._icebreakerCam) {
+            window._icebreakerCam.active = false;
+            window._icebreakerCam = null;
+          }
+          unlockIcebreakerInput();
+          if (scroll?.el) scroll.el.style.overflow = 'auto';
         }
-        unlockIcebreakerInput();
-        if (scroll?.el) scroll.el.style.overflow = 'auto';
       }
     }
 
-    // While completed, maintain thawed state and seamlessly hand camera back when scrolling away
+    // While completed, maintain thawed state and keep camera in elevated position while within Icebreaker zone
     if (window._icebreakerMeltState === 'completed') {
       window.icebreakerThaw = 1.0;
       if (window._icebreakerCam) {
-        if (p < 0.118 || p > 0.144) {
+        if (p < 0.100 || p > 0.155) {
           window._icebreakerCam.active = false;
         } else {
           window._icebreakerCam.active = true;
@@ -668,12 +669,10 @@ const IcebreakerController = () => {
       }
     }
 
-    // Trigger when user scrolls into Icebreaker pause zone (p between 0.118 and 0.145)
-    if (p >= 0.118 && p <= 0.145) {
+    // Automatically trigger melt sequence when user is in Icebreaker pause zone (p between 0.115 and 0.145)
+    if (p >= 0.115 && p <= 0.145) {
       if (!window._icebreakerMeltState || window._icebreakerMeltState === 'idle') {
-        if (!window._isWorldActionActive && !window._isTransitActive) {
-          runIcebreakerMelt();
-        }
+        runIcebreakerMelt();
       }
     }
   });

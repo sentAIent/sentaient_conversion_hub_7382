@@ -100,17 +100,25 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
       }
       window._currentStationIndex = clampedIndex;
       activeAnimId = null;
-      window._warpProgress = undefined;
-      window._isProgrammaticScroll = false;
       if (targetStation.id === 'icebreaker') {
         window._isTransitActive = true;
+        window._warpProgress = endP;
+        window._isProgrammaticScroll = false;
         if (window.triggerIcebreakerMelt) {
           window.triggerIcebreakerMelt(() => {
             window._isTransitActive = false;
+            window._warpProgress = undefined;
           });
         }
-        setTimeout(() => { window._isTransitActive = false; }, 8500);
-      } else if (targetStation.id !== 'hub') {
+        setTimeout(() => { 
+          window._isTransitActive = false; 
+          window._warpProgress = undefined;
+        }, 8500);
+      } else {
+        window._warpProgress = undefined;
+        window._isProgrammaticScroll = false;
+      }
+      if (targetStation.id !== 'icebreaker' && targetStation.id !== 'hub') {
         window._isTransitActive = false;
         const pauseStation = WORLD_PAUSE_STATIONS.find(s => s.id === targetStation.id);
         if (pauseStation) {
