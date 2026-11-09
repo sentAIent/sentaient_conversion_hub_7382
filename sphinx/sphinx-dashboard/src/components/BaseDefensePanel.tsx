@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { PerimeterTripwirePanel } from './defense/PerimeterTripwirePanel';
+import { ShieldAlert, Cpu } from 'lucide-react';
 
 export function BaseDefensePanel({ onClose }: { onClose: () => void }) {
+  const [tab, setTab] = useState<'tripwires' | 'actuators'>('tripwires');
   const [status, setStatus] = useState<string>('');
 
   const triggerAction = async (action: string) => {
@@ -28,26 +31,50 @@ export function BaseDefensePanel({ onClose }: { onClose: () => void }) {
         <button onClick={onClose} className="hover:text-white transition-colors">✕</button>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <button 
-          onClick={() => triggerAction('lock_doors')}
-          className="bg-red-900/40 hover:bg-red-800/60 border border-red-800 p-2 rounded transition-colors text-left pl-4 font-bold"
+      {/* Sub Tabs */}
+      <div className="flex border-b border-red-900/60 mb-3 text-xs">
+        <button
+          onClick={() => setTab('tripwires')}
+          className={`flex-1 py-1.5 font-bold transition-colors flex items-center justify-center gap-1 border-r border-red-900/60 ${
+            tab === 'tripwires' ? 'bg-red-950/80 text-red-300 border-b-2 border-b-red-500' : 'text-gray-400 hover:bg-white/5'
+          }`}
         >
-          [!] LOCK ALL DEADBOLTS
+          <ShieldAlert size={12} /> TRIPWIRES
         </button>
-        <button 
-          onClick={() => triggerAction('pulse_lights')}
-          className="bg-red-900/40 hover:bg-red-800/60 border border-red-800 p-2 rounded transition-colors text-left pl-4 font-bold"
+        <button
+          onClick={() => setTab('actuators')}
+          className={`flex-1 py-1.5 font-bold transition-colors flex items-center justify-center gap-1 ${
+            tab === 'actuators' ? 'bg-red-950/80 text-red-300 border-b-2 border-b-red-500' : 'text-gray-400 hover:bg-white/5'
+          }`}
         >
-          [!] ENGAGE PERIMETER LIGHTS
-        </button>
-        <button 
-          onClick={() => triggerAction('arm_sensors')}
-          className="bg-red-900/40 hover:bg-red-800/60 border border-red-800 p-2 rounded transition-colors text-left pl-4 font-bold"
-        >
-          [!] ARM EXTERIOR SENSORS
+          <Cpu size={12} /> ACTUATORS
         </button>
       </div>
+
+      {tab === 'tripwires' ? (
+        <PerimeterTripwirePanel />
+      ) : (
+        <div className="flex flex-col gap-3">
+          <button 
+            onClick={() => triggerAction('lock_doors')}
+            className="bg-red-900/40 hover:bg-red-800/60 border border-red-800 p-2 rounded transition-colors text-left pl-4 font-bold"
+          >
+            [!] LOCK ALL DEADBOLTS
+          </button>
+          <button 
+            onClick={() => triggerAction('pulse_lights')}
+            className="bg-red-900/40 hover:bg-red-800/60 border border-red-800 p-2 rounded transition-colors text-left pl-4 font-bold"
+          >
+            [!] ENGAGE PERIMETER LIGHTS
+          </button>
+          <button 
+            onClick={() => triggerAction('arm_sensors')}
+            className="bg-red-900/40 hover:bg-red-800/60 border border-red-800 p-2 rounded transition-colors text-left pl-4 font-bold"
+          >
+            [!] ARM EXTERIOR SENSORS
+          </button>
+        </div>
+      )}
 
       {status && (
         <div className="mt-4 text-xs p-2 bg-black/50 border border-red-900 rounded break-words">

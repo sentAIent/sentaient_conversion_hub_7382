@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { Moon, Sun, Compass, X, Info, Sparkles, Eye } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Moon, Sun, Compass, X, Info, Sparkles, Eye, Satellite, ShieldAlert } from 'lucide-react';
+import { SatellitePassPredictor, SatellitePass } from '../lib/satellite/satellitePassPredictor';
 
 interface CelestialDomeModalProps {
   onClose: () => void;
@@ -81,6 +82,10 @@ export const CelestialDomeModal: React.FC<CelestialDomeModalProps> = ({ onClose,
   };
 
   const twilight = getTwilightStatus(solarElev);
+
+  const upcomingPasses = useMemo(() => {
+    return SatellitePassPredictor.predictUpcomingPasses(lat, lon, now, 12);
+  }, [lat, lon, now]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
@@ -194,6 +199,51 @@ export const CelestialDomeModal: React.FC<CelestialDomeModalProps> = ({ onClose,
 
               {/* Center Zenith point */}
               <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_#a855f7]" title="Observer Zenith" />
+            </div>
+
+            {/* Recon Satellite Passes & Concealment Window */}
+            <div className="bg-neutral-900/70 border border-purple-500/30 rounded-lg p-3 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-purple-300 font-bold border-b border-purple-900/40 pb-1.5">
+                <span className="flex items-center gap-1.5"><Satellite size={14} /> RECON SATELLITE PASSES & CONCEALMENT WINDOW</span>
+                <span className="text-[10px] text-gray-400 font-mono">12-HR ORBITAL PROJECTION</span>
+              </div>
+
+              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                {upcomingPasses.slice(0, 4).map((pass) => {
+                  const minutesUntil = Math.max(0, Math.round((pass.startTime.getTime() - now.getTime()) / 60000));
+                  return (
+                    <div
+                      key={pass.id}
+                      className="p-2 rounded bg-black/60 border border-white/10 flex items-center justify-between text-[11px]"
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white">{pass.satellite.name}</span>
+                          <span className={`px-1.5 py-0.2 text-[9px] rounded font-bold ${
+                            pass.satellite.sensorType === 'SYNTHETIC_APERTURE_RADAR'
+                              ? 'bg-amber-950 text-amber-300 border border-amber-600/40'
+                              : 'bg-cyan-950 text-cyan-300 border border-cyan-600/40'
+                          }`}>
+                            {pass.satellite.sensorType === 'SYNTHETIC_APERTURE_RADAR' ? 'SAR RADAR' : 'OPTICAL'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-gray-400">
+                          Max Elevation: {pass.maxElevationDeg}° • Window: {pass.durationMinutes}m • {pass.concealmentAdvisory}
+                        </div>
+                      </div>
+
+                      <div className="text-right pl-2 shrink-0">
+                        <div className="text-purple-400 font-bold font-mono">in {minutesUntil}m</div>
+                        <div className={`text-[9px] font-bold ${
+                          pass.threatLevel === 'CRITICAL_OVERHEAD' ? 'text-red-400' : 'text-amber-400'
+                        }`}>
+                          {pass.threatLevel === 'CRITICAL_OVERHEAD' ? 'OVERHEAD ZENITH' : 'ANGLED PASS'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Tactical Field Instructions */}

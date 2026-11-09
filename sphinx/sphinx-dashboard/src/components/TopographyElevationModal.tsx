@@ -5,6 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import { X, Mountain, Compass, Layers, Navigation, Eye, EyeOff, Search } from 'lucide-react';
 import { TopographyElevationEngine, TopoTileProvider, TopographicPeak } from '../lib/intelligence/topographyElevationEngine';
+import { ElevationProfileVisualizer } from './elevation/ElevationProfileVisualizer';
 
 interface TopographyElevationModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export const TopographyElevationModal: React.FC<TopographyElevationModalProps> =
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegionFilter, setSelectedRegionFilter] = useState<'all' | string>('all');
+  const [subTab, setSubTab] = useState<'relief' | 'los'>('relief');
 
   // Estimate elevation for the current viewport center
   const centerElevation = useMemo(() => {
@@ -141,7 +143,36 @@ export const TopographyElevationModal: React.FC<TopographyElevationModalProps> =
           </div>
         </div>
 
+        {/* Navigation Tabs */}
+        <div className="flex border-b border-emerald-500/20 bg-slate-900/60 text-xs">
+          <button
+            onClick={() => setSubTab('relief')}
+            className={`flex-1 py-2.5 font-bold transition-colors flex items-center justify-center gap-2 border-r border-emerald-500/20 ${
+              subTab === 'relief'
+                ? 'bg-emerald-950/60 text-emerald-300 border-b-2 border-b-emerald-400'
+                : 'text-slate-400 hover:bg-white/5'
+            }`}
+          >
+            <Layers className="w-4 h-4" /> HYPSOMETRIC RELIEF & SUMMITS
+          </button>
+          <button
+            onClick={() => setSubTab('los')}
+            className={`flex-1 py-2.5 font-bold transition-colors flex items-center justify-center gap-2 ${
+              subTab === 'los'
+                ? 'bg-emerald-950/60 text-emerald-300 border-b-2 border-b-emerald-400'
+                : 'text-slate-400 hover:bg-white/5'
+            }`}
+          >
+            <Compass className="w-4 h-4" /> RF LINE-OF-SIGHT & FRESNEL ZONE
+          </button>
+        </div>
+
         {/* Controls & Configuration (100% Zero-Slider Rule) */}
+        {subTab === 'los' ? (
+          <div className="p-5 overflow-y-auto">
+            <ElevationProfileVisualizer currentCoordinates={currentCoordinates} />
+          </div>
+        ) : (
         <div className="p-5 overflow-y-auto space-y-5">
           
           {/* Provider Selection Chips */}
@@ -345,6 +376,7 @@ export const TopographyElevationModal: React.FC<TopographyElevationModalProps> =
           </div>
 
         </div>
+        )}
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between text-xs text-slate-400">

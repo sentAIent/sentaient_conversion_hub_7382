@@ -19,6 +19,7 @@ import { CustomCursor } from './CustomCursor';
 import { FieldManualsPanel } from './FieldManualsPanel';
 import { RangeRingsPanel } from './RangeRingsPanel';
 const CelestialDomeModal = dynamic(() => import('./CelestialDomeModal').then(m => m.CelestialDomeModal), { ssr: false });
+const TacticalMissionPackModal = dynamic(() => import('./TacticalMissionPackModal').then(m => m.TacticalMissionPackModal), { ssr: false });
 import { WeatherWindPanel } from './WeatherWindPanel';
 import { AviationSafetyPanel } from './AviationSafetyPanel';
 import { WindHudWidget } from './WindHudWidget';
@@ -625,6 +626,7 @@ export default function SphinxMap() {
   }));
 
   const [showFieldManuals, setShowFieldManuals] = useState(false);
+  const [showMissionPack, setShowMissionPack] = useState(false);
   const [showRangeRings, setShowRangeRings] = useState(false);
   const [showCelestialDome, setShowCelestialDome] = useState(false);
   const [lightningFeatures, setLightningFeatures] = useState<any[]>([]);
@@ -6925,6 +6927,16 @@ export default function SphinxMap() {
                 </button>
                 <button 
                   type="button" 
+                  data-testid="hud-btn-tools-mission-pack"
+                  title="ATAK CoT XML export/import, AES-256-GCM encrypted mission packages, and air-gapped animated QR code exchange"
+                  onClick={() => { setShowMissionPack(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${showMissionPack ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-700/60' : 'hover:bg-cyan-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>📦</span> ATAK CoT & Mission Pack</span>
+                  <span className="text-[10px] text-cyan-400 font-bold">MIL-STD-2525</span>
+                </button>
+                <button 
+                  type="button" 
                   data-testid="hud-btn-weather-forecast"
                   title="Multi-horizon meteorological forecast with precipitation prob, barometric trend, and cloud cover"
                   onClick={() => { setShowWeatherWind(!showWeatherWind); setShowToolsMenu(false); }}
@@ -7263,6 +7275,12 @@ export default function SphinxMap() {
           setTierUpgradeTrigger('offline_survival_vault');
           setShowTierUpgrade(true);
         }}
+      />
+
+      <TacticalMissionPackModal
+        isOpen={showMissionPack}
+        onClose={() => setShowMissionPack(false)}
+        activeCoordinates={[viewState.longitude, viewState.latitude]}
       />
 
       {showRangeRings && (
