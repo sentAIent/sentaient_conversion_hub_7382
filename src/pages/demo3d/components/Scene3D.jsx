@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Sparkles, ScrollControls, Scroll, useScroll } from '@react-three/drei';
-import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing';
+import { Sparkles, ScrollControls, Scroll, useScroll, Preload } from '@react-three/drei';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { CameraController, TimelineManager } from '../TimelineManager';
 import { useWaypointControls } from '../navigation/WaypointNavigator';
@@ -167,16 +167,6 @@ const HTMLStations = () => {
 
   useFrame(() => {
     const progress = (window._isTransitActive && window._warpProgress !== undefined) ? window._warpProgress : scroll.offset;
-    
-    // Clean up any duplicate cards in document.body
-    const duplicateCards = document.querySelectorAll('.demo3d-side-dossier-card');
-    if (duplicateCards.length > 1) {
-      for (let i = 0; i < duplicateCards.length - 1; i++) {
-        const root = duplicateCards[i].closest('.demo3d-portal-root');
-        if (root) root.remove();
-        else duplicateCards[i].remove();
-      }
-    }
 
     // Back button visibility
     if (backRef.current) {
@@ -525,6 +515,7 @@ const HTMLStations = () => {
 
 const Scene3D = () => {
   return (
+    <>
     <Canvas 
       camera={{ fov: 55, near: 2, far: 25000, position: [0, 0, 100] }}
       dpr={[1, 1.5]} 
@@ -539,8 +530,9 @@ const Scene3D = () => {
         <React.Suspense fallback={null}>
           <CameraController />
           <TimelineManager />
+          <Preload all />
         </React.Suspense>
-        <Sparkles count={2000} scale={200} size={4} speed={0.8} opacity={0.5} color="#00ff44" />
+        <Sparkles count={400} scale={200} size={3} speed={0.8} opacity={0.4} color="#00ff44" />
 
         {/* The HTML UI Layer */}
         <Scroll html style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
@@ -549,17 +541,19 @@ const Scene3D = () => {
 
       </ScrollControls>
       
-      {/* Cinematic Post-Processing */}
-      <EffectComposer disableNormalPass>
+      {/* Cinematic Post-Processing - High-Performance Zero-Allocation */}
+      <EffectComposer disableNormalPass multisampling={0}>
         <Bloom 
-          luminanceThreshold={0.85} 
+          luminanceThreshold={0.88} 
           mipmapBlur 
-          intensity={1.2} 
+          intensity={0.95} 
+          levels={5}
         />
-        <Noise opacity={0.05} />
-        <Vignette eskil={false} offset={0.1} darkness={1.1} />
       </EffectComposer>
     </Canvas>
+    {/* Ultra-smooth CSS Vignette: zero WebGL draw calls & zero GPU fill-rate cost */}
+    <div className="pointer-events-none fixed inset-0 z-[5]" style={{ background: 'radial-gradient(ellipse at center, transparent 65%, rgba(0,0,0,0.55) 100%)' }} />
+    </>
   );
 };
 

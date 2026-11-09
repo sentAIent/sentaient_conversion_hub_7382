@@ -1595,6 +1595,7 @@ const WorldFantasyQuant = ({ position, rotation, visible }) => {
   stadiumTex.wrapS = THREE.RepeatWrapping;
   stadiumTex.repeat.set(-1, 1);
   
+  if (!visible) return null;
 
   return (
     <group visible={visible} position={position} rotation={rotation}>

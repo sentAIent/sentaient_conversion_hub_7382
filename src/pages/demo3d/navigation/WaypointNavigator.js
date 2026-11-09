@@ -104,6 +104,9 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
       switchedWorld = true;
       window._teleportActiveWorldId = targetStation.id;
       window._snapCamera = true;
+      if (window._scrollObj) {
+        window._scrollObj.offset = targetStation.p;
+      }
       if (window._scrollEl) {
         const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
         if (maxScroll > 0) {
@@ -131,7 +134,7 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
       if (window._teleportWarp) window._teleportWarp.active = false;
       window._teleportActiveWorldId = null;
       window._teleportFovBoost = 0;
-      window._warpProgress = targetStation.p;
+      window._warpProgress = undefined;
       window._isProgrammaticScroll = false;
       window._currentStationIndex = clampedIndex;
       if (targetStation.id === 'hub') {
@@ -139,6 +142,9 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
       }
       activeAnimId = null;
       
+      if (window._scrollObj) {
+        window._scrollObj.offset = targetStation.p;
+      }
       if (window._scrollEl) {
         const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
         if (maxScroll > 0) {
@@ -146,12 +152,6 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
         }
         window._scrollEl.style.overflow = 'auto';
       }
-      
-      setTimeout(() => {
-        if (!window._isTransitActive) {
-          window._warpProgress = undefined;
-        }
-      }, 60);
       
       if (typeof onComplete === 'function') onComplete();
     }
@@ -218,17 +218,12 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
     const currentP = startP + (endP - startP) * ease;
     window._warpProgress = currentP;
     
-    // Synchronize DOM scroll container if present
-    if (window._scrollEl) {
-      const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
-      if (maxScroll > 0) {
-        window._scrollEl.scrollTop = currentP * maxScroll;
-      }
-    }
-    
     if (t < 1.0) {
       activeAnimId = requestAnimationFrame(step);
     } else {
+      if (window._scrollObj) {
+        window._scrollObj.offset = endP;
+      }
       if (window._scrollEl) {
         const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
         if (maxScroll > 0) {
@@ -294,6 +289,7 @@ export const useWaypointControls = (scroll) => {
   useEffect(() => {
     if (scroll?.el) {
       window._scrollEl = scroll.el;
+      window._scrollObj = scroll;
     }
     let lastWheelTime = 0;
     const onWheel = (e) => {

@@ -129,7 +129,7 @@ const CandlestickTunnel = ({ worldPosition }) => {
   const tunnelRef = useRef();
   
   const candlesticks = useMemo(() => {
-    return Array.from({ length: 800 }).map(() => {
+    return Array.from({ length: 240 }).map(() => {
       const isGreen = Math.random() > 0.5;
       const height = 20 + Math.random() * 80;
       const wickHeight = height + Math.random() * 40;

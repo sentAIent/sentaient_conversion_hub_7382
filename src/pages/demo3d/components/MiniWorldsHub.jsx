@@ -437,6 +437,7 @@ export default function MiniWorldsHub({ visible = true }) {
 
       {/* Central SentAIent Toroidal Field Core */}
       <ToroidalSentaientCore
+        visible={visible}
         dynamicRadius={dynamicRadius}
         itemScale={itemScale}
         appPositions={appPositions}

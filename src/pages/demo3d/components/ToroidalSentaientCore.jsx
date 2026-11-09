@@ -17,6 +17,7 @@ import * as THREE from 'three';
 // ============================================================================
 
 export default function ToroidalSentaientCore({
+  visible = true,
   dynamicRadius = 300,
   itemScale = 1.0,
   appPositions = [],
@@ -431,6 +432,7 @@ export default function ToroidalSentaientCore({
   // 8. 60-120FPS ZERO-ALLOCATION KINETIC ANIMATION LOOP
   // --------------------------------------------------------------------------
   useFrame((state, delta) => {
+    if (!visible) return;
     const t = state.clock.getElapsedTime();
 
     // Side profile: vertical cyclone in the center, horizontal toroidal equator
