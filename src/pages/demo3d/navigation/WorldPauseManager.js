@@ -17,7 +17,7 @@ export const WORLD_PAUSE_STATIONS = [
   { id: 'sphinx', name: 'Sphinx', p: 0.610, triggerMin: 0.598, triggerMax: 0.622, duration: 2500 },
   { id: 'liquid', name: 'Liquid', p: 0.668, triggerMin: 0.658, triggerMax: 0.678, duration: 2500 },
   { id: 'maya', name: 'Maya', p: 0.728, triggerMin: 0.718, triggerMax: 0.738, duration: 2500 },
-  { id: 'pyramid', name: 'PyRAmid', p: 0.803, triggerMin: 0.788, triggerMax: 0.816, duration: 2500 },
+  { id: 'pyramid', name: 'Pyramid', p: 0.803, triggerMin: 0.788, triggerMax: 0.816, duration: 2500 },
   { id: 'matrix', name: 'Matrix', p: 0.873, triggerMin: 0.858, triggerMax: 0.888, duration: 2500 },
   { id: 'lightspeed', name: 'LightSpeed', p: 0.945, triggerMin: 0.928, triggerMax: 0.962, duration: 2500 }
 ];

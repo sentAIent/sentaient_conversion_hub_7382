@@ -23,6 +23,7 @@ const WORLD_ROUTES = {
   'Sphinx': '/sphinx',
   'Liquid': '/liquid',
   'Maya': '/maya',
+  'Pyramid': '/pyramid',
   'PyRAmid': '/pyramid',
   'Matrix': '/matrix',
   'LightSpeed': '/lightspeed'
@@ -107,8 +108,14 @@ const WORLD_CONFIG = {
     posStyle: { top: '80px', left: '44px', bottom: 'auto', right: 'auto', transform: 'none' },
     tags: ['Conversational Sales', 'Active Habit Coach', 'Deep Learning Companion']
   },
+  'Pyramid': {
+    category: 'AUTONOMOUS PROFIT ENGINE',
+    index: '14 / 16',
+    posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
+    tags: ['Market Arbitrage', 'Strategic Execution', 'Self-Operating Venture']
+  },
   'PyRAmid': {
-    category: 'AUTONOMOUS BUSINESS OPS BRAIN',
+    category: 'AUTONOMOUS PROFIT ENGINE',
     index: '14 / 16',
     posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Market Arbitrage', 'Strategic Execution', 'Self-Operating Venture']

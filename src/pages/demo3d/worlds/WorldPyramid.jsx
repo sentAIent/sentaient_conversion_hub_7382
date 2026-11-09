@@ -4,7 +4,7 @@ import { Sparkles, Float, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ===========================================================================
-// WORLD PYRAMID: Autonomous Business Ops Brain & Strategic Execution Engine
+// WORLD PYRAMID: Autonomous Profit Engine & Strategic Execution
 // Translucent Crystalline Cyber-Pyramid with Quantum Brain Core, Pulsed
 // Synaptic Circuitry, Apex Transmission Orb, and Strategic Market Execution HUD.
 // ===========================================================================
@@ -17,7 +17,7 @@ export default function WorldPyramid({ position, visible }) {
   const circuitsRef = useRef();
   const beaconRef = useRef();
 
-  // Load official high-res PyRAmid emblem
+  // Load official high-res Pyramid emblem
   const logoTex = useLoader(THREE.TextureLoader, '/pyramid_logo_final.png');
   logoTex.colorSpace = THREE.SRGBColorSpace;
 
@@ -63,16 +63,20 @@ export default function WorldPyramid({ position, visible }) {
       apexOrbRef.current.rotation.y = t * 0.6;
     }
 
-    // 3. Expanding Wireless Thought Transmission Wave Arcs
+    // 3. Expanding Wireless Thought Transmission Wave Pulses (All Directions)
     if (waveArcsRef.current) {
-      waveArcsRef.current.children.forEach((child, idx) => {
-        const speed = 1.2;
-        const progress = ((t * speed + idx * 0.33) % 1.0);
-        const s = 1.0 + progress * 1.8;
-        child.scale.set(s, s, s);
-        if (child.material) {
-          child.material.opacity = (1.0 - progress) * 0.85;
-        }
+      const count = waveArcsRef.current.children.length;
+      waveArcsRef.current.children.forEach((group, idx) => {
+        const speed = 1.1;
+        const progress = ((t * speed + idx * (1.0 / count)) % 1.0);
+        const s = 1.0 + progress * 2.4;
+        group.scale.set(s, s, s);
+        const opacity = Math.pow(1.0 - progress, 1.2) * 0.85;
+        group.traverse((node) => {
+          if (node.isMesh && node.material) {
+            node.material.opacity = opacity * (node.userData.baseAlpha || 1.0);
+          }
+        });
       });
     }
   });
@@ -225,13 +229,31 @@ export default function WorldPyramid({ position, visible }) {
           </mesh>
           <pointLight color="#c084fc" intensity={14} distance={400} />
 
-          {/* Radial Wireless Thought Transmission Wave Arcs */}
+          {/* Radial Wireless Thought Transmission Waves (All Directions) */}
           <group ref={waveArcsRef}>
-            {[1, 2, 3].map((w) => (
-              <mesh key={w} rotation={[Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[28 + w * 12, 32 + w * 12, 32, 1, -Math.PI / 3, (2 * Math.PI) / 3]} />
-                <meshBasicMaterial color="#00e5ff" transparent opacity={0.6} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
-              </mesh>
+            {[0, 1, 2, 3].map((w) => (
+              <group key={w}>
+                {/* Horizontal Wave Ring (XZ Plane) */}
+                <mesh rotation={[Math.PI / 2, 0, 0]} userData={{ baseAlpha: 0.85 }}>
+                  <ringGeometry args={[26, 29, 64]} />
+                  <meshBasicMaterial color="#00e5ff" transparent opacity={0.8} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+                </mesh>
+                {/* Frontal Wave Ring (XY Plane - Camera Facing) */}
+                <mesh rotation={[0, 0, 0]} userData={{ baseAlpha: 0.75 }}>
+                  <ringGeometry args={[26, 29, 64]} />
+                  <meshBasicMaterial color="#c084fc" transparent opacity={0.7} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+                </mesh>
+                {/* Lateral Wave Ring (YZ Plane) */}
+                <mesh rotation={[0, Math.PI / 2, 0]} userData={{ baseAlpha: 0.65 }}>
+                  <ringGeometry args={[26, 29, 64]} />
+                  <meshBasicMaterial color="#00e5ff" transparent opacity={0.6} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+                </mesh>
+                {/* Diagonal Spherical Wave Ring */}
+                <mesh rotation={[Math.PI / 4, Math.PI / 4, 0]} userData={{ baseAlpha: 0.55 }}>
+                  <ringGeometry args={[26, 29, 64]} />
+                  <meshBasicMaterial color="#f472b6" transparent opacity={0.5} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+                </mesh>
+              </group>
             ))}
           </group>
         </group>
@@ -271,7 +293,7 @@ export default function WorldPyramid({ position, visible }) {
           </mesh>
         </Float>
 
-        {/* PyRAmid Title Text */}
+        {/* Pyramid Title Text */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
@@ -284,7 +306,7 @@ export default function WorldPyramid({ position, visible }) {
           anchorY="middle"
           letterSpacing={0.12}
         >
-          PyRAmid
+          Pyramid
         </Text>
 
         {/* Subtitle Badge */}
@@ -300,7 +322,7 @@ export default function WorldPyramid({ position, visible }) {
           anchorY="middle"
           letterSpacing={0.16}
         >
-          AUTONOMOUS BUSINESS OPS BRAIN
+          AUTONOMOUS PROFIT ENGINE
         </Text>
       </group>
     </group>

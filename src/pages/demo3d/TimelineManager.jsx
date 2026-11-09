@@ -40,7 +40,7 @@ const WORLD_NAMES_MAP = {
   sphinx: 'Sphinx',
   liquid: 'Liquid',
   maya: 'Maya',
-  pyramid: 'PyRAmid',
+  pyramid: 'Pyramid',
   matrix: 'Matrix',
   lightspeed: 'LightSpeed'
 };

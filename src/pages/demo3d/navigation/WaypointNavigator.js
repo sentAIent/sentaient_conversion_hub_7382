@@ -18,7 +18,7 @@ export const STATIONS = [
   { id: 'sphinx', name: 'Sphinx', p: 0.610, duration: 2200 },
   { id: 'liquid', name: 'Liquid', p: 0.668, duration: 2200 },
   { id: 'maya', name: 'Maya', p: 0.728, duration: 2200 },
-  { id: 'pyramid', name: 'PyRAmid', p: 0.803, duration: 2200 },
+  { id: 'pyramid', name: 'Pyramid', p: 0.803, duration: 2200 },
   { id: 'matrix', name: 'Matrix', p: 0.873, duration: 2200 },
   { id: 'lightspeed', name: 'LightSpeed', p: 0.945, duration: 2500 }
 ];
