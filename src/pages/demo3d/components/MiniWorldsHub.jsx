@@ -34,7 +34,7 @@ const getHolographicGlowTexture = () => {
   return _sharedGlowTex;
 };
 
-const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0 }) => {
+const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0, coreGlowColor }) => {
   const meshRef = useRef();
   const glowGroupRef = useRef();
   const containerRef = useRef();
@@ -130,7 +130,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
-                color="#ffffff"
+                color={coreGlowColor || (name === 'MindWave' ? '#38bdf8' : '#ffffff')}
                 transparent
                 opacity={(name === 'Liquid' ? 0.0 : 1.0) * (isHovered ? 0.95 : (isDimmed ? 0.35 : 0.65)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
@@ -338,7 +338,7 @@ export const getPrimitiveLogo = (name, color, hovered) => {
 export const WORLDS_DATA = [
   { name: 'Sentaient', startP: 0.485, p: 0.505, endP: 0.525, color: '#60A9FF', ringColor: '#FF8800', logoUrl: '/sentaient_logo_final.png', logoScale: [1.692, 0.315], summary: 'Autonomous AI Venture Studio & Multi-Industry Revenue Engines', description: 'The foundational intelligence nexus engineering proprietary autonomous platforms across FinTech, LegalTech, Health & BioTech, Defense, and Enterprise Cloud.' },
   { name: 'CloveH2O', startP: 0.32, p: 0.36, endP: 0.37, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.584, 1.584], summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.' },
-  { name: 'MindWave', startP: 0.02, p: 0.040, endP: 0.06, color: '#60A9FF', ringColor: '#FF2A6D', logoUrl: '/mindwave-ring-logo.png', logoScale: [1.555, 1.555], summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.' },
+  { name: 'MindWave', startP: 0.02, p: 0.040, endP: 0.06, color: '#38BDF8', ringColor: '#FF2A6D', logoUrl: '/mindwave-ring-logo.png', logoScale: [1.555, 1.555], coreGlowColor: '#38BDF8', summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.' },
   { name: 'Icebreaker', startP: 0.10, p: 0.135, endP: 0.16, color: '#00F0FF', ringColor: '#FF6600', logoUrl: '/icebreaker_logo.png', logoScale: [1.0, 1.0], summary: 'Real Content. Real Human Connections.', description: 'Thaw the social ice. Transform superficial online interactions into vibrant, authentic real-world connections and spontaneous events.' },
   { name: 'Interstellar', startP: 0.16, p: 0.21, endP: 0.22, color: '#FF3F00', ringColor: '#00FFFF', logoUrl: '/interstellar_logo_final.png', logoScale: [1.287, 1.287], summary: 'Galactic Strategy & Space Conquest', description: 'Command deep-space starfleets, conquer uncharted solar systems, extract stellar resources, and build an invincible galactic empire.' },
   { name: 'Elevate', startP: 0.520, p: 0.550, endP: 0.570, color: '#38BDF8', ringColor: '#FF8000', logoUrl: '/elevate_logo_final.png', logoScale: [1.365, 0.81], summary: '3D Freeride Snowboard Action with Live Mountain Weather, Snow Conditions & Gear Intelligence', description: 'Drop into high-stakes mountain freeriding with thrilling 3D snowboarding action, paired with a complete mountain companion that delivers real-time weather, live snowpack conditions, avalanche safety radar, and personalized gear optimization.' },
@@ -532,6 +532,7 @@ export default function MiniWorldsHub({ visible = true }) {
             key={w.name}
             name={w.name}
             color={w.color}
+            coreGlowColor={w.coreGlowColor}
             ringColor={w.ringColor}
             startP={w.startP}
             targetP={w.p}
