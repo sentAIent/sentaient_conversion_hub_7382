@@ -352,35 +352,35 @@ export const TimelineManager = () => {
       newZones = {
         intro: activeId === 'hub' || activeId === 'intro',
         mindwave: activeId === 'mindwave',
-        wormhole_ice: activeId === 'icebreaker',
+        wormhole_ice: false,
         icebreaker: activeId === 'icebreaker', 
-        wormhole_sound: activeId === 'interstellar',
+        wormhole_sound: false,
         interstellar: activeId === 'interstellar', 
-        w_legal: activeId === 'legal',
+        w_legal: false,
         legal: activeId === 'legal',
-        w_autopilot: activeId === 'autopilot',
+        w_autopilot: false,
         autopilot: activeId === 'autopilot',
-        w_clove: activeId === 'clove',
+        w_clove: false,
         clove: activeId === 'clove',
-        w_fantasy: activeId === 'fantasy',
+        w_fantasy: false,
         fantasy: activeId === 'fantasy',
         w_contango: false,
         contango: activeId === 'contango',
-        w_sentaient: activeId === 'sentaient',
+        w_sentaient: false,
         sentaient: activeId === 'sentaient',
-        w_elevate: activeId === 'elevate',
+        w_elevate: false,
         elevate: activeId === 'elevate',
-        w_sphinx: activeId === 'sphinx',
+        w_sphinx: false,
         sphinx: activeId === 'sphinx',
-        w_liquid: activeId === 'liquid',
+        w_liquid: false,
         liquid: activeId === 'liquid',
-        w_maya: activeId === 'maya',
+        w_maya: false,
         maya: activeId === 'maya',
-        w_pyramid: activeId === 'pyramid',
+        w_pyramid: false,
         pyramid: activeId === 'pyramid',
-        w_matrix: activeId === 'matrix',
+        w_matrix: false,
         matrix: activeId === 'matrix',
-        w_lightspeed: activeId === 'lightspeed',
+        w_lightspeed: false,
         lightspeed: activeId === 'lightspeed'
       };
     } else {
@@ -397,7 +397,7 @@ export const TimelineManager = () => {
         autopilot: p >= 0.275 && p < 0.325,
         w_clove: p >= 0.300 && p < 0.345,
         clove: p >= 0.320 && p < 0.380,
-        w_fantasy: p >= 0.355 && p < 0.420,
+        w_fantasy: p >= 0.355 && p < 0.400,
         fantasy: p >= 0.390 && p < 0.445,
         w_contango: p >= 0.420 && p < 0.455,
         contango: p >= 0.445 && p < 0.490,
@@ -517,7 +517,7 @@ export const TimelineManager = () => {
 
       <WorldCloveH2O position={[0, -4000, -16550]} rotation={[0, 0, 0]} visible={activeZones.clove} />
 
-      <WormholeWaterslide position={[0, -8000, -16550]} rotation={[0, 0, 0]} length={9000} visible={activeZones.w_fantasy} />
+      <WormholeWaterslide position={[0, -7800, -16550]} rotation={[0, 0, 0]} length={7000} visible={activeZones.w_fantasy} />
 
       <WorldFantasyQuant position={[0, -11700, -17500]} rotation={[0, 0, 0]} visible={activeZones.fantasy} />
 
