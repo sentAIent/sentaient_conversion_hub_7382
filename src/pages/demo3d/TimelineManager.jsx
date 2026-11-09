@@ -361,7 +361,7 @@ export const TimelineManager = () => {
         clove: activeId === 'clove',
         w_fantasy: activeId === 'fantasy',
         fantasy: activeId === 'fantasy',
-        w_contango: activeId === 'contango',
+        w_contango: false,
         contango: activeId === 'contango',
         w_sentaient: activeId === 'sentaient',
         sentaient: activeId === 'sentaient',
@@ -396,7 +396,7 @@ export const TimelineManager = () => {
         clove: p >= 0.320 && p < 0.380,
         w_fantasy: p >= 0.355 && p < 0.420,
         fantasy: p >= 0.390 && p < 0.445,
-        w_contango: p >= 0.420 && p < 0.470,
+        w_contango: p >= 0.420 && p < 0.455,
         contango: p >= 0.445 && p < 0.490,
         w_sentaient: p >= 0.465 && p < 0.505,
         sentaient: p >= 0.480 && p < 0.535,
@@ -518,7 +518,7 @@ export const TimelineManager = () => {
 
       <WorldFantasyQuant position={[0, -11700, -17500]} rotation={[0, 0, 0]} visible={activeZones.fantasy} />
 
-      <WormholeContango position={[0, -11750, -17500]} length={7500} visible={activeZones.w_contango} />
+      <WormholeContango position={[0, -11750, -17500]} length={6000} visible={activeZones.w_contango} />
 
       <ContangoQuant position={[0, -11750, -24800]} rotation={[0, 0, 0]} visible={activeZones.contango} />
 
