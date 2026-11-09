@@ -92,13 +92,17 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
       if (typeof e.preventDefault === 'function') e.preventDefault();
       if (typeof e.stopPropagation === 'function') e.stopPropagation();
     }
-    if (window._goToStation) {
+    if (window._goToStation || window.directTeleportTo) {
       let targetIdx = window.STATIONS ? window.STATIONS.findIndex(s => s.name.toLowerCase() === name.toLowerCase()) : -1;
       if (targetIdx === -1 && window.STATIONS) {
         targetIdx = window.STATIONS.findIndex(s => Math.abs(s.p - (targetP || 0)) < 0.03);
       }
       if (targetIdx !== -1) {
-        window._goToStation(targetIdx, 2400);
+        if (window.directTeleportTo) {
+          window.directTeleportTo(targetIdx);
+        } else {
+          window._goToStation(targetIdx, 1350);
+        }
         return;
       }
     }
@@ -438,8 +442,10 @@ export default function MiniWorldsHub({ visible = true }) {
         appPositions={appPositions}
         hoveredWorld={hoveredWorld}
         onClick={() => {
-          if (window._goToStation) {
-            window._goToStation(1, 2400);
+          if (window.directTeleportTo) {
+            window.directTeleportTo(1);
+          } else if (window._goToStation) {
+            window._goToStation(1, 1350);
           }
         }}
       />

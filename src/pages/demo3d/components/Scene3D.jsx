@@ -310,8 +310,10 @@ const HTMLStations = () => {
     if (e) { e.preventDefault(); e.stopPropagation(); }
     if (window.clearActiveWorldPause) window.clearActiveWorldPause();
     ['icebreakerCaveLocked', 'icebreakerThawLocked', 'icebreakerTextLocked', 'mindwaveLocked', 'interstellarLocked', 'autopilotLocked', 'contangoLocked', 'swarmLocked', 'orbitalLocked'].forEach(k => { window[k] = false; });
-    if (window._goToStation) {
-      window._goToStation(0, 1800);
+    if (window.directTeleportTo) {
+      window.directTeleportTo(0, 1350);
+    } else if (window._goToStation) {
+      window._goToStation(0, 1350);
     } else if (scroll.el) {
       window._cancelWarp = true;
       window._warpProgress = undefined;

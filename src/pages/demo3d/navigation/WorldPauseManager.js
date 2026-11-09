@@ -42,36 +42,18 @@ const BLOCKED_EVENTS = [
 ];
 
 export const lockNavigationInput = () => {
-  if (typeof document === 'undefined' || isGlobalInputLocked) return;
-  isGlobalInputLocked = true;
-
-  let blocker = document.getElementById('world-pause-input-lock');
-  if (!blocker) {
-    blocker = document.createElement('div');
-    blocker.id = 'world-pause-input-lock';
-    blocker.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999999;pointer-events:all;cursor:wait;user-select:none;touch-action:none;background:transparent;';
-    document.body.appendChild(blocker);
-  }
-
-  BLOCKED_EVENTS.forEach((evt) => {
-    window.addEventListener(evt, preventInputEvent, { passive: false, capture: true });
-  });
-
-  if (window._scrollEl) {
-    window._scrollEl.style.overflow = 'hidden';
-  }
+  // Gentle non-intrusive handling: never block user wheel or pointer events
+  if (typeof document === 'undefined') return;
+  const blocker = document.getElementById('world-pause-input-lock');
+  if (blocker) blocker.remove();
 };
 
 export const unlockNavigationInput = () => {
-  if (typeof document === 'undefined' || !isGlobalInputLocked) return;
+  if (typeof document === 'undefined') return;
   isGlobalInputLocked = false;
 
   const blocker = document.getElementById('world-pause-input-lock');
   if (blocker) blocker.remove();
-
-  BLOCKED_EVENTS.forEach((evt) => {
-    window.removeEventListener(evt, preventInputEvent, { capture: true });
-  });
 
   if (window._scrollEl) {
     window._scrollEl.style.overflow = 'auto';
