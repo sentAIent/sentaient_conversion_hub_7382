@@ -404,6 +404,10 @@ export default function SphinxMap() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       registerElevationHeatmapProtocol(maplibregl);
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('sphinx_force_webgl') === 'true') {
+        setIsWebGLSupported(true);
+        return;
+      }
       try {
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -822,7 +826,7 @@ export default function SphinxMap() {
     } else if (w < 1280) {
       targetWidth = 1140;
     } else if (w < 1536) {
-      targetWidth = 1220;
+      targetWidth = 1420;
     } else {
       targetWidth = 1280;
     }

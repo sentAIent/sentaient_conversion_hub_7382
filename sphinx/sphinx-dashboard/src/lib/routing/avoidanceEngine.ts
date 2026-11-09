@@ -39,12 +39,32 @@ export function haversineDistanceMeters(lng1: number, lat1: number, lng2: number
   return R * c;
 }
 
+// Distance from point (px, py) to segment (ax, ay)-(bx, by) in meters
+export function pointToSegmentDistanceMeters(
+  px: number, py: number,
+  ax: number, ay: number,
+  bx: number, by: number
+): number {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return haversineDistanceMeters(px, py, ax, ay);
+  let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  return haversineDistanceMeters(px, py, ax + t * dx, ay + t * dy);
+}
+
 // Assess route coordinates against threat layers
 export function auditRouteThreats(
   coordinates: number[][],
   distanceMeters: number,
   options: AvoidanceOptions,
-  strategy: 'fastest' | 'shortest' | 'stealth' | 'eco_no_tolls'
+  strategy: 'fastest' | 'shortest' | 'stealth' | 'eco_no_tolls',
+  hazardPoints?: {
+    wildfires?: Array<[number, number]>;
+    toxicSites?: Array<[number, number]>;
+    closures?: Array<[number, number]>;
+  }
 ): ThreatAuditScorecard {
   const isStealth = strategy === 'stealth' || options.avoidCameras;
   const isNoTolls = strategy === 'eco_no_tolls' || options.avoidTolls;
@@ -59,7 +79,9 @@ export function auditRouteThreats(
   let tollCost = isNoTolls ? 0 : (distanceMeters > 20000 ? Math.round((distanceMeters / 30000) * 4.75 * 100) / 100 : 0);
 
   // Road closures and construction
-  let closures = options.avoidClosedRoads ? 0 : (distanceMeters > 50000 ? Math.min(2, Math.floor(distanceMeters / 80000)) : 0);
+  let closures = options.avoidClosedRoads ? 0 : (hazardPoints?.closures?.length
+    ? hazardPoints.closures.filter(c => coordinates.some((pt, idx) => idx < coordinates.length - 1 && pointToSegmentDistanceMeters(c[0], c[1], pt[0], pt[1], coordinates[idx+1][0], coordinates[idx+1][1]) < 800)).length
+    : (distanceMeters > 50000 ? Math.min(2, Math.floor(distanceMeters / 80000)) : 0));
   let construction = options.avoidConstruction ? 0 : Math.min(3, Math.floor(distanceMeters / 40000));
 
   // Flood risk calculation
@@ -76,7 +98,12 @@ export function auditRouteThreats(
     crimeIndex = Math.max(72, Math.round(92 - (distanceMeters / 100000) * 10));
   }
 
-  const plumeExposure = !options.avoidToxicPlumes && distanceMeters > 45000 && Math.random() < 0.2;
+  const coordHash = coordinates.length > 0 ? Math.abs(Math.sin(coordinates[0][0] * 31.5 + coordinates[0][1] * 17.3)) : 0;
+  const plumeExposure = !options.avoidToxicPlumes && (
+    hazardPoints?.toxicSites?.length
+      ? hazardPoints.toxicSites.some(t => coordinates.some((pt, idx) => idx < coordinates.length - 1 && pointToSegmentDistanceMeters(t[0], t[1], pt[0], pt[1], coordinates[idx+1][0], coordinates[idx+1][1]) < 2000))
+      : (distanceMeters > 45000 && coordHash < 0.2)
+  );
 
   const avoidanceScore = isStealth
     ? '100% SHIELDED (0 ALPR)'

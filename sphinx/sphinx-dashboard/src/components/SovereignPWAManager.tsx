@@ -61,7 +61,7 @@ export function SovereignPWAManager({ currentTier, onUpgradeTier }: SovereignPWA
 
     // Check if catalog is cached
     if ('caches' in window) {
-      caches.open('sphinx-grid-down-v1').then((cache) => {
+      caches.open('sphinx-grid-down-v2').then((cache) => {
         cache.match('/data/civil_preparedness_catalog.json').then((resp) => {
           if (resp) setCatalogCached(true);
         });
@@ -87,7 +87,10 @@ export function SovereignPWAManager({ currentTier, onUpgradeTier }: SovereignPWA
 
     try {
       setActionMessage('Registering Grid-Down Service Worker...');
-      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      const swUrl = window.location.pathname.startsWith('/sphinx') ? '/sphinx/sw.js' : '/sw.js';
+      const scope = window.location.pathname.startsWith('/sphinx') ? '/sphinx/' : '/';
+      const reg = await navigator.serviceWorker.register(swUrl, { scope })
+        .catch(() => navigator.serviceWorker.register('/sw.js', { scope: '/' }));
       setSwRegistration(reg);
       setSwStatus('active');
       setActionMessage('Grid-Down Autonomous Service Worker registered and active.');
@@ -114,20 +117,36 @@ export function SovereignPWAManager({ currentTier, onUpgradeTier }: SovereignPWA
     setActionMessage('Fetching and caching Master Logistics Catalog (30 Tabs)...');
 
     try {
-      const resp = await fetch('/data/civil_preparedness_catalog.json');
-      if (resp.ok) {
-        if ('caches' in window) {
-          const cache = await caches.open('sphinx-grid-down-v1');
-          await cache.put('/data/civil_preparedness_catalog.json', resp.clone());
+      const datasets = [
+        'civil_preparedness_catalog.json', 'watchtower_baseline.json', 'cell_towers.geojson',
+        'critical_infrastructure_global.geojson', 'public_lands_global.geojson', 'submarine_cables.geojson',
+        'landing_points.geojson', 'data_centers_global.geojson', 'boundaries_countries.geojson',
+        'boundaries_states.geojson', 'toxic_sites_global.geojson', 'wildfires.geojson',
+        'road_closures.geojson', 'lightning.geojson', 'snowboard_resorts_global.geojson',
+        'resorts/bundled_pistes_lifts.geojson', 'resorts/mt_baldy_pistes_lifts.geojson',
+        'evacuation_centers.geojson', 'tactical_presets.json'
+      ];
+      let cachedCount = 0;
+      if ('caches' in window) {
+        const cache = await caches.open('sphinx-grid-down-v2');
+        for (let i = 0; i < datasets.length; i++) {
+          const ds = datasets[i];
+          setActionMessage(`Caching offline dataset ${i + 1}/${datasets.length}: ${ds}...`);
+          try {
+            const resp = await fetch(`/data/${ds}`).catch(() => fetch(`/sphinx/data/${ds}`));
+            if (resp && resp.ok) {
+              await cache.put(`/data/${ds}`, resp.clone());
+              await cache.put(`/sphinx/data/${ds}`, resp.clone());
+              cachedCount++;
+            }
+          } catch (e) {}
         }
-        setCatalogCached(true);
-        setActionMessage('Master Logistics Catalog successfully persisted in offline cache.');
-        if (navigator.storage && navigator.storage.estimate) {
-          const est = await navigator.storage.estimate();
-          if (est.usage) setCacheBytes(est.usage);
-        }
-      } else {
-        setActionMessage(`Catalog fetch returned HTTP ${resp.status}`);
+      }
+      setCatalogCached(true);
+      setActionMessage(`Persisted ${cachedCount}/${datasets.length} master datasets into offline cache.`);
+      if (navigator.storage && navigator.storage.estimate) {
+        const est = await navigator.storage.estimate();
+        if (est.usage) setCacheBytes(est.usage);
       }
     } catch (err: any) {
       setActionMessage(`Catalog pre-cache failed: ${err.message}`);
