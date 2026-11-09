@@ -33,10 +33,12 @@ const ReturnToHubButton = () => {
       window[k] = false; 
     });
     
-    if (window._goToStation) {
-      window._goToStation(0, 1800);
+    if (window.directTeleportTo) {
+      window.directTeleportTo(0, 1350);
+    } else if (window._goToStation) {
+      window._goToStation(0, 1350);
     } else {
-      goToStation(0, 1800);
+      goToStation(0, 1350);
     }
   };
 

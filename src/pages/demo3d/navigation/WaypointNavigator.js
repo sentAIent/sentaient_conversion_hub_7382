@@ -134,6 +134,9 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
       window._warpProgress = targetStation.p;
       window._isProgrammaticScroll = false;
       window._currentStationIndex = clampedIndex;
+      if (targetStation.id === 'hub') {
+        window._snapCamera = true;
+      }
       activeAnimId = null;
       
       if (window._scrollEl) {
@@ -235,6 +238,9 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
         window._scrollEl.style.overflow = 'auto';
       }
       window._currentStationIndex = clampedIndex;
+      if (targetStation.id === 'hub') {
+        window._snapCamera = true;
+      }
       activeAnimId = null;
       window._warpProgress = undefined;
       window._isProgrammaticScroll = false;

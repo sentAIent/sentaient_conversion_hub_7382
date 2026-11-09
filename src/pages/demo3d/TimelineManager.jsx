@@ -238,6 +238,14 @@ export const CameraController = () => {
       finalPosZ = THREE.MathUtils.lerp(targetPos.z, window._elevateChaseCam.pos.z, chaseBlend);
     }
     
+    // Keep camera upright and level during direct teleport to/from load screen (Hub)
+    if (window._isDirectTeleportActive && window._teleportWarp) {
+      if (window._teleportWarp.targetStationId === 'hub' || window._teleportWarp.startStationId === 'hub') {
+        targetRotX = 0;
+        targetRotY = 0;
+      }
+    }
+    
     if (window._snapCamera) {
       state.camera.position.set(finalPosX, finalPosY, finalPosZ);
       tempEuler.set(targetRotX, targetRotY, 0);
@@ -259,11 +267,6 @@ export const CameraController = () => {
         tempQuat.slerp(window._elevateChaseCam.quat, chaseBlend);
       }
       state.camera.quaternion.slerp(tempQuat, 0.18);
-      
-      // Slight banking based on scroll speed (attenuated during chase cam)
-      const velocity = scroll.delta * 10 * (1 - chaseBlend);
-      // We add the banking on top of the slerped rotation
-      state.camera.rotateZ(THREE.MathUtils.lerp(0, velocity * 2.0, 0.2));
 
       // Dynamic action FOV expansion for panoramic alpine clearance & warp speed dilation
       const fovBoost = window._teleportFovBoost || 0;
