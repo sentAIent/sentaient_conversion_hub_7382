@@ -130,7 +130,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
-                color={coreGlowColor || (name === 'MindWave' ? '#38bdf8' : (name === 'Icebreaker' ? '#FFAA33' : (name === 'Contango' ? '#FFE066' : '#ffffff')))}
+                color={coreGlowColor || (name === 'MindWave' ? '#38bdf8' : (name === 'Icebreaker' ? '#FFAA33' : (name === 'Contango' ? '#FFE066' : (name === 'Interstellar' ? '#38bdf8' : '#ffffff'))))}
                 transparent
                 opacity={(name === 'Liquid' ? 0.0 : 1.0) * (isHovered ? 0.95 : (isDimmed ? 0.35 : 0.65)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
@@ -143,7 +143,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
-                color={glowColor || (name === 'Icebreaker' ? '#FF6600' : (name === 'Contango' ? '#FFD700' : color))}
+                color={glowColor || (name === 'Icebreaker' ? '#FF6600' : (name === 'Contango' ? '#FFD700' : (name === 'Interstellar' ? '#00D2FF' : color)))}
                 transparent
                 opacity={(isHovered ? 1.0 : (isDimmed ? 0.45 : 0.88)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
@@ -156,7 +156,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
-                color={glowColor || (name === 'Icebreaker' ? '#FF5500' : (name === 'Contango' ? '#F59E0B' : color))}
+                color={glowColor || (name === 'Icebreaker' ? '#FF5500' : (name === 'Contango' ? '#F59E0B' : (name === 'Interstellar' ? '#0284C7' : color)))}
                 transparent
                 opacity={(isHovered ? 0.65 : (isDimmed ? 0.20 : 0.42)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
@@ -340,7 +340,7 @@ export const WORLDS_DATA = [
   { name: 'CloveH2O', startP: 0.32, p: 0.36, endP: 0.37, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.584, 1.584], summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.' },
   { name: 'MindWave', startP: 0.02, p: 0.040, endP: 0.06, color: '#38BDF8', ringColor: '#FF2A6D', logoUrl: '/mindwave-ring-logo.png', logoScale: [1.555, 1.555], coreGlowColor: '#38BDF8', summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.' },
   { name: 'Icebreaker', startP: 0.10, p: 0.135, endP: 0.16, color: '#00F0FF', glowColor: '#FF6600', coreGlowColor: '#FFAA33', ringColor: '#FF6600', logoUrl: '/icebreaker_logo.png', logoScale: [1.0, 1.0], summary: 'Real Content. Real Human Connections.', description: 'Thaw the social ice. Transform superficial online interactions into vibrant, authentic real-world connections and spontaneous events.' },
-  { name: 'Interstellar', startP: 0.16, p: 0.21, endP: 0.22, color: '#FF3F00', glowColor: '#cbd5e1', coreGlowColor: '#f1f5f9', glowMultiplier: 0.35, ringColor: '#00FFFF', logoUrl: '/interstellar_logo_final.png', logoScale: [1.287, 1.287], summary: 'Galactic Strategy & Space Conquest', description: 'Command deep-space starfleets, conquer uncharted solar systems, extract stellar resources, and build an invincible galactic empire.' },
+  { name: 'Interstellar', startP: 0.16, p: 0.21, endP: 0.22, color: '#FF3F00', glowColor: '#00D2FF', coreGlowColor: '#38BDF8', glowMultiplier: 0.75, ringColor: '#00FFFF', logoUrl: '/interstellar_logo_final.png', logoScale: [1.287, 1.287], summary: 'Galactic Strategy & Space Conquest', description: 'Command deep-space starfleets, conquer uncharted solar systems, extract stellar resources, and build an invincible galactic empire.' },
   { name: 'Elevate', startP: 0.520, p: 0.550, endP: 0.570, color: '#38BDF8', ringColor: '#FF8000', logoUrl: '/elevate_logo_final.png', logoScale: [1.365, 0.81], summary: '3D Freeride Snowboard Action with Live Mountain Weather, Snow Conditions & Gear Intelligence', description: 'Drop into high-stakes mountain freeriding with thrilling 3D snowboarding action, paired with a complete mountain companion that delivers real-time weather, live snowpack conditions, avalanche safety radar, and personalized gear optimization.' },
   { name: 'FantasyQuant', startP: 0.37, p: 0.42, endP: 0.43, color: '#00E676', ringColor: '#FFD700', logoUrl: '/fantasyquant_wizard_bright.png', logoScale: [0.825, 1.10], summary: 'Sports Betting Intelligence & Quantitative Edge', description: 'Gain a mathematical advantage with algorithmic sports modeling, real-time odds discrepancies, and predictive simulation engines.' },
   { name: 'Sphinx', startP: 0.580, p: 0.60, endP: 0.62, color: '#F59E0B', ringColor: '#00D2FF', logoUrl: '/sphinx_logo_final.png', logoScale: [1.142, 0.9], summary: 'Global Threat Intelligence & Unified Security', description: 'Protect assets worldwide with real-time natural disaster tracking, geopolitical threat monitoring, and centralized perimeter security.' },
