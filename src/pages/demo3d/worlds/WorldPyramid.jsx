@@ -266,8 +266,8 @@ export default function WorldPyramid({ position, visible }) {
         {/* Floating High-Res PyRAmid Logo Icon (Sleek & Scaled) */}
         <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
           <mesh position={[0, 50, 0]}>
-            <planeGeometry args={[75, 75]} />
-            <meshBasicMaterial map={logoTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+            <planeGeometry args={[82, 82]} />
+            <meshBasicMaterial map={logoTex} transparent depthWrite={false} side={THREE.DoubleSide} toneMapped={false} />
           </mesh>
         </Float>
 
