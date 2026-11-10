@@ -165,9 +165,10 @@ export class GlobalDataEngine {
       }
     }
 
-    // Direct USGS Worldwide All-Day GeoJSON Feed (Zero blind spots globally)
+    // Direct USGS Worldwide GeoJSON Feed (Live 24h vs. Historical Month)
     try {
-      const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+      const endpoint = timeframe === 'historical' ? 'significant_month.geojson' : 'all_day.geojson';
+      const res = await fetch(`https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/${endpoint}`);
       if (res.ok) {
         const d = await res.json();
         if (Array.isArray(d.features)) return d.features;

@@ -575,6 +575,7 @@ export default function SphinxMap() {
   const [overpassError, setOverpassError] = useState<string | null>(null);
   const [disasterFeatures, setDisasterFeatures] = useState<any[]>([]);
   const [earthquakeFeatures, setEarthquakeFeatures] = useState<any[]>([]);
+  const [minQuakeMagnitude, setMinQuakeMagnitude] = useState<number>(0); // 0 = ALL, 2.5 = M2.5+, 4.5 = M4.5+, 6.0 = M6.0+
   const [powerFeatures, setPowerFeatures] = useState<any[]>([]);
   const [aviationFeatures, setAviationFeatures] = useState<any[]>([]);
   const [emergencyFeatures, setEmergencyFeatures] = useState<any[]>([]);
@@ -1732,7 +1733,7 @@ export default function SphinxMap() {
     custom_pins: settings.custom_pins?.length || 0,
     springs: springFeatures.length,
     cellTowers: cellTowerFeatures.length,
-    earthquakes: earthquakeFeatures.length,
+    earthquakes: (minQuakeMagnitude <= 0 ? earthquakeFeatures.length : earthquakeFeatures.filter(f => (f.properties?.mag ?? 0) >= minQuakeMagnitude).length),
     disasters: disasterFeatures.length,
     aircraft: aircraftFeatures.length,
     power: powerFeatures.length,
@@ -1782,7 +1783,7 @@ export default function SphinxMap() {
     water_aqueducts: waterAqueductsData?.features?.length || 0,
     strategic_facilities: fastBboxCount(strategicFacilitiesData?.features),
   }), [
-    settings.custom_pins, settings.layers.fire_spread_forecast, springFeatures, cellTowerFeatures, earthquakeFeatures,
+    settings.custom_pins, settings.layers.fire_spread_forecast, springFeatures, cellTowerFeatures, earthquakeFeatures, minQuakeMagnitude,
     disasterFeatures, aircraftFeatures, powerFeatures, aviationFeatures,
     emergencyFeatures, cameraFeatures, weatherStationFeatures, dataCenterFeatures,
     radarFeatures, publicLandFeatures, campsiteFeatures, trailFeatures,
@@ -1807,7 +1808,11 @@ export default function SphinxMap() {
   const springData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: springFeatures }), [springFeatures]);
   const aircraftData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: aircraftFeatures }), [aircraftFeatures]);
   const disasterData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: disasterFeatures }), [disasterFeatures]);
-  const earthquakeData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: earthquakeFeatures }), [earthquakeFeatures]);
+  const filteredEarthquakeFeatures = React.useMemo(() => {
+    if (minQuakeMagnitude <= 0) return earthquakeFeatures;
+    return earthquakeFeatures.filter(f => (f.properties?.mag ?? 0) >= minQuakeMagnitude);
+  }, [earthquakeFeatures, minQuakeMagnitude]);
+  const earthquakeData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: filteredEarthquakeFeatures }), [filteredEarthquakeFeatures]);
   const powerData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: powerFeatures }), [powerFeatures]);
   const aviationData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: aviationFeatures }), [aviationFeatures]);
   const emergencyData = React.useMemo(() => ({ type: 'FeatureCollection' as const, features: emergencyFeatures }), [emergencyFeatures]);
@@ -4201,7 +4206,7 @@ export default function SphinxMap() {
 
               {selectedFeature.properties.type === 'earthquake' && (
                 <div className="space-y-1 mt-2">
-                  <p><strong>Magnitude:</strong> {selectedFeature.properties.mag}</p>
+                  <p><strong>Magnitude:</strong> <span className="font-bold text-orange-400">M{selectedFeature.properties.mag}</span> <span className="text-[9px] px-1 py-0.2 rounded font-bold bg-orange-950 text-orange-300 border border-orange-500/50">{(selectedFeature.properties.mag >= 6) ? 'MAJOR' : (selectedFeature.properties.mag >= 4.5) ? 'MODERATE' : (selectedFeature.properties.mag >= 2.5) ? 'LIGHT' : 'MICRO'}</span></p>
                   <p><strong>Location:</strong> {selectedFeature.properties.place}</p>
                   <p><strong>Depth:</strong> {(selectedFeature as any).geometry?.coordinates?.[2]} km</p>
                   <p><strong>Time:</strong> {new Date(selectedFeature.properties.time).toLocaleString()}</p>
@@ -5795,6 +5800,36 @@ export default function SphinxMap() {
               </span>
               {renderLayerBadge(visibleCounts.earthquakes, 'earthquakes', 'text-orange-500')}
             </div>
+
+            {settings.layers.earthquakes && !isLegendCollapsed && (
+              <div className="pl-7 pr-1 py-1 flex items-center justify-between border-b border-white/5 mb-1 bg-black/30 rounded-md">
+                <span className="text-[9px] text-gray-400 font-mono font-semibold">MAG:</span>
+                <div className="flex items-center gap-1">
+                  {[
+                    { label: 'ALL', val: 0 },
+                    { label: '2.5+', val: 2.5 },
+                    { label: '4.5+', val: 4.5 },
+                    { label: '6.0+', val: 6.0 },
+                  ].map(item => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMinQuakeMagnitude(item.val);
+                      }}
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-colors ${
+                        minQuakeMagnitude === item.val
+                          ? 'bg-orange-950 border-orange-400 text-orange-300 shadow-[0_0_8px_rgba(249,115,22,0.4)]'
+                          : 'bg-black/50 border-gray-800 text-gray-400 hover:text-white hover:border-gray-600'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div title={DATA_POINTS_TOOLTIPS['submarine_cables']} className={`flex justify-between items-center cursor-pointer hover:bg-white/5 p-1.5 rounded transition-colors ${!settings.layers.submarine_cables ? 'opacity-50' : ''}`} onClick={() => toggleLayer('submarine_cables')} onMouseEnter={() => setHoveredLegendLayer('submarine_cables')} onMouseLeave={() => setHoveredLegendLayer(null)}>
               <span className="flex items-center gap-3">
