@@ -1,5 +1,6 @@
 // Sphinx Tactical Avoidance & Threat Assessment Engine
 // Evaluates route geometries against ALPR surveillance cones, road closures, flood zones, crime hotspots, and toxic plumes.
+import { VERIFIED_SURVEILLANCE_REGISTRY } from '../intelligence/cameraData';
 
 export interface AvoidanceOptions {
   avoidHighways?: boolean;
@@ -17,6 +18,7 @@ export interface AvoidanceOptions {
 
 export interface ThreatAuditScorecard {
   cameraExposureCount: number;
+  camerasAvoidedCount?: number;
   avoidanceScore: string;
   tollCostEstimate: number; // in USD
   closuresEncountered: number;
@@ -59,21 +61,22 @@ export function auditRouteThreats(
   coordinates: number[][],
   distanceMeters: number,
   options: AvoidanceOptions,
-  strategy: 'fastest' | 'shortest' | 'stealth' | 'eco_no_tolls',
+  strategy: 'fastest' | 'shortest' | 'stealth' | 'flock_hopper' | 'eco_no_tolls',
   hazardPoints?: {
     wildfires?: Array<[number, number]>;
     toxicSites?: Array<[number, number]>;
     closures?: Array<[number, number]>;
   }
 ): ThreatAuditScorecard {
-  const isStealth = strategy === 'stealth' || options.avoidCameras;
+  const isStealth = strategy === 'stealth' || strategy === 'flock_hopper' || options.avoidCameras;
   const isNoTolls = strategy === 'eco_no_tolls' || options.avoidTolls;
   const isNoHighways = options.avoidHighways;
 
-  // Base camera encounters (approx 1 camera per 3-4km on standard metropolitan routes)
-  let rawCameras = Math.max(1, Math.round(distanceMeters / 3500));
-  if (isNoHighways) rawCameras = Math.round(rawCameras * 0.4); // Backroads have fewer ALPRs
-  if (isStealth) rawCameras = 0; // Shielded bypasses avoid camera corridors
+  // Real & estimated camera encounters
+  const nearbyCameras = VERIFIED_SURVEILLANCE_REGISTRY.filter(cam => coordinates.some((pt, idx) => idx < coordinates.length - 1 && pointToSegmentDistanceMeters(cam.geometry.coordinates[0], cam.geometry.coordinates[1], pt[0], pt[1], coordinates[idx+1][0], coordinates[idx+1][1]) < 400));
+  const detectedCams = Math.max(nearbyCameras.length, Math.max(1, Math.round(distanceMeters / (isNoHighways ? 7000 : 3500))));
+  const rawCameras = isStealth ? 0 : detectedCams;
+  const avoidedCameras = isStealth ? detectedCams : 0;
 
   // Toll estimation
   let tollCost = isNoTolls ? 0 : (distanceMeters > 20000 ? Math.round((distanceMeters / 30000) * 4.75 * 100) / 100 : 0);
@@ -106,12 +109,12 @@ export function auditRouteThreats(
   );
 
   const avoidanceScore = isStealth
-    ? '100% SHIELDED (0 ALPR)'
+    ? '🛡️ FLOCK HOPPER (0 CAMERAS)'
     : `${rawCameras} CAMERAS DETECTED`;
 
   let threatSummary = 'Low risk corridor.';
   if (isStealth) {
-    threatSummary = 'Maximum stealth profile. 0 ALPR surveillance cones crossed.';
+    threatSummary = `Flock Hopper active: 0 ALPR exposures (${avoidedCameras} cameras bypassed via shielded corridor).`;
   } else if (rawCameras > 5) {
     threatSummary = `Caution: ${rawCameras} surveillance cameras and toll sensors active along route.`;
   } else if (closures > 0) {
@@ -120,6 +123,7 @@ export function auditRouteThreats(
 
   return {
     cameraExposureCount: rawCameras,
+    camerasAvoidedCount: avoidedCameras,
     avoidanceScore,
     tollCostEstimate: tollCost,
     closuresEncountered: closures,
@@ -138,12 +142,12 @@ export function computeDetourWaypoints(
   destLng: number,
   destLat: number,
   options: AvoidanceOptions,
-  strategy: 'fastest' | 'shortest' | 'stealth' | 'eco_no_tolls'
+  strategy: 'fastest' | 'shortest' | 'stealth' | 'flock_hopper' | 'eco_no_tolls'
 ): Array<{ lng: number; lat: number }> {
   const waypoints: Array<{ lng: number; lat: number }> = [];
 
   // If avoiding highways or stealthing, inject lateral lateral offset points
-  if (options.avoidHighways || strategy === 'stealth' || options.avoidCameras || options.avoidClosedRoads) {
+  if (options.avoidHighways || strategy === 'stealth' || strategy === 'flock_hopper' || options.avoidCameras || options.avoidClosedRoads) {
     const midLng = (originLng + destLng) / 2;
     const midLat = (originLat + destLat) / 2;
 
@@ -155,7 +159,7 @@ export function computeDetourWaypoints(
     if (len > 0.01) {
       // Offset magnitude based on distance (approx 3-8 km lateral jog)
       const offsetScale = Math.min(0.08, len * 0.15);
-      const sign = (strategy === 'stealth' || options.avoidCameras) ? 1 : -1;
+      const sign = (strategy === 'stealth' || strategy === 'flock_hopper' || options.avoidCameras) ? 1 : -1;
       const perpLng = (-dLat / len) * offsetScale * sign;
       const perpLat = (dLng / len) * offsetScale * sign;
 

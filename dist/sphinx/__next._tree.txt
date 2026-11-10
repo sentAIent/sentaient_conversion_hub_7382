@@ -1,3 +1,3 @@
 :HL["/sphinx/_next/static/css/3c824bb7deb401d5.css","style"]
-:HL["/sphinx/_next/static/css/295132b5634d65b9.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":4112,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4224,"slots":null}}},"staleTime":300,"buildId":"p72p1zqqOssdCe50LIbX3"}
+:HL["/sphinx/_next/static/css/7273ba5ffaa277e0.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":4112,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4224,"slots":null}}},"staleTime":300,"buildId":"hNAT1p6UjwZqY3PXdzrTt"}

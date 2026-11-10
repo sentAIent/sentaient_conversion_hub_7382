@@ -3028,7 +3028,7 @@ export default function SphinxMap() {
                   ['==', ['get', 'mode'], 'cycling'], '#10b981',
                   ['==', ['get', 'mode'], 'mountain_biking'], '#f59e0b',
                   ['==', ['get', 'mode'], 'skateboarding'], '#84cc16',
-                  directionsResult.routingStrategy === 'stealth' ? '#a855f7' :
+                  (directionsResult.routingStrategy === 'stealth' || directionsResult.routingStrategy === 'flock_hopper') ? '#a855f7' :
                   directionsResult.trafficCongestion === 'severe' ? '#ef4444' : 
                   directionsResult.trafficCongestion === 'heavy' ? '#f97316' : 
                   directionsResult.trafficCongestion === 'moderate' ? '#eab308' : '#06b6d4'
