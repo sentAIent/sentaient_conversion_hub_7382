@@ -385,39 +385,60 @@ export const TimelineManager = () => {
       };
     } else {
       newZones = {
-        intro: p < 0.035,
+        intro: p < 0.025,
         mindwave: p >= 0.012 && p < 0.075,
-        wormhole_ice: p >= 0.045 && p < 0.125,
+        wormhole_ice: p >= 0.045 && p < 0.105,
         icebreaker: p >= 0.080 && p < 0.170, 
-        wormhole_sound: p >= 0.140 && p < 0.205,
+        wormhole_sound: p >= 0.155 && p < 0.185,
         interstellar: p >= 0.175 && p < 0.235, 
-        w_legal: p >= 0.210 && p < 0.255,
+        w_legal: p >= 0.220 && p < 0.238,
         legal: p >= 0.230 && p < 0.280,
-        w_autopilot: p >= 0.255 && p < 0.300,
+        w_autopilot: p >= 0.265 && p < 0.282,
         autopilot: p >= 0.275 && p < 0.325,
-        w_clove: p >= 0.300 && p < 0.345,
+        w_clove: p >= 0.310 && p < 0.328,
         clove: p >= 0.320 && p < 0.380,
-        w_fantasy: p >= 0.355 && p < 0.400,
+        w_fantasy: p >= 0.365 && p < 0.398,
         fantasy: p >= 0.390 && p < 0.445,
-        w_contango: p >= 0.420 && p < 0.455,
+        w_contango: p >= 0.430 && p < 0.452,
         contango: p >= 0.445 && p < 0.490,
-        w_sentaient: p >= 0.465 && p < 0.505,
+        w_sentaient: p >= 0.475 && p < 0.490,
         sentaient: p >= 0.480 && p < 0.535,
-        w_elevate: p >= 0.515 && p < 0.550,
+        w_elevate: p >= 0.528 && p < 0.538,
         elevate: p >= 0.530 && p < 0.575,
-        w_sphinx: p >= 0.555 && p < 0.610,
+        w_sphinx: p >= 0.570 && p < 0.595,
         sphinx: p >= 0.585 && p < 0.635,
-        w_liquid: p >= 0.620 && p < 0.670,
+        w_liquid: p >= 0.630 && p < 0.655,
         liquid: p >= 0.645 && p < 0.695,
-        w_maya: p >= 0.680 && p < 0.730,
+        w_maya: p >= 0.690 && p < 0.715,
         maya: p >= 0.705 && p < 0.760,
-        w_pyramid: p >= 0.745 && p < 0.800,
+        w_pyramid: p >= 0.755 && p < 0.785,
         pyramid: p >= 0.770 && p < 0.835,
-        w_matrix: p >= 0.815 && p < 0.870,
+        w_matrix: p >= 0.825 && p < 0.855,
         matrix: p >= 0.840 && p < 0.905,
-        w_lightspeed: p >= 0.885 && p < 0.940,
+        w_lightspeed: p >= 0.900 && p < 0.925,
         lightspeed: p >= 0.915
       };
+    }
+
+    // Unconditionally ensure wormholes are completely hidden at any world's focal point
+    const isAtAnyFocalPoint = window._isWorldActionActive || 
+      WORLD_PAUSE_STATIONS.some(st => Math.abs(st.p - p) < 0.015);
+    if (isAtAnyFocalPoint) {
+      newZones.wormhole_ice = false;
+      newZones.wormhole_sound = false;
+      newZones.w_legal = false;
+      newZones.w_autopilot = false;
+      newZones.w_clove = false;
+      newZones.w_fantasy = false;
+      newZones.w_contango = false;
+      newZones.w_sentaient = false;
+      newZones.w_elevate = false;
+      newZones.w_sphinx = false;
+      newZones.w_liquid = false;
+      newZones.w_maya = false;
+      newZones.w_pyramid = false;
+      newZones.w_matrix = false;
+      newZones.w_lightspeed = false;
     }
     
     let changed = false;
@@ -490,30 +511,30 @@ export const TimelineManager = () => {
       <WormholeTeleport />
 
       <MiniWorldsHub visible={activeZones.intro} />
-      <WormholeMatrix startZ={20} endZ={-1200} visible={activeZones.intro || activeZones.mindwave} />
+      <WormholeMatrix startZ={20} endZ={-600} visible={activeZones.intro} />
       
       <WorldMindWave position={[0, 0, -1350]} visible={activeZones.mindwave} />
       
       {/* Plunge tunnel down Y axis */}
-      <WormholeIce position={[0, -2000, -1250]} rotation={[0, 0, 0]} length={4400} visible={activeZones.wormhole_ice} />
+      <WormholeIce position={[0, -1800, -1250]} rotation={[0, 0, 0]} length={3600} visible={activeZones.wormhole_ice} />
       
       {/* Icebreaker Cavern */}
       <WorldIcebreaker position={[0, -4000, -2550]} visible={activeZones.icebreaker} />
       
-      <WormholeGeneric position={[0, -4000, -5000]} rotation={[Math.PI/2, 0, 0]} length={4800} color="#ff00ff" speed={25.0} visible={activeZones.wormhole_sound} />
+      <WormholeGeneric position={[0, -4000, -5050]} rotation={[Math.PI/2, 0, 0]} length={2500} color="#ff00ff" speed={25.0} visible={activeZones.wormhole_sound} />
 
       {/* Interstellar */}
       <Interstellar position={[0, -4000, -7550]} rotation={[0, 0, 0]} visible={activeZones.interstellar} />
 
-      <WormholeGeneric position={[0, -4000, -9050]} rotation={[Math.PI/2, 0, 0]} length={3800} color="#d4af37" speed={25.0} visible={activeZones.w_legal} />
+      <WormholeGeneric position={[0, -4000, -8850]} rotation={[Math.PI/2, 0, 0]} length={1200} color="#d4af37" speed={25.0} visible={activeZones.w_legal} />
       
       <LegalEagle position={[0, -4000, -10550]} rotation={[0, 0, 0]} visible={activeZones.legal} />
 
-      <WormholeGeneric position={[0, -4000, -12200]} rotation={[Math.PI/2, 0, 0]} length={3800} color="#00ffff" speed={40.0} visible={activeZones.w_autopilot} />
+      <WormholeGeneric position={[0, -4000, -12000]} rotation={[Math.PI/2, 0, 0]} length={1000} color="#00ffff" speed={40.0} visible={activeZones.w_autopilot} />
 
       <WorldAutopilot position={[0, -4000, -13550]} rotation={[0, 0, 0]} visible={activeZones.autopilot} />
 
-      <WormholeGeneric position={[0, -4000, -15200]} rotation={[Math.PI/2, 0, 0]} length={3800} color="#ff00ff" speed={40.0} visible={activeZones.w_clove} />
+      <WormholeGeneric position={[0, -4000, -15000]} rotation={[Math.PI/2, 0, 0]} length={1000} color="#ff00ff" speed={40.0} visible={activeZones.w_clove} />
 
       <WorldCloveH2O position={[0, -4000, -16550]} rotation={[0, 0, 0]} visible={activeZones.clove} />
 
@@ -525,29 +546,29 @@ export const TimelineManager = () => {
 
       <ContangoQuant position={[0, -11750, -24800]} rotation={[0, 0, 0]} visible={activeZones.contango} />
 
-      <WormholeGeneric position={[0, -11750, -27075]} rotation={[Math.PI/2, 0, 0]} length={4800} color="#60a9ff" speed={30.0} visible={activeZones.w_sentaient} />
+      <WormholeGeneric position={[0, -11750, -26825]} rotation={[Math.PI/2, 0, 0]} length={3250} color="#60a9ff" speed={30.0} visible={activeZones.w_sentaient} />
 
       <WorldSentaient position={[0, -11750, -29350]} rotation={[0, 0, 0]} visible={activeZones.sentaient} />
       
-      <WormholeElevate position={[0, -11750, -31750]} rotation={[Math.PI/2, 0, 0]} length={3600} visible={activeZones.w_elevate} />
+      <WormholeElevate position={[0, -11750, -31700]} rotation={[Math.PI/2, 0, 0]} length={1400} visible={activeZones.w_elevate} />
       <WorldElevate position={[0, -11750, -33000]} visible={activeZones.elevate} />
       
-      <WormholeSphinx position={[0, -11750, -35140]} rotation={[Math.PI/2, 0, 0]} length={3800} visible={activeZones.w_sphinx} />
+      <WormholeSphinx position={[0, -11750, -34900]} rotation={[Math.PI/2, 0, 0]} length={1800} visible={activeZones.w_sphinx} />
       <WorldSphinx position={[0, -11750, -37000]} visible={activeZones.sphinx} />
       
-      <WormholeLiquid position={[0, -11750, -39050]} rotation={[Math.PI/2, 0, 0]} length={4400} visible={activeZones.w_liquid} />
+      <WormholeLiquid position={[0, -11750, -38950]} rotation={[Math.PI/2, 0, 0]} length={1900} visible={activeZones.w_liquid} />
       <WorldLiquid position={[0, -11750, -41000]} visible={activeZones.liquid} />
       
-      <WormholeMaya position={[0, -11750, -43400]} rotation={[Math.PI/2, 0, 0]} length={4400} visible={activeZones.w_maya} />
+      <WormholeMaya position={[0, -11750, -43400]} rotation={[Math.PI/2, 0, 0]} length={1800} visible={activeZones.w_maya} />
       <WorldMaya position={[0, -11750, -45000]} visible={activeZones.maya} />
       
-      <WormholePyramid position={[0, -11750, -47260]} rotation={[Math.PI/2, 0, 0]} length={3800} visible={activeZones.w_pyramid} />
+      <WormholePyramid position={[0, -11750, -47200]} rotation={[Math.PI/2, 0, 0]} length={1400} visible={activeZones.w_pyramid} />
       <WorldPyramid position={[0, -11750, -49000]} visible={activeZones.pyramid} />
       
-      <WormholeMatrixTeam position={[0, -11750, -51060]} rotation={[Math.PI/2, 0, 0]} length={4400} visible={activeZones.w_matrix} />
+      <WormholeMatrixTeam position={[0, -11750, -51000]} rotation={[Math.PI/2, 0, 0]} length={2000} visible={activeZones.w_matrix} />
       <WorldMatrix position={[0, -11750, -53000]} visible={activeZones.matrix} />
       
-      <WormholeLightSpeed position={[0, -11750, -54875]} rotation={[Math.PI/2, 0, 0]} length={4200} visible={activeZones.w_lightspeed} />
+      <WormholeLightSpeed position={[0, -11750, -54800]} rotation={[Math.PI/2, 0, 0]} length={1600} visible={activeZones.w_lightspeed} />
       <WorldLightSpeed position={[0, -11750, -57000]} visible={activeZones.lightspeed} />
     </group>
   );
