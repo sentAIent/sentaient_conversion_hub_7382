@@ -532,7 +532,7 @@ const Scene3D = () => {
           <TimelineManager />
           <Preload all />
         </React.Suspense>
-        <Sparkles count={400} scale={200} size={3} speed={0.8} opacity={0.4} color="#00ff44" />
+        <Sparkles count={1000} scale={200} size={4} speed={0.8} opacity={0.5} color="#00ff44" />
 
         {/* The HTML UI Layer */}
         <Scroll html style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
@@ -544,10 +544,9 @@ const Scene3D = () => {
       {/* Cinematic Post-Processing - High-Performance Zero-Allocation */}
       <EffectComposer disableNormalPass multisampling={0}>
         <Bloom 
-          luminanceThreshold={0.88} 
+          luminanceThreshold={0.85} 
           mipmapBlur 
-          intensity={0.95} 
-          levels={5}
+          intensity={1.2} 
         />
       </EffectComposer>
     </Canvas>

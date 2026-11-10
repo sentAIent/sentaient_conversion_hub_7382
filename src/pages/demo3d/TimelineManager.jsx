@@ -511,7 +511,7 @@ export const TimelineManager = () => {
       <WormholeTeleport />
 
       <MiniWorldsHub visible={activeZones.intro} />
-      <WormholeMatrix startZ={20} endZ={-600} visible={activeZones.intro} />
+      <WormholeMatrix startZ={20} endZ={-1000} visible={activeZones.intro} />
       
       <WorldMindWave position={[0, 0, -1350]} visible={activeZones.mindwave} />
       
