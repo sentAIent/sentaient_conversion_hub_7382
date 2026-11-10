@@ -115,11 +115,9 @@ interface SelectedFeature {
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
-const BASE_MAP_STYLE = MAPBOX_TOKEN
-  ? 'mapbox://styles/mapbox/dark-v11'
-  : {
-      version: 8 as const,
-      glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+const BASE_MAP_STYLE = {
+  version: 8 as const,
+  glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
       sources: {},
       layers: [
         {
@@ -2052,12 +2050,13 @@ export default function SphinxMap() {
         touchZoomRotate={true}
         maxPitch={85}
         onError={(e) => {
+          if (e?.error?.message?.includes('glyphs') || (e as any)?.statusMessage?.includes('glyphs')) return;
           console.error("MapLibre GL Error:", e);
           if (e?.error?.message?.includes('WebGL') || (e as any)?.statusMessage?.includes('WebGL')) {
             setIsWebGLSupported(false);
           }
         }}
-        mapStyle={isOfflineMode ? "http://localhost:3117/api/tiles/style.json" as any : BASE_MAP_STYLE as any}
+        mapStyle={BASE_MAP_STYLE as any}
         onLoad={(e) => {
           const map = e.target;
           if (typeof window !== 'undefined') {

@@ -19,6 +19,7 @@ export class ResilientDataClient {
    */
   public static isLocalServerViable(): boolean {
     if (typeof window === 'undefined') return false;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
     if (Date.now() < this.localServerDownUntil) return false;
     return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   }
@@ -55,19 +56,15 @@ export class ResilientDataClient {
   ): Promise<T | null> {
     const timeoutMs = options.timeoutMs ?? (primaryUrl.includes('3117') ? 300 : 1500);
 
-    // Try primary if not tripped
-    if (this.isLocalServerViable() || !primaryUrl.includes('3117')) {
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+    // Try primary if not tripped and online
+    if (!isOffline && (this.isLocalServerViable() || !primaryUrl.includes('3117'))) {
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-        // Normalize 127.0.0.1:3117 to relative /api when running on port 3000 to leverage Next.js rewrites and avoid PNA preflight
-        let targetUrl = primaryUrl;
-        if (typeof window !== 'undefined' && (targetUrl.includes('127.0.0.1:3117/api/') || targetUrl.includes('localhost:3117/api/'))) {
-          targetUrl = targetUrl.replace(/^https?:\/\/(127\.0\.0\.1|localhost):3117/, '');
-        }
-
-        const res = await fetch(targetUrl, {
+        const res = await fetch(primaryUrl, {
           signal: controller.signal,
           headers: options.headers
         });
