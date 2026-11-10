@@ -539,7 +539,7 @@ export const runIcebreakerMelt = (onComplete) => {
   if (window._scrollEl) {
     const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
     if (maxScroll > 0) {
-      window._scrollEl.scrollTop = 0.131 * maxScroll;
+      window._scrollEl.scrollTop = 0.120 * maxScroll;
     }
   }
 
@@ -556,12 +556,34 @@ export const runIcebreakerMelt = (onComplete) => {
 
   const step = (now) => {
     if (window._icebreakerMeltState !== 'running') return;
+
+    // If user or tour advances to another world, cleanly finish Icebreaker and exit immediately
+    if (window._isTransitActive && window._currentStationIndex !== 2) {
+      window.icebreakerThaw = 1.0;
+      if (window._icebreakerCam) {
+        window._icebreakerCam.active = false;
+        window._icebreakerCam = null;
+      }
+      window._icebreakerMeltState = 'completed';
+      window.icebreakerThawLocked = false;
+      window._icebreakerLockCamera = false;
+      window._isWorldActionActive = false;
+      unlockIcebreakerInput();
+      return;
+    }
+
     const elapsed = now - start;
 
-    if (window._scrollEl) {
+    if (window._scrollEl && !window._isTransitActive) {
       const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
       if (maxScroll > 0) {
-        window._scrollEl.scrollTop = 0.131 * maxScroll;
+        let curP = 0.120;
+        if (elapsed > PAUSE_MS + MELT_MS) {
+          const zoomElapsed = elapsed - PAUSE_MS - MELT_MS;
+          const prog = Math.min(1.0, zoomElapsed / ZOOM_MS);
+          curP = 0.120 + (0.131 - 0.120) * easeInOutCubic(prog);
+        }
+        window._scrollEl.scrollTop = curP * maxScroll;
       }
     }
 
@@ -605,6 +627,16 @@ export const runIcebreakerMelt = (onComplete) => {
       window.icebreakerThawLocked = false;
       window._icebreakerLockCamera = false;
       window._isWorldActionActive = false;
+      window._currentProgress = 0.131;
+      if (window._scrollObj) {
+        window._scrollObj.offset = 0.131;
+      }
+      if (window._scrollEl && !window._isTransitActive) {
+        const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
+        if (maxScroll > 0) {
+          window._scrollEl.scrollTop = 0.131 * maxScroll;
+        }
+      }
       unlockIcebreakerInput();
       if (typeof onComplete === 'function') onComplete();
     }
@@ -665,8 +697,9 @@ const IcebreakerController = () => {
       window.icebreakerThaw = 1.0;
     }
 
-    // Automatically trigger melt sequence when user is in Icebreaker pause zone (p between 0.118 and 0.142)
-    if (p >= 0.118 && p <= 0.142) {
+    // Automatically trigger melt sequence when user is in Icebreaker pause zone (p between 0.115 and 0.142)
+    // Only trigger when not in transit to a different station
+    if (!window._isTransitActive && p >= 0.115 && p <= 0.142) {
       if (!window._icebreakerMeltState || window._icebreakerMeltState === 'idle') {
         runIcebreakerMelt();
       }

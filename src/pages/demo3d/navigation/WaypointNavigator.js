@@ -6,7 +6,7 @@ import { WORLD_PAUSE_STATIONS, startWorldPause, clearActiveWorldPause } from './
 export const STATIONS = [
   { id: 'hub', name: 'Home Hub', p: 0.000, duration: 1600, color: '#00E5FF' },
   { id: 'mindwave', name: 'MindWave', p: 0.038, duration: 1600, color: '#38BDF8' },
-  { id: 'icebreaker', name: 'Icebreaker', p: 0.131, duration: 2200, color: '#FF6600' },
+  { id: 'icebreaker', name: 'Icebreaker', p: 0.120, duration: 2000, color: '#FF6600' },
   { id: 'interstellar', name: 'Interstellar', p: 0.200, duration: 1600, color: '#00D2FF' },
   { id: 'legal', name: 'Legal Eagle', p: 0.248, duration: 1600, color: '#D4AF37' },
   { id: 'autopilot', name: 'Autopilot', p: 0.293, duration: 1600, color: '#10B981' },
@@ -35,11 +35,23 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
   }
   clearActiveWorldPause();
   
-  window.icebreakerThaw = 0.0;
-  window._icebreakerMeltState = 'idle';
-  window._icebreakerCam = null;
-  window._icebreakerLockCamera = false;
-  window.icebreakerThawLocked = false;
+  if (clampedIndex === 2) {
+    window.icebreakerThaw = 0.0;
+    window._icebreakerMeltState = 'idle';
+    window._icebreakerCam = null;
+    window._icebreakerLockCamera = false;
+    window.icebreakerThawLocked = false;
+  } else if (clampedIndex > 2) {
+    window.icebreakerThaw = 1.0;
+    window._icebreakerMeltState = 'completed';
+    if (window._icebreakerCam) {
+      window._icebreakerCam.active = false;
+      window._icebreakerCam = null;
+    }
+    window._icebreakerLockCamera = false;
+    window.icebreakerThawLocked = false;
+    window._isWorldActionActive = false;
+  }
   
   window._cancelWarp = false;
   window._isTransitActive = true;
@@ -187,11 +199,23 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
   clearActiveWorldPause();
   
   // When warping away from or to Icebreaker, reset ice cave so it is frozen solid before entering
-  window.icebreakerThaw = 0.0;
-  window._icebreakerMeltState = 'idle';
-  window._icebreakerCam = null;
-  window._icebreakerLockCamera = false;
-  window.icebreakerThawLocked = false;
+  if (clampedIndex === 2) {
+    window.icebreakerThaw = 0.0;
+    window._icebreakerMeltState = 'idle';
+    window._icebreakerCam = null;
+    window._icebreakerLockCamera = false;
+    window.icebreakerThawLocked = false;
+  } else if (clampedIndex > 2) {
+    window.icebreakerThaw = 1.0;
+    window._icebreakerMeltState = 'completed';
+    if (window._icebreakerCam) {
+      window._icebreakerCam.active = false;
+      window._icebreakerCam = null;
+    }
+    window._icebreakerLockCamera = false;
+    window.icebreakerThawLocked = false;
+    window._isWorldActionActive = false;
+  }
   
   window._cancelWarp = false;
   window._isTransitActive = true;

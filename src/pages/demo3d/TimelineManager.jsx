@@ -208,7 +208,7 @@ export const CameraController = () => {
       : scroll.offset;
     if (window._worldPauseLockProgress !== undefined && window._worldPauseLockProgress !== null) {
       progress = window._worldPauseLockProgress;
-    } else if ((window._icebreakerLockCamera || window.icebreakerThawLocked) && progress >= 0.118 && progress <= 0.148) {
+    } else if (!window._isTransitActive && (window._icebreakerLockCamera || window.icebreakerThawLocked) && progress >= 0.118 && progress <= 0.148) {
       progress = 0.131;
     }
     window._currentProgress = progress;
@@ -223,7 +223,7 @@ export const CameraController = () => {
     let chaseBlend = 0;
 
     // Smooth Icebreaker Island Zoom-Cam Integration
-    if (window._icebreakerCam && window._icebreakerCam.active) {
+    if (!window._isTransitActive && window._icebreakerCam && window._icebreakerCam.active) {
       finalPosX = window._icebreakerCam.x;
       finalPosY = window._icebreakerCam.y;
       finalPosZ = window._icebreakerCam.z;

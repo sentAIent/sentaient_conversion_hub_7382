@@ -5,7 +5,7 @@
 
 export const WORLD_PAUSE_STATIONS = [
   { id: 'mindwave', name: 'MindWave', p: 0.038, triggerMin: 0.026, triggerMax: 0.046, duration: 2500 },
-  { id: 'icebreaker', name: 'Icebreaker', p: 0.131, triggerMin: 0.118, triggerMax: 0.145, duration: 8000, isIcebreaker: true },
+  { id: 'icebreaker', name: 'Icebreaker', p: 0.120, triggerMin: 0.110, triggerMax: 0.145, duration: 8000, isIcebreaker: true },
   { id: 'interstellar', name: 'Interstellar', p: 0.200, triggerMin: 0.188, triggerMax: 0.212, duration: 2500 },
   { id: 'legal', name: 'Legal Eagle', p: 0.248, triggerMin: 0.238, triggerMax: 0.258, duration: 2500 },
   { id: 'autopilot', name: 'Autopilot', p: 0.293, triggerMin: 0.283, triggerMax: 0.302, duration: 2500 },

@@ -161,7 +161,22 @@ class AutoTourEngine {
       this.currentStationIndex = stationIndex;
       this.remainingSeconds = this.seconds;
       this.notify();
-      this.startCountdown();
+
+      if (stationIndex === 2 && window._icebreakerMeltState === 'running') {
+        // Wait for the ice cave to thaw into the island before starting the world dwell countdown
+        const checkMelt = setInterval(() => {
+          if (!this.isActive || this.currentStationIndex !== 2) {
+            clearInterval(checkMelt);
+            return;
+          }
+          if (window._icebreakerMeltState === 'completed') {
+            clearInterval(checkMelt);
+            this.startCountdown();
+          }
+        }, 200);
+      } else {
+        this.startCountdown();
+      }
     }, true);
   }
 
