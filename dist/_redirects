@@ -4,10 +4,6 @@
 /icebusiness/* https://sentaient-icebusiness-hub.netlify.app/:splat 200!
 /iceadmin https://sentaient-iceadmin-hub.netlify.app/ 200!
 /iceadmin/* https://sentaient-iceadmin-hub.netlify.app/:splat 200!
-/autopilot https://sentaient-autopilot-hub.netlify.app/autopilot/ 301
-/autopilot/* https://sentaient-autopilot-hub.netlify.app/autopilot/:splat 301
-/lightspeed /lightspeed/ 301
-/lightspeed/* /lightspeed/index.html 200
 /legaleagle /legaleagle/ 301
 /legaleagle/* /legaleagle/index.html 200
 /sphinx /sphinx/ 301

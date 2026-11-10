@@ -57,23 +57,23 @@ export const JOURNEYS = [
 
 export const INTENT_GREETINGS = {
     focus: [
-        "Welcome back. Let's get locked in.",
-        "Ready for some deep work? I've set the frequencies for high focus."
+        "Welcome back. Take a deep, steady breath, and let's slip into effortless focus.",
+        "Ready for deep work. Your frequencies are tuned, and your mind is clear."
     ],
     sleep: [
-        "Good evening. Let's wind down and get you to sleep.",
-        "It's time to rest. I'm preparing a deep delta wave for you."
+        "Good evening. Let the noise of the day gently drift away. It's time to rest.",
+        "Close your eyes, and let yourself unwind. Deep, restorative sleep awaits."
     ],
     relax: [
-        "Welcome. Let's wash away the stress of the day.",
-        "Take a deep breath. We're going to relax now."
+        "Welcome home. Soften your shoulders, and let go of whatever you've been carrying.",
+        "Breathe in peace... and breathe out tension. You are safe here."
     ],
     meditate: [
-        "Welcome to your meditation space. Let's begin.",
-        "Find a comfortable position. It's time to turn inward."
+        "Welcome to your sanctuary. Settle in, soften your gaze, and listen within.",
+        "Find stillness in this moment. Nowhere else you need to be."
     ],
     default: [
-        "Welcome back to MindWave.",
-        "Hello. I'm ready when you are."
+        "Welcome to MindWave. Take a calm breath, and let the frequencies ground you.",
+        "Hello. Whenever you are ready, I'm here to guide your journey."
     ]
 };

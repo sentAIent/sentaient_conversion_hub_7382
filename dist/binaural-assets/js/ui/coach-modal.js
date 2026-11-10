@@ -28,7 +28,39 @@ export function initCoachModal() {
                 </div>
 
                 <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
-                    <p class="text-[var(--text-muted)] mb-6 text-sm">Select a guided journey or sleep story. The AI Coach will guide your narrative and automatically adjust frequencies and visuals for maximum effect.</p>
+                    <!-- Voice Atmosphere Header Card -->
+                    <div class="mb-6 p-4 rounded-xl border border-white/10 bg-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] flex items-center justify-center shrink-0">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-semibold text-[var(--text-bright)]">Voice Guide Atmosphere</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono tracking-wider uppercase border border-emerald-500/30">Natural & Calming</span>
+                                </div>
+                                <p class="text-xs text-[var(--text-muted)] mt-0.5">Humanized neural prosody with 432Hz harmonic acoustic warmth</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <select id="voiceSelector" class="bg-black/70 border border-white/20 text-xs text-[var(--text-bright)] rounded-lg px-2.5 py-1.5 outline-none focus:border-[var(--accent)] transition-all flex-1 sm:w-48">
+                                <option value="">Detecting calming voices...</option>
+                            </select>
+                            <button id="previewVoiceBtn" class="px-3 py-1.5 rounded-lg bg-[var(--accent)]/20 hover:bg-[var(--accent)]/30 text-[var(--accent)] border border-[var(--accent)]/30 text-xs font-medium transition-all shrink-0 flex items-center gap-1.5" title="Listen to calming voice preview">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                Test
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="text-[var(--text-muted)] mb-4 text-xs uppercase tracking-wider font-semibold">Guided Audio Journeys</p>
                     
                     <div class="grid gap-4" id="journeysList">
                         <!-- Journeys injected here -->
@@ -81,11 +113,55 @@ export function initCoachModal() {
 
     closeBtn.addEventListener('click', closeCoachModal);
     
+    // Wire up Voice Atmosphere selector and live preview
+    populateVoiceSelector();
+
+    const voiceSelector = document.getElementById('voiceSelector');
+    if (voiceSelector) {
+        voiceSelector.addEventListener('change', (e) => {
+            if (e.target.value) {
+                voiceSynth.setVoice(e.target.value);
+                voiceSynth.speak("Voice calibrated. Relax, and enjoy your session.");
+            }
+        });
+    }
+
+    const previewBtn = document.getElementById('previewVoiceBtn');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', () => {
+            voiceSynth.speak("Welcome to your calm space. Breathe in slowly... and let your tension melt away.");
+        });
+    }
+
     // Add event listener to the main Coach button
     const mainCoachBtn = document.getElementById('coachBtn');
     if (mainCoachBtn) {
         mainCoachBtn.addEventListener('click', openCoachModal);
     }
+}
+
+function populateVoiceSelector() {
+    const voiceSelector = document.getElementById('voiceSelector');
+    if (!voiceSelector) return;
+
+    const voices = voiceSynth.getVoices();
+    if (!voices || !voices.length) {
+        voiceSelector.innerHTML = '<option value="">Default Calming Voice</option>';
+        return;
+    }
+
+    const currentVoiceName = voiceSynth.voice ? voiceSynth.voice.name : '';
+    voiceSelector.innerHTML = voices.map(v => {
+        const isSelected = v.name === currentVoiceName ? 'selected' : '';
+        let cleanName = v.name
+            .replace(/Microsoft /i, '')
+            .replace(/Online \(Natural\)/i, '✨ Natural')
+            .replace(/\(Enhanced\)/i, '✨ Enhanced')
+            .replace(/\(Premium\)/i, '✨ Premium')
+            .replace(/English \(United States\)/i, 'US')
+            .replace(/English \(United Kingdom\)/i, 'UK');
+        return `<option value="${v.name}" ${isSelected}>${cleanName}</option>`;
+    }).join('');
 }
 
 function getCategoryIcon(category) {
@@ -97,6 +173,7 @@ function getCategoryIcon(category) {
 export function openCoachModal() {
     const modal = document.getElementById('coachModal');
     if (modal) {
+        populateVoiceSelector();
         modal.classList.remove('hidden');
         // Small delay to allow display:block to apply before animating opacity
         setTimeout(() => modal.classList.remove('opacity-0'), 10);

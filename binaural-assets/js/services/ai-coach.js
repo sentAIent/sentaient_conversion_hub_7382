@@ -6,6 +6,7 @@
  * 3. Scope Creep / Burnout Detector
  * 4. RAG over Tasks (Chat Insights)
  */
+import { voiceSynth } from '../audio/voice-synth.js';
 
 class AICoachService {
     constructor() {
@@ -25,28 +26,10 @@ class AICoachService {
 
     /**
      * 1. Voice AI Agent
-     * Uses native Web Speech API to act as a calm, guiding focus coach.
+     * Uses state-of-the-art neural VoiceSynth for a calming, human guiding coach.
      */
     speak(text) {
-        if (!this.synth) return;
-        
-        // Cancel any ongoing speech
-        this.synth.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        
-        // Try to find a good voice (preferably female/calm for mindfulness)
-        const voices = this.synth.getVoices();
-        const preferredVoice = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English') || v.name.includes('Female'));
-        
-        if (preferredVoice) {
-            utterance.voice = preferredVoice;
-        }
-
-        utterance.rate = 0.9; // Slightly slower for a calming effect
-        utterance.pitch = 1.0;
-        
-        this.synth.speak(utterance);
+        return voiceSynth.speak(text);
     }
 
     /**
