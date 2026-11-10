@@ -53,8 +53,8 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
   const scaleX = Array.isArray(logoScale) ? logoScale[0] : (typeof logoScale === 'number' ? logoScale : 1.0);
   const scaleY = Array.isArray(logoScale) ? logoScale[1] : 1.0;
   const baseDim = 74 * itemScale;
-  const glowW = Math.max(baseDim, baseDim * scaleX);
-  const glowH = Math.max(baseDim, baseDim * scaleY);
+  const glowW = baseDim * Math.min(1.25, Math.max(0.85, scaleX));
+  const glowH = baseDim * Math.min(1.25, Math.max(0.85, scaleY));
 
   React.useLayoutEffect(() => {
     if (containerRef.current) {
@@ -130,39 +130,39 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
         {glowTexture && (
           <>
             {/* Layer 1: Core Backlight (Brand tinted) */}
-            <mesh scale={[glowW * 1.5, glowH * 1.5, 1]}>
+            <mesh scale={[glowW * 1.3, glowH * 1.3, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
                 color={coreGlowColor || glowColor || (name === 'MindWave' ? '#38bdf8' : (name === 'Icebreaker' ? '#FFAA33' : (name === 'Contango' ? '#FFE066' : (name === 'Interstellar' ? '#38bdf8' : (name === 'Liquid' ? '#FFD700' : color)))))}
                 transparent
-                opacity={(isHovered ? 0.85 : (isDimmed ? 0.25 : 0.55)) * glowMultiplier}
+                opacity={(isHovered ? 0.45 : (isDimmed ? 0.12 : 0.28)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
             </mesh>
 
             {/* Layer 2: Vibrant Brand-Color Holographic Aura */}
-            <mesh scale={[glowW * 2.2, glowH * 2.2, 1]}>
+            <mesh scale={[glowW * 1.85, glowH * 1.85, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
                 color={glowColor || (name === 'Icebreaker' ? '#FF6600' : (name === 'Contango' ? '#FFD700' : (name === 'Interstellar' ? '#00D2FF' : (name === 'Liquid' ? '#FFB800' : color))))}
                 transparent
-                opacity={(isHovered ? 0.95 : (isDimmed ? 0.35 : 0.70)) * glowMultiplier}
+                opacity={(isHovered ? 0.55 : (isDimmed ? 0.15 : 0.35)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
             </mesh>
 
             {/* Layer 3: Atmospheric Deep Halo */}
-            <mesh scale={[glowW * 3.2, glowH * 3.2, 1]}>
+            <mesh scale={[glowW * 2.5, glowH * 2.5, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
                 color={glowColor || (name === 'Icebreaker' ? '#FF5500' : (name === 'Contango' ? '#F59E0B' : (name === 'Interstellar' ? '#0284C7' : (name === 'Liquid' ? '#FF9900' : color))))}
                 transparent
-                opacity={(isHovered ? 0.50 : (isDimmed ? 0.18 : 0.35)) * glowMultiplier}
+                opacity={(isHovered ? 0.25 : (isDimmed ? 0.06 : 0.16)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
