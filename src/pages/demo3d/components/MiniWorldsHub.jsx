@@ -34,12 +34,13 @@ const getHolographicGlowTexture = () => {
   return _sharedGlowTex;
 };
 
-const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0, coreGlowColor, glowColor }) => {
+const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0, hoverGlowMultiplier, coreGlowColor, glowColor }) => {
   const meshRef = useRef();
   const glowGroupRef = useRef();
   const containerRef = useRef();
   const isHovered = hoveredWorld === name;
   const isDimmed = hoveredWorld !== null && !isHovered;
+  const hoverGlow = isHovered ? (hoverGlowMultiplier !== undefined ? hoverGlowMultiplier : ((name === 'Matrix' || name === 'Contango') ? 0.87 : 1.0)) : 1.0;
   
   // Position card popup off to the side (outside the ring, never on top of the logos)
   const isRightSide = position[0] >= 0;
@@ -136,7 +137,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
                 map={glowTexture}
                 color={coreGlowColor || glowColor || (name === 'MindWave' ? '#38bdf8' : (name === 'Icebreaker' ? '#FFAA33' : (name === 'Contango' ? '#FFE066' : (name === 'Interstellar' ? '#38bdf8' : (name === 'Liquid' ? '#55FFAA' : color)))))}
                 transparent
-                opacity={(isHovered ? 0.45 : (isDimmed ? 0.12 : 0.28)) * glowMultiplier}
+                opacity={(isHovered ? 0.45 : (isDimmed ? 0.12 : 0.28)) * glowMultiplier * hoverGlow}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
@@ -149,7 +150,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
                 map={glowTexture}
                 color={glowColor || (name === 'Icebreaker' ? '#FF6600' : (name === 'Contango' ? '#FFD700' : (name === 'Interstellar' ? '#00D2FF' : (name === 'Liquid' ? '#00FF88' : color))))}
                 transparent
-                opacity={(isHovered ? 0.55 : (isDimmed ? 0.15 : 0.35)) * glowMultiplier}
+                opacity={(isHovered ? 0.55 : (isDimmed ? 0.15 : 0.35)) * glowMultiplier * hoverGlow}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
@@ -162,7 +163,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
                 map={glowTexture}
                 color={glowColor || (name === 'Icebreaker' ? '#FF5500' : (name === 'Contango' ? '#F59E0B' : (name === 'Interstellar' ? '#0284C7' : (name === 'Liquid' ? '#059669' : color))))}
                 transparent
-                opacity={(isHovered ? 0.25 : (isDimmed ? 0.06 : 0.16)) * glowMultiplier}
+                opacity={(isHovered ? 0.25 : (isDimmed ? 0.06 : 0.16)) * glowMultiplier * hoverGlow}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
@@ -352,9 +353,9 @@ export const WORLDS_DATA = [
   { name: 'Legal Eagle', startP: 0.23, p: 0.255, endP: 0.265, color: '#A855F7', ringColor: '#FBBF24', logoUrl: '/legal_eagle_logo.png', logoScale: [1.032, 1.0], glowMultiplier: 1.10, summary: 'Autonomous AI Legal Intelligence & Contract Defense', description: 'Audit contracts in seconds with eagle-eyed AI precision. Detect hidden liabilities, mitigate legal risks, and auto-draft favorable clauses.' },
   { name: 'LightSpeed', startP: 0.910, p: 0.93, endP: 0.99, color: '#00A3FF', ringColor: '#FFC800', logoUrl: '/lightspeed_logo_gold.png', logoScale: [0.829, 1.0], glowMultiplier: 1.10, summary: 'Autonomous AI CTO & Enterprise Cyber-Defense', description: 'Deploy a self-healing cloud infrastructure protected by zero-trust cyber defense, sub-10ms global edge routing, and 99.999% SLA uptime.' },
   { name: 'Liquid', startP: 0.645, p: 0.665, endP: 0.685, color: '#00FF88', glowColor: '#00FF88', coreGlowColor: '#55FFAA', ringColor: '#A855F7', logoUrl: '/liquid_logo_gold.png', logoScale: [1.25, 1.25], glowMultiplier: 1.0, summary: 'Autonomous Accounting, Tax Intelligence & Token Forge', description: 'Distill enterprise financial complexity into instant clarity with automated tax liability calculation, live P&L auditing, and smart token minting.' },
-  { name: 'Contango', startP: 0.44, p: 0.47, endP: 0.475, color: '#22C55E', glowColor: '#FFD700', coreGlowColor: '#FFE066', ringColor: '#FF7A00', logoUrl: '/assets/images/contango_quant_logo_new.png', logoScale: [1.0, 0.526], summary: 'Algorithmic Trading & High-Frequency Market Intelligence', description: 'Master market volatility with automated quant strategies, order book microstructure analytics, and macro liquidity tracking.' },
+  { name: 'Contango', startP: 0.44, p: 0.47, endP: 0.475, color: '#22C55E', glowColor: '#FFD700', coreGlowColor: '#FFE066', ringColor: '#FF7A00', logoUrl: '/assets/images/contango_quant_logo_new.png', logoScale: [1.0, 0.526], hoverGlowMultiplier: 0.87, summary: 'Algorithmic Trading & High-Frequency Market Intelligence', description: 'Master market volatility with automated quant strategies, order book microstructure analytics, and macro liquidity tracking.' },
   { name: 'Pyramid', startP: 0.770, p: 0.79, endP: 0.82, color: '#00E5FF', ringColor: '#C084FC', logoUrl: '/pyramid_logo_final.png', logoScale: [1.1, 1.1], summary: 'Autonomous Profit Engine & Strategic Execution', description: 'Harness an AI executive that scans markets for high-margin opportunities, designs end-to-end strategic playbooks, and executes autonomously.' },
-  { name: 'Matrix', startP: 0.840, p: 0.865, endP: 0.900, color: '#00FF44', ringColor: '#D946EF', logoUrl: '/matrix_logo_bright.png', logoScale: [1.522, 0.363], glowMultiplier: 0.90, summary: 'Autonomous Production Code Generation, Full-Stack Architecture & Deep Technical Research', description: 'Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors complex codebases, and conducts deep end-to-end debugging—leveraging technical research capabilities to parse complex documentation and frontier frameworks.' },
+  { name: 'Matrix', startP: 0.840, p: 0.865, endP: 0.900, color: '#00FF44', ringColor: '#D946EF', logoUrl: '/matrix_logo_bright.png', logoScale: [1.522, 0.363], glowMultiplier: 0.90, hoverGlowMultiplier: 0.87, summary: 'Autonomous Production Code Generation, Full-Stack Architecture & Deep Technical Research', description: 'Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors complex codebases, and conducts deep end-to-end debugging—leveraging technical research capabilities to parse complex documentation and frontier frameworks.' },
   { name: 'Autopilot', startP: 0.275, p: 0.30, endP: 0.31, color: '#10B981', ringColor: '#FF3366', logoUrl: '/autopilot_logo.png', logoScale: [1.4, 0.766], glowMultiplier: 1.10, summary: 'Enterprise Social Media Marketing Automation', description: 'Automate multi-channel brand growth with AI-driven content generation, scheduled omnichannel publishing, and predictive audience engagement.' }
 ];
 
@@ -556,6 +557,7 @@ export default function MiniWorldsHub({ visible = true }) {
             safeMaxCardY={safeMaxCardY}
             safeMinCardY={safeMinCardY}
             glowMultiplier={w.glowMultiplier !== undefined ? w.glowMultiplier : 1.0}
+            hoverGlowMultiplier={w.hoverGlowMultiplier}
             onHoverStart={() => handleHoverStart(w.name)}
             onHoverEnd={() => handleHoverEnd(w.name)}
           />
