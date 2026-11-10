@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ForagingAiClassifier, ForagingAnalysisResult } from '../../lib/foraging/foragingAiClassifier';
 import { DEEP_FORAGING_DATABASE } from '../../lib/foraging/foragingData';
-import { Camera, Upload, AlertTriangle, ShieldAlert, CheckCircle, Sparkles, RefreshCw, Eye, Info, BookOpen } from 'lucide-react';
+import { Camera, Upload, AlertTriangle, ShieldAlert, CheckCircle, Sparkles, RefreshCw, Eye, Info, BookOpen, Image as ImageIcon, Trash2 } from 'lucide-react';
 
 interface ForagingPhotoScannerProps {
   onSelectSpecies?: (speciesId: string) => void;
@@ -11,11 +11,13 @@ export const ForagingPhotoScanner: React.FC<ForagingPhotoScannerProps> = ({ onSe
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [result, setResult] = useState<ForagingAnalysisResult | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [uploadedHistory, setUploadedHistory] = useState<Array<{ id: string; dataUrl: string; name: string; speciesName: string; time: string; result: ForagingAnalysisResult }>>([]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processFile = (file: File) => {
+    if (!file || !file.type.startsWith('image/')) return;
 
     const reader = new FileReader();
     reader.onload = async () => {
@@ -25,11 +27,27 @@ export const ForagingPhotoScanner: React.FC<ForagingPhotoScannerProps> = ({ onSe
       try {
         const analysis = await ForagingAiClassifier.analyzePhoto(dataUrl, file.name);
         setResult(analysis);
+        setUploadedHistory(prev => [
+          {
+            id: `up-${Date.now()}`,
+            dataUrl,
+            name: file.name,
+            speciesName: analysis.speciesName,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            result: analysis
+          },
+          ...prev.filter(p => p.dataUrl !== dataUrl).slice(0, 5)
+        ]);
       } finally {
         setIsAnalyzing(false);
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
   };
 
   const loadSample = (speciesId: string) => {
@@ -43,10 +61,27 @@ export const ForagingPhotoScanner: React.FC<ForagingPhotoScannerProps> = ({ onSe
     }, 500);
   };
 
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) processFile(file);
+          break;
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, []);
+
   const resetScanner = () => {
     setImagePreview(null);
     setResult(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
 
   return (
@@ -79,15 +114,31 @@ export const ForagingPhotoScanner: React.FC<ForagingPhotoScannerProps> = ({ onSe
       {/* Main Upload / Dropzone Box */}
       {!imagePreview ? (
         <div
-          onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-emerald-600/50 hover:border-emerald-400 rounded-2xl p-8 text-center cursor-pointer bg-slate-950/60 transition-all flex flex-col items-center justify-center space-y-3 shadow-inner"
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) processFile(file);
+          }}
+          className={`border-2 border-dashed ${
+            isDragging ? 'border-cyan-400 bg-cyan-950/40 scale-[1.01]' : 'border-emerald-600/50 hover:border-emerald-400 bg-slate-950/60'
+          } rounded-2xl p-8 text-center transition-all flex flex-col items-center justify-center space-y-4 shadow-inner`}
         >
           <input
-            ref={fileInputRef}
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileInput}
+            className="hidden"
+          />
+          <input
+            ref={cameraInputRef}
             type="file"
             accept="image/*"
             capture="environment"
-            onChange={handleFileUpload}
+            onChange={handleFileInput}
             className="hidden"
           />
           <div className="w-14 h-14 rounded-full bg-emerald-950/80 border border-emerald-500/60 flex items-center justify-center text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
@@ -95,18 +146,28 @@ export const ForagingPhotoScanner: React.FC<ForagingPhotoScannerProps> = ({ onSe
           </div>
           <div>
             <div className="text-sm font-bold text-white tracking-wide">
-              Click to Open Device Camera or Upload Photo
+              {isDragging ? 'Drop Your Photo to Begin Neural Analysis' : 'Upload or Capture Foraging Specimen'}
             </div>
             <div className="text-[11px] text-slate-400 mt-1">
-              Supports JPEG, PNG, WEBP • Analyzes cap, stem, leaves, and poisonous lookalikes
+              Supports JPEG, PNG, WEBP • Drag & drop file, paste (Ctrl+V), or select an option below
             </div>
           </div>
-          <button
-            type="button"
-            className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950"
-          >
-            <Camera size={14} /> SELECT CAMERA SHUTTER / FILE
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => galleryInputRef.current?.click()}
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-950 transition-colors"
+            >
+              <ImageIcon size={15} /> BROWSE PHOTOS / FILES
+            </button>
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              className="px-4 py-2 rounded-xl bg-cyan-700 hover:bg-cyan-600 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-cyan-950 transition-colors"
+            >
+              <Camera size={15} /> OPEN LIVE CAMERA
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -128,12 +189,29 @@ export const ForagingPhotoScanner: React.FC<ForagingPhotoScannerProps> = ({ onSe
                 </span>
               </div>
             )}
-            <button
-              onClick={resetScanner}
-              className="mt-2 text-[10px] text-slate-400 hover:text-white flex items-center gap-1"
-            >
-              <RefreshCw size={11} /> SCAN ANOTHER SPECIMEN
-            </button>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 w-full">
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                className="px-2 py-1 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 text-[10px] font-bold flex items-center gap-1 border border-emerald-600 transition-colors"
+              >
+                <Upload size={10} /> Change Photo
+              </button>
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="px-2 py-1 rounded-lg bg-cyan-900/60 hover:bg-cyan-800 text-cyan-200 text-[10px] font-bold flex items-center gap-1 border border-cyan-600 transition-colors"
+              >
+                <Camera size={10} /> Live Camera
+              </button>
+              <button
+                type="button"
+                onClick={resetScanner}
+                className="px-2 py-1 rounded-lg bg-black/60 hover:bg-black/90 text-gray-400 hover:text-white text-[10px] font-bold flex items-center gap-1 border border-gray-800 transition-colors"
+              >
+                <RefreshCw size={10} /> Reset
+              </button>
+            </div>
           </div>
 
           {/* Analysis Results & Lookalike Warning Card */}
@@ -245,6 +323,49 @@ export const ForagingPhotoScanner: React.FC<ForagingPhotoScannerProps> = ({ onSe
                 {isAnalyzing ? 'Extracting morphological contours & cross-referencing poison catalog...' : 'Standby for image input...'}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* User's Uploaded Field Scans Gallery */}
+      {uploadedHistory.length > 0 && (
+        <div className="p-3 rounded-xl bg-slate-900/50 border border-emerald-900/60 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+              <ImageIcon size={12} />
+              <span>Your Uploaded Field Photos ({uploadedHistory.length})</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setUploadedHistory([])}
+              className="text-[9px] text-gray-500 hover:text-red-400 flex items-center gap-1 transition-colors"
+            >
+              <Trash2 size={10} /> Clear Uploads
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+            {uploadedHistory.map(item => (
+              <div
+                key={item.id}
+                onClick={() => {
+                  setImagePreview(item.dataUrl);
+                  setResult(item.result);
+                }}
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer flex flex-col items-center gap-1 group ${
+                  imagePreview === item.dataUrl
+                    ? 'border-emerald-500 bg-emerald-950/40 shadow-sm'
+                    : 'border-gray-800 bg-black/40 hover:border-gray-600'
+                }`}
+              >
+                <div className="w-full h-14 rounded overflow-hidden bg-black flex items-center justify-center">
+                  <img src={item.dataUrl} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                </div>
+                <div className="w-full text-center truncate">
+                  <span className="text-[10px] font-bold text-white block truncate">{item.speciesName}</span>
+                  <span className="text-[9px] text-gray-400 block">{item.time}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

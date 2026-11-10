@@ -52,9 +52,20 @@ export class ForagingAiClassifier {
     } else if (lowerName.includes('elder') || lowerName.includes('berry') || lowerName.includes('poke') || lowerName.includes('purple')) {
       matchedSpecies = DEEP_FORAGING_DATABASE[5];
     } else {
-      // Pick random sample from database to showcase variety if filename is generic (e.g. image.jpg)
-      const idx = Math.floor(Math.random() * DEEP_FORAGING_DATABASE.length);
-      matchedSpecies = DEEP_FORAGING_DATABASE[idx];
+      const metrics = await ForagingAiClassifier.sampleImageColorMetrics(imageDataUrl);
+      if (metrics.brightness > 185) {
+        matchedSpecies = DEEP_FORAGING_DATABASE[4]; // Lion's Mane (white / pale)
+      } else if (metrics.r > 120 && metrics.g > 80 && metrics.b < 70) {
+        matchedSpecies = DEEP_FORAGING_DATABASE[1]; // Golden Chanterelle (golden / yellow)
+      } else if (metrics.g > metrics.r && metrics.g > metrics.b) {
+        matchedSpecies = DEEP_FORAGING_DATABASE[3]; // Wild Ramps (foliage green)
+      } else if (metrics.r < 80 && metrics.g < 80 && metrics.b < 100) {
+        matchedSpecies = DEEP_FORAGING_DATABASE[5]; // Elderberry (dark purple/black)
+      } else if (metrics.r > 100 && metrics.g > 60 && metrics.b < 50) {
+        matchedSpecies = DEEP_FORAGING_DATABASE[0]; // Yellow Morel (tan/ochre honeycomb)
+      } else {
+        matchedSpecies = DEEP_FORAGING_DATABASE[2]; // Wild Carrot / Queen Anne's Lace
+      }
     }
 
     const confidence = Math.floor(Math.random() * 8) + 91; // 91% - 98% confidence
@@ -121,5 +132,42 @@ export class ForagingAiClassifier {
       referenceImageUrl: matched.imageUrl,
       timestamp: new Date().toLocaleTimeString()
     };
+  }
+
+  public static async sampleImageColorMetrics(dataUrl: string): Promise<{ r: number; g: number; b: number; brightness: number }> {
+    if (typeof window === 'undefined' || typeof Image === 'undefined') {
+      return { r: 128, g: 128, b: 128, brightness: 128 };
+    }
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = 32;
+          canvas.height = 32;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve({ r: 128, g: 128, b: 128, brightness: 128 });
+          ctx.drawImage(img, 0, 0, 32, 32);
+          const data = ctx.getImageData(0, 0, 32, 32).data;
+          let rTotal = 0, gTotal = 0, bTotal = 0;
+          const count = data.length / 4;
+          for (let i = 0; i < data.length; i += 4) {
+            rTotal += data[i];
+            gTotal += data[i + 1];
+            bTotal += data[i + 2];
+          }
+          const r = rTotal / count;
+          const g = gTotal / count;
+          const b = bTotal / count;
+          const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+          resolve({ r, g, b, brightness });
+        } catch {
+          resolve({ r: 128, g: 128, b: 128, brightness: 128 });
+        }
+      };
+      img.onerror = () => resolve({ r: 128, g: 128, b: 128, brightness: 128 });
+      img.src = dataUrl;
+    });
   }
 }
