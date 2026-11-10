@@ -137,6 +137,11 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
       window._warpProgress = undefined;
       window._isProgrammaticScroll = false;
       window._currentStationIndex = clampedIndex;
+      window._currentProgress = targetStation.p;
+      const pauseStation = WORLD_PAUSE_STATIONS.find(s => s.id === targetStation.id);
+      if (pauseStation) {
+        startWorldPause(pauseStation);
+      }
       if (targetStation.id === 'hub') {
         window._snapCamera = true;
       }
@@ -160,13 +165,16 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
   activeAnimId = requestAnimationFrame(step);
 };
 
-export const goToStation = (targetIndex, customDuration = null, onComplete = null) => {
+export const goToStation = (targetIndex, customDuration = null, onComplete = null, forceSequential = false) => {
   const clampedIndex = Math.max(0, Math.min(STATIONS.length - 1, targetIndex));
   const currentIdx = window._currentStationIndex !== undefined ? window._currentStationIndex : 0;
   
   // If moving across non-adjacent worlds (e.g. from Hub into any world, or between distant worlds):
   // Engage DIRECT WORMHOLE TELEPORTATION so intermediate worlds are never traversed!
-  if (Math.abs(clampedIndex - currentIdx) > 1 || currentIdx === 0 || clampedIndex === 0) {
+  // Unless forceSequential is explicitly enabled (e.g. during Auto Tour)
+  const isAdjacent = Math.abs(clampedIndex - currentIdx) <= 1;
+  const isHubTransition = currentIdx === 0 || clampedIndex === 0;
+  if (!forceSequential && (!isAdjacent || isHubTransition)) {
     return directTeleportTo(clampedIndex, customDuration || 1350, onComplete);
   }
   
@@ -233,6 +241,11 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
         window._scrollEl.style.overflow = 'auto';
       }
       window._currentStationIndex = clampedIndex;
+      window._currentProgress = targetStation.p;
+      const pauseStation = WORLD_PAUSE_STATIONS.find(s => s.id === targetStation.id);
+      if (pauseStation) {
+        startWorldPause(pauseStation);
+      }
       if (targetStation.id === 'hub') {
         window._snapCamera = true;
       }
