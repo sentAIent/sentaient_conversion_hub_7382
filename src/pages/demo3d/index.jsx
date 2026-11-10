@@ -91,6 +91,17 @@ const ReturnToHubButton = () => {
           >
             NEXT →
           </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              tour.stopTour();
+            }}
+            className="px-2.5 py-0.5 rounded bg-rose-500/25 hover:bg-rose-500/50 text-rose-300 hover:text-white border border-rose-500/40 font-bold text-[10px] transition-all cursor-pointer"
+            title="Exit Auto Tour and explore manually"
+          >
+            ✕ EXIT TOUR
+          </button>
         </div>
       )}
     </div>

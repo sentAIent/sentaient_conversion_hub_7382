@@ -570,6 +570,45 @@ const HTMLStations = () => {
                   +
                 </button>
               </div>
+
+              {tour.isActive && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    tour.stopTour();
+                  }}
+                  style={{
+                    padding: '7px 11px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(244, 63, 94, 0.45)',
+                    background: 'rgba(244, 63, 94, 0.12)',
+                    color: '#fda4af',
+                    fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+                    fontSize: '9.5px',
+                    fontWeight: 800,
+                    letterSpacing: '0.04em',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s ease',
+                    flexShrink: 0
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(244, 63, 94, 0.28)';
+                    e.currentTarget.style.color = '#fff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(244, 63, 94, 0.12)';
+                    e.currentTarget.style.color = '#fda4af';
+                  }}
+                  title="Exit Auto Tour and remain in this world"
+                >
+                  <span style={{ fontSize: '11px', lineHeight: 1 }}>✕</span>
+                  <span>EXIT TOUR</span>
+                </button>
+              )}
             </div>
 
             {/* Experience Link & Hub Exit */}
