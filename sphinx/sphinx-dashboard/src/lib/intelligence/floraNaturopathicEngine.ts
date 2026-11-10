@@ -38,6 +38,30 @@ export interface NaturopathicBenefits {
   contraindications: string[];        // Safety warnings (e.g. pregnancy, MAOI interaction)
 }
 
+export interface ToxicLookalike {
+  name: string;
+  scientificName: string;
+  dangerLevel: 'DEADLY_FATAL' | 'SEVERE_TOXIC' | 'GASTROINTESTINAL_IRRITANT';
+  poisonToxin: string;
+  distinguishingMarkers: string[];
+  warningAdvice: string;
+  imageUrl?: string;
+}
+
+export type EdibilityRating =
+  | 'CHOICE_EDIBLE'
+  | 'EDIBLE_WITH_PREPARATION'
+  | 'MEDICINAL_ONLY'
+  | 'CAUTION_ALLERGEN'
+  | 'TOXIC_DEADLY'
+  | 'INEDIBLE';
+
+export interface SurvivalBenefits {
+  nutritionalHighlights: string[];
+  survivalUtility: string[];
+  caloriesPer100g?: number;
+}
+
 export interface FloraSpecies {
   id: string;
   commonName: string;
@@ -65,6 +89,12 @@ export interface FloraSpecies {
   phytochemistry: PhytochemicalProfile;
   naturopathy: NaturopathicBenefits;
   homeopathy: HomeopathicProfile;
+
+  // Wild Foraging & Mycology Security
+  imageUrl?: string;
+  edibility?: EdibilityRating;
+  survivalBenefits?: SurvivalBenefits;
+  toxicLookalikes?: ToxicLookalike[];
 }
 
 // -----------------------------------------------------------------------------------------

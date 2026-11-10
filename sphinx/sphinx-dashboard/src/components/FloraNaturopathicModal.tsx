@@ -6,6 +6,8 @@ import {
   FloraNaturopathicEngine,
   FloraCategory 
 } from '../lib/intelligence/floraNaturopathicEngine';
+import { DEEP_FORAGING_DATABASE } from '../lib/foraging/foragingData';
+import { ForagingPhotoScanner } from './foraging/ForagingPhotoScanner';
 import { 
   Sprout, 
   Search, 
@@ -17,7 +19,12 @@ import {
   ShieldCheck, 
   Droplet,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle,
+  Camera,
+  Skull,
+  Utensils,
+  ShieldAlert
 } from 'lucide-react';
 
 interface FloraNaturopathicModalProps {
@@ -35,7 +42,7 @@ export const FloraNaturopathicModal: React.FC<FloraNaturopathicModalProps> = ({
   onFlyToPlant,
   selectedPlantId
 }) => {
-  const [activeTab, setActiveTab] = useState<'viewport' | 'materia_medica' | 'phytochemistry'>('viewport');
+  const [activeTab, setActiveTab] = useState<'viewport' | 'materia_medica' | 'foraging_catalog' | 'toxic_lookalikes' | 'ai_scanner' | 'phytochemistry'>('viewport');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<'all' | FloraCategory>('all');
   const [organFilter, setOrganFilter] = useState<string>('all');
@@ -55,12 +62,20 @@ export const FloraNaturopathicModal: React.FC<FloraNaturopathicModalProps> = ({
     return FloraNaturopathicEngine.getFloraForViewport(bounds, 5);
   }, [viewportBounds]);
 
+  const allKnownSpecies = useMemo(() => {
+    const list = [...CURATED_MEDICINAL_FLORA];
+    DEEP_FORAGING_DATABASE.forEach(item => {
+      if (!list.some(existing => existing.id === item.id)) list.push(item);
+    });
+    return list;
+  }, []);
+
   const activePlant = useMemo(() => {
-    return CURATED_MEDICINAL_FLORA.find(p => p.id === activePlantId) || CURATED_MEDICINAL_FLORA[0];
-  }, [activePlantId]);
+    return allKnownSpecies.find(p => p.id === activePlantId) || allKnownSpecies[0];
+  }, [allKnownSpecies, activePlantId]);
 
   const filteredSpecies = useMemo(() => {
-    const list = activeTab === 'viewport' ? viewportResult.species : CURATED_MEDICINAL_FLORA;
+    const list = activeTab === 'viewport' ? viewportResult.species : allKnownSpecies;
     return list.filter(p => {
       if (categoryFilter !== 'all' && p.category !== categoryFilter) return false;
       if (organFilter !== 'all' && !p.phytochemistry.organAffinity.includes(organFilter as any)) return false;
@@ -102,7 +117,7 @@ export const FloraNaturopathicModal: React.FC<FloraNaturopathicModalProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-gray-400">
-                Phytochemicals • Clinical Naturopathy • Homeopathic Materia Medica • Viewport Bio-Prospecting
+                Wild Foraging • Toxic Lookalikes • AI Photo Scanner • Phytochemicals • Naturopathy
               </p>
             </div>
           </div>
@@ -117,7 +132,7 @@ export const FloraNaturopathicModal: React.FC<FloraNaturopathicModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-gray-800 bg-black/50 px-5 pt-2 gap-2 text-xs">
+        <div className="flex border-b border-gray-800 bg-black/50 px-5 pt-2 gap-2 text-xs overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab('viewport')}
@@ -141,6 +156,36 @@ export const FloraNaturopathicModal: React.FC<FloraNaturopathicModalProps> = ({
           >
             <BookOpen size={14} />
             <span>Materia Medica & Monograph</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('foraging_catalog')}
+            className={`pb-2.5 px-3 font-semibold transition-colors flex items-center gap-2 border-b-2 whitespace-nowrap ${
+              activeTab === 'foraging_catalog' ? 'border-emerald-400 text-emerald-300' : 'border-transparent text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <Utensils size={14} />
+            <span>Wild Foraging ({DEEP_FORAGING_DATABASE.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('toxic_lookalikes')}
+            className={`pb-2.5 px-3 font-semibold transition-colors flex items-center gap-2 border-b-2 whitespace-nowrap ${
+              activeTab === 'toxic_lookalikes' ? 'border-red-400 text-red-300' : 'border-transparent text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <Skull size={14} className="text-red-400" />
+            <span>Toxic Lookalikes</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('ai_scanner')}
+            className={`pb-2.5 px-3 font-semibold transition-colors flex items-center gap-2 border-b-2 whitespace-nowrap ${
+              activeTab === 'ai_scanner' ? 'border-emerald-400 text-emerald-300' : 'border-transparent text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            <Camera size={14} className="text-cyan-400" />
+            <span>AI Camera Scanner</span>
           </button>
           <button
             type="button"
@@ -278,15 +323,28 @@ export const FloraNaturopathicModal: React.FC<FloraNaturopathicModalProps> = ({
               {/* Plant Banner */}
               <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-950 border border-emerald-600/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-4xl p-2 rounded-xl bg-black/40 border border-emerald-700/60">{activePlant.icon}</span>
+                  {activePlant.imageUrl ? (
+                    <div className="w-14 h-14 rounded-xl bg-black/60 border border-emerald-500/60 p-1 flex items-center justify-center overflow-hidden shrink-0">
+                      <img src={activePlant.imageUrl} alt={activePlant.commonName} className="w-full h-full object-contain" />
+                    </div>
+                  ) : (
+                    <span className="text-4xl p-2 rounded-xl bg-black/40 border border-emerald-700/60">{activePlant.icon}</span>
+                  )}
                   <div>
                     <h3 className="text-base font-bold text-white flex items-center gap-2">
                       <span>{activePlant.commonName}</span>
                       <span className="text-xs text-emerald-400 font-normal italic">({activePlant.scientificName})</span>
                     </h3>
-                    <p className="text-[11px] text-gray-400">
-                      Family: {activePlant.family} • Category: {activePlant.category.toUpperCase()} • Growth: {activePlant.activeGrowthSeason}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                      <p className="text-[11px] text-gray-400">
+                        Family: {activePlant.family} • Category: {activePlant.category.toUpperCase()}
+                      </p>
+                      {activePlant.edibility && (
+                        <span className="text-[9px] px-2 py-0.5 rounded font-bold uppercase bg-emerald-950 text-emerald-300 border border-emerald-700">
+                          {activePlant.edibility.replace(/_/g, ' ')}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -416,10 +474,269 @@ export const FloraNaturopathicModal: React.FC<FloraNaturopathicModalProps> = ({
                 </div>
               </div>
 
+              {/* Survival Nutritional Profile if available */}
+              {activePlant.survivalBenefits && (
+                <div className="p-3.5 rounded-xl bg-slate-900/60 border border-emerald-800/60 text-[11px] space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                    <Utensils size={15} />
+                    <span>Wild Foraging & Survival Nutritional Profile</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+                    <div className="bg-black/40 p-2 rounded border border-gray-800">
+                      <span className="text-gray-400 font-bold block mb-1">Nutritional Highlights:</span>
+                      <ul className="space-y-0.5 text-gray-200">
+                        {activePlant.survivalBenefits.nutritionalHighlights.map((n, idx) => (
+                          <li key={idx}>• {n}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="bg-black/40 p-2 rounded border border-gray-800">
+                      <span className="text-gray-400 font-bold block mb-1">Survival Utility:</span>
+                      <ul className="space-y-0.5 text-gray-200">
+                        {activePlant.survivalBenefits.survivalUtility.map((u, idx) => (
+                          <li key={idx}>• {u}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Critical Toxic Lookalikes Alert if available */}
+              {activePlant.toxicLookalikes && activePlant.toxicLookalikes.length > 0 && (
+                <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-700/80 text-[11px] space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-red-800/60 pb-1.5">
+                    <div className="flex items-center gap-2 text-red-400 font-bold">
+                      <Skull size={16} className="text-red-400" />
+                      <span>CRITICAL DANGER: POISONOUS / FATAL LOOKALIKES</span>
+                    </div>
+                    <span className="text-[9px] px-2 py-0.5 rounded font-bold uppercase bg-red-900/80 text-red-200 border border-red-600">
+                      MANDATORY VERIFICATION
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {activePlant.toxicLookalikes.map((lookalike, idx) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-black/60 border border-red-900/60 space-y-1 text-[10px]">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-red-300 text-xs">
+                            {lookalike.name} <span className="italic text-[10px] text-gray-400">({lookalike.scientificName})</span>
+                          </span>
+                          <span className="px-1.5 py-0.2 rounded font-bold bg-red-950 text-red-400 border border-red-700">
+                            {lookalike.dangerLevel.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        <p className="text-gray-300"><strong className="text-red-400">Toxin:</strong> {lookalike.poisonToxin}</p>
+                        <div>
+                          <strong className="text-yellow-400 block">Distinguishing Markers:</strong>
+                          <ul className="space-y-0.5 text-gray-300 mt-0.5">
+                            {lookalike.distinguishingMarkers.map((m, mIdx) => (
+                              <li key={mIdx}>• {m}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="p-1.5 rounded bg-red-950/80 border border-red-800/80 text-red-200 text-[10px]">
+                          <strong>Action Warning:</strong> {lookalike.warningAdvice}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
 
-          {/* TAB 3: PHYTOCHEMICAL TAXONOMY */}
+          {/* TAB 3: WILD FORAGING & MYCOLOGY CATALOG */}
+          {activeTab === 'foraging_catalog' && (
+            <div className="space-y-4">
+              <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-600/40 flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-bold text-emerald-300 block">OFFLINE WILD FORAGING & MYCOLOGY DATABASE</span>
+                  <p className="text-[11px] text-gray-400">Nutritional profiles, edibility ratings, and harvest windows with zero network dependency</p>
+                </div>
+                <div className="text-right font-mono text-[11px]">
+                  <span className="text-emerald-400 font-bold">{DEEP_FORAGING_DATABASE.length} Prime Species</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {DEEP_FORAGING_DATABASE.map(item => (
+                  <div
+                    key={item.id}
+                    className="p-3.5 rounded-xl bg-slate-900/70 border border-gray-800 hover:border-emerald-600 transition-all flex flex-col justify-between gap-3 group"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 pb-2 border-b border-gray-800/60">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-black/60 border border-emerald-600/40 p-1 flex items-center justify-center shrink-0">
+                            <img src={item.imageUrl} alt={item.commonName} className="w-full h-full object-contain" />
+                          </div>
+                          <div>
+                            <span className="font-bold text-white text-xs group-hover:text-emerald-300 transition-colors">
+                              {item.commonName}
+                            </span>
+                            <span className="block text-[10px] text-gray-400 italic">
+                              {item.scientificName} ({item.family})
+                            </span>
+                          </div>
+                        </div>
+                        <span className={`text-[9px] px-2 py-0.5 rounded uppercase font-bold shrink-0 border ${
+                          item.edibility === 'CHOICE_EDIBLE' ? 'bg-emerald-950 text-emerald-300 border-emerald-700' :
+                          item.edibility === 'EDIBLE_WITH_PREPARATION' ? 'bg-amber-950 text-amber-300 border-amber-700' :
+                          item.edibility === 'TOXIC_DEADLY' ? 'bg-red-950 text-red-300 border-red-700' :
+                          'bg-slate-900 text-gray-300 border-gray-700'
+                        }`}>
+                          {item.edibility.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+
+                      <div className="mt-2.5 space-y-1.5 text-[11px]">
+                        <div>
+                          <span className="text-gray-400 font-bold block text-[10px]">Nutritional / Survival Highlights:</span>
+                          <p className="text-emerald-300 text-[10px]">{item.survivalBenefits?.nutritionalHighlights.slice(0, 2).join(' • ')}</p>
+                        </div>
+                        <p><strong className="text-gray-400 text-[10px]">Habitat & Season:</strong> <span className="text-gray-200 text-[10px]">{item.activeGrowthSeason}</span></p>
+                        {item.toxicLookalikes && item.toxicLookalikes.length > 0 && (
+                          <div className="p-1.5 rounded bg-red-950/40 border border-red-800/60 text-[10px] text-red-300 flex items-center gap-1.5">
+                            <AlertTriangle size={12} className="text-red-400 shrink-0" />
+                            <span><strong>Warning:</strong> {item.toxicLookalikes.length} lethal/toxic lookalike(s) identified.</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-800/80 flex items-center justify-between text-[10px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivePlantId(item.id);
+                          setActiveTab('materia_medica');
+                        }}
+                        className="px-2.5 py-1 rounded bg-black/50 hover:bg-black/80 text-emerald-400 border border-emerald-800/60 font-bold flex items-center gap-1 transition-colors"
+                      >
+                        <BookOpen size={11} /> Inspect Dossier
+                      </button>
+                      {item.toxicLookalikes && item.toxicLookalikes.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('toxic_lookalikes')}
+                          className="px-2.5 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-700 font-bold flex items-center gap-1 transition-colors"
+                        >
+                          <Skull size={11} /> Compare Lookalikes
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: TOXIC LOOKALIKES & POISONS */}
+          {activeTab === 'toxic_lookalikes' && (
+            <div className="space-y-4">
+              <div className="p-3 rounded-xl bg-red-950/40 border border-red-700/60 flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-bold text-red-300 block flex items-center gap-1.5">
+                    <Skull size={15} className="text-red-400" />
+                    DEADLY & TOXIC LOOKALIKES IDENTIFICATION MATRIX
+                  </span>
+                  <p className="text-[11px] text-gray-400">
+                    Cross-referencing edible wild species against life-threatening lookalikes and field verification tests
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('ai_scanner')}
+                  className="px-3 py-1.5 rounded-lg bg-red-900/80 hover:bg-red-800 text-white font-bold text-[10px] flex items-center gap-1 transition-colors border border-red-600"
+                >
+                  <Camera size={12} /> Scan with AI
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {DEEP_FORAGING_DATABASE.filter(s => s.toxicLookalikes && s.toxicLookalikes.length > 0).map(species => (
+                  <div key={species.id} className="p-4 rounded-xl bg-slate-900/80 border border-red-900/50 space-y-3">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-emerald-300 text-xs">SAFE TARGET: {species.commonName}</span>
+                        <span className="text-[10px] text-gray-400 italic">({species.scientificName})</span>
+                      </div>
+                      <span className="text-[9px] px-2 py-0.5 rounded uppercase font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">
+                        {species.edibility.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {species.toxicLookalikes.map((lookalike, lIdx) => (
+                        <div key={lIdx} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 rounded-lg bg-black/50 border border-red-900/40">
+                          {/* Left: Edible Specimen Markers */}
+                          <div className="space-y-1.5 text-[11px]">
+                            <div className="flex items-center gap-2 text-emerald-400 font-bold border-b border-emerald-900/50 pb-1">
+                              <ShieldCheck size={13} />
+                              <span>Verified Edible Morphology</span>
+                            </div>
+                            <div className="flex items-center gap-3 pt-1">
+                              {species.imageUrl && (
+                                <div className="w-12 h-12 rounded-lg bg-black/80 border border-emerald-600/40 p-1 shrink-0">
+                                  <img src={species.imageUrl} alt={species.commonName} className="w-full h-full object-contain" />
+                                </div>
+                              )}
+                              <div className="space-y-0.5 text-[10px] text-gray-300">
+                                {species.capCharacteristics && <p>• <strong>Cap:</strong> {species.capCharacteristics}</p>}
+                                {species.stemCharacteristics && <p>• <strong>Stem:</strong> {species.stemCharacteristics}</p>}
+                                {species.sporePrintColor && <p>• <strong>Spore:</strong> {species.sporePrintColor}</p>}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Toxic Lookalike & Lethal Threat */}
+                          <div className="space-y-1.5 text-[11px]">
+                            <div className="flex items-center justify-between border-b border-red-900/50 pb-1">
+                              <span className="font-bold text-red-400 flex items-center gap-1.5">
+                                <Skull size={13} /> {lookalike.name}
+                              </span>
+                              <span className="text-[9px] px-1.5 py-0.2 rounded font-bold uppercase bg-red-950 text-red-300 border border-red-700">
+                                {lookalike.dangerLevel.replace(/_/g, ' ')}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-gray-300">
+                              <strong className="text-red-400">Poison/Toxin:</strong> {lookalike.poisonToxin}
+                            </p>
+                            <div>
+                              <strong className="text-amber-400 block text-[10px]">Toxic Distinguishing Markers:</strong>
+                              <ul className="space-y-0.5 text-[10px] text-gray-300 mt-0.5">
+                                {lookalike.distinguishingMarkers.map((m, mIdx) => (
+                                  <li key={mIdx}>• {m}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="p-1.5 rounded bg-red-950/70 border border-red-800 text-red-200 text-[10px] font-bold">
+                              {lookalike.warningAdvice}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: AI CAMERA SCANNER */}
+          {activeTab === 'ai_scanner' && (
+            <div className="space-y-4">
+              <ForagingPhotoScanner
+                onSelectSpecies={(speciesId) => {
+                  setActivePlantId(speciesId);
+                  setActiveTab('materia_medica');
+                }}
+              />
+            </div>
+          )}
+
+          {/* TAB 6: PHYTOCHEMICAL TAXONOMY */}
           {activeTab === 'phytochemistry' && (
             <div className="space-y-3">
               <div className="p-3 rounded-xl bg-slate-900/70 border border-gray-800 text-[11px] leading-relaxed">

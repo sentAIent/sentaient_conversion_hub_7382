@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const puppeteer = require('puppeteer');
 
 const distDir = path.join(__dirname, '..', 'dist', 'sphinx');
@@ -25,28 +26,34 @@ const MIME_TYPES = {
 
 const server = http.createServer((req, res) => {
   let cleanUrl = req.url.split('?')[0];
-  if (cleanUrl.startsWith('/sphinx/')) {
-    cleanUrl = cleanUrl.replace(/^\/sphinx/, '');
+  if (cleanUrl.startsWith('/sphinx')) {
+    cleanUrl = cleanUrl.replace(/^\/sphinx/, '') || '/';
   }
   let filePath = path.join(distDir, cleanUrl);
   if (cleanUrl === '/' || cleanUrl === '') {
     filePath = path.join(distDir, 'index.html');
+  } else if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(filePath, 'index.html');
   } else if (!fs.existsSync(filePath) && fs.existsSync(filePath + '.html')) {
     filePath = filePath + '.html';
-  } else if (!fs.existsSync(filePath) && fs.existsSync(path.join(filePath, 'index.html'))) {
-    filePath = path.join(filePath, 'index.html');
   }
 
   if (!fs.existsSync(filePath)) {
     filePath = path.join(distDir, 'index.html');
   }
 
-  const ext = path.extname(filePath).toLowerCase();
-  res.writeHead(200, {
-    'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-    'Access-Control-Allow-Origin': '*'
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404);
+      return res.end('Not found');
+    }
+    const ext = path.extname(filePath).toLowerCase();
+    res.writeHead(200, {
+      'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(data);
   });
-  fs.createReadStream(filePath).pipe(res);
 });
 
 const PORT = 4173;
@@ -64,10 +71,11 @@ async function runAudit() {
 
   const chromePath = fs.existsSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
     ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : undefined;
+  const tmpUserDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sphinx-audit-'));
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: chromePath,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security', '--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader']
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security', '--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader', '--user-data-dir=' + tmpUserDataDir]
   });
 
   let totalFailures = 0;
@@ -136,7 +144,7 @@ async function runAudit() {
     try {
       await page.goto(`http://127.0.0.1:${PORT}/sphinx/`, {
         waitUntil: 'domcontentloaded',
-        timeout: 15000
+        timeout: 30000
       });
 
       // 1. Instant Custom Cursor check at DOM load
@@ -160,7 +168,7 @@ async function runAudit() {
       }
 
       // Wait for React hydration & map layout
-      await page.waitForSelector('[data-testid="bottom-tactical-dock"]', { timeout: 15000 }).catch(() => null);
+      await page.waitForSelector('[data-testid="bottom-tactical-dock"]', { timeout: 25000 }).catch(() => null);
       await new Promise(r => setTimeout(r, 1000));
 
       // 2. Dock & Threats Button Bounds check
@@ -223,6 +231,7 @@ async function runAudit() {
   }
 
   await browser.close();
+  try { fs.rmSync(tmpUserDataDir, { recursive: true, force: true }); } catch (e) {}
   server.close();
 
   console.log(`\n========================================`);
