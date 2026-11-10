@@ -532,7 +532,7 @@ const Scene3D = () => {
           <TimelineManager />
           <Preload all />
         </React.Suspense>
-        <Sparkles count={250} scale={[500, 500, 100]} position={[0, 0, -560]} size={2} speed={0.5} opacity={0.25} color="#00ff88" />
+        <Sparkles count={1000} scale={200} size={4} speed={0.8} opacity={0.5} color="#00ff44" />
 
         {/* The HTML UI Layer */}
         <Scroll html style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
