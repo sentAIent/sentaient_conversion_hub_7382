@@ -310,18 +310,19 @@ export default function ToroidalSentaientCore({
   const synapseGeometry = useMemo(() => {
     const positions = [];
     const sourceDist = maxOuterR;
+    const maxEndDist = Math.max(sourceDist, dynamicRadius - 48);
     appPositions.forEach(app => {
-      const targetX = app.x;
-      const targetY = app.y + 18;
-      const angle = Math.atan2(targetY, targetX);
+      const angle = Math.atan2(app.y, app.x);
       const sx = Math.cos(angle) * sourceDist;
       const sy = Math.sin(angle) * sourceDist;
-      positions.push(sx, sy, 0, targetX, targetY, 0);
+      const ex = Math.cos(angle) * maxEndDist;
+      const ey = Math.sin(angle) * maxEndDist;
+      positions.push(sx, sy, 0, ex, ey, 0);
     });
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     return geo;
-  }, [appPositions, maxOuterR]);
+  }, [appPositions, maxOuterR, dynamicRadius]);
 
   // --------------------------------------------------------------------------
   // 7A. SEGMENTED EQUATORIAL ACCELERATOR RING (Active High-Visibility Rotation)
@@ -780,7 +781,7 @@ export default function ToroidalSentaientCore({
       {/* ------------------------------------------------------------------ */}
       {/* E. MEMOIZED SYNAPSE BEAMS (Linking Core to Perimeter Apps)         */}
       {/* ------------------------------------------------------------------ */}
-      <lineSegments geometry={synapseGeometry}>
+      <lineSegments geometry={synapseGeometry} position={[0, 0, -6]} renderOrder={5}>
         <lineBasicMaterial
           color="#0088ff"
           transparent

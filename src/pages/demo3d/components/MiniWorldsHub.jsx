@@ -7,7 +7,7 @@ import ToroidalSentaientCore from './ToroidalSentaientCore';
 const LogoMesh = ({ url, scaleX, scaleY }) => {
   const texture = useTexture(url);
   return (
-    <mesh scale={[70 * scaleX, 70 * scaleY, 1]} position={[0, 0, 0]}>
+    <mesh scale={[70 * scaleX, 70 * scaleY, 1]} position={[0, 0, 2]} renderOrder={100}>
       <planeGeometry args={[1, 1]} />
       <meshBasicMaterial map={texture} transparent={true} alphaTest={0.05} depthWrite={false} side={THREE.DoubleSide} toneMapped={false} />
     </mesh>
@@ -126,43 +126,43 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
   return (
     <group position={position}>
       {/* Camera-Facing Pronounced Holographic Glow Aura (Remains behind logo throughout 360° spin) */}
-      <group ref={glowGroupRef} position={[0, 0, -4]}>
+      <group ref={glowGroupRef} position={[0, 0, -8]} renderOrder={10}>
         {glowTexture && (
           <>
-            {/* Layer 1: High-Intensity Luminous Core Backlight */}
-            <mesh scale={[glowW * 1.45, glowH * 1.45, 1]}>
+            {/* Layer 1: Soft Luminous Core Backlight (Brand tinted, no blinding whiteout) */}
+            <mesh scale={[glowW * 1.35, glowH * 1.35, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
-                color={coreGlowColor || (name === 'MindWave' ? '#38bdf8' : (name === 'Icebreaker' ? '#FFAA33' : (name === 'Contango' ? '#FFE066' : (name === 'Interstellar' ? '#38bdf8' : '#ffffff'))))}
+                color={coreGlowColor || glowColor || (name === 'MindWave' ? '#38bdf8' : (name === 'Icebreaker' ? '#FFAA33' : (name === 'Contango' ? '#FFE066' : (name === 'Interstellar' ? '#38bdf8' : color))))}
                 transparent
-                opacity={(name === 'Liquid' ? 0.0 : 1.0) * (isHovered ? 0.95 : (isDimmed ? 0.35 : 0.65)) * glowMultiplier}
+                opacity={(name === 'Liquid' ? 0.0 : 1.0) * (isHovered ? 0.35 : (isDimmed ? 0.08 : 0.20)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
             </mesh>
 
-            {/* Layer 2: Vibrant Brand-Color Holographic Aura */}
-            <mesh scale={[glowW * 2.1, glowH * 2.1, 1]}>
+            {/* Layer 2: Subtle Brand-Color Holographic Aura */}
+            <mesh scale={[glowW * 1.9, glowH * 1.9, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
                 color={glowColor || (name === 'Icebreaker' ? '#FF6600' : (name === 'Contango' ? '#FFD700' : (name === 'Interstellar' ? '#00D2FF' : color)))}
                 transparent
-                opacity={(isHovered ? 1.0 : (isDimmed ? 0.45 : 0.88)) * glowMultiplier}
+                opacity={(isHovered ? 0.45 : (isDimmed ? 0.10 : 0.25)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
             </mesh>
 
-            {/* Layer 3: Expansive Atmospheric Deep Bloom */}
-            <mesh scale={[glowW * 3.1, glowH * 3.1, 1]}>
+            {/* Layer 3: Atmospheric Deep Halo */}
+            <mesh scale={[glowW * 2.6, glowH * 2.6, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
                 color={glowColor || (name === 'Icebreaker' ? '#FF5500' : (name === 'Contango' ? '#F59E0B' : (name === 'Interstellar' ? '#0284C7' : color)))}
                 transparent
-                opacity={(isHovered ? 0.65 : (isDimmed ? 0.20 : 0.42)) * glowMultiplier}
+                opacity={(isHovered ? 0.20 : (isDimmed ? 0.04 : 0.12)) * glowMultiplier}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
@@ -171,7 +171,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
         )}
       </group>
 
-      <group ref={meshRef} onClick={handleClick}>
+      <group ref={meshRef} onClick={handleClick} position={[0, 0, 2]}>
         {/* Holographic Mini World Preview Diorama */}
         <group
           onPointerOver={(e) => { e.stopPropagation(); onHoverStart(); document.body.style.cursor = 'pointer'; }}
