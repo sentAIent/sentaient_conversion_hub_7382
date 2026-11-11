@@ -14,6 +14,7 @@ import { TacticalRepeaterEngine, EMERGENCY_SIMPLEX_CHANNELS } from '../comms/tac
 import { SpaceWeatherEngine } from '../space/spaceWeatherEngine';
 import { CBRNFalloutEngine } from '../cbrn/cbrnFalloutEngine';
 import { BugOutRoutingEngine, VEHICLE_PROFILES } from '../routing/bugOutRoutingEngine';
+import { dispatchComprehensiveKnowledge } from './comprehensiveKnowledgeBase';
 
 export interface MapContext {
   center: { lat: number; lon: number };
@@ -117,6 +118,12 @@ async function synthesizeClientAIResponse(
   // Check if query is about traffic stop, police encounter, legal defense, tickets
   if (isLegalDefenseQuery(lower)) {
     return generateLegalDefenseResponse(query, mapContext, isDeepResearch);
+  }
+
+  // Check comprehensive knowledge base across all 18+ application domains
+  const compReport = dispatchComprehensiveKnowledge(query, mapContext, isDeepResearch);
+  if (compReport) {
+    return compReport;
   }
 
   // Check if query is about Black's Law Dictionary, legal maxims, statutory vs common law
