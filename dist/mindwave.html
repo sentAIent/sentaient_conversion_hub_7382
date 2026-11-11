@@ -439,10 +439,10 @@ window.resetGalaxySettings = function() {
         }
     </script>
 <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
-  <script type="module" crossorigin src="/assets/mindwave-DorjOD7t.js"></script>
+  <script type="module" crossorigin src="/assets/mindwave-DlUuU2w-.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/preload-helper-CS1eXPs2.js">
-  <link rel="modulepreload" crossorigin href="/assets/bootloader-Yut0b9Yt.js">
-  <link rel="modulepreload" crossorigin href="/assets/main_vFINAL-CNkuNZuz.js">
+  <link rel="modulepreload" crossorigin href="/assets/bootloader-dQ0CuUjW.js">
+  <link rel="modulepreload" crossorigin href="/assets/main_vFINAL-DBwYVsc9.js">
   <link rel="stylesheet" crossorigin href="/assets/bootloader-D8gydro4.css">
   <link rel="stylesheet" crossorigin href="/assets/main_vFINAL-BKp4VZKv.css">
 <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
@@ -5105,13 +5105,14 @@ window.resetGalaxySettings = function() {
                     alert('Loading purchase verification... Please try again in a moment.');
                     return;
                 }
-                const hasAccess = await window.paywall.hasPurchasedApp();
+                const isPremium = (await import('/assets/stripe-simple-lbnaObyd.js')).isPremiumUser;
+                const hasAccess = await isPremium().catch(() => false);
                 if (!hasAccess) {
-                    if (window.showToast) window.showToast('Redirecting to Lifetime upgrade...', 'info');
-                    if (window.paywall && window.paywall.goToCheckout) {
-                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
+                    if (window.showToast) window.showToast('App download requires a Premium membership.', 'info');
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Premium Members. Please upgrade to unlock.");
                     }
                     return;
                 }
@@ -5137,18 +5138,14 @@ window.resetGalaxySettings = function() {
 
         if (installAccept) {
             installAccept.addEventListener('click', async () => {
-                // STRICT PAYWALL CHECK: Source Code / App Download ($350)
-                if (!window.paywall) {
-                    alert('Loading purchase verification... Please try again in a moment.');
-                    return;
-                }
-                const hasAccess = await window.paywall.hasPurchasedApp();
+                const isPremium = (await import('/assets/stripe-simple-lbnaObyd.js')).isPremiumUser;
+                const hasAccess = await isPremium().catch(() => false);
                 if (!hasAccess) {
-                    if (window.showToast) window.showToast('Redirecting to Lifetime upgrade...', 'info');
-                    if (window.paywall && window.paywall.goToCheckout) {
-                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
+                    if (window.showToast) window.showToast('App download requires a Premium membership.', 'info');
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Premium Members. Please upgrade to unlock.");
                     }
                     return;
                 }

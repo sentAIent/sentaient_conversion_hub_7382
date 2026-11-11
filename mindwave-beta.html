@@ -4549,13 +4549,14 @@ window.resetGalaxySettings = function() {
                     alert('Loading purchase verification... Please try again in a moment.');
                     return;
                 }
-                const hasAccess = await window.paywall.hasPurchasedApp();
+                const isPremium = (await import('./binaural-assets/js/services/stripe-simple.js')).isPremiumUser;
+                const hasAccess = await isPremium().catch(() => false);
                 if (!hasAccess) {
-                    if (window.showToast) window.showToast('Redirecting to Lifetime upgrade...', 'info');
-                    if (window.paywall && window.paywall.goToCheckout) {
-                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
+                    if (window.showToast) window.showToast('App download requires a Premium membership.', 'info');
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Premium Members. Please upgrade to unlock.");
                     }
                     return;
                 }
@@ -4581,18 +4582,14 @@ window.resetGalaxySettings = function() {
 
         if (installAccept) {
             installAccept.addEventListener('click', async () => {
-                // STRICT PAYWALL CHECK: Source Code / App Download ($350)
-                if (!window.paywall) {
-                    alert('Loading purchase verification... Please try again in a moment.');
-                    return;
-                }
-                const hasAccess = await window.paywall.hasPurchasedApp();
+                const isPremium = (await import('./binaural-assets/js/services/stripe-simple.js')).isPremiumUser;
+                const hasAccess = await isPremium().catch(() => false);
                 if (!hasAccess) {
-                    if (window.showToast) window.showToast('Redirecting to Lifetime upgrade...', 'info');
-                    if (window.paywall && window.paywall.goToCheckout) {
-                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
+                    if (window.showToast) window.showToast('App download requires a Premium membership.', 'info');
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Premium Members. Please upgrade to unlock.");
                     }
                     return;
                 }
