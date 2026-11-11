@@ -1,0 +1,131 @@
+{
+  "timestamp": 1794362374.846443,
+  "total_treasury_balance_dollars": 897.49,
+  "gross_revenue_dollars": 800.0,
+  "total_spend_dollars": 2.51,
+  "net_profit_dollars": 797.49,
+  "aggregate_margin_pct": 99.7,
+  "solvency_health_score": 99,
+  "synaptic_pulse_intensity": 0.2,
+  "active_ventures": [
+    "Bug Bounty Hunter (#5)",
+    "Media Localization Studio (#3)",
+    "Academic Synthesis Studio (#2)",
+    "Autonomous Marketing Agency (#1)"
+  ],
+  "vault": {
+    "tax_escrow_dollars": 199.35,
+    "dividend_pool_available_dollars": 0.0,
+    "growth_buffer_dollars": 199.42,
+    "cumulative_dividends_paid_dollars": 398.72,
+    "milestones_reached": [
+      250.0,
+      500.0
+    ],
+    "disbursements_count": 1,
+    "latest_disbursement": {
+      "disbursement_id": "div_1794362374_250",
+      "timestamp": 1794362374.8290539,
+      "amount_dollars": 398.72,
+      "destination": "Primary_Owner_ACH_Stripe",
+      "milestone_trigger_dollars": 250.0,
+      "status": "completed"
+    }
+  },
+  "arbitrage": {
+    "total_spent_dollars": 0.93,
+    "total_saved_dollars": 1.47,
+    "arbitrage_savings_pct": 61.3,
+    "effective_margin_boost_multiplier": 2.6
+  },
+  "security": {
+    "total_inspected_payloads": 10,
+    "total_blocked_attacks": 1,
+    "security_integrity_score": 99,
+    "status": "ARMED_AND_ACTIVE"
+  },
+  "cross_pollination": {
+    "total_internal_jobs_captured": 8,
+    "total_internal_volume_dollars": 1040.0,
+    "customer_acquisition_cost_dollars": 0.0,
+    "cross_pollination_efficiency": "100% Internal Synergy"
+  },
+  "obelisks": {
+    "north": {
+      "name": "Marketing Agency (#1)",
+      "jobs": 2,
+      "revenue_dollars": 210.0,
+      "profit_dollars": 209.35
+    },
+    "east": {
+      "name": "Academic Synthesis Studio (#2)",
+      "jobs": 2,
+      "revenue_dollars": 190.0,
+      "profit_dollars": 189.49
+    },
+    "south": {
+      "name": "Media Localization Studio (#3)",
+      "jobs": 2,
+      "revenue_dollars": 190.0,
+      "profit_dollars": 188.95
+    },
+    "west": {
+      "name": "Bug Bounty Hunter (#5)",
+      "jobs": 2,
+      "revenue_dollars": 210.0,
+      "profit_dollars": 209.7
+    }
+  },
+  "recent_events": [
+    {
+      "time": "17:59:34",
+      "type": "MARGIN_DECLINE",
+      "message": "Declined 'Dub 60-minute documentary for $5'. Auto-generated counter-offer of $42.29"
+    },
+    {
+      "time": "17:59:34",
+      "type": "JOB_ACCEPTED",
+      "message": "Accepted 'Autopilot Conversion Funnel: 12-Asset Micro-Landing Page Copy Matrix' (Venture: marketing_agency, Reward: $120.00)"
+    },
+    {
+      "time": "17:59:34",
+      "type": "JOB_DELIVERED",
+      "message": "Delivered SEO topic cluster for 'Autopilot Conversion Funnel: 12-Asset Micro-Landing Page Copy Matrix'. Profit: +$119.66"
+    },
+    {
+      "time": "17:59:34",
+      "type": "JOB_ACCEPTED",
+      "message": "Accepted 'Legal Eagle: Cross-Border AI IP Case Precedents Synthesis Brief' (Venture: academic_studio, Reward: $140.00)"
+    },
+    {
+      "time": "17:59:34",
+      "type": "JOB_DELIVERED",
+      "message": "Delivered study package for 'Legal Eagle: Cross-Border AI IP Case Precedents Synthesis Brief'. Profit: +$139.77"
+    },
+    {
+      "time": "17:59:34",
+      "type": "JOB_ACCEPTED",
+      "message": "Accepted 'Matrix / LightSpeed: Optimize Three.js Instanced Mesh GPU Draw Calls' (Venture: bug_bounty, Reward: $150.00)"
+    },
+    {
+      "time": "17:59:34",
+      "type": "JOB_DELIVERED",
+      "message": "Merged PR fix for 'Matrix / LightSpeed: Optimize Three.js Instanced Mesh GPU Draw Calls'. Bounty collected: +$149.85"
+    },
+    {
+      "time": "17:59:34",
+      "type": "JOB_ACCEPTED",
+      "message": "Accepted 'Contango Quant: Localize Alpha Strategy Video into Japanese & German' (Venture: media_localization, Reward: $110.00)"
+    },
+    {
+      "time": "17:59:34",
+      "type": "JOB_DELIVERED",
+      "message": "Delivered localized package for 'Contango Quant: Localize Alpha Strategy Video into Japanese & German'. Profit: +$109.50"
+    },
+    {
+      "time": "17:59:34",
+      "type": "DIVIDEND_DISBURSED",
+      "message": "Milestone $250 hit! Auto-disbursed $398.72 dividend to Primary_Owner_ACH_Stripe."
+    }
+  ]
+}

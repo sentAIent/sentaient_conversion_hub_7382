@@ -3,6 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '../AppIcon';
 import { supabase } from '../../config/supabase';
+import { getOfferings, makePurchase } from '../../services/revenuecat';
 
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_placeholder');
@@ -13,6 +14,21 @@ export const SoftPaywall = ({ isVisible, onClose, featureName = "Advanced AI Com
   const handleUpgrade = async () => {
     setLoading(true);
     try {
+      const isNative = Boolean(window.Capacitor?.isNativePlatform());
+      if (isNative) {
+        const packages = await getOfferings();
+        if (packages && packages.length > 0) {
+          const proPkg = packages.find(p => p.identifier.includes('pro') || p.identifier.includes('monthly')) || packages[0];
+          const result = await makePurchase(proPkg);
+          if (result) {
+            onClose();
+            return;
+          }
+        }
+        alert("In-App Purchases are currently initializing. Please try again in a moment.");
+        return;
+      }
+
       const stripe = await stripePromise;
       if (!stripe) throw new Error('Stripe failed to load');
       
@@ -110,7 +126,7 @@ export const SoftPaywall = ({ isVisible, onClose, featureName = "Advanced AI Com
                   )}
                 </button>
                 <p className="text-center text-[10px] text-neutral-500 mt-4 uppercase tracking-widest flex items-center justify-center gap-1">
-                  <Icon name="Lock" size={10} /> Secured by Stripe
+                  <Icon name="Lock" size={10} /> {window.Capacitor?.isNativePlatform() ? 'Secured via Apple & Google In-App Purchases' : 'Secured by Stripe'}
                 </p>
               </div>
             </motion.div>

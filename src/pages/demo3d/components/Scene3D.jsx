@@ -11,23 +11,23 @@ import analytics from '../../../services/ComprehensiveAnalytics';
 import { useAutoTour } from '../navigation/useAutoTour';
 
 const WORLD_ROUTES = {
-  'MindWave': '/mindwave',
-  'Icebreaker': '/icelogin',
-  'Interstellar': '/interstellar',
-  'Legal Eagle': '/legaleagle',
+  'MindWave': '/mindwave.html',
+  'Icebreaker': '/icebreaker',
+  'Interstellar': '/interstellar-game/',
+  'Legal Eagle': '/legaleagle/',
   'Autopilot': '/autopilot',
   'CloveH2O': 'https://cloveh2o.com',
   'FantasyQuant': '/fantasyquant',
-  'Contango': '/contango',
-  'Sentaient': '/landing',
-  'Elevate': '/elevate',
-  'Sphinx': '/sphinx',
-  'Liquid': '/liquid',
-  'Maya': '/maya',
+  'Contango': '/contango/',
+  'Sentaient': '/agent-studio',
+  'Elevate': null,
+  'Sphinx': '/sphinx/',
+  'Liquid': null,
+  'Maya': null,
   'Pyramid': '/pyramid',
   'PyRAmid': '/pyramid',
   'Matrix': '/matrix',
-  'LightSpeed': '/lightspeed'
+  'LightSpeed': '/lightspeed/'
 };
 
 const WORLD_CONFIG = {
@@ -152,6 +152,7 @@ const HTMLStations = () => {
   const descRef = useRef();
   const tagsRef = useRef();
   const btnRef = useRef();
+  const enterAppBtnRef = useRef();
   
   // Keep track of the currently active world to avoid redundant DOM updates
   const activeWorldRef = useRef(null);
@@ -303,6 +304,20 @@ const HTMLStations = () => {
                 // Update Button
                 if (btnRef.current) {
                   btnRef.current.style.backgroundColor = world.color || '#38bdf8';
+                }
+
+                // Update Enter App Button
+                if (enterAppBtnRef.current) {
+                  const targetUrl = world.appUrl || WORLD_ROUTES[world.name];
+                  if (targetUrl) {
+                    enterAppBtnRef.current.href = targetUrl;
+                    enterAppBtnRef.current.target = targetUrl.startsWith('http') ? '_blank' : '_self';
+                    enterAppBtnRef.current.style.display = 'inline-flex';
+                    enterAppBtnRef.current.style.background = `linear-gradient(135deg, ${world.color || '#38bdf8'}ee, ${world.color || '#38bdf8'}99)`;
+                    enterAppBtnRef.current.style.boxShadow = `0 4px 16px ${world.color || '#38bdf8'}44`;
+                  } else {
+                    enterAppBtnRef.current.style.display = 'none';
+                  }
                 }
             }
         } else {
@@ -457,6 +472,46 @@ const HTMLStations = () => {
           {/* Action Bar */}
           <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
             
+            {/* Primary Action: Enter App */}
+            <a
+              ref={enterAppBtnRef}
+              href="#"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              style={{
+                width: '100%',
+                padding: '9px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                color: '#ffffff',
+                fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+                fontSize: '11px',
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+                boxSizing: 'border-box'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px) scale(1.01)';
+                e.currentTarget.style.filter = 'brightness(1.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.filter = 'none';
+              }}
+            >
+              <span>ENTER APP</span>
+              <span style={{ fontSize: '12px' }}>➔</span>
+            </a>
+
             {/* Auto Tour Progression Bar: Continue Forward Button + Seconds Adjuster */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
               <button

@@ -3226,28 +3226,28 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
           ELEVATE
         </Text>
 
-        {/* Subtitle & Description */}
+        {/* Subtitle & Description - Enlarged for High Legibility */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -32, 0]}
-          fontSize={15}
+          position={[0, -42, 0]}
+          fontSize={26}
           color="#38bdf8"
-          outlineWidth={0.9}
+          outlineWidth={1.2}
           outlineColor="#040b17"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.12}
+          letterSpacing={0.14}
         >
           BIG-MOUNTAIN SNOWBOARD GAME & ALPINE HUB
         </Text>
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -52, 0]}
-          fontSize={11}
+          position={[0, -76, 0]}
+          fontSize={18}
           color="#e0f2fe"
-          outlineWidth={0.6}
+          outlineWidth={0.8}
           outlineColor="#040b17"
           anchorX="center"
           anchorY="middle"

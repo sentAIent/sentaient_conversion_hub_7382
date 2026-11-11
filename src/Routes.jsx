@@ -30,6 +30,8 @@ const AutopilotTerms = React.lazy(() => import('./pages/AutopilotTerms'));
 const ContangoOldPage = React.lazy(() => import('./pages/ContangoOldPage'));
 const AgentStudio = React.lazy(() => import('./pages/AgentStudio'));
 const AdminAnalyticsDashboard = React.lazy(() => import('./pages/analytics/AdminAnalyticsDashboard'));
+const SportsAnalytics = React.lazy(() => import('./pages/SportsAnalytics'));
+const MatrixChatDemo = React.lazy(() => import('./pages/MatrixChatDemo'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -81,9 +83,11 @@ const ProjectRoutes = () => {
               <Route path="/register" element={<Register />} />
               
               {/* App Routes (Public for Marketing Phase) */}
-              
-              
-              
+              <Route path="/fantasyquant" element={<SportsAnalytics />} />
+              <Route path="/matrix" element={<MatrixChatDemo />} />
+              <Route path="/sentaient" element={<Navigate to="/agent-studio" replace />} />
+              <Route path="/autopilot" element={<AISolutionsExperienceCenter />} />
+              <Route path="/pyramid" element={<AdminAnalyticsDashboard />} />
               {/* Legal Pages */}
               <Route path="/autopilot/privacy" element={<AutopilotPrivacy />} />
               <Route path="/autopilot/terms" element={<AutopilotTerms />} />

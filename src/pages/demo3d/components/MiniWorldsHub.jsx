@@ -34,7 +34,7 @@ const getHolographicGlowTexture = () => {
   return _sharedGlowTex;
 };
 
-const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0, hoverGlowMultiplier, coreGlowColor, glowColor }) => {
+const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, appUrl, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0, hoverGlowMultiplier, coreGlowColor, glowColor }) => {
   const meshRef = useRef();
   const glowGroupRef = useRef();
   const containerRef = useRef();
@@ -280,6 +280,46 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               }}>
                 {description}
               </div>
+              {appUrl && (
+                <div style={{ marginTop: '8px', width: '100%', pointerEvents: 'auto' }}>
+                  <a
+                    href={appUrl}
+                    target={appUrl.startsWith('http') ? '_blank' : '_self'}
+                    rel={appUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    onClick={(e) => { e.stopPropagation(); }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      background: `linear-gradient(135deg, ${color}ee, ${color}88)`,
+                      color: '#ffffff',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      textDecoration: 'none',
+                      textTransform: 'uppercase',
+                      boxShadow: `0 4px 14px ${color}44`,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      border: '1px solid rgba(255, 255, 255, 0.25)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)';
+                      e.currentTarget.style.filter = 'brightness(1.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'none';
+                      e.currentTarget.style.filter = 'none';
+                    }}
+                  >
+                    Enter App
+                    <span style={{ fontSize: '12px', lineHeight: 1 }}>➔</span>
+                  </a>
+                </div>
+              )}
           </div>
         </Html>
       )}
@@ -342,22 +382,22 @@ export const getPrimitiveLogo = (name, color, hovered) => {
 };
 
 export const WORLDS_DATA = [
-  { name: 'Sentaient', startP: 0.485, p: 0.505, endP: 0.525, color: '#60A9FF', ringColor: '#FF8800', logoUrl: '/sentaient_logo_final.png', logoScale: [1.692, 0.315], summary: 'Autonomous AI Venture Studio & Multi-Industry Revenue Engines', description: 'The foundational intelligence nexus engineering proprietary autonomous platforms across FinTech, LegalTech, Health & BioTech, Defense, and Enterprise Cloud.' },
-  { name: 'CloveH2O', startP: 0.32, p: 0.36, endP: 0.37, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.584, 1.584], glowMultiplier: 1.265, summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.' },
-  { name: 'MindWave', startP: 0.02, p: 0.038, endP: 0.06, color: '#38BDF8', ringColor: '#FF2A6D', logoUrl: '/mindwave-ring-logo.png', logoScale: [1.555, 1.555], coreGlowColor: '#38BDF8', glowMultiplier: 1.265, summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.' },
-  { name: 'Icebreaker', startP: 0.10, p: 0.135, endP: 0.16, color: '#00F0FF', glowColor: '#FF6600', coreGlowColor: '#FFAA33', glowMultiplier: 1.265, ringColor: '#FF6600', logoUrl: '/icebreaker_logo.png', logoScale: [1.0, 1.0], summary: 'Real Content. Real Human Connections.', description: 'Thaw the social ice. Transform superficial online interactions into vibrant, authentic real-world connections and spontaneous events.' },
-  { name: 'Interstellar', startP: 0.16, p: 0.21, endP: 0.22, color: '#FF3F00', glowColor: '#00D2FF', coreGlowColor: '#38BDF8', glowMultiplier: 1.10, ringColor: '#00FFFF', logoUrl: '/interstellar_logo_final.png', logoScale: [1.287, 1.287], summary: 'Galactic Strategy & Space Conquest', description: 'Command deep-space starfleets, conquer uncharted solar systems, extract stellar resources, and build an invincible galactic empire.' },
+  { name: 'Sentaient', startP: 0.485, p: 0.505, endP: 0.525, color: '#60A9FF', ringColor: '#FF8800', logoUrl: '/sentaient_logo_final.png', logoScale: [1.692, 0.315], summary: 'Autonomous AI Venture Studio & Multi-Industry Revenue Engines', description: 'The foundational intelligence nexus engineering proprietary autonomous platforms across FinTech, LegalTech, Health & BioTech, Defense, and Enterprise Cloud.', appUrl: '/agent-studio' },
+  { name: 'CloveH2O', startP: 0.32, p: 0.36, endP: 0.37, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.584, 1.584], glowMultiplier: 1.265, summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.', appUrl: 'https://cloveh2o.com' },
+  { name: 'MindWave', startP: 0.02, p: 0.038, endP: 0.06, color: '#38BDF8', ringColor: '#FF2A6D', logoUrl: '/mindwave-ring-logo.png', logoScale: [1.555, 1.555], coreGlowColor: '#38BDF8', glowMultiplier: 1.265, summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.', appUrl: '/mindwave.html' },
+  { name: 'Icebreaker', startP: 0.10, p: 0.135, endP: 0.16, color: '#00F0FF', glowColor: '#FF6600', coreGlowColor: '#FFAA33', glowMultiplier: 1.265, ringColor: '#FF6600', logoUrl: '/icebreaker_logo.png', logoScale: [1.0, 1.0], summary: 'Real Content. Real Human Connections.', description: 'Thaw the social ice. Transform superficial online interactions into vibrant, authentic real-world connections and spontaneous events.', appUrl: '/icebreaker' },
+  { name: 'Interstellar', startP: 0.16, p: 0.21, endP: 0.22, color: '#FF3F00', glowColor: '#00D2FF', coreGlowColor: '#38BDF8', glowMultiplier: 1.10, ringColor: '#00FFFF', logoUrl: '/interstellar_logo_final.png', logoScale: [1.287, 1.287], summary: 'Galactic Strategy & Space Conquest', description: 'Command deep-space starfleets, conquer uncharted solar systems, extract stellar resources, and build an invincible galactic empire.', appUrl: '/interstellar-game/' },
   { name: 'Elevate', startP: 0.520, p: 0.550, endP: 0.570, color: '#38BDF8', ringColor: '#FF8000', logoUrl: '/elevate_logo_final.png', logoScale: [1.365, 0.81], glowMultiplier: 1.265, summary: '3D Freeride Snowboard Action with Live Mountain Weather, Snow Conditions & Gear Intelligence', description: 'Drop into high-stakes mountain freeriding with thrilling 3D snowboarding action, paired with a complete mountain companion that delivers real-time weather, live snowpack conditions, avalanche safety radar, and personalized gear optimization.' },
-  { name: 'FantasyQuant', startP: 0.37, p: 0.42, endP: 0.43, color: '#00E676', ringColor: '#FFD700', logoUrl: '/fantasyquant_wizard_bright.png', logoScale: [0.825, 1.10], summary: 'Sports Betting Intelligence & Quantitative Edge', description: 'Gain a mathematical advantage with algorithmic sports modeling, real-time odds discrepancies, and predictive simulation engines.' },
-  { name: 'Sphinx', startP: 0.580, p: 0.60, endP: 0.62, color: '#F59E0B', ringColor: '#00D2FF', logoUrl: '/sphinx_logo_final.png', logoScale: [1.142, 0.9], glowMultiplier: 1.265, summary: 'Global Threat Intelligence & Unified Security', description: 'Protect assets worldwide with real-time natural disaster tracking, geopolitical threat monitoring, and centralized perimeter security.' },
+  { name: 'FantasyQuant', startP: 0.37, p: 0.42, endP: 0.43, color: '#00E676', ringColor: '#FFD700', logoUrl: '/fantasyquant_wizard_bright.png', logoScale: [0.825, 1.10], summary: 'Sports Betting Intelligence & Quantitative Edge', description: 'Gain a mathematical advantage with algorithmic sports modeling, real-time odds discrepancies, and predictive simulation engines.', appUrl: '/fantasyquant' },
+  { name: 'Sphinx', startP: 0.580, p: 0.60, endP: 0.62, color: '#F59E0B', ringColor: '#00D2FF', logoUrl: '/sphinx_logo_final.png', logoScale: [1.142, 0.9], glowMultiplier: 1.265, summary: 'Global Threat Intelligence & Unified Security', description: 'Protect assets worldwide with real-time natural disaster tracking, geopolitical threat monitoring, and centralized perimeter security.', appUrl: '/sphinx/' },
   { name: 'Maya', startP: 0.705, p: 0.725, endP: 0.745, color: '#818CF8', ringColor: '#FB7185', logoUrl: '/maya_logo_final.png', logoScale: [1.222, 1.0], glowMultiplier: 1.265, summary: 'Empathetic AI Avatar & 24/7 Enterprise Representative', description: 'Engage customers around the clock with life-like conversational AI avatars for autonomous sales, compassionate support, and personal growth.' },
-  { name: 'Legal Eagle', startP: 0.23, p: 0.255, endP: 0.265, color: '#A855F7', ringColor: '#FBBF24', logoUrl: '/legal_eagle_logo.png', logoScale: [1.032, 1.0], glowMultiplier: 1.668, summary: 'Autonomous AI Legal Intelligence & Contract Defense', description: 'Audit contracts in seconds with eagle-eyed AI precision. Detect hidden liabilities, mitigate legal risks, and auto-draft favorable clauses.' },
-  { name: 'LightSpeed', startP: 0.910, p: 0.93, endP: 0.99, color: '#00A3FF', ringColor: '#FFC800', logoUrl: '/lightspeed_logo_gold.png', logoScale: [0.829, 1.0], glowMultiplier: 1.39, summary: 'Autonomous AI CTO & Enterprise Cyber-Defense', description: 'Deploy a self-healing cloud infrastructure protected by zero-trust cyber defense, sub-10ms global edge routing, and 99.999% SLA uptime.' },
+  { name: 'Legal Eagle', startP: 0.23, p: 0.255, endP: 0.265, color: '#A855F7', ringColor: '#FBBF24', logoUrl: '/legal_eagle_logo.png', logoScale: [1.032, 1.0], glowMultiplier: 1.668, summary: 'Autonomous AI Legal Intelligence & Contract Defense', description: 'Audit contracts in seconds with eagle-eyed AI precision. Detect hidden liabilities, mitigate legal risks, and auto-draft favorable clauses.', appUrl: '/legaleagle/' },
+  { name: 'LightSpeed', startP: 0.910, p: 0.93, endP: 0.99, color: '#00A3FF', ringColor: '#FFC800', logoUrl: '/lightspeed_logo_gold.png', logoScale: [0.829, 1.0], glowMultiplier: 1.39, summary: 'Autonomous AI CTO & Enterprise Cyber-Defense', description: 'Deploy a self-healing cloud infrastructure protected by zero-trust cyber defense, sub-10ms global edge routing, and 99.999% SLA uptime.', appUrl: '/lightspeed/' },
   { name: 'Liquid', startP: 0.645, p: 0.665, endP: 0.685, color: '#00FF88', glowColor: '#00FF88', coreGlowColor: '#55FFAA', ringColor: '#A855F7', logoUrl: '/liquid_logo_gold.png', logoScale: [1.25, 1.25], glowMultiplier: 0.765, summary: 'Autonomous Accounting, Tax Intelligence & Token Forge', description: 'Distill enterprise financial complexity into instant clarity with automated tax liability calculation, live P&L auditing, and smart token minting.' },
-  { name: 'Contango', startP: 0.44, p: 0.47, endP: 0.475, color: '#22C55E', glowColor: '#FFD700', coreGlowColor: '#FFE066', ringColor: '#FF7A00', logoUrl: '/assets/images/contango_quant_logo_new.png', logoScale: [1.0, 0.526], hoverGlowMultiplier: 0.87, summary: 'Algorithmic Trading & High-Frequency Market Intelligence', description: 'Master market volatility with automated quant strategies, order book microstructure analytics, and macro liquidity tracking.' },
-  { name: 'Pyramid', startP: 0.770, p: 0.79, endP: 0.82, color: '#00E5FF', ringColor: '#C084FC', logoUrl: '/pyramid_logo_final.png', logoScale: [1.1, 1.1], summary: 'Autonomous Profit Engine & Strategic Execution', description: 'Harness an AI executive that scans markets for high-margin opportunities, designs end-to-end strategic playbooks, and executes autonomously.' },
-  { name: 'Matrix', startP: 0.840, p: 0.865, endP: 0.900, color: '#00FF44', ringColor: '#D946EF', logoUrl: '/matrix_logo_bright.png', logoScale: [1.522, 0.363], glowMultiplier: 0.90, hoverGlowMultiplier: 0.87, summary: 'Autonomous Production Code Generation, Full-Stack Architecture & Deep Technical Research', description: 'Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors complex codebases, and conducts deep end-to-end debugging—leveraging technical research capabilities to parse complex documentation and frontier frameworks.' },
-  { name: 'Autopilot', startP: 0.275, p: 0.30, endP: 0.31, color: '#10B981', ringColor: '#FF3366', logoUrl: '/autopilot_logo.png', logoScale: [1.4, 0.766], glowMultiplier: 1.265, summary: 'Enterprise Social Media Marketing Automation', description: 'Automate multi-channel brand growth with AI-driven content generation, scheduled omnichannel publishing, and predictive audience engagement.' }
+  { name: 'Contango', startP: 0.44, p: 0.47, endP: 0.475, color: '#22C55E', glowColor: '#FFD700', coreGlowColor: '#FFE066', ringColor: '#FF7A00', logoUrl: '/assets/images/contango_quant_logo_new.png', logoScale: [1.0, 0.526], hoverGlowMultiplier: 0.87, summary: 'Algorithmic Trading & High-Frequency Market Intelligence', description: 'Master market volatility with automated quant strategies, order book microstructure analytics, and macro liquidity tracking.', appUrl: '/contango/' },
+  { name: 'Pyramid', startP: 0.770, p: 0.79, endP: 0.82, color: '#00E5FF', ringColor: '#C084FC', logoUrl: '/pyramid_logo_final.png', logoScale: [1.1, 1.1], summary: 'Autonomous Profit Engine & Strategic Execution', description: 'Harness an AI executive that scans markets for high-margin opportunities, designs end-to-end strategic playbooks, and executes autonomously.', appUrl: '/pyramid' },
+  { name: 'Matrix', startP: 0.840, p: 0.865, endP: 0.900, color: '#00FF44', ringColor: '#D946EF', logoUrl: '/matrix_logo_bright.png', logoScale: [1.522, 0.363], glowMultiplier: 0.90, hoverGlowMultiplier: 0.87, summary: 'Autonomous Production Code Generation, Full-Stack Architecture & Deep Technical Research', description: 'Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors complex codebases, and conducts deep end-to-end debugging—leveraging technical research capabilities to parse complex documentation and frontier frameworks.', appUrl: '/matrix' },
+  { name: 'Autopilot', startP: 0.275, p: 0.30, endP: 0.31, color: '#10B981', ringColor: '#FF3366', logoUrl: '/autopilot_logo.png', logoScale: [1.4, 0.766], glowMultiplier: 1.265, summary: 'Enterprise Social Media Marketing Automation', description: 'Automate multi-channel brand growth with AI-driven content generation, scheduled omnichannel publishing, and predictive audience engagement.', appUrl: '/autopilot' }
 ];
 
 export default function MiniWorldsHub({ visible = true }) {
@@ -556,6 +596,7 @@ export default function MiniWorldsHub({ visible = true }) {
             logoScale={w.logoScale}
             summary={w.summary}
             description={w.description}
+            appUrl={w.appUrl}
             position={[x, y, z]}
             scrollEl={scroll.el}
             hoveredWorld={hoveredWorld}

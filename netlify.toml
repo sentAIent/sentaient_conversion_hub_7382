@@ -49,24 +49,15 @@
   to = "/lightspeed/index.html"
   status = 200
 
-
+[[redirects]]
+  from = "/contango/*"
+  to = "/contango/index.html"
+  status = 200
 
 [[redirects]]
   from = "/legaleagle/*"
   to = "/legaleagle/index.html"
   status = 200
-
-[[redirects]]
-  from = "/autopilot"
-  to = "https://sentaient-autopilot-hub.netlify.app/autopilot/"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/autopilot/*"
-  to = "https://sentaient-autopilot-hub.netlify.app/autopilot/:splat"
-  status = 200
-  force = true
 
 [[redirects]]
   from = "/sphinx"

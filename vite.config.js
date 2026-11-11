@@ -69,7 +69,7 @@ export default defineConfig({
     emptyOutDir: false,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: ['@mlc-ai/web-llm', '@langchain/langgraph', 'livekit-client'],
+      external: ['@mlc-ai/web-llm', '@langchain/langgraph', 'livekit-client', 'langfuse'],
       input: {
         main: path.resolve(__dirname, 'index.html'),
         mindwave: path.resolve(__dirname, 'mindwave.html'),

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account & Data Deletion Request — Icebreaker</title>
+  <style>
+    :root {
+      --bg: #090514;
+      --card: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.12);
+      --accent: #ef4444;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(12px);
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 12px; font-weight: 800; color: #fff; }
+    p { color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; font-size: 0.95rem; }
+    .warning {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 16px;
+      border-radius: 12px;
+      color: #fca5a5;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; color: #fff; }
+    input[type="email"], textarea {
+      width: 100%;
+      padding: 14px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    .success-msg { display: none; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 12px; color: #6ee7b7; margin-bottom: 20px; font-size: 0.95rem; }
+    .links { margin-top: 24px; text-align: center; }
+    .links a { color: var(--text-muted); text-decoration: none; font-size: 0.85rem; margin: 0 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Account & Data Deletion</h1>
+    <p>In compliance with Apple App Store and Google Play Developer Policies, you may request the permanent deletion of your Icebreaker account and all associated personal data.</p>
+    
+    <div class="warning">
+      ⚠️ <strong>Notice:</strong> Account deletion is permanent. Deleting your account will immediately erase your profile, wallet balance, active check-in history, Trust Score, and private messages. This action cannot be reversed.
+    </div>
+
+    <div id="successMsg" class="success-msg">
+      ✓ Your deletion request has been submitted. Our compliance team will process and purge your account records within 48 hours. A confirmation email will be sent to your address.
+    </div>
+
+    <form id="deleteForm">
+      <label for="email">Registered Account Email</label>
+      <input type="email" id="email" required placeholder="name@example.com">
+
+      <label for="reason">Reason for leaving (Optional)</label>
+      <textarea id="reason" rows="3" placeholder="Tell us why you're requesting account deletion..."></textarea>
+
+      <button type="submit">Submit Permanent Deletion Request</button>
+    </form>
+
+    <div class="links">
+      <a href="/icebreaker/privacy">Privacy Policy</a>
+      <a href="/icebreaker/tos">Terms of Service</a>
+      <a href="/icebreaker">Back to App</a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.getElementById('deleteForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    });
+  </script>
+</body>
+</html>

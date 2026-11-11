@@ -14,6 +14,40 @@ import AutoHedgeSwarm from './components/AutoHedgeSwarm';
 import KYCWizard from './components/KYCWizard';
 import SocialLeaderboard from './components/SocialLeaderboard';
 import StrategyStudio from './components/StrategyStudio';
+import MicroserviceHealthBar from './components/MicroserviceHealthBar';
+import ContangoTermStructure from './components/ContangoTermStructure';
+import RiskStressTestLab from './components/RiskStressTestLab';
+import StatArbScanner from './components/StatArbScanner';
+import AlgoExecutionPanel from './components/AlgoExecutionPanel';
+import ChatOpsModal from './components/ChatOpsModal';
+import GexHeatmap from './components/GexHeatmap';
+import OrderBookDOM from './components/OrderBookDOM';
+import AltDataIntelligence from './components/AltDataIntelligence';
+import FactorAttributionLab from './components/FactorAttributionLab';
+import MacroRegimeRadar from './components/MacroRegimeRadar';
+import FixProtocolRouter from './components/FixProtocolRouter';
+import PropFirmRiskPortal from './components/PropFirmRiskPortal';
+import VolSurfaceLab from './components/VolSurfaceLab';
+import OptionsStrategyArchitect from './components/OptionsStrategyArchitect';
+import DarkPoolTape from './components/DarkPoolTape';
+import OptimalExecutionLab from './components/OptimalExecutionLab';
+import HierarchicalRiskParity from './components/HierarchicalRiskParity';
+import TaxLossHarvesting from './components/TaxLossHarvesting';
+import SecSemanticDiff from './components/SecSemanticDiff';
+import BasisCarryEngine from './components/BasisCarryEngine';
+import EarningsIvCrushScreener from './components/EarningsIvCrushScreener';
+import DemarkExhaustionLab from './components/DemarkExhaustionLab';
+import TriangularArbScanner from './components/TriangularArbScanner';
+import KellyCriterionLab from './components/KellyCriterionLab';
+import NewsCatalystScanner from './components/NewsCatalystScanner';
+import TearSheetReport from './components/TearSheetReport';
+import VpinToxicityRadar from './components/VpinToxicityRadar';
+import CryptoLiquidationHeatmap from './components/CryptoLiquidationHeatmap';
+import YieldCurveButterflyLab from './components/YieldCurveButterflyLab';
+import LeadLagMatrix from './components/LeadLagMatrix';
+import ConvertibleArbLab from './components/ConvertibleArbLab';
+import CommodityTermStructure from './components/CommodityTermStructure';
+import L3MicrostructureReplay from './components/L3MicrostructureReplay';
 
 function App() {
   const chartContainerRef = useRef(null);
@@ -31,6 +65,7 @@ function App() {
 
   // Deep Preferences State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isChatOpsOpen, setIsChatOpsOpen] = useState(false);
   const [customTickers, setCustomTickers] = useState(() => {
     const saved = localStorage.getItem('contango_tickers');
     return saved ? JSON.parse(saved) : ['SPY', 'QQQ', 'AAPL', 'MSFT', 'TSLA'];
@@ -200,10 +235,14 @@ function App() {
       {/* Header */}
       <div className="panel header">
         {/* Left Side: Logo & Brand */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img src="/contango_quant_logo.png" alt="Contango Quant Logo" style={{ height: '36px', marginRight: '12px', objectFit: 'contain' }} />
-          <span className="brand">Contango Quant</span>
-          <span style={{ marginLeft: '12px', fontSize: '0.9rem', color: '#64748b' }}>// XMIM Engine</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <img src="/contango_quant_logo.png" alt="Contango Quant Logo" style={{ height: '36px', marginRight: '12px', objectFit: 'contain' }} />
+            <span className="brand">Contango Quant</span>
+            <span style={{ marginLeft: '12px', fontSize: '0.9rem', color: '#64748b' }}>// XMIM Engine</span>
+          </div>
+          {/* Real-Time Microservice Health Indicators */}
+          <MicroserviceHealthBar />
         </div>
         
         {/* Right Side: All Buttons */}
@@ -259,6 +298,13 @@ function App() {
           </div>
 
           <button 
+            onClick={() => setIsChatOpsOpen(true)}
+            style={{ padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.15)', color: '#c084fc', fontWeight: 600, fontSize: '0.85rem' }}
+          >
+            📲 ChatOps
+          </button>
+
+          <button 
             onClick={() => setIsSettingsOpen(true)}
             style={{ padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#94a3b8' }}
           >
@@ -272,6 +318,69 @@ function App() {
             {isLivePaused ? '▶ Resume Live Data' : '⏸ Pause Live Data'}
           </button>
         </div>
+      </div>
+
+      {/* Institutional Quantitative Terminal Shelf */}
+      <div style={{ display: 'flex', gap: '8px', padding: '8px 24px', background: 'rgba(0,0,0,0.35)', borderBottom: '1px solid var(--border-color)', overflowX: 'auto', alignItems: 'center' }}>
+        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', marginRight: '4px' }}>
+          Institutional Engines:
+        </span>
+        {[
+          { id: 'contango', label: '📉 Contango Curve', color: '#8b5cf6' },
+          { id: 'vol', label: '🏔️ 3D Vol Surface', color: '#8b5cf6' },
+          { id: 'gex', label: '🎯 GEX & 0DTE', color: '#38bdf8' },
+          { id: 'options_strat', label: '🦅 Multi-Leg Options', color: '#10b981' },
+          { id: 'dom', label: '📖 Order Book DOM', color: '#10b981' },
+          { id: 'darkpool', label: '🕵️ Dark Pool Tape', color: '#38bdf8' },
+          { id: 'algo', label: '⚡ Algo OMS', color: '#f59e0b' },
+          { id: 'impact', label: '⚡ Optimal Execution', color: '#f59e0b' },
+          { id: 'fix', label: '🛰️ FIX Router', color: '#6366f1' },
+          { id: 'statarb', label: '⚖️ Stat-Arb Scanner', color: '#10b981' },
+          { id: 'risk', label: '🛡️ Stress Lab', color: '#ef4444' },
+          { id: 'macro', label: '🌐 Macro Regime', color: '#38bdf8' },
+          { id: 'factor', label: '🔬 Factor Lab', color: '#c084fc' },
+          { id: 'hrp', label: '🌳 HRP Allocator', color: '#10b981' },
+          { id: 'altdata', label: '🏛️ Alt-Data Alpha', color: '#f59e0b' },
+          { id: 'sec', label: '📜 SEC Semantic Diff', color: '#38bdf8' },
+          { id: 'tax', label: '🌾 Tax-Loss Harvest', color: '#c084fc' },
+          { id: 'prop', label: '🛡️ Prop Firm Risk', color: '#ef4444' },
+          { id: 'kyc', label: '📋 KYC Planner', color: '#94a3b8' },
+          { id: 'carry', label: '🌾 Basis Carry', color: '#10b981' },
+          { id: 'earnings_vol', label: '💥 Earnings Vol Screener', color: '#ef4444' },
+          { id: 'demark', label: '⏱️ DeMark Sequential', color: '#10b981' },
+          { id: 'triangular', label: '🔺 Triangular Arb', color: '#38bdf8' },
+          { id: 'kelly', label: '🛡️ Kelly Criterion', color: '#10b981' },
+          { id: 'news', label: '📰 News Catalyst NLP', color: '#f59e0b' },
+          { id: 'tearsheet', label: '📊 LP Tear Sheet', color: '#c084fc' },
+          { id: 'vpin', label: '🌊 VPIN Toxicity', color: '#38bdf8' },
+          { id: 'liquidations', label: '⚡ Liq Heatmap', color: '#f59e0b' },
+          { id: 'yield_curve', label: '📈 SOFR Yield Curve', color: '#c084fc' },
+          { id: 'lead_lag', label: '🔗 Lead-Lag Matrix', color: '#10b981' },
+          { id: 'convertible', label: '💎 Convertible Arb', color: '#38bdf8' },
+          { id: 'commodity', label: '🌾 Commodity Roll', color: '#f59e0b' },
+          { id: 'l3_replay', label: '⏱️ L3 Queue Replay', color: '#10b981' }
+        ].map((eng) => {
+          const isActive = activeView === eng.id;
+          return (
+            <button
+              key={eng.id}
+              onClick={() => setActiveView(eng.id)}
+              style={{
+                padding: '4px 10px',
+                borderRadius: '4px',
+                border: isActive ? `1px solid ${eng.color}` : '1px solid rgba(255,255,255,0.06)',
+                background: isActive ? `${eng.color}22` : 'transparent',
+                color: isActive ? eng.color : '#94a3b8',
+                fontWeight: isActive ? 700 : 500,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {eng.label}
+            </button>
+          );
+        })}
       </div>
 
       {activeView === 'portfolio' ? (
@@ -298,6 +407,134 @@ function App() {
       ) : activeView === 'leaderboard' ? (
         <div className="portfolio-view" style={{ overflowY: 'auto' }}>
           <SocialLeaderboard />
+        </div>
+      ) : activeView === 'contango' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <ContangoTermStructure />
+        </div>
+      ) : activeView === 'risk' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <RiskStressTestLab />
+        </div>
+      ) : activeView === 'statarb' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <StatArbScanner />
+        </div>
+      ) : activeView === 'algo' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <AlgoExecutionPanel />
+        </div>
+      ) : activeView === 'gex' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <GexHeatmap />
+        </div>
+      ) : activeView === 'dom' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <OrderBookDOM />
+        </div>
+      ) : activeView === 'altdata' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <AltDataIntelligence />
+        </div>
+      ) : activeView === 'factor' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <FactorAttributionLab />
+        </div>
+      ) : activeView === 'macro' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <MacroRegimeRadar />
+        </div>
+      ) : activeView === 'fix' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <FixProtocolRouter />
+        </div>
+      ) : activeView === 'prop' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <PropFirmRiskPortal />
+        </div>
+      ) : activeView === 'vol' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <VolSurfaceLab />
+        </div>
+      ) : activeView === 'options_strat' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <OptionsStrategyArchitect />
+        </div>
+      ) : activeView === 'darkpool' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <DarkPoolTape />
+        </div>
+      ) : activeView === 'impact' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <OptimalExecutionLab />
+        </div>
+      ) : activeView === 'hrp' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <HierarchicalRiskParity />
+        </div>
+      ) : activeView === 'tax' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <TaxLossHarvesting />
+        </div>
+      ) : activeView === 'sec' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <SecSemanticDiff />
+        </div>
+      ) : activeView === 'carry' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <BasisCarryEngine />
+        </div>
+      ) : activeView === 'earnings_vol' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <EarningsIvCrushScreener />
+        </div>
+      ) : activeView === 'demark' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <DemarkExhaustionLab />
+        </div>
+      ) : activeView === 'triangular' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <TriangularArbScanner />
+        </div>
+      ) : activeView === 'kelly' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <KellyCriterionLab />
+        </div>
+      ) : activeView === 'news' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <NewsCatalystScanner />
+        </div>
+      ) : activeView === 'tearsheet' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <TearSheetReport />
+        </div>
+      ) : activeView === 'vpin' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <VpinToxicityRadar />
+        </div>
+      ) : activeView === 'liquidations' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <CryptoLiquidationHeatmap />
+        </div>
+      ) : activeView === 'yield_curve' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <YieldCurveButterflyLab />
+        </div>
+      ) : activeView === 'lead_lag' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <LeadLagMatrix />
+        </div>
+      ) : activeView === 'convertible' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <ConvertibleArbLab />
+        </div>
+      ) : activeView === 'commodity' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <CommodityTermStructure />
+        </div>
+      ) : activeView === 'l3_replay' ? (
+        <div className="portfolio-view" style={{ overflowY: 'auto' }}>
+          <L3MicrostructureReplay />
         </div>
       ) : activeView === 'research' ? (
         <div className="research-view" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -417,6 +654,12 @@ function App() {
         onClose={() => setIsSettingsOpen(false)} 
         customTickers={customTickers}
         setCustomTickers={setCustomTickers}
+      />
+
+      {/* ChatOps Telegram/Discord Dispatcher Modal */}
+      <ChatOpsModal 
+        isOpen={isChatOpsOpen} 
+        onClose={() => setIsChatOpsOpen(false)} 
       />
       
     </div>

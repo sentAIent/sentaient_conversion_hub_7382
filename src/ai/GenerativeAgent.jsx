@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useChat } from 'ai/react';
 import { QuantDataGrid } from '../components/QuantDataGrid';
 import { ConversionHeatmap } from '../components/ConversionHeatmap';
@@ -10,9 +10,15 @@ import { CompetitorIntelPanel } from '../components/CompetitorIntelPanel';
  * instead of just text responses.
  */
 export const GenerativeAgent = () => {
+  const [reportedIds, setReportedIds] = useState(new Set());
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat', // Your backend endpoint using streamText with tools
   });
+
+  const handleReportContent = (messageId) => {
+    setReportedIds(prev => new Set([...prev, messageId]));
+    alert("Content reported. Thank you for keeping our community safe. Our moderation team has been notified.");
+  };
 
   // Render specific UI components based on tool invocations from the LLM
   const renderToolCall = (toolCall) => {
@@ -71,6 +77,22 @@ export const GenerativeAgent = () => {
                   {renderToolCall(toolCall)}
                 </div>
               ))}
+
+              {m.role !== 'user' && (
+                <div className="mt-2 pt-2 border-t border-gray-700/50 flex justify-end">
+                  <button
+                    onClick={() => handleReportContent(m.id)}
+                    disabled={reportedIds.has(m.id)}
+                    className="text-[10px] text-gray-400 hover:text-red-400 flex items-center gap-1 transition-colors disabled:opacity-50"
+                    title="Report inappropriate AI content"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                    </svg>
+                    {reportedIds.has(m.id) ? 'Reported' : 'Report'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}

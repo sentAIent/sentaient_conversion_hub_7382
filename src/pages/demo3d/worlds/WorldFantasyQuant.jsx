@@ -1237,7 +1237,7 @@ const Scoreboard = () => {
       <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 0, 15]} fontSize={35} color={isCelebration ? '#38bdf8' : '#00ffff'} outlineWidth={0.01} outlineColor="#0088ff" anchorX="center" anchorY="middle">
         {isCelebration ? 'MONTANA TO RICE: 42-YD TD PASS!' : 'PREDICTING: PLAY ACTION DEEP POST -> TOUCHDOWN'}
       </Text>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -60, 15]} fontSize={22} color="#ffffff" maxWidth={750} textAlign="center" lineHeight={1.5} anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -60, 15]} fontSize={26} color="#ffffff" maxWidth={850} textAlign="center" lineHeight={1.5} anchorX="center" anchorY="middle">
         {isCelebration ? '"TOUCHDOWN SAN FRANCISCO!! Rice splits the Cover 2 safeties in the endzone! Unbelievable execution!"' : '"Play action fake to Craig sucks in the linebackers, Montana bombs the deep post to Rice splitting the Cover 2 safeties... TOUCHDOWN!!"'}
       </Text>
 
