@@ -19,19 +19,18 @@ const getHolographicGlowTexture = () => {
   if (_sharedGlowTex) return _sharedGlowTex;
   if (typeof document === 'undefined') return null;
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 256;
+  canvas.width = 128;
+  canvas.height = 128;
   const ctx = canvas.getContext('2d');
-  const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
   grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
-  grad.addColorStop(0.35, 'rgba(255, 255, 255, 1.0)');
-  grad.addColorStop(0.60, 'rgba(255, 255, 255, 0.85)');
-  grad.addColorStop(0.80, 'rgba(255, 255, 255, 0.45)');
+  grad.addColorStop(0.25, 'rgba(255, 255, 255, 0.95)');
+  grad.addColorStop(0.50, 'rgba(255, 255, 255, 0.60)');
+  grad.addColorStop(0.75, 'rgba(255, 255, 255, 0.22)');
   grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 256, 256);
+  ctx.fillRect(0, 0, 128, 128);
   _sharedGlowTex = new THREE.CanvasTexture(canvas);
-  _sharedGlowTex.needsUpdate = true;
   return _sharedGlowTex;
 };
 
@@ -56,8 +55,8 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
   const scaleY = Array.isArray(logoScale) ? logoScale[1] : 1.0;
   const baseDim = 74 * itemScale;
   const glowRadiusScale = name === 'Legal Eagle' ? 1.20 : 1.0;
-  const glowW = Math.max(baseDim * 1.35, baseDim * scaleX * 1.25) * glowRadiusScale;
-  const glowH = Math.max(baseDim * 1.35, baseDim * scaleY * 1.25) * glowRadiusScale;
+  const glowW = baseDim * Math.min(1.25, Math.max(0.85, scaleX)) * glowRadiusScale;
+  const glowH = baseDim * Math.min(1.25, Math.max(0.85, scaleY)) * glowRadiusScale;
 
   React.useLayoutEffect(() => {
     if (containerRef.current) {
@@ -133,39 +132,39 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
         {glowTexture && (
           <>
             {/* Layer 1: Core Backlight (Brand tinted) */}
-            <mesh scale={[glowW * 1.5, glowH * 1.5, 1]}>
+            <mesh scale={[glowW * 1.3, glowH * 1.3, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
                 color={coreGlowColor || glowColor || (name === 'MindWave' ? '#38bdf8' : (name === 'Icebreaker' ? '#FFAA33' : (name === 'Contango' ? '#FFE066' : (name === 'Interstellar' ? '#38bdf8' : (name === 'Liquid' ? '#55FFAA' : color)))))}
                 transparent
-                opacity={(isHovered ? 0.90 : (isDimmed ? 0.30 : 0.65)) * glowMultiplier * hoverGlow}
+                opacity={(isHovered ? 0.45 : (isDimmed ? 0.12 : 0.28)) * glowMultiplier * hoverGlow}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
             </mesh>
 
             {/* Layer 2: Vibrant Brand-Color Holographic Aura */}
-            <mesh scale={[glowW * 2.2, glowH * 2.2, 1]}>
+            <mesh scale={[glowW * 1.85, glowH * 1.85, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
                 color={glowColor || (name === 'Icebreaker' ? '#FF6600' : (name === 'Contango' ? '#FFD700' : (name === 'Interstellar' ? '#00D2FF' : (name === 'Liquid' ? '#00FF88' : color))))}
                 transparent
-                opacity={(isHovered ? 1.00 : (isDimmed ? 0.40 : 0.80)) * glowMultiplier * hoverGlow}
+                opacity={(isHovered ? 0.55 : (isDimmed ? 0.15 : 0.35)) * glowMultiplier * hoverGlow}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
             </mesh>
 
             {/* Layer 3: Atmospheric Deep Halo */}
-            <mesh scale={[glowW * 3.2, glowH * 3.2, 1]}>
+            <mesh scale={[glowW * 2.5, glowH * 2.5, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
                 color={glowColor || (name === 'Icebreaker' ? '#FF5500' : (name === 'Contango' ? '#F59E0B' : (name === 'Interstellar' ? '#0284C7' : (name === 'Liquid' ? '#059669' : color))))}
                 transparent
-                opacity={(isHovered ? 0.60 : (isDimmed ? 0.18 : 0.45)) * glowMultiplier * hoverGlow}
+                opacity={(isHovered ? 0.25 : (isDimmed ? 0.06 : 0.16)) * glowMultiplier * hoverGlow}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
