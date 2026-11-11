@@ -38,10 +38,10 @@ export const SphinxAIAssistant: React.FC<SphinxAIAssistantProps> = ({
 I am grounded in your live geospatial map feed and intelligence databases.
 
 **I can answer in-depth inquiries including:**
-- **Crime in any city and neighborhood** (e.g., *"What is the crime breakdown in Chicago by neighborhood?"*)
-- **Aviation safety analytics** (e.g., *"Tell me the frequency of airplane crashes by day of the week."*)
-- **Live map threats & sensor telemetry** (active wildfires, seismic shocks, wind vectors, and dropped pins)
-- **Deep multi-source research** on demand with verified statistical tables.
+- **Black's Law Dictionary & Maxims** (e.g., *"Driver vs traveler distinction in Black's Law"*)
+- **Tactical Survival & Defense** (Water potability, HAM repeaters, Space weather/EMP, CBRN)
+- **Crime, Aviation, & Weather Analytics** (Crash days, winter accumulation, neighborhood crime)
+- **Live map threats & sensor telemetry** (active wildfires, seismic shocks, wind vectors)
 
 Select a quick query below or type your inquiry.`,
       sources: ['Sphinx Central Core', 'NTSB Historical Records', 'FBI UCR / OpenData', 'Live Telemetry Sensors'],
@@ -128,6 +128,10 @@ Select a quick query below or type your inquiry.`,
   }, [isOpen, initialQuery]);
 
   const quickPrompts = [
+    { label: "⚖️ Black's Law: Driver vs Traveler", query: "What is the Black's Law Dictionary definition of driver vs traveler and its constitutional implications?" },
+    { label: "📜 Legal Maxim: Ignorantia Juris", query: "Explain the legal maxim Ignorantia juris non excusat and its application to statutory notice." },
+    { label: "💧 Water potability & boil formulas", query: "What is the altitude-adjusted boiling time and purification protocol for natural subalpine water sources?" },
+    { label: "☀️ Space weather & EMP vulnerability", query: "What is the current planetary Kp index and what are the GIC power grid risks of a coronal mass ejection?" },
     { label: '🌦️ Historical weather & rain/snow accum (Denver)', query: 'Show historical weather data for Denver including temps, rain/snow accumulation, and wind.' },
     { label: '❄️ Historical freeze & snow records (Chicago)', query: 'What was the historical temperature, snowfall accumulation, and peak wind gusts in Chicago during the winter?' },
     { label: '✈️ Hired pilot flight safety (Part 121/135)', query: 'Break down airplane crashes by day of the week for commercial and private flights piloted by professional hired pilots.' },

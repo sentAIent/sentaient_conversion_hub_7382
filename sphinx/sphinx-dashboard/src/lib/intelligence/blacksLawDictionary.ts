@@ -1,0 +1,554 @@
+// src/lib/intelligence/blacksLawDictionary.ts
+// Black's Law Dictionary & Classical Legal Maxims Knowledge Base
+// Covers 1st, 2nd, 4th, 6th, and modern editions, Latin maxims, statutory vs. common law definitions,
+// constitutional jurisprudence, and sovereign legal reference materials.
+
+export interface BlacksLawEntry {
+  term: string;
+  pronunciation?: string;
+  etymology?: string;
+  category: 'Constitutional' | 'Common Law Maxims' | 'Commercial & Contracts' | 'Criminal Procedure' | 'Property & Title' | 'Jurisdiction & Sovereignty' | 'Civil Rights & Due Process';
+  editions: {
+    edition: string;
+    definition: string;
+    pageOrCite?: string;
+  }[];
+  statutoryVsCommonLaw?: {
+    statutoryMeaning: string;
+    commonLawMeaning: string;
+    criticalDistinction: string;
+  };
+  relatedMaxims: string[];
+  keyPrecedents: string[];
+  practicalApplication: string;
+}
+
+export interface LegalMaximEntry {
+  latin: string;
+  english: string;
+  meaning: string;
+  legalSignificance: string;
+  branch: 'Due Process' | 'Statutory Interpretation' | 'Equity & Justice' | 'Evidence & Proof' | 'Contracts' | 'Sovereignty';
+  precedents: string[];
+}
+
+// 1. Classical Latin & Common Law Maxims
+export const CLASSICAL_LEGAL_MAXIMS: LegalMaximEntry[] = [
+  {
+    latin: 'Ignorantia juris non excusat',
+    english: 'Ignorance of the law excuses not',
+    meaning: 'Every person subject to a jurisdiction is presumed to know the public laws governing their conduct; ignorance of the law does not constitute a valid defense against an offense.',
+    legalSignificance: 'Fundamental canon of Anglo-American criminal and civil law, establishing that laws must be promulgated publicly so that all reasonable persons have constructive notice.',
+    branch: 'Due Process',
+    precedents: ['Barlow v. United States, 32 U.S. 404 (1833)', 'Cheek v. United States, 498 U.S. 192 (1991)']
+  },
+  {
+    latin: 'Actus non facit reum nisi mens sit rea',
+    english: 'An act does not make a person guilty unless the mind is also guilty',
+    meaning: 'A wrongful act alone (actus reus) is insufficient for criminal liability; it must concur with a culpable mental state or criminal intent (mens rea).',
+    legalSignificance: 'Foundational doctrine distinguishing accidental harm or civil torts from punishable criminal offenses, preventing strict liability for general intent crimes without clear statutory mandate.',
+    branch: 'Due Process',
+    precedents: ['Morissette v. United States, 342 U.S. 246 (1952)', 'Elonis v. United States, 575 U.S. 723 (2015)']
+  },
+  {
+    latin: 'Nemo tenetur seipsum accusare',
+    english: 'No one is bound to accuse oneself',
+    meaning: 'No individual can be compelled by government authority to provide testimony, answers, or evidence that incriminates themselves in a criminal matter.',
+    legalSignificance: 'The core common-law foundation of the Fifth Amendment privilege against self-incrimination and the Miranda warning doctrine.',
+    branch: 'Due Process',
+    precedents: ['Miranda v. Arizona, 384 U.S. 436 (1966)', 'Counselman v. Hitchcock, 142 U.S. 547 (1892)']
+  },
+  {
+    latin: 'Fraus omnia corrumpit',
+    english: 'Fraud corrupts everything it touches',
+    meaning: 'Any contract, judgment, decree, statute, or title obtained through intentional deception, fraudulent concealment, or bad faith is void ab initio (void from the beginning).',
+    legalSignificance: 'Prevents litigants and state actors from retaining benefits or judgments acquired through deceit, allowing collateral attack on fraudulent judgments without time limitation.',
+    branch: 'Equity & Justice',
+    precedents: ['Hazel-Atlas Glass Co. v. Hartford-Empire Co., 322 U.S. 238 (1944)', 'United States v. Throckmorton, 98 U.S. 61 (1878)']
+  },
+  {
+    latin: 'Expressio unius est exclusio alterius',
+    english: 'The expression of one thing is the exclusion of another',
+    meaning: 'When a statute or legal instrument explicitly enumerates specific persons, items, or remedies, all others omitted from the text are presumed to be deliberately excluded.',
+    legalSignificance: 'Primary canon of statutory construction used by state and federal appellate courts to prevent judicial expansion of legislative enactments.',
+    branch: 'Statutory Interpretation',
+    precedents: ['Leatherman v. Tarrant County Narcotics Unit, 507 U.S. 163 (1993)', 'TRW Inc. v. Andrews, 534 U.S. 19 (2001)']
+  },
+  {
+    latin: 'Ubi jus ibi remedium',
+    english: 'Where there is a right, there is a remedy',
+    meaning: 'If the law recognizes a substantive right in an individual, it must necessarily provide a legal mechanism or cause of action for its enforcement or redress when violated.',
+    legalSignificance: 'Historic principle articulated by Chief Justice John Marshall in Marbury v. Madison establishing judicial review and civil rights enforcement under 42 U.S.C. § 1983.',
+    branch: 'Equity & Justice',
+    precedents: ['Marbury v. Madison, 5 U.S. (1 Cranch) 137 (1803)', 'Bivens v. Six Unknown Named Agents, 403 U.S. 388 (1971)']
+  },
+  {
+    latin: 'Delegata potestas non potest delegari',
+    english: 'Delegated power cannot be further delegated',
+    meaning: 'An authority or power granted to a specific agent, branch, or official cannot be sub-delegated to another body unless expressly authorized by the original granting authority.',
+    legalSignificance: 'Cornerstone of the Constitutional Non-Delegation Doctrine, limiting Congress from abdicating core legislative power to unelected administrative agencies.',
+    branch: 'Sovereignty',
+    precedents: ['A.L.A. Schechter Poultry Corp. v. United States, 295 U.S. 495 (1935)', 'Gundy v. United States, 588 U.S. 128 (2019)']
+  },
+  {
+    latin: 'Inclusio unius est exclusio alterius',
+    english: 'Inclusion of the one is exclusion of the other',
+    meaning: 'Affirmative inclusion of designated items or jurisdictions establishes legislative intent to withhold that power or remedy from unmentioned spheres.',
+    branch: 'Statutory Interpretation',
+    legalSignificance: 'Ensures that statutory codes are interpreted strictly according to their plain letter without administrative usurpation.',
+    precedents: ['Christianson v. Colt Industries Operating Corp., 486 U.S. 800 (1988)']
+  },
+  {
+    latin: 'Quod omnes tangit ab omnibus approbari debet',
+    english: 'What touches all must be approved by all',
+    meaning: 'Matters affecting the rights, property, and liberties of the entire community require representative consensus and legislative sanction rather than executive edict.',
+    branch: 'Sovereignty',
+    legalSignificance: 'Origin of representative government and the constitutional prohibition on taxation without representation.',
+    precedents: ['The Federalist No. 51', 'Magna Carta (1215) Clause 12']
+  },
+  {
+    latin: 'Nullum crimen, nulla poena sine lege',
+    english: 'No crime, no punishment without law',
+    meaning: 'No conduct can be punished as a criminal offense, and no penalty imposed, unless declared as such by a pre-existing, clearly defined statute.',
+    branch: 'Due Process',
+    legalSignificance: 'The common-law root of the constitutional prohibition on Ex Post Facto laws (U.S. Const. Art. I, § 9, cl. 3) and the Void for Vagueness doctrine.',
+    precedents: ['Calder v. Bull, 3 U.S. (3 Dall.) 386 (1798)', 'Johnson v. United States, 576 U.S. 591 (2015)']
+  },
+  {
+    latin: 'Ei incumbit probatio qui dicit, non qui negat',
+    english: 'The proof lies upon him who affirms, not upon him who denies',
+    meaning: 'The burden of proof in any dispute rests upon the party asserting an affirmative allegation or prosecution charge, not upon the defending party.',
+    branch: 'Evidence & Proof',
+    legalSignificance: 'Underpins the constitutional presumption of innocence and the requirement of proof beyond a reasonable doubt in criminal proceedings.',
+    precedents: ['In re Winship, 397 U.S. 358 (1970)']
+  },
+  {
+    latin: 'Res judicata pro veritate accipitur',
+    english: 'A matter judged is taken for truth',
+    meaning: 'Once a court of competent jurisdiction has entered a final judgment on the merits, the parties cannot relitigate the same cause of action.',
+    branch: 'Equity & Justice',
+    legalSignificance: 'Protects citizens from vexatious, repetitive state prosecution and preserves the finality of judicial determinations.',
+    precedents: ['Montana v. United States, 440 U.S. 147 (1979)', 'Parklane Hosiery Co. v. Shore, 439 U.S. 322 (1979)']
+  }
+];
+
+// 2. Comprehensive Black's Law Dictionary Terms Database
+export const BLACKS_LAW_ENTRIES: BlacksLawEntry[] = [
+  {
+    term: 'Jurisdiction',
+    category: 'Jurisdiction & Sovereignty',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "The power and authority constitutionally conferred upon (or constitutionally recognized as existing in) a court or judge to pronounce the sentence of the law, or to award the remedies provided by law, upon a state of facts, proved or admitted, referred to the court for its decision, and authorized by law to be by the court decided upon. It embraces three distinct elements: subject-matter jurisdiction, personal jurisdiction, and territorial jurisdiction.",
+        pageOrCite: "p. 991"
+      },
+      {
+        edition: "Black's Law Dictionary (2nd Ed. 1910)",
+        definition: "The right to adjudicate concerning the subject-matter in the given case. To constitute this there are three essentials: First, the court must have cognizance of the class of cases to which the one to be adjudicated belongs; second, the proper parties must be present; and third, the point decided must be, in substance and effect, within the issue.",
+        pageOrCite: "p. 665"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Administrative authority granted by legislative code to agencies, regulatory bodies, and municipal courts over specific statutory infractions.",
+      commonLawMeaning: "Constitutional judicial power deriving from the sovereign consent of the governed, requiring an injured party (corpus delicti) or contract breach.",
+      criticalDistinction: "A court lacking subject-matter jurisdiction has zero lawful power; any order, fine, or judgment issued without jurisdiction is completely void and may be attacked collaterally at any time."
+    },
+    relatedMaxims: ['Delegata potestas non potest delegari', 'Fraus omnia corrumpit'],
+    keyPrecedents: ['Ex parte McCardle, 74 U.S. (7 Wall.) 506 (1869)', 'Steel Co. v. Citizens for a Better Environment, 523 U.S. 83 (1998)'],
+    practicalApplication: "Challenging jurisdiction must be done at the threshold. Subject-matter jurisdiction can never be waived or acquired by consent."
+  },
+  {
+    term: 'Driver',
+    category: 'Commercial & Contracts',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (2nd Ed. 1910)",
+        definition: "One employed in conducting or operating a coach, carriage, wagon, or other vehicle, with horses, mules, or other beasts, or a bicycle, tricycle, or motor car, though not as an owner.",
+        pageOrCite: "p. 403"
+      },
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "One employed in conducting or operating any vehicle or carriage on a highway. In transportation law, one who drives or is in physical control of a commercial vehicle engaged in carriage or transport.",
+        pageOrCite: "p. 585"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Under state vehicle codes (e.g., Cal. Veh. Code § 305, Tex. Transp. Code § 521.001), any person who drives or is in actual physical control of a motor vehicle upon a highway.",
+      commonLawMeaning: "Historically, one employed for hire to conduct livestock, coaches, or commercial transport carriages for monetary consideration.",
+      criticalDistinction: "Statutory traffic codes regulate the commercial privilege of operating vehicles upon public thoroughfares. Citizens operating private conveyances for non-commercial travel frequently invoke common-law right-to-travel precedents, though modern traffic courts apply statutory definitions universally to all operators on public roads."
+    },
+    relatedMaxims: ['Expressio unius est exclusio alterius'],
+    keyPrecedents: ['Murdock v. Pennsylvania, 319 U.S. 105 (1943)', 'Thompson v. Smith, 154 S.E. 579 (Va. 1930)'],
+    practicalApplication: "Understanding the difference between commercial transportation regulation and private conveyance rights is central to constitutional travel litigation."
+  },
+  {
+    term: 'Commerce',
+    category: 'Commercial & Contracts',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (1st Ed. 1891)",
+        definition: "The exchange of goods, productions, or property of any kind; the intercourse, exchange, or buying and selling of commodities between different countries or different places in the same country.",
+        pageOrCite: "p. 222"
+      },
+      {
+        edition: "Black's Law Dictionary (6th Ed. 1990)",
+        definition: "The exchange of goods, commodities, or services on a large scale involving transportation between different countries or between different parts of the same country. Intercourse for the purpose of trade in any and all its forms.",
+        pageOrCite: "p. 269"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Broadly expanded under the Commerce Clause (U.S. Const. Art. I, § 8, cl. 3) to encompass economic activities that exert a substantial effect on interstate commerce.",
+      commonLawMeaning: "Strict mercantile trade, buying, selling, and carriage of wares for commercial profit.",
+      criticalDistinction: "Federal jurisdiction is strictly tethered to interstate commerce; purely local, non-commercial acts historically fell beyond federal legislative police power."
+    },
+    relatedMaxims: ['Delegata potestas non potest delegari'],
+    keyPrecedents: ['Gibbons v. Ogden, 22 U.S. (9 Wheat.) 1 (1824)', 'United States v. Lopez, 514 U.S. 549 (1995)', 'Wickard v. Filburn, 317 U.S. 111 (1942)'],
+    practicalApplication: "Federal regulatory reach requires establishing an interstate commercial nexus."
+  },
+  {
+    term: 'Inalienable Rights',
+    category: 'Constitutional',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "Rights which are not capable of being surrendered, transferred, or assigned without the consent of the one possessing them; rights which cannot be bartered away, such as the rights to life, liberty, and the pursuit of happiness.",
+        pageOrCite: "p. 903"
+      },
+      {
+        edition: "Black's Law Dictionary (2nd Ed. 1910)",
+        definition: "Rights which are not capable of being alienated, that is, transferred to another nor surrendered by the possessor himself. They are inherent and imprescriptible.",
+        pageOrCite: "p. 614"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Statutory rights are legislative privileges created by enactment and subject to repeal, amendment, or administrative licensing.",
+      commonLawMeaning: "Inherent natural rights preexisting governments and constitutions, recognized rather than granted by the Constitution.",
+      criticalDistinction: "Government cannot license or convert an inalienable right into a revocable privilege."
+    },
+    relatedMaxims: ['Ubi jus ibi remedium', 'Quod omnes tangit ab omnibus approbari debet'],
+    keyPrecedents: ['Murdock v. Pennsylvania, 319 U.S. 105 (1943)', 'Shuttlesworth v. City of Birmingham, 394 U.S. 147 (1969)'],
+    practicalApplication: "State agencies cannot demand fees or licenses as a prerequisite to exercising a fundamental inalienable right."
+  },
+  {
+    term: 'Color of Law',
+    category: 'Civil Rights & Due Process',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "The appearance or semblance, without the substance, of legal right. A mere pretense of law. An act done with the apparent authority of law, but actually in contravention of it.",
+        pageOrCite: "p. 331"
+      },
+      {
+        edition: "Black's Law Dictionary (6th Ed. 1990)",
+        definition: "The appearance or semblance of legal right, without the substance. Misuse of power, possessed by virtue of state law and made possible only because the wrongdoer is clothed with the authority of state law.",
+        pageOrCite: "p. 265"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Governed federally by 18 U.S.C. § 242 (criminal civil rights violations) and 42 U.S.C. § 1983 (civil liability for state actors violating constitutional rights under color of statute).",
+      commonLawMeaning: "Acts committed by public officers that masquerade as lawful commands but violate fundamental constitutional law.",
+      criticalDistinction: "Acting under color of law does NOT shield an official from personal liability when constitutional rights are clearly established."
+    },
+    relatedMaxims: ['Fraus omnia corrumpit', 'Actus non facit reum nisi mens sit rea'],
+    keyPrecedents: ['Monroe v. Pape, 365 U.S. 167 (1961)', 'United States v. Classic, 313 U.S. 299 (1941)'],
+    practicalApplication: "Officers violating Fourth or Fifth Amendment rights under pretense of departmental policy are acting under color of law and are subject to § 1983 action."
+  },
+  {
+    term: 'Person',
+    category: 'Jurisdiction & Sovereignty',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (2nd Ed. 1910)",
+        definition: "A man considered according to the rank he holds in society, with all the rights to which the place he holds entitles him, and the duties which it imposes. The term in law is of much wider significance, including artificial entities as well as human beings.",
+        pageOrCite: "p. 892"
+      },
+      {
+        edition: "Black's Law Dictionary (6th Ed. 1990)",
+        definition: "In general usage, a human being; by statute however, the term may include firms, labor organizations, partnerships, associations, corporations, legal representatives, trustees, or receivers.",
+        pageOrCite: "p. 1142"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Statutes frequently define 'person' broadly (e.g., 1 U.S.C. § 1) to encompass corporations, trusts, and administrative entities as legal fictions.",
+      commonLawMeaning: "A natural man or woman possessing God-given inherent rights, distinct from synthetic juridical corporate persons.",
+      criticalDistinction: "A statutory 'person' owes its existence to statutory charter and is subject to legislative regulation, whereas natural persons possess constitutionally shielded immunities."
+    },
+    relatedMaxims: ['Expressio unius est exclusio alterius'],
+    keyPrecedents: ['Santa Clara County v. Southern Pacific Railroad, 118 U.S. 394 (1886)', 'Citizens United v. FEC, 558 U.S. 310 (2010)'],
+    practicalApplication: "Discerning whether a statute regulates natural individuals or statutory corporate fictions is vital in tax, corporate, and regulatory disputes."
+  },
+  {
+    term: 'Allodial',
+    category: 'Property & Title',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (1st Ed. 1891)",
+        definition: "Free; not held of any superior or lord; held in absolute independence, without being subject to any feudal service, rent, or acknowledgment. Pertaining to allodium.",
+        pageOrCite: "p. 59"
+      },
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "Free; not holden of any lord or superior; owned without obligation of vassalage or fealty; the opposite of feudal.",
+        pageOrCite: "p. 99"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Most modern real property in the United States is held in fee simple, which remains subject to state property taxes, zoning ordinances, and eminent domain.",
+      commonLawMeaning: "True sovereign land title completely free of all superior liens, rents, lordships, or sovereign taxes.",
+      criticalDistinction: "Fee simple is a feudal derivative where the State retains underlying radical title; allodial title is absolute and unencumbered by sovereign tribute."
+    },
+    relatedMaxims: ['Ubi jus ibi remedium'],
+    keyPrecedents: ['Barker v. Dayton, 28 Wis. 367 (1871)', 'Wallace v. Harmstad, 44 Pa. 492 (1863)'],
+    practicalApplication: "Found in several state constitutions (e.g., Wisconsin Const. Art. I, § 14, Minnesota Const. Art. I, § 15 declaring all land allodial and feudal tenures prohibited)."
+  },
+  {
+    term: 'Due Process of Law',
+    category: 'Civil Rights & Due Process',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "Law in its regular course of administration through courts of justice. It means such an exercise of the powers of the government as the settled maxims of law permit and sanction, and under such safeguards for the protection of individual rights as those maxims prescribe for the class of cases to which the one in question belongs.",
+        pageOrCite: "p. 590"
+      },
+      {
+        edition: "Black's Law Dictionary (6th Ed. 1990)",
+        definition: "An orderly proceeding wherein a person is served with notice, actual or constructive, and has an opportunity to be heard and to enforce and protect rights before a properly constituted court for the decision of the matter.",
+        pageOrCite: "p. 500"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Administrative hearings, statutory notices, and compliance procedures satisfying minimum regulatory criteria.",
+      commonLawMeaning: "Tracing back to Chapter 39 of Magna Carta (1215), guarantee that no free person shall be deprived of life, liberty, or property except by lawful judgment of peers or law of the land.",
+      criticalDistinction: "Procedural due process demands notice and meaningful opportunity to be heard; substantive due process bars arbitrary governmental deprivation regardless of procedural form."
+    },
+    relatedMaxims: ['Nullum crimen, nulla poena sine lege', 'Ei incumbit probatio qui dicit, non qui negat'],
+    keyPrecedents: ['Mathews v. Eldridge, 424 U.S. 319 (1976)', 'Murray\'s Lessee v. Hoboken Land & Improvement Co., 59 U.S. 272 (1856)'],
+    practicalApplication: "Any governmental forfeiture, fine, or license suspension enacted without prior notice and evidentiary hearing is vulnerable to due process challenge."
+  },
+  {
+    term: 'Corpus Delicti',
+    category: 'Criminal Procedure',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (2nd Ed. 1910)",
+        definition: "The body of a crime. The material substance upon which a crime has been committed; e.g., the corpse of a murdered man, the charred remains of a house burned down. In a derivative sense, the substantial and fundamental fact that a crime has been committed.",
+        pageOrCite: "p. 276"
+      },
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "The body of a crime. The body or substance of the offense. In its primary sense, the physical evidence of crime; in its secondary sense, the fact that an actual injury or harm was sustained as the result of a criminal act.",
+        pageOrCite: "p. 412"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Malum prohibitum regulatory infractions where the state penalizes conduct without requiring demonstrable injury to person or property.",
+      commonLawMeaning: "Malum in se crimes strictly requiring concrete injury, victim, or property damage before criminal jurisdiction attaches.",
+      criticalDistinction: "A confession alone cannot support a criminal conviction without independent proof establishing the corpus delicti (the actual occurrence of the injury)."
+    },
+    relatedMaxims: ['Actus non facit reum nisi mens sit rea', 'Ei incumbit probatio qui dicit, non qui negat'],
+    keyPrecedents: ['Opper v. United States, 348 U.S. 84 (1954)', 'Smith v. United States, 348 U.S. 147 (1954)'],
+    practicalApplication: "In criminal trials, defense counsel can move to dismiss if the state fails to prove an actual injured party or sustained damage."
+  },
+  {
+    term: 'Motor Vehicle',
+    category: 'Commercial & Contracts',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "A self-propelled vehicle, especially one powered by an internal-combustion engine or electric motor, designed for operation upon highways, excluding vehicles running on rails. In commercial transportation statutes, a vehicle used for commercial transport of persons or cargo.",
+        pageOrCite: "p. 1164"
+      },
+      {
+        edition: "Black's Law Dictionary (6th Ed. 1990)",
+        definition: "A device in, upon, or by which any person or property is or may be transported or drawn upon a highway, except devices used exclusively upon stationary rails or tracks.",
+        pageOrCite: "p. 1014"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Under federal transportation statutes (18 U.S.C. § 31), 'motor vehicle' is defined specifically as every carriage or other contrivance propelled by power and used for commercial purposes on highways in the transportation of passengers or cargo.",
+      commonLawMeaning: "A private carriage or personal property conveyance operated privately without commercial hire.",
+      criticalDistinction: "Federal Title 18 explicitly predicates 'motor vehicle' on commercial purposes; state codes incorporate all self-propelled vehicles on public roads."
+    },
+    relatedMaxims: ['Expressio unius est exclusio alterius'],
+    keyPrecedents: ['United States v. One 1936 Model Ford V-8, 307 U.S. 219 (1939)', 'McBoyle v. United States, 283 U.S. 25 (1931)'],
+    practicalApplication: "Statutory jurisdiction over motor vehicles requires evaluating whether federal commercial definitions or state highway safety police powers govern."
+  },
+  {
+    term: 'Habeas Corpus',
+    category: 'Civil Rights & Due Process',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "'That you have the body.' The name given to a variety of writs having for their object to bring a party before a court or judge. In common usage, the great writ (habeas corpus ad subjiciendum) directed to the person detaining another, commanding him to produce the body of the prisoner, with the day and cause of his caption and detention, to do, submit to, and receive whatsoever the judge or court shall direct.",
+        pageOrCite: "p. 837"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Codified under 28 U.S.C. §§ 2241, 2254 for state and federal post-conviction relief.",
+      commonLawMeaning: "The Great Writ of Liberty dating to 12th-century England, universally recognized as the ultimate safeguard against arbitrary executive imprisonment.",
+      criticalDistinction: "The U.S. Constitution (Art. I, § 9, cl. 2) explicitly prohibits suspension of the Privilege of the Writ of Habeas Corpus except in cases of rebellion or invasion."
+    },
+    relatedMaxims: ['Ubi jus ibi remedium'],
+    keyPrecedents: ['Boumediene v. Bush, 553 U.S. 723 (2008)', 'Ex parte Milligan, 71 U.S. (4 Wall.) 2 (1866)'],
+    practicalApplication: "In emergency detentions, a petition for writ of habeas corpus forces the custodian to present lawful statutory authority within hours."
+  },
+  {
+    term: 'Bill of Rights',
+    category: 'Constitutional',
+    editions: [
+      {
+        edition: "Black's Law Dictionary (4th Ed. 1951)",
+        definition: "A formal declaration or enumeration of the fundamental rights, privileges, and liberties of the people, constitutionally preserved from governmental encroachment. Specifically, the first ten amendments to the Constitution of the United States, proposed by Congress in 1789 and ratified by the states in 1791.",
+        pageOrCite: "p. 210"
+      }
+    ],
+    statutoryVsCommonLaw: {
+      statutoryMeaning: "Negative prohibitions constraining government power rather than positive affirmative entitlements bestowed by the state.",
+      commonLawMeaning: "Declarations of ancestral liberties won through Magna Carta (1215), the English Petition of Right (1628), and the English Bill of Rights (1689).",
+      criticalDistinction: "The Ninth Amendment explicitly declares that the enumeration in the Constitution of certain rights shall not be construed to deny or disparage others retained by the people."
+    },
+    relatedMaxims: ['Inclusio unius est exclusio alterius', 'Quod omnes tangit ab omnibus approbari debet'],
+    keyPrecedents: ['Barron v. Baltimore, 32 U.S. 243 (1833)', 'Gitlow v. New York, 268 U.S. 652 (1925)'],
+    practicalApplication: "The Bill of Rights limits state as well as federal power via the 14th Amendment Incorporation Doctrine."
+  }
+];
+
+// Helper functions for query evaluation
+export function isBlacksLawQuery(query: string): boolean {
+  const lower = query.toLowerCase();
+  return (
+    lower.includes("black's law") ||
+    lower.includes("blacks law") ||
+    lower.includes("legal dictionary") ||
+    lower.includes("legal maxim") ||
+    lower.includes("maxims of law") ||
+    lower.includes("latin maxim") ||
+    lower.includes("allodial") ||
+    lower.includes("corpus delicti") ||
+    lower.includes("mens rea") ||
+    lower.includes("color of law") ||
+    lower.includes("ultra vires") ||
+    lower.includes("habeas corpus") ||
+    lower.includes("inalienable right") ||
+    lower.includes("statutory vs common law") ||
+    lower.includes("definition of driver") ||
+    lower.includes("definition of motor vehicle") ||
+    lower.includes("definition of person") ||
+    lower.includes("definition of commerce") ||
+    lower.includes("definition of jurisdiction") ||
+    lower.includes("legal definition") ||
+    lower.includes("fraus omnia corrumpit") ||
+    lower.includes("ignorantia juris") ||
+    lower.includes("expressio unius") ||
+    lower.includes("ubi jus ibi remedium")
+  );
+}
+
+export function searchBlacksLaw(query: string): { entries: BlacksLawEntry[]; maxims: LegalMaximEntry[] } {
+  const q = query.toLowerCase().trim();
+  if (!q) {
+    return {
+      entries: BLACKS_LAW_ENTRIES,
+      maxims: CLASSICAL_LEGAL_MAXIMS
+    };
+  }
+
+  const matchedEntries = BLACKS_LAW_ENTRIES.filter(e => 
+    e.term.toLowerCase().includes(q) ||
+    e.category.toLowerCase().includes(q) ||
+    e.editions.some(ed => ed.definition.toLowerCase().includes(q)) ||
+    (e.statutoryVsCommonLaw && (
+      e.statutoryVsCommonLaw.statutoryMeaning.toLowerCase().includes(q) ||
+      e.statutoryVsCommonLaw.commonLawMeaning.toLowerCase().includes(q)
+    )) ||
+    e.relatedMaxims.some(m => m.toLowerCase().includes(q))
+  );
+
+  const matchedMaxims = CLASSICAL_LEGAL_MAXIMS.filter(m =>
+    m.latin.toLowerCase().includes(q) ||
+    m.english.toLowerCase().includes(q) ||
+    m.meaning.toLowerCase().includes(q) ||
+    m.branch.toLowerCase().includes(q)
+  );
+
+  return {
+    entries: matchedEntries,
+    maxims: matchedMaxims
+  };
+}
+
+export function generateBlacksLawAIReport(query: string, isDeepResearch = false) {
+  const { entries, maxims } = searchBlacksLaw(query);
+  const sources = [
+    "Black's Law Dictionary (1st, 2nd, 4th, and 6th Editions)",
+    "Broom's Legal Maxims (Herbert Broom, LL.D.)",
+    "Bouvier's Law Dictionary (John Bouvier, 1856)",
+    "Restatement of the Law (American Law Institute)",
+    "Supreme Court of the United States Jurisprudence"
+  ];
+
+  if (entries.length === 0 && maxims.length === 0) {
+    return {
+      text: "### ⚖️ BLACK'S LAW DICTIONARY & LEGAL MAXIMS DOSSIER\n\n**Query:** *\"" + query + "\"*`\n\nNo exact single entry matched this query directly in the core dictionary index, but here are the primary canons of statutory and common-law construction:\n\n1. **Statutory vs. Common Law Principle:** In statutory codes, words of art (e.g. *person*, *driver*, *motor vehicle*, *employee*) frequently possess restricted definitions that diverge from ordinary common-law parlance. When reading statutes, always review the specific statutory definition section (e.g. § 1 or § 2) of that title.\n2. **Cardinal Maxim of Interpretation:** *Expressio unius est exclusio alterius* (The expression of one thing is the exclusion of another). If the legislature omitted a power or category, the court cannot read it into the statute.\n3. **Remedial Protections:** Under *Ubi jus ibi remedium*, every substantive constitutional right retained by a citizen carries an actionable remedy in law.\n\n*Tip: Search for specific terms such as **\"Jurisdiction\"**, **\"Driver\"**, **\"Commerce\"**, **\"Color of Law\"**, **\"Allodial\"**, **\"Corpus Delicti\"**, or **\"Legal Maxims\"**.*",
+      isDeepResearch,
+      sources,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  let text = "### ⚖️ BLACK'S LAW DICTIONARY & CLASSICAL MAXIMS: OPERATIONAL DOSSIER\n\n";
+
+  if (entries.length > 0) {
+    const top = entries[0];
+    text += "#### 📖 TERM: **" + top.term.toUpperCase() + "** (" + top.category + ")\n\n";
+    
+    top.editions.forEach(ed => {
+      text += "**" + ed.edition + "** " + (ed.pageOrCite ? "[" + ed.pageOrCite + "]" : "") + ":\n";
+      text += "> *\"" + ed.definition + "\"*`\n\n";
+    });
+
+    if (top.statutoryVsCommonLaw) {
+      text += "#### 🔍 Statutory Code vs. Common Law Distinction:\n";
+      text += "- **Statutory Construction:** " + top.statutoryVsCommonLaw.statutoryMeaning + "\n";
+      text += "- **Common Law Definition:** " + top.statutoryVsCommonLaw.commonLawMeaning + "\n";
+      text += "- **Critical Legal Implication:** " + top.statutoryVsCommonLaw.criticalDistinction + "\n\n";
+    }
+
+    if (top.keyPrecedents.length > 0) {
+      text += "#### 🏛️ Foundational Judicial Precedents:\n";
+      top.keyPrecedents.forEach(p => {
+        text += "- " + p + "\n";
+      });
+      text += "\n";
+    }
+
+    if (top.practicalApplication) {
+      text += "#### 🛡️ Field & Courtroom Application:\n" + top.practicalApplication + "\n\n";
+    }
+  }
+
+  if (maxims.length > 0) {
+    text += "#### 📜 Classical Legal Maxims Grounding This Doctrine:\n\n";
+    text += "| Latin Maxim | English Translation | Legal Doctrine | Leading Precedent |\n";
+    text += "| :--- | :--- | :--- | :--- |\n";
+    maxims.slice(0, 4).forEach(m => {
+      text += "| *" + m.latin + "* | **" + m.english + "** | " + m.meaning.slice(0, 75) + "... | " + (m.precedents[0] || 'Common Law') + " |\n";
+    });
+    text += "\n";
+  }
+
+  if (isDeepResearch) {
+    text += "#### 🔬 Deep Research Jurisprudential Analysis:\n" +
+      "- **Historical Evolution:** Tracing early English common law (Glanvill, Bracton, Blackstone's Commentaries) through early American Constitutional jurisprudence.\n" +
+      "- **Administrative Agency Usurpation:** Administrative tribunals (Article I courts) operate under specialized regulatory jurisdiction. Invoking classical Black's Law definitions and Article III constitutional standing protects citizens against administrative overreach.\n" +
+      "- **Evidentiary Standard:** Under *Ei incumbit probatio qui dicit, non qui negat*, the asserting party bears the absolute burden of establishing subject-matter jurisdiction and every statutory element before liability attaches.\n";
+  }
+
+  return {
+    text,
+    isDeepResearch,
+    sources,
+    timestamp: new Date().toISOString()
+  };
+}

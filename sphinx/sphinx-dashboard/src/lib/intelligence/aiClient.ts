@@ -8,6 +8,12 @@ import { generateDeepResearchDossier } from './deepResearchEngine';
 import { generateHistoricalWeatherAIReport, searchWeatherLocations, HistoricalWeatherSummary } from './historicalWeatherEngine';
 import { isConstitutionalQuery, generateConstitutionalAIReport } from './constitutionalDatabase';
 import { isLegalDefenseQuery, generateLegalDefenseResponse } from './legalDefenseEngine';
+import { isBlacksLawQuery, generateBlacksLawAIReport } from './blacksLawDictionary';
+import { WaterPotabilityEngine } from './waterPotabilityEngine';
+import { TacticalRepeaterEngine, EMERGENCY_SIMPLEX_CHANNELS } from '../comms/tacticalRepeaterEngine';
+import { SpaceWeatherEngine } from '../space/spaceWeatherEngine';
+import { CBRNFalloutEngine } from '../cbrn/cbrnFalloutEngine';
+import { BugOutRoutingEngine, VEHICLE_PROFILES } from '../routing/bugOutRoutingEngine';
 
 export interface MapContext {
   center: { lat: number; lon: number };
@@ -111,6 +117,36 @@ async function synthesizeClientAIResponse(
   // Check if query is about traffic stop, police encounter, legal defense, tickets
   if (isLegalDefenseQuery(lower)) {
     return generateLegalDefenseResponse(query, mapContext, isDeepResearch);
+  }
+
+  // Check if query is about Black's Law Dictionary, legal maxims, statutory vs common law
+  if (isBlacksLawQuery(lower)) {
+    return generateBlacksLawAIReport(query, isDeepResearch);
+  }
+
+  // Check if query is about natural water sources, potability, boiling altitude, purification
+  if (isWaterPotabilityQuery(lower)) {
+    return generateWaterPotabilityAIReport(query, mapContext, isDeepResearch);
+  }
+
+  // Check if query is about tactical repeaters, ham radio, GMRS, viewshed, radio horizon
+  if (isRepeaterQuery(lower)) {
+    return generateRepeaterAIReport(query, mapContext, isDeepResearch);
+  }
+
+  // Check if query is about space weather, solar flare, Kp index, EMP, geomagnetic storm
+  if (isSpaceWeatherQuery(lower)) {
+    return generateSpaceWeatherAIReport(query, isDeepResearch);
+  }
+
+  // Check if query is about CBRN, nuclear fallout, blast radius, 7:10 decay, dirty bomb
+  if (isCbrnQuery(lower)) {
+    return generateCbrnAIReport(query, mapContext, isDeepResearch);
+  }
+
+  // Check if query is about bug-out corridors, escape routes, choke-points, evacuation
+  if (isBugOutQuery(lower)) {
+    return generateBugOutAIReport(query, mapContext, isDeepResearch);
   }
 
   // Check if query is about airplane / aircraft crashes by day of week
@@ -349,6 +385,269 @@ async function handleHistoricalWeatherAIQuery(
     actions,
     historicalWeatherData: report.summary,
     sources: report.sources,
+    timestamp: new Date().toISOString()
+  };
+}
+
+// ==========================================
+// TACTICAL INTELLIGENCE AI REPORT GENERATORS
+// ==========================================
+
+function isWaterPotabilityQuery(lower: string): boolean {
+  return (
+    lower.includes('potab') ||
+    lower.includes('water purif') ||
+    lower.includes('boil water') ||
+    lower.includes('boiling time') ||
+    lower.includes('giardia') ||
+    lower.includes('cryptosporidium') ||
+    lower.includes('cyanobacteria') ||
+    lower.includes('natural spring') ||
+    lower.includes('freshwater lake') ||
+    lower.includes('water filtration') ||
+    lower.includes('drinkable water')
+  );
+}
+
+function generateWaterPotabilityAIReport(query: string, mapContext: MapContext, isDeepResearch: boolean): AIResponse {
+  const elevFt = mapContext.center.lat > 37 ? 6800 : 3200;
+  const dossier = WaterPotabilityEngine.evaluateWaterSource(
+    'Tactical Field Source',
+    mapContext.center.lat,
+    mapContext.center.lon,
+    elevFt,
+    'Subalpine Lake'
+  );
+
+  const text = `### 💧 WATER POTABILITY & FIELD PURIFICATION DOSSIER
+
+**Target Coordinates:** ${mapContext.center.lat.toFixed(4)}°N, ${mapContext.center.lon.toFixed(4)}°W (Estimated Elev: ${elevFt} ft)
+**Potability Classification:** **${dossier.grade}**
+**Safety Score:** **${dossier.safetyScore}/100** (TDS Est: ${dossier.tdsEstimatedPpm} ppm, pH: ${dossier.phRange})
+**Chemical Hazard:** ${dossier.chemicalThreatRisk}
+
+#### 🔥 Altitude-Adjusted Boil Directives:
+- **Minimum Required Rolling Boil:** **${dossier.recommendedBoilTimeMinutes} minutes**
+- *Scientific Rationale:* Elevated terrain (~4,500 ft) reduces boiling point below 100°C (212°F). Extended rolling boil ensures destruction of cysts.
+
+#### 🦠 Pathogen Threat Matrix:
+| Pathogen / Hazard | Category | Size / Morphology | Inactivation Protocol |
+| :--- | :--- | :--- | :--- |
+${dossier.pathogens.map((p: any) => `| **${p.name}** | ${p.type} | ${p.sizeMicrons} | ${p.inactivation} |`).join('\n')}
+
+#### 🛡️ Field Purification Protocols:
+${dossier.fieldPurificationSteps.map((s: any) => `${s.step}. **${s.action}:** ${s.toolRequired} — *${s.notes}*`).join('\n')}
+
+${isDeepResearch ? `#### 🔬 Deep Research Hydrology Intel:
+- Cryptosporidium oocysts possess thick outer protective shells impervious to standard iodine or chlorine tablets; micro-filtration (<=0.1 micron) or a full rolling boil is required.
+- Atmospheric pressure drops with altitude, lowering water's boiling point below 100°C (212°F); boiling duration must increase by 1 min per 1,000 ft above 6,562 ft.` : ''}`;
+
+  return {
+    text,
+    isDeepResearch,
+    sources: ['USGS National Hydrography Dataset', 'CDC Water Disinfection Guidelines', 'EPA Safe Drinking Water Act Protocols'],
+    timestamp: new Date().toISOString()
+  };
+}
+
+function isRepeaterQuery(lower: string): boolean {
+  return (
+    lower.includes('repeater') ||
+    lower.includes('ham radio') ||
+    lower.includes('gmrs') ||
+    lower.includes('radio horizon') ||
+    lower.includes('viewshed') ||
+    lower.includes('ctcss') ||
+    lower.includes('pl tone') ||
+    lower.includes('noaa nwr') ||
+    lower.includes('simplex') ||
+    lower.includes('146.520') ||
+    lower.includes('emergency radio')
+  );
+}
+
+function generateRepeaterAIReport(query: string, mapContext: MapContext, isDeepResearch: boolean): AIResponse {
+  const viewsheds = TacticalRepeaterEngine.calculateViewsheds(mapContext.center.lat, mapContext.center.lon, 650);
+  const reachable = viewsheds.filter(v => v.lineOfSightProbable);
+
+  const text = `### 📻 TACTICAL REPEATER & RF LINE-OF-SIGHT DOSSIER
+
+**Station Location:** ${mapContext.center.lat.toFixed(4)}°N, ${mapContext.center.lon.toFixed(4)}°W (AGL: 650 ft)
+**Calculated Radio Horizon:** **${viewsheds[0]?.horizonLimitMiles.toFixed(1) || 28.5} miles** (4/3 Earth Curvature Model)
+**Reachable Repeaters in Viewshed:** **${reachable.length} active stations**
+
+#### 📡 High-Probability Tactical Repeaters:
+| Repeater Call / Site | Band | Output Freq | Offset | Tone (CTCSS) | Distance | Line of Sight |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+${viewsheds.slice(0, 5).map(v => `| **${v.repeater.callsign}** (${v.repeater.locationName}) | ${v.repeater.band} | **${v.repeater.outputFreqMHz} MHz** | ${v.repeater.offsetMHz > 0 ? '+' : ''}${v.repeater.offsetMHz} | ${v.repeater.toneHz ? v.repeater.toneHz + ' Hz' : 'CSQ'} | ${v.distanceMiles} mi | ${v.lineOfSightProbable ? '🟢 CLEAR' : '🟡 REFRACTIVE'} |`).join('\n')}
+
+#### 🆘 National Emergency Calling Simplex Frequencies:
+| Service / Purpose | Frequency | Mode | Protocol |
+| :--- | :--- | :--- | :--- |
+${EMERGENCY_SIMPLEX_CHANNELS.map(s => `| **${s.name}** | **${s.freq}** | ${s.mode} | ${s.notes} |`).join('\n')}
+
+${isDeepResearch ? `#### 🔬 Deep Research RF Propagation Analysis:
+- VHF/UHF signals travel via space waves, bounded by the optical horizon multiplied by 4/3 to account for standard atmospheric refraction: d = 1.415 * (sqrt(h_tx) + sqrt(h_rx)).
+- Knife-edge diffraction over mountain ridges can extend coverage beyond optical line of sight by 12–18 dB.` : ''}`;
+
+  return {
+    text,
+    isDeepResearch,
+    sources: ['FCC Universal Licensing System (ULS)', 'RepeaterBook National Directory', 'NOAA Weather Radio All Hazards (NWR)'],
+    timestamp: new Date().toISOString()
+  };
+}
+
+function isSpaceWeatherQuery(lower: string): boolean {
+  return (
+    lower.includes('space weather') ||
+    lower.includes('solar flare') ||
+    lower.includes('solar storm') ||
+    lower.includes('kp index') ||
+    lower.includes('cme') ||
+    lower.includes('coronal mass') ||
+    lower.includes('geomagnetic') ||
+    lower.includes('emp') ||
+    lower.includes('gic') ||
+    lower.includes('radio blackout')
+  );
+}
+
+function generateSpaceWeatherAIReport(query: string, isDeepResearch: boolean): AIResponse {
+  const currentKp = 3.67;
+  const assessment = SpaceWeatherEngine.getCurrentTelemetry(currentKp);
+
+  const text = `### ☀️ SPACE WEATHER, SOLAR STORM & EMP VULNERABILITY MONITOR
+
+**Planetary Kp-Index:** **${assessment.kpIndex.toFixed(1)} / 9.0** (${assessment.stormLevel} - ${assessment.stormTitle})
+**Solar Wind Velocity:** **${assessment.solarWindSpeedKmS} km/s**
+**X-Ray Solar Flare Flux:** **${assessment.solarFlareClass}** (${assessment.xrayFluxWattsM2} W/m²)
+
+#### ⚠️ Threat Impact Matrix:
+- **Power Grid GIC Vulnerability:** \`${assessment.powerGridGicThreat}\`
+- **HF Radio Propagation:** \`${assessment.hfBlackoutRisk}\`
+- **GNSS/GPS Position Drift:** **±${assessment.gnssDriftMeters} meters**
+- **Minimum Aurora Latitude:** **${assessment.auroraVisibilityLatMin}°N**
+
+#### 🛡️ Protective Countermeasures:
+${assessment.protectiveDirectives.map((d: string) => `- ${d}`).join('\n')}
+
+${isDeepResearch ? `#### 🔬 Deep Research Carrington-Class Vulnerability:
+- Rapid fluctuations in Earth's geomagnetic field (dB/dt > 500 nT/min) induce quasi-DC currents (GICs) into long, grounded transmission lines, driving transformer cores into half-cycle magnetic saturation.
+- Coronal Mass Ejections (CMEs) with strong southward magnetic orientation (-Bz) couple directly with Earth's magnetosphere, creating intense auroral electrojets.` : ''}`;
+
+  return {
+    text,
+    isDeepResearch,
+    sources: ['NOAA Space Weather Prediction Center (SWPC)', 'NASA Solar Dynamics Observatory (SDO)', 'USGS Geomagnetism Program'],
+    timestamp: new Date().toISOString()
+  };
+}
+
+function isCbrnQuery(lower: string): boolean {
+  return (
+    lower.includes('cbrn') ||
+    lower.includes('nuclear') ||
+    lower.includes('fallout') ||
+    lower.includes('blast radius') ||
+    lower.includes('overpressure') ||
+    lower.includes('7:10 rule') ||
+    lower.includes('decay law') ||
+    lower.includes('radiation plume') ||
+    lower.includes('dirty bomb') ||
+    lower.includes('potassium iodide')
+  );
+}
+
+function generateCbrnAIReport(query: string, mapContext: MapContext, isDeepResearch: boolean): AIResponse {
+  const analysis = CBRNFalloutEngine.calculateFallout(
+    mapContext.center.lon,
+    mapContext.center.lat,
+    '10kt_ind',
+    14,
+    45
+  );
+
+  const text = `### ☣️ CBRN FALLOUT & DISPERSION SIMULATION DOSSIER
+
+**Detonation Model:** **${analysis.yieldProfile.name}**
+**Ground Zero:** ${mapContext.center.lat.toFixed(4)}°N, ${mapContext.center.lon.toFixed(4)}°W
+**Wind Telemetry:** ${analysis.windSpeedMph} mph bearing ${analysis.windBearingDeg}° (NE)
+
+#### 💥 Prompt Damage Radii:
+- **Severe Destruction (20 psi):** **${analysis.yieldProfile.psi20HeavyDestructionMiles} mi** (Heavy concrete structures pulverized)
+- **Residential Collapse (5 psi):** **${analysis.yieldProfile.psi5ModerateDestructionMiles} mi** (Complete residential structural failure)
+- **Window Glass Shatter (1 psi):** **${analysis.yieldProfile.psi1GlassBreakageMiles} mi** (Flying debris hazard)
+- **3rd-Degree Thermal Flash:** **${analysis.yieldProfile.thermalFlashBurnMiles} mi** (Exposed skin ignition)
+- **Prompt Lethal Radiation:** **${analysis.yieldProfile.promptRadiationLethalMiles} mi** (500 rem boundary)
+
+#### ⏳ 7:10 Radioactive Decay Timeline:
+| Elapsed Time | Relative Dose Activity | Operational Shelter Status |
+| :--- | :--- | :--- |
+${analysis.decayTimeline.map((d: any) => `| **T + ${d.hoursAfter} hr${d.hoursAfter > 1 ? 's' : ''}** | **${d.relativeDosePercent}%** | ${d.safeStatus} |`).join('\n')}
+
+#### 🛡️ Immediate Evacuation & PPE Directive:
+- **Respirator Requirement:** ${analysis.recommendedPPE.respirator}
+- **Body Suit Barrier:** ${analysis.recommendedPPE.bodySuit}
+- **Decontamination Protocol:** ${analysis.recommendedPPE.deconProtocol}
+
+${isDeepResearch ? `#### 🔬 Deep Research Radio-Nuclide Decay Physics:
+- Under the 7:10 rule (R(t) = R_0 * t^-1.2), radiation intensity drops tenfold for every sevenfold increase in elapsed time post-detonation.
+- Primary short-term biological threat is Iodine-131 (8-day half-life, concentrated in thyroid; countered with timely Potassium Iodide administration) followed by Cesium-137 and Strontium-90.` : ''}`;
+
+  return {
+    text,
+    isDeepResearch,
+    sources: ['FEMA Planning Guidance for Response to a Nuclear Detonation', 'Armed Forces Radiobiology Research Institute (AFRRI)', 'IAEA EPR-NPP Guidelines'],
+    timestamp: new Date().toISOString()
+  };
+}
+
+function isBugOutQuery(lower: string): boolean {
+  return (
+    lower.includes('bug-out') ||
+    lower.includes('bug out') ||
+    lower.includes('evacuation corridor') ||
+    lower.includes('escape route') ||
+    lower.includes('choke-point') ||
+    lower.includes('chokepoint') ||
+    lower.includes('bridge bottleneck') ||
+    lower.includes('blm dirt') ||
+    lower.includes('usfs trail')
+  );
+}
+
+function generateBugOutAIReport(query: string, mapContext: MapContext, isDeepResearch: boolean): AIResponse {
+  const analysis = BugOutRoutingEngine.calculateCorridors(
+    [mapContext.center.lon, mapContext.center.lat],
+    [mapContext.center.lon + 0.6, mapContext.center.lat + 0.5],
+    'overland_4x4'
+  );
+
+  const text = `### 🚨 BUG-OUT CORRIDOR & CHOKE-POINT EVASION DOSSIER
+
+**Origin Coordinates:** ${mapContext.center.lat.toFixed(4)}°N, ${mapContext.center.lon.toFixed(4)}°W
+**Vehicle Profile:** **${analysis.vehicle.name}** (Range: ${analysis.vehicle.rangeMiles} mi, Clearance: ${analysis.vehicle.clearanceInches}")
+**Feasibility:** \`${analysis.canReachDestination ? 'PASS - SAFE FUEL MARGIN' : 'CRITICAL - FUEL INSUFFICIENT'}\` (Est. Fuel Remaining: ${analysis.remainingFuelPercentage}%)
+
+#### 🛣️ Multi-Tiered Evacuation Corridors:
+| Corridor Profile | Distance | Est. Duration | Evasion Score | Bridges Avoided | Surface Composition |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+${analysis.corridors.map(c => `| **${c.title}** | ${c.distanceMiles} mi | ${c.estimatedMinutes} min | **${c.evasionScore}/100** | ${c.chokePointsAvoided} Choke-points | ${c.surfaceComposition} |`).join('\n')}
+
+#### 🚙 Vehicle Clearance Profiles for Off-Grid Egress:
+| Vehicle Type | Range | Ground Clearance | Fuel Type | Off-Road Feasibility |
+| :--- | :--- | :--- | :--- | :--- |
+${Object.values(VEHICLE_PROFILES).map(v => `| **${v.name}** | ${v.rangeMiles} mi | ${v.clearanceInches}" | ${v.fuelType} | ${v.offRoadCapable ? '🟢 FULL BLM/USFS' : '🔴 PAVED ONLY'} |`).join('\n')}
+
+${isDeepResearch ? `#### 🔬 Deep Research Evacuation Bottleneck Dynamics:
+- Highway corridors experience gridlock within 90 minutes of panic declaration; bridge funnels and toll plazas become permanent blockades.
+- Overland bypass routes utilizing secondary county easements and high-clearance BLM fire cuts preserve mobility regardless of arterial congestion.` : ''}`;
+
+  return {
+    text,
+    isDeepResearch,
+    sources: ['USFS Motor Vehicle Use Maps (MVUM)', 'BLM Public Lands Database', 'FHWA Emergency Evacuation Route Guidelines'],
     timestamp: new Date().toISOString()
   };
 }

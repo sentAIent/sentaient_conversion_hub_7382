@@ -89,6 +89,7 @@ const WaterPotabilityModal = dynamic(() => import('./WaterPotabilityModal').then
 const TacticalRepeaterModal = dynamic(() => import('./TacticalRepeaterModal').then(m => m.TacticalRepeaterModal), { ssr: false });
 const SpaceWeatherModal = dynamic(() => import('./SpaceWeatherModal').then(m => m.SpaceWeatherModal), { ssr: false });
 const CBRNDefenseModal = dynamic(() => import('./CBRNDefenseModal').then(m => m.CBRNDefenseModal), { ssr: false });
+const BlacksLawDictionaryModal = dynamic(() => import('./BlacksLawDictionaryModal').then(m => m.BlacksLawDictionaryModal), { ssr: false });
 import { ALL_CURATED_LOCATIONS } from '../lib/geo/curatedLocations';
 
 if (typeof window !== 'undefined') {
@@ -615,6 +616,7 @@ export default function SphinxMap() {
   const [isCameraFeedModalOpen, setIsCameraFeedModalOpen] = useState(false);
   const [isDisclaimersModalOpen, setIsDisclaimersModalOpen] = useState(false);
   const [isConstitutionalModalOpen, setIsConstitutionalModalOpen] = useState(false);
+  const [isBlacksLawOpen, setIsBlacksLawOpen] = useState(false);
   const [isWaterPotabilityOpen, setIsWaterPotabilityOpen] = useState(false);
   const [waterPotabilitySource, setWaterPotabilitySource] = useState<any | null>(null);
   const [isRepeaterModalOpen, setIsRepeaterModalOpen] = useState(false);
@@ -7257,6 +7259,16 @@ export default function SphinxMap() {
                 </button>
                 <button 
                   type="button" 
+                  data-testid="hud-btn-tools-blacks-law"
+                  title="Black's Law Dictionary & Maxims: 1st, 2nd, 4th, 6th editions, statutory vs common law definitions, and classical Latin maxims"
+                  onClick={() => { setIsBlacksLawOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isBlacksLawOpen ? 'bg-amber-950/80 text-amber-300 border border-amber-700/60' : 'hover:bg-amber-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>⚖️</span> Black's Law & Maxims</span>
+                  <span className="text-[10px] text-amber-400 font-bold">COMMON LAW</span>
+                </button>
+                <button 
+                  type="button" 
                   data-testid="hud-btn-tools-water-potability"
                   title="Natural Water Source Potability & Field Dossier: Bio-chemical contaminant scoring, pathogen vectors, and altitude-adjusted purification protocols"
                   onClick={() => { setIsWaterPotabilityOpen(true); setShowToolsMenu(false); }}
@@ -7721,6 +7733,16 @@ export default function SphinxMap() {
       <ConstitutionalLawModal
         isOpen={isConstitutionalModalOpen}
         onClose={() => setIsConstitutionalModalOpen(false)}
+      />
+
+      <BlacksLawDictionaryModal
+        isOpen={isBlacksLawOpen}
+        onClose={() => setIsBlacksLawOpen(false)}
+        onAskAI={(q) => {
+          setIsBlacksLawOpen(false);
+          setAiInitialQuery(q);
+          setShowAIAssistant(true);
+        }}
       />
 
       <div className="fixed bottom-2 sm:bottom-2.5 left-0 right-0 z-50 flex justify-center pointer-events-none px-1 sm:px-2 max-w-full">
