@@ -61,16 +61,16 @@ export function auditRouteThreats(
   coordinates: number[][],
   distanceMeters: number,
   options: AvoidanceOptions,
-  strategy: 'fastest' | 'shortest' | 'stealth' | 'flock_hopper' | 'eco_no_tolls',
+  strategy: 'fastest' | 'shortest' | 'stealth' | 'flock_hopper' | 'eco_no_tolls' | 'bug_out',
   hazardPoints?: {
     wildfires?: Array<[number, number]>;
     toxicSites?: Array<[number, number]>;
     closures?: Array<[number, number]>;
   }
 ): ThreatAuditScorecard {
-  const isStealth = strategy === 'stealth' || strategy === 'flock_hopper' || options.avoidCameras;
-  const isNoTolls = strategy === 'eco_no_tolls' || options.avoidTolls;
-  const isNoHighways = options.avoidHighways;
+  const isStealth = strategy === 'stealth' || strategy === 'flock_hopper' || strategy === 'bug_out' || options.avoidCameras;
+  const isNoTolls = strategy === 'eco_no_tolls' || strategy === 'bug_out' || options.avoidTolls;
+  const isNoHighways = strategy === 'bug_out' || options.avoidHighways;
 
   // Real & estimated camera encounters
   const nearbyCameras = VERIFIED_SURVEILLANCE_REGISTRY.filter(cam => coordinates.some((pt, idx) => idx < coordinates.length - 1 && pointToSegmentDistanceMeters(cam.geometry.coordinates[0], cam.geometry.coordinates[1], pt[0], pt[1], coordinates[idx+1][0], coordinates[idx+1][1]) < 400));
@@ -142,12 +142,12 @@ export function computeDetourWaypoints(
   destLng: number,
   destLat: number,
   options: AvoidanceOptions,
-  strategy: 'fastest' | 'shortest' | 'stealth' | 'flock_hopper' | 'eco_no_tolls'
+  strategy: 'fastest' | 'shortest' | 'stealth' | 'flock_hopper' | 'eco_no_tolls' | 'bug_out'
 ): Array<{ lng: number; lat: number }> {
   const waypoints: Array<{ lng: number; lat: number }> = [];
 
   // If avoiding highways or stealthing, inject lateral lateral offset points
-  if (options.avoidHighways || strategy === 'stealth' || strategy === 'flock_hopper' || options.avoidCameras || options.avoidClosedRoads) {
+  if (options.avoidHighways || strategy === 'stealth' || strategy === 'flock_hopper' || strategy === 'bug_out' || options.avoidCameras || options.avoidClosedRoads) {
     const midLng = (originLng + destLng) / 2;
     const midLat = (originLat + destLat) / 2;
 

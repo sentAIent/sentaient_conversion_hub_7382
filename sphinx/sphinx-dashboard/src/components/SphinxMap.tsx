@@ -85,6 +85,10 @@ import { DraggablePopupWrapper } from './DraggablePopupWrapper';
 import { PinThreatEngine, ThreatRadarSummary } from '../lib/intelligence/pinThreatEngine';
 const PinThreatRadarModal = dynamic(() => import('./PinThreatRadarModal').then(m => m.PinThreatRadarModal), { ssr: false });
 const InfrastructureCascadeModal = dynamic(() => import('./InfrastructureCascadeModal').then(m => m.InfrastructureCascadeModal), { ssr: false });
+const WaterPotabilityModal = dynamic(() => import('./WaterPotabilityModal').then(m => m.WaterPotabilityModal), { ssr: false });
+const TacticalRepeaterModal = dynamic(() => import('./TacticalRepeaterModal').then(m => m.TacticalRepeaterModal), { ssr: false });
+const SpaceWeatherModal = dynamic(() => import('./SpaceWeatherModal').then(m => m.SpaceWeatherModal), { ssr: false });
+const CBRNDefenseModal = dynamic(() => import('./CBRNDefenseModal').then(m => m.CBRNDefenseModal), { ssr: false });
 import { ALL_CURATED_LOCATIONS } from '../lib/geo/curatedLocations';
 
 if (typeof window !== 'undefined') {
@@ -388,7 +392,9 @@ function optimizeWaterAndLakeLabels(map: any) {
       if (isWaterSymbol) {
         // Completely hide default underlying water/lake labels
         // Only the white name with black outline from curated-lakes will be kept.
-        try { map.setLayoutProperty(id, 'visibility', 'none'); } catch (e) {}
+        if (map.getLayoutProperty(id, 'visibility') !== 'none') {
+          try { map.setLayoutProperty(id, 'visibility', 'none'); } catch (e) {}
+        }
       }
     }
   } catch (err) {
@@ -516,6 +522,7 @@ export default function SphinxMap() {
   const fetchingOverpassRef = useRef(false);
   const pendingOverpassRef = useRef(false);
   const staticDataLoadedRef = useRef(false);
+  const watchtowerBaselineLoadedRef = useRef(false);
 
   // Initialize viewState from settings once loaded
   useEffect(() => {
@@ -608,6 +615,11 @@ export default function SphinxMap() {
   const [isCameraFeedModalOpen, setIsCameraFeedModalOpen] = useState(false);
   const [isDisclaimersModalOpen, setIsDisclaimersModalOpen] = useState(false);
   const [isConstitutionalModalOpen, setIsConstitutionalModalOpen] = useState(false);
+  const [isWaterPotabilityOpen, setIsWaterPotabilityOpen] = useState(false);
+  const [waterPotabilitySource, setWaterPotabilitySource] = useState<any | null>(null);
+  const [isRepeaterModalOpen, setIsRepeaterModalOpen] = useState(false);
+  const [isSpaceWeatherOpen, setIsSpaceWeatherOpen] = useState(false);
+  const [isCbrnModalOpen, setIsCbrnModalOpen] = useState(false);
   const [activeCameraFeed, setActiveCameraFeed] = useState<LiveCameraFeed | null>(null);
   const [countScopeMode, setCountScopeMode] = useState<'world' | 'country'>('world');
   const [selectedCountryCode, setSelectedCountryCode] = useState<string>('US');
@@ -1111,9 +1123,11 @@ export default function SphinxMap() {
         throw new Error('Overpass error payload');
       }
     } catch (e: any) {
-      // Overpass backend offline or busy, fall back to comprehensive local baseline
-      try {
-        const baseline = await fetch('/sphinx/data/watchtower_baseline.json').then(r => r.json());
+      // Overpass backend offline or busy, fall back to comprehensive local baseline once
+      if (!watchtowerBaselineLoadedRef.current) {
+        watchtowerBaselineLoadedRef.current = true;
+        try {
+          const baseline = await fetch('/sphinx/data/watchtower_baseline.json').then(r => r.json());
         if (baseline) {
           if (baseline.celltowers?.features) setCellTowerFeatures(baseline.celltowers.features);
           if (baseline.springs?.features) setSpringFeatures(baseline.springs.features);
@@ -1129,6 +1143,7 @@ export default function SphinxMap() {
           if (baseline.trails?.features) setTrailFeatures(baseline.trails.features);
         }
       } catch (err) {}
+      }
     } finally {
       fetchingOverpassRef.current = false;
       setIsFetchingOverpass(false);
@@ -1887,8 +1902,8 @@ export default function SphinxMap() {
   useEffect(() => {
     if (!settings.layers.atmospheric_radar) return;
     const interval = setInterval(() => {
-      setRadarSweepAngle(prev => (prev + 6) % 360);
-    }, 100);
+      setRadarSweepAngle(prev => (prev + 15) % 360);
+    }, 250);
     return () => clearInterval(interval);
   }, [settings.layers.atmospheric_radar]);
 
@@ -2043,7 +2058,7 @@ export default function SphinxMap() {
         boxZoom={true}
         keyboard={true}
         style={{ width: '100%', height: '100%' }}
-        maxTileCacheSize={150}
+        maxTileCacheSize={60}
         transformRequest={transformRequest}
         dragRotate={true}
         touchPitch={true}
@@ -2105,7 +2120,6 @@ export default function SphinxMap() {
           if (typeof window !== 'undefined') (window as any).__sphinxMap = map;
           optimizeWaterAndLakeLabels(map);
           map.on('style.load', () => optimizeWaterAndLakeLabels(map));
-          map.on('styledata', () => optimizeWaterAndLakeLabels(map));
         }}
         onMoveEnd={(evt) => {
           if (evt?.viewState) {
@@ -4176,6 +4190,22 @@ export default function SphinxMap() {
                   <p><strong>Name:</strong> {selectedFeature.properties.name}</p>
                   <p><strong>Description:</strong> {selectedFeature.properties.description}</p>
                   <p><strong>Drinking Water:</strong> {selectedFeature.properties.drinking_water}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWaterPotabilitySource({
+                        name: selectedFeature.properties.name || 'Natural Spring',
+                        type: 'spring',
+                        lat: selectedFeature.latitude,
+                        lon: selectedFeature.longitude
+                      });
+                      setIsWaterPotabilityOpen(true);
+                    }}
+                    className="w-full mt-2 py-1 px-2 bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-600/60 rounded text-[10px] font-bold transition-all flex items-center justify-center gap-1 shadow-[0_0_8px_rgba(59,130,246,0.3)]"
+                  >
+                    <span>💧 Field Water Potability Dossier</span>
+                    <span>➔</span>
+                  </button>
                 </div>
               )}
               
@@ -5000,6 +5030,22 @@ export default function SphinxMap() {
                   {selectedFeature.properties.depth && <p><strong>Max Depth:</strong> {selectedFeature.properties.depth}</p>}
                   {selectedFeature.properties.subtitle && <p className="text-gray-600 text-[11px] pt-1">{selectedFeature.properties.subtitle}</p>}
                   {selectedFeature.properties.description && !selectedFeature.properties.subtitle && <p className="text-gray-600 text-[11px] pt-1">{selectedFeature.properties.description}</p>}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWaterPotabilitySource({
+                        name: selectedFeature.properties.name || 'Freshwater Lake',
+                        type: 'lake',
+                        lat: selectedFeature.latitude,
+                        lon: selectedFeature.longitude
+                      });
+                      setIsWaterPotabilityOpen(true);
+                    }}
+                    className="w-full mt-2 py-1 px-2 bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-600/60 rounded text-[10px] font-bold transition-all flex items-center justify-center gap-1 shadow-[0_0_8px_rgba(59,130,246,0.3)]"
+                  >
+                    <span>💧 Field Water Potability Dossier</span>
+                    <span>➔</span>
+                  </button>
                 </div>
               )}
 
@@ -7211,6 +7257,46 @@ export default function SphinxMap() {
                 </button>
                 <button 
                   type="button" 
+                  data-testid="hud-btn-tools-water-potability"
+                  title="Natural Water Source Potability & Field Dossier: Bio-chemical contaminant scoring, pathogen vectors, and altitude-adjusted purification protocols"
+                  onClick={() => { setIsWaterPotabilityOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isWaterPotabilityOpen ? 'bg-blue-950/80 text-blue-300 border border-blue-700/60' : 'hover:bg-blue-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>💧</span> Water Potability & Field Dossier</span>
+                  <span className="text-[10px] text-blue-400 font-bold">PURIFY</span>
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-tactical-repeaters"
+                  title="Tactical Ham & GMRS Repeaters: 2m/70cm VHF/UHF repeaters, CTCSS/PL tones, NOAA NWR, emergency simplex frequencies, and RF viewshed"
+                  onClick={() => { setIsRepeaterModalOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isRepeaterModalOpen ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/60' : 'hover:bg-emerald-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>📻</span> Ham & GMRS Tactical Repeaters</span>
+                  <span className="text-[10px] text-emerald-400 font-bold">COMMS</span>
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-space-weather"
+                  title="Space Weather, Solar Flares & EMP Monitor: NOAA SWPC Kp index 0-9, solar storm G1-G5 alerts, power grid GIC risk, and HF radio blackouts"
+                  onClick={() => { setIsSpaceWeatherOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isSpaceWeatherOpen ? 'bg-amber-950/80 text-amber-300 border border-amber-700/60' : 'hover:bg-amber-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>☀️</span> Space Weather & EMP Monitor</span>
+                  <span className="text-[10px] text-amber-400 font-bold">SOLAR</span>
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-cbrn-defense"
+                  title="CBRN Fallout & Chemical Plume Simulator: Nuclear fallout zones, 20/5/1 psi overpressure, Gaussian wind dispersion, 7:10 decay law, and PPE protocols"
+                  onClick={() => { setIsCbrnModalOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isCbrnModalOpen ? 'bg-red-950/80 text-red-300 border border-red-700/60' : 'hover:bg-red-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>☣️</span> CBRN Fallout & Plume Defense</span>
+                  <span className="text-[10px] text-red-400 font-bold">FALLOUT</span>
+                </button>
+                <button 
+                  type="button" 
                   data-testid="hud-btn-settings"
                   title="System Configuration: Customize UI theme, map projection, coordinate formats, and cursor styles"
                   onClick={() => { setIsSettingsOpen(true); setShowToolsMenu(false); }}
@@ -8017,6 +8103,25 @@ export default function SphinxMap() {
           }
           setIsPinThreatRadarOpen(false);
         }}
+      />
+      <WaterPotabilityModal
+        isOpen={isWaterPotabilityOpen}
+        onClose={() => setIsWaterPotabilityOpen(false)}
+        selectedSource={waterPotabilitySource}
+      />
+      <TacticalRepeaterModal
+        isOpen={isRepeaterModalOpen}
+        onClose={() => setIsRepeaterModalOpen(false)}
+        currentLocation={{ lat: viewState.latitude, lng: viewState.longitude }}
+      />
+      <SpaceWeatherModal
+        isOpen={isSpaceWeatherOpen}
+        onClose={() => setIsSpaceWeatherOpen(false)}
+      />
+      <CBRNDefenseModal
+        isOpen={isCbrnModalOpen}
+        onClose={() => setIsCbrnModalOpen(false)}
+        currentCenter={{ lat: viewState.latitude, lng: viewState.longitude }}
       />
       <CustomCursor settings={settings.cursor} />
     </div>

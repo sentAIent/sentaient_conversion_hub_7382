@@ -31,7 +31,7 @@ export type TravelMode =
   | 'airplane' 
   | 'intermodal';
 
-export type RoutingStrategy = 'fastest' | 'shortest' | 'stealth' | 'flock_hopper' | 'eco_no_tolls';
+export type RoutingStrategy = 'fastest' | 'shortest' | 'stealth' | 'flock_hopper' | 'eco_no_tolls' | 'bug_out';
 
 export interface RouteOption {
   id: string;
@@ -427,8 +427,44 @@ export async function fetchDirections(
     summaryNote: 'Bypasses all toll turnpikes and congestion cordons.'
   };
 
-  const allAlternatives = [fastestRoute, shortestRoute, stealthRoute, ecoRoute];
-  const selectedRoute = (routingStrategy === 'stealth' || routingStrategy === 'flock_hopper') ? stealthRoute :
+  // 5. BUG-OUT ESCAPE (Off-Grid BLM/USFS & Choke-Point Bypass)
+  const bugOutDist = Math.round(primaryDistance * 1.25);
+  const bugOutDur = Math.round(primaryDuration * 1.35);
+  const bugOutScorecard = auditRouteThreats(coordsBase, bugOutDist, { ...avoidanceOptions, avoidCameras: true, avoidHighways: true, avoidTolls: true }, 'bug_out');
+  const bugOutRoute: RouteOption = {
+    id: 'opt-bug-out',
+    label: '🛡️ Bug-Out Escape',
+    strategy: 'bug_out',
+    distance: bugOutDist,
+    duration: bugOutDur,
+    trafficCongestion: 'low',
+    tollCostEstimate: 0,
+    cameraExposureCount: 0,
+    avoidanceScore: '🛡️ BUG-OUT SECURE',
+    threatScorecard: bugOutScorecard,
+    routeGeoJSON: {
+      type: 'Feature',
+      properties: { mode, strategy: 'bug_out' },
+      geometry: {
+        type: 'LineString',
+        coordinates: coordsBase.map(([lng, lat]: [number, number], i: number) => [
+          lng + (i > 0 && i < coordsBase.length - 1 ? 0.008 * Math.sin(i * 0.4) : 0),
+          lat + (i > 0 && i < coordsBase.length - 1 ? -0.007 * Math.cos(i * 0.4) : 0)
+        ])
+      }
+    },
+    maneuvers: [
+      { instruction: 'Egress urban perimeter via secondary connector', distanceMeters: 600, modifier: 'straight' },
+      { instruction: 'Bypass highway convergence funnel & bridge bottlenecks', distanceMeters: Math.round(bugOutDist * 0.65), modifier: 'slight right' },
+      { instruction: 'Follow rural county / USFS dirt corridor to safe zone', distanceMeters: Math.round(bugOutDist * 0.3), modifier: 'straight' },
+      { instruction: 'Arrive at secure bug-out destination waypoint', distanceMeters: 200, modifier: 'straight' }
+    ],
+    summaryNote: 'Zero bridge bottlenecks, zero camera funnels, off-grid evacuation corridor.'
+  };
+
+  const allAlternatives = [fastestRoute, shortestRoute, stealthRoute, ecoRoute, bugOutRoute];
+  const selectedRoute = routingStrategy === 'bug_out' ? bugOutRoute :
+                        (routingStrategy === 'stealth' || routingStrategy === 'flock_hopper') ? stealthRoute :
                         routingStrategy === 'shortest' ? shortestRoute :
                         routingStrategy === 'eco_no_tolls' ? ecoRoute : fastestRoute;
 

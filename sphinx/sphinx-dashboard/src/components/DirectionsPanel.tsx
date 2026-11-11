@@ -38,6 +38,7 @@ import {
   RouteSubLeg
 } from '../lib/directionsService';
 import { UserTier } from '../lib/useSettings';
+import { VEHICLE_PROFILES } from '../lib/routing/bugOutRoutingEngine';
 
 export interface RoutePoint {
   label: string;
@@ -114,6 +115,7 @@ export function DirectionsPanel({
   const [timeMode, setTimeMode] = useState<'now' | 'custom'>('now');
   const [customTime, setCustomTime] = useState('');
   const [routingStrategy, setRoutingStrategy] = useState<RoutingStrategy>('fastest');
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('overland_4x4');
   const [waypoints, setWaypoints] = useState<RoutePoint[]>([]);
   const [isGuidanceMode, setIsGuidanceMode] = useState(false);
   
@@ -344,7 +346,8 @@ export function DirectionsPanel({
         avoidanceOptions
       );
       setResult(res);
-      setSelectedAltId((routingStrategy === 'stealth' || routingStrategy === 'flock_hopper') ? 'opt-stealth' :
+      setSelectedAltId(routingStrategy === 'bug_out' ? 'opt-bug-out' :
+                        (routingStrategy === 'stealth' || routingStrategy === 'flock_hopper') ? 'opt-stealth' :
                         routingStrategy === 'shortest' ? 'opt-shortest' :
                         routingStrategy === 'eco_no_tolls' ? 'opt-eco' : 'opt-fastest');
       onRouteCalculated(res);
@@ -901,8 +904,13 @@ export function DirectionsPanel({
                 🛡️ 0 CAMERAS
               </span>
             )}
+            {routingStrategy === 'bug_out' && (
+              <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/50 px-1.5 py-0.5 rounded font-black animate-pulse">
+                🛡️ CHOKE-POINT EVASION
+              </span>
+            )}
           </div>
-          <div className="grid grid-cols-4 gap-1 text-[10px]">
+          <div className="grid grid-cols-5 gap-1 text-[9px]">
             <button
               type="button"
               onClick={() => setRoutingStrategy('fastest')}
@@ -912,7 +920,7 @@ export function DirectionsPanel({
                   : 'bg-black/50 border-gray-800 text-gray-400 hover:text-gray-200'
               }`}
             >
-              ⚡ Fastest
+              ⚡ Fast
             </button>
             <button
               type="button"
@@ -923,7 +931,7 @@ export function DirectionsPanel({
                   : 'bg-black/50 border-gray-800 text-gray-400 hover:text-gray-200'
               }`}
             >
-              📏 Shortest
+              📏 Short
             </button>
             <button
               type="button"
@@ -938,7 +946,7 @@ export function DirectionsPanel({
               }`}
               title="Avoid all Flock Safety, Axon, and ALPR surveillance cameras"
             >
-              🛡️ Flock Hopper
+              🛡️ Flock
             </button>
             <button
               type="button"
@@ -952,9 +960,56 @@ export function DirectionsPanel({
                   : 'bg-black/50 border-gray-800 text-gray-400 hover:text-gray-200'
               }`}
             >
-              🌿 Eco Toll-Free
+              🌿 Eco
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRoutingStrategy('bug_out');
+                setAvoidanceOptions(prev => ({ ...prev, avoidCameras: true, avoidHighways: true, avoidTolls: true, avoidClosedRoads: true }));
+              }}
+              className={`py-1.5 px-0.5 rounded-lg border text-center transition-all ${
+                routingStrategy === 'bug_out'
+                  ? 'bg-amber-950/90 border-amber-400 text-amber-200 font-bold shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                  : 'bg-black/50 border-gray-800 text-amber-400 hover:text-amber-300'
+              }`}
+              title="Bug-out off-grid evacuation corridor bypassing highway funnels, bridge choke-points, and cameras"
+            >
+              🚨 Bug-Out
             </button>
           </div>
+
+          {/* Vehicle Profile Chips for Bug-Out Strategy */}
+          {routingStrategy === 'bug_out' && (
+            <div className="pt-1.5 border-t border-amber-900/40 space-y-1">
+              <div className="flex justify-between items-center text-[9px] text-amber-300 font-bold uppercase tracking-wider">
+                <span>Vehicle Clearance Profile</span>
+                <span className="text-gray-400">{VEHICLE_PROFILES[selectedVehicle]?.name || 'Overland 4x4'}</span>
+              </div>
+              <div className="grid grid-cols-5 gap-1 text-[9px]">
+                {Object.values(VEHICLE_PROFILES).map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setSelectedVehicle(v.id)}
+                    className={`py-1 px-0.5 rounded border text-center transition-all ${
+                      selectedVehicle === v.id
+                        ? 'bg-amber-900/60 border-amber-400 text-amber-200 font-bold shadow-[0_0_6px_rgba(245,158,11,0.3)]'
+                        : 'bg-black/40 border-gray-800 text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <div>{v.icon}</div>
+                    <div className="text-[8px] truncate">{v.id.split('_')[0]}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between items-center text-[8px] text-amber-400/80 px-1 pt-0.5">
+                <span>Range: {VEHICLE_PROFILES[selectedVehicle]?.rangeMiles} mi</span>
+                <span>Clearance: {VEHICLE_PROFILES[selectedVehicle]?.clearanceInches}&quot;</span>
+                <span>Fuel: {VEHICLE_PROFILES[selectedVehicle]?.fuelType}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Departure Time */}
