@@ -397,12 +397,12 @@ export const TimelineManager = () => {
       newZones = {
         intro: p < 0.025,
         w_matrix_intro: p >= 0.000 && p < 0.038,
-        w_mindwave: p >= 0.002 && p < 0.030,
-        mindwave: p >= 0.000 && p < 0.080, // Preloaded at hub, warm in GPU
+        w_mindwave: p >= 0.015 && p < 0.030,
+        mindwave: p >= 0.022 && p < 0.065,
         wormhole_ice: p >= 0.045 && p < 0.118,
-        icebreaker: p >= 0.000 && p < 0.180, // Preloaded at hub before dive
+        icebreaker: p >= 0.045 && p < 0.170,
         wormhole_sound: p >= 0.145 && p < 0.198,
-        interstellar: p >= 0.025 && p < 0.245, // Preloaded 2 worlds in advance
+        interstellar: p >= 0.110 && p < 0.245,
         w_legal: p >= 0.210 && p < 0.246,
         legal: p >= 0.100 && p < 0.285, // Preloaded 2-3 worlds in advance
         w_autopilot: p >= 0.258 && p < 0.292,
