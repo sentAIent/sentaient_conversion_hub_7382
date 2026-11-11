@@ -47,6 +47,7 @@ const WORLD_NAMES_MAP = {
 
 // Import Wormholes (All 100% Unique - Zero Generic Duplicates)
 import WormholeMatrix from './wormholes/WormholeMatrix';
+import WormholeMindWave from './wormholes/WormholeMindWave';
 import WormholeIce from './wormholes/WormholeIce';
 import WormholeSoundwaves from './wormholes/WormholeSoundwaves';
 import WormholeLegal from './wormholes/WormholeLegal';
@@ -358,6 +359,7 @@ export const TimelineManager = () => {
       newZones = {
         intro: activeId === 'hub' || activeId === 'intro',
         w_matrix_intro: activeId === 'hub' || activeId === 'mindwave',
+        w_mindwave: false,
         mindwave: activeId === 'mindwave',
         wormhole_ice: false,
         icebreaker: activeId === 'icebreaker', 
@@ -391,47 +393,50 @@ export const TimelineManager = () => {
         lightspeed: activeId === 'lightspeed'
       };
     } else {
+      // Smooth preloading of 2-3 worlds in advance to eliminate frame hitching and shader compilation lag
       newZones = {
         intro: p < 0.025,
         w_matrix_intro: p >= 0.000 && p < 0.038,
-        mindwave: p >= 0.025 && p < 0.060,
-        wormhole_ice: p >= 0.048 && p < 0.135,
-        icebreaker: p >= 0.105 && p < 0.165, 
-        wormhole_sound: p >= 0.135 && p < 0.200,
-        interstellar: p >= 0.185 && p < 0.230, 
-        w_legal: p >= 0.200 && p < 0.248,
-        legal: p >= 0.235 && p < 0.270,
-        w_autopilot: p >= 0.248 && p < 0.293,
-        autopilot: p >= 0.280 && p < 0.315,
-        w_clove: p >= 0.293 && p < 0.345,
-        clove: p >= 0.325 && p < 0.370,
-        w_fantasy: p >= 0.345 && p < 0.413,
-        fantasy: p >= 0.400 && p < 0.435,
-        w_contango: p >= 0.413 && p < 0.463,
-        contango: p >= 0.450 && p < 0.485,
-        w_sentaient: p >= 0.463 && p < 0.505,
-        sentaient: p >= 0.488 && p < 0.528,
-        w_elevate: p >= 0.505 && p < 0.548,
-        elevate: p >= 0.535 && p < 0.568,
-        w_sphinx: p >= 0.548 && p < 0.610,
-        sphinx: p >= 0.595 && p < 0.630,
-        w_liquid: p >= 0.610 && p < 0.668,
-        liquid: p >= 0.652 && p < 0.690,
-        w_maya: p >= 0.668 && p < 0.728,
-        maya: p >= 0.712 && p < 0.750,
-        w_pyramid: p >= 0.728 && p < 0.785,
-        pyramid: p >= 0.780 && p < 0.835,
+        w_mindwave: p >= 0.002 && p < 0.030,
+        mindwave: p >= 0.000 && p < 0.080, // Preloaded at hub, warm in GPU
+        wormhole_ice: p >= 0.045 && p < 0.118,
+        icebreaker: p >= 0.000 && p < 0.180, // Preloaded at hub before dive
+        wormhole_sound: p >= 0.145 && p < 0.198,
+        interstellar: p >= 0.025 && p < 0.245, // Preloaded 2 worlds in advance
+        w_legal: p >= 0.210 && p < 0.246,
+        legal: p >= 0.100 && p < 0.285, // Preloaded 2-3 worlds in advance
+        w_autopilot: p >= 0.258 && p < 0.292,
+        autopilot: p >= 0.160 && p < 0.330, // Preloaded 2-3 worlds in advance
+        w_clove: p >= 0.302 && p < 0.338,
+        clove: p >= 0.210 && p < 0.380, // Preloaded 2-3 worlds in advance
+        w_fantasy: p >= 0.355 && p < 0.412,
+        fantasy: p >= 0.270 && p < 0.445, // Preloaded 2-3 worlds in advance
+        w_contango: p >= 0.422 && p < 0.462,
+        contango: p >= 0.320 && p < 0.495, // Preloaded 2-3 worlds in advance
+        w_sentaient: p >= 0.472 && p < 0.502,
+        sentaient: p >= 0.370 && p < 0.535, // Preloaded 2-3 worlds in advance
+        w_elevate: p >= 0.520 && p < 0.546,
+        elevate: p >= 0.410 && p < 0.575, // Preloaded 2-3 worlds in advance
+        w_sphinx: p >= 0.560 && p < 0.608,
+        sphinx: p >= 0.460 && p < 0.640, // Preloaded 2-3 worlds in advance
+        w_liquid: p >= 0.620 && p < 0.666,
+        liquid: p >= 0.520 && p < 0.700, // Preloaded 2-3 worlds in advance
+        w_maya: p >= 0.675 && p < 0.726,
+        maya: p >= 0.580 && p < 0.760, // Preloaded 2-3 worlds in advance
+        w_pyramid: p >= 0.735 && p < 0.785,
+        pyramid: p >= 0.640 && p < 0.840, // Preloaded 2-3 worlds in advance
         w_matrix: p >= 0.825 && p < 0.870,
-        matrix: p >= 0.852 && p < 0.898,
-        w_lightspeed: p >= 0.873 && p <= 1.000,
-        lightspeed: p >= 0.925
+        matrix: p >= 0.700 && p < 0.910, // Preloaded 2-3 worlds in advance
+        w_lightspeed: p >= 0.885 && p < 0.940,
+        lightspeed: p >= 0.770 && p <= 1.000 // Preloaded 2-3 worlds in advance
       };
     }
 
     // Unconditionally ensure wormholes are completely hidden at any world's focal point
     const isAtAnyFocalPoint = window._isWorldActionActive || 
-      WORLD_PAUSE_STATIONS.some(st => Math.abs(st.p - p) < 0.015);
+      WORLD_PAUSE_STATIONS.some(st => Math.abs(st.p - p) < 0.012);
     if (isAtAnyFocalPoint) {
+      newZones.w_mindwave = false;
       newZones.wormhole_ice = false;
       newZones.wormhole_sound = false;
       newZones.w_legal = false;
@@ -517,11 +522,12 @@ export const TimelineManager = () => {
     <group>
       <MiniWorldsHub visible={activeZones.intro} />
       <WormholeMatrix startZ={20} endZ={-1100} visible={activeZones.w_matrix_intro} />
+      <WormholeMindWave position={[0, 0, -425]} rotation={[Math.PI / 2, 0, 0]} length={1100} visible={activeZones.w_mindwave} />
       
       <WorldMindWave position={[0, 0, -1350]} visible={activeZones.mindwave} />
       
-      {/* Plunge tunnel down Y axis (flush with lake surface Y=-50 down to Y=-3950) */}
-      <WormholeIce position={[0, -2000, -1250]} rotation={[0, 0, 0]} length={3700} visible={activeZones.wormhole_ice} />
+      {/* Plunge tunnel down Y axis (flush with lake surface Y=+300 down to Y=-4500) */}
+      <WormholeIce position={[0, -2100, -1250]} rotation={[0, 0, 0]} length={4800} visible={activeZones.wormhole_ice} />
       
       {/* Icebreaker Cavern */}
       <WorldIcebreaker position={[0, -4000, -2550]} visible={activeZones.icebreaker} />
