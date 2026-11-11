@@ -690,20 +690,20 @@ const HTMLStations = () => {
         ref={hubTourRef}
         style={{
           position: 'fixed',
-          bottom: '28px',
+          bottom: '16px',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 90,
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          padding: '8px 14px 8px 18px',
+          gap: '10px',
+          padding: '6px 14px 6px 16px',
           borderRadius: '9999px',
-          background: 'linear-gradient(135deg, rgba(8, 14, 28, 0.90) 0%, rgba(3, 7, 18, 0.96) 100%)',
+          background: 'linear-gradient(135deg, rgba(8, 14, 28, 0.92) 0%, rgba(3, 7, 18, 0.97) 100%)',
           backdropFilter: 'blur(24px) saturate(190%)',
           WebkitBackdropFilter: 'blur(24px) saturate(190%)',
           border: '1px solid rgba(56, 189, 248, 0.45)',
-          boxShadow: '0 12px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.28)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.25)',
           pointerEvents: 'auto',
           transition: 'opacity 0.35s ease, transform 0.35s ease'
         }}
