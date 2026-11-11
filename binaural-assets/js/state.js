@@ -258,6 +258,29 @@ export const HEALING_VISUALS = {
     'heal-963': ['dragon', 'interstellar', 'matrix'] // Oneness
 };
 
+export const ORGAN_VISUALS = {
+    'organ-teeth': ['sphere', 'particles'],
+    'organ-brain': ['matrix', 'interstellar'],
+    'organ-heart': ['particles', 'galaxy'],
+    'organ-lungs': ['ocean', 'particles'],
+    'organ-liver': ['rainforest', 'zengarden'],
+    'organ-kidneys': ['ocean', 'waves'],
+    'organ-stomach': ['fireplace', 'particles'],
+    'organ-gut': ['zengarden', 'particles'],
+    'organ-pancreas': ['particles', 'galaxy'],
+    'organ-spleen': ['sphere', 'galaxy'],
+    'organ-gallbladder': ['rainforest', 'particles'],
+    'organ-bladder': ['waves', 'ocean'],
+    'organ-thyroid': ['sphere', 'interstellar'],
+    'organ-adrenals': ['lava', 'fireplace'],
+    'organ-bones': ['snowflake', 'tesseract'],
+    'organ-muscles': ['fireplace', 'particles'],
+    'organ-blood': ['galaxy', 'particles'],
+    'organ-skin': ['particles', 'sphere'],
+    'organ-eyes': ['matrix', 'interstellar'],
+    'organ-spine': ['tesseract', 'galaxy']
+};
+
 export const STATE_INSIGHTS = {
 
     // Custom Deep Dive Frequencies
