@@ -57,7 +57,7 @@ const WormholeLiquid = ({ position, rotation = [Math.PI / 2, 0, 0], length = 320
       goldTexture.offset.y = -t * 3.2;
     }
     if (ledgerRibbonsRef.current) {
-      ledgerRibbonsRef.current.rotation.z = -t * 0.5;
+      ledgerRibbonsRef.current.rotation.y = -t * 0.5;
     }
   });
 

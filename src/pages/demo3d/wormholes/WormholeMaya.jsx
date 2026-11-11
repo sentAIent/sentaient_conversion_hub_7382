@@ -56,7 +56,7 @@ const WormholeMaya = ({ position, rotation = [Math.PI / 2, 0, 0], length = 3200,
       mayaTexture.offset.y = -t * 2.5;
     }
     if (auraRingsRef.current) {
-      auraRingsRef.current.rotation.z = t * 0.35;
+      auraRingsRef.current.rotation.y = t * 0.35;
       const pulse = 1 + Math.sin(t * 3) * 0.03;
       auraRingsRef.current.scale.set(pulse, 1, pulse);
     }

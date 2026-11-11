@@ -547,12 +547,14 @@ export const runIcebreakerMelt = (onComplete) => {
     }
   }
 
-  // Phase 1: Camera stops in center where we see the ice cave for 2.0s
-  // Phase 2: Melts smoothly without needing to move the mouse (3.2s)
-  // Phase 3: Automatic smooth camera zoom-in toward the dancing people on the island (2.6s)
-  const PAUSE_MS = 2000;
-  const MELT_MS = 3200;
-  const ZOOM_MS = 2600;
+  // Phase 1: Camera stops in center where we see the ice cave for 1.4s
+  // Phase 2: Melts smoothly without needing to move the mouse (2.0s)
+  // Phase 2b: Brief delay (< 0.4s) from melt completion before moving above island
+  // Phase 3: Automatic smooth camera zoom-in toward the dancing people on the island (2.2s)
+  const PAUSE_MS = 1400;
+  const MELT_MS = 2000;
+  const DELAY_AFTER_MELT_MS = 400;
+  const ZOOM_MS = 2200;
   const start = performance.now();
 
   const easeOutCubic = (t) => 1.0 - Math.pow(1.0 - t, 3);
@@ -582,8 +584,8 @@ export const runIcebreakerMelt = (onComplete) => {
       const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
       if (maxScroll > 0) {
         let curP = 0.120;
-        if (elapsed > PAUSE_MS + MELT_MS) {
-          const zoomElapsed = elapsed - PAUSE_MS - MELT_MS;
+        if (elapsed > PAUSE_MS + MELT_MS + DELAY_AFTER_MELT_MS) {
+          const zoomElapsed = elapsed - PAUSE_MS - MELT_MS - DELAY_AFTER_MELT_MS;
           const prog = Math.min(1.0, zoomElapsed / ZOOM_MS);
           curP = 0.120 + (0.131 - 0.120) * easeInOutCubic(prog);
         }
@@ -600,13 +602,18 @@ export const runIcebreakerMelt = (onComplete) => {
       // Phase 2: Melting progression
       const meltElapsed = elapsed - PAUSE_MS;
       const prog = Math.min(1.0, meltElapsed / MELT_MS);
-      window.icebreakerThaw = easeOutCubic(prog);
+      window.icebreakerThaw = prog * prog * (3.0 - 2.0 * prog);
       window._icebreakerCam = { active: true, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 };
       requestAnimationFrame(step);
-    } else if (elapsed < PAUSE_MS + MELT_MS + ZOOM_MS) {
+    } else if (elapsed < PAUSE_MS + MELT_MS + DELAY_AFTER_MELT_MS) {
+      // Phase 2b: Brief delay (< 0.4s) from melt completion before moving above island
+      window.icebreakerThaw = 1.0;
+      window._icebreakerCam = { active: true, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 };
+      requestAnimationFrame(step);
+    } else if (elapsed < PAUSE_MS + MELT_MS + DELAY_AFTER_MELT_MS + ZOOM_MS) {
       // Phase 3: Automatic smooth camera zoom-in toward campfire and dancing people
       window.icebreakerThaw = 1.0;
-      const zoomElapsed = elapsed - PAUSE_MS - MELT_MS;
+      const zoomElapsed = elapsed - PAUSE_MS - MELT_MS - DELAY_AFTER_MELT_MS;
       const prog = Math.min(1.0, zoomElapsed / ZOOM_MS);
       const easedZoom = easeInOutCubic(prog);
 
@@ -751,9 +758,9 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
         fallbackFonts={[]} 
         position={[0, 84, centerZ - 40]} 
         rotation={[-0.45, 0, 0]}
-        fontSize={20} 
+        fontSize={28} 
         color="#00ffff" 
-        outlineWidth={1.0} 
+        outlineWidth={1.2} 
         outlineColor="#003366" 
         anchorX="center"
         anchorY="middle"

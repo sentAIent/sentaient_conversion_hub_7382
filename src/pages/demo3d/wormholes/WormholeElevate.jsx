@@ -46,11 +46,10 @@ const WormholeElevate = ({ position, rotation = [Math.PI / 2, 0, 0], length = 32
       iceTexture.offset.y = -t * 3.5;
     }
     if (contourRingsRef.current) {
-      contourRingsRef.current.rotation.z = t * 0.4;
+      contourRingsRef.current.rotation.y = t * 0.4;
     }
     if (snowFlurryRef.current) {
-      snowFlurryRef.current.rotation.z = -t * 0.8;
-      snowFlurryRef.current.position.y = (Math.sin(t * 2) * 20);
+      snowFlurryRef.current.rotation.y = -t * 0.8;
     }
   });
 

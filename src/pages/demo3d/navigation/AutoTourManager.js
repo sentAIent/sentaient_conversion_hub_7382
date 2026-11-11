@@ -231,11 +231,11 @@ class AutoTourEngine {
       // Tour completed all 16 worlds! Return to Hub
       this.isTransit = true;
       this.notify();
-      goToStation(0, 1600, () => {
+      goToStation(0, 1400, () => {
         this.stopTour();
         window._currentStationIndex = 0;
-        if (window._snapCamera) window._snapCamera = true;
-      }, true);
+        window._snapCamera = true;
+      });
     }
   }
 

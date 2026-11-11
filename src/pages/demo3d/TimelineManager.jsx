@@ -392,8 +392,8 @@ export const TimelineManager = () => {
       newZones = {
         intro: p < 0.025,
         w_matrix_intro: p >= 0.000 && p < 0.038,
-        mindwave: p >= 0.028 && p < 0.055,
-        wormhole_ice: p >= 0.038 && p < 0.135,
+        mindwave: p >= 0.025 && p < 0.060,
+        wormhole_ice: p >= 0.048 && p < 0.135,
         icebreaker: p >= 0.105 && p < 0.165, 
         wormhole_sound: p >= 0.135 && p < 0.200,
         interstellar: p >= 0.185 && p < 0.230, 
@@ -497,8 +497,8 @@ export const TimelineManager = () => {
       
       <WorldMindWave position={[0, 0, -1350]} visible={activeZones.mindwave} />
       
-      {/* Plunge tunnel down Y axis */}
-      <WormholeIce position={[0, -1800, -1250]} rotation={[0, 0, 0]} length={3800} visible={activeZones.wormhole_ice} />
+      {/* Plunge tunnel down Y axis (flush with lake surface Y=-50 down to Y=-3950) */}
+      <WormholeIce position={[0, -2000, -1250]} rotation={[0, 0, 0]} length={3700} visible={activeZones.wormhole_ice} />
       
       {/* Icebreaker Cavern */}
       <WorldIcebreaker position={[0, -4000, -2550]} visible={activeZones.icebreaker} />

@@ -208,8 +208,8 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
             onPointerLeave={(e) => { e.stopPropagation(); onHoverEnd(); document.body.style.cursor = 'auto'; }}
             onClick={handleClick}
             style={{
-              width: '260px',
-              padding: '14px 18px',
+              width: '290px',
+              padding: '16px 20px',
               background: 'linear-gradient(135deg, rgba(8, 14, 28, 0.98) 0%, rgba(4, 7, 16, 0.99) 100%)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
@@ -222,7 +222,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
-              gap: '6px',
+              gap: '7px',
               animation: 'popupFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
               zIndex: 99999999,
               pointerEvents: 'auto',
@@ -244,7 +244,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               onPointerEnter={(e) => { e.stopPropagation(); onHoverStart(); }}
             />
               <div style={{
-                fontSize: '11px',
+                fontSize: '13px',
                 fontWeight: 800,
                 letterSpacing: '0.12em',
                 color: color,
@@ -257,10 +257,10 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               </div>
               {summary && (
                 <div style={{
-                  fontSize: '11px',
+                  fontSize: '14.5px',
                   fontWeight: 700,
                   color: '#ffffff',
-                  lineHeight: 1.35,
+                  lineHeight: 1.4,
                   letterSpacing: '0.01em',
                   textShadow: '0 1px 4px rgba(0,0,0,0.8)',
                   pointerEvents: 'none'
@@ -269,8 +269,8 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
                 </div>
               )}
               <div style={{
-                fontSize: '12px',
-                lineHeight: 1.5,
+                fontSize: '13.5px',
+                lineHeight: 1.55,
                 color: '#e2e8f0',
                 fontFamily: "'Inter', -apple-system, sans-serif",
                 fontWeight: 400,
@@ -377,13 +377,17 @@ export default function MiniWorldsHub({ visible = true }) {
     }, 600);
   };
   
-  const { size, viewport, camera } = useThree();
+  const { size } = useThree();
   const worlds = useMemo(() => WORLDS_DATA.filter(w => w.name !== 'Sentaient'), []);
 
-  // Real-time camera frustum viewport at Z = -500 (distance = 510 from camera Z = 10)
-  const currentViewport = viewport.getCurrentViewport(camera, [0, 0, -500]);
-  const visibleW = currentViewport.width;
-  const visibleH = currentViewport.height;
+  // Canonical Hub camera frustum viewport at Z = -500 (home camera at Z = 10, FOV = 75)
+  // Computing directly from screen aspect and canonical distance guarantees rock-solid stability
+  // and completely prevents the ring from stretching out when returning to the main page.
+  const aspect = size.width / (size.height || 1);
+  const canonicalDistance = 510;
+  const canonicalFov = 75;
+  const visibleH = 2 * Math.tan(((canonicalFov * Math.PI) / 180) / 2) * canonicalDistance;
+  const visibleW = visibleH * aspect;
 
   // Screen edge safety padding - generous clearance for top header (80px) and bottom launcher (60px)
   const safePadTop = 60;
