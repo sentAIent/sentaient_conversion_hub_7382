@@ -45,13 +45,16 @@ const WORLD_NAMES_MAP = {
   lightspeed: 'LightSpeed'
 };
 
-// Import Wormholes
-import WormholeTeleport from './wormholes/WormholeTeleport';
+// Import Wormholes (All 100% Unique - Zero Generic Duplicates)
 import WormholeMatrix from './wormholes/WormholeMatrix';
 import WormholeIce from './wormholes/WormholeIce';
-import WormholeGeneric from './wormholes/WormholeGeneric';
-import WormholeContango from './wormholes/WormholeContango';
+import WormholeSoundwaves from './wormholes/WormholeSoundwaves';
+import WormholeLegal from './wormholes/WormholeLegal';
+import WormholeAutopilot from './wormholes/WormholeAutopilot';
+import WormholeClove from './wormholes/WormholeClove';
 import WormholeWaterslide from './wormholes/WormholeWaterslide';
+import WormholeContango from './wormholes/WormholeContango';
+import WormholeSentaient from './wormholes/WormholeSentaient';
 import WormholeElevate from './wormholes/WormholeElevate';
 import WormholeSphinx from './wormholes/WormholeSphinx';
 import WormholeLiquid from './wormholes/WormholeLiquid';
@@ -148,10 +151,10 @@ export const SCROLL_TIMELINE = [
   { p: 0.675, x: 0, y: -11750, z: -40600, rx: 0, ry: 0 }, // PAUSE Liquid (Zoomed out 400 units)
   { p: 0.690, x: 0, y: -11750, z: -42500, rx: 0, ry: 0 },
   
-  // Maya (Center at Z=-45750, Camera holds at Z=-45000, 750 units clearance)
-  { p: 0.705, x: 0, y: -11750, z: -43500, rx: 0, ry: 0 },
-  { p: 0.720, x: 0, y: -11750, z: -45000, rx: 0, ry: 0 },
-  { p: 0.735, x: 0, y: -11750, z: -45000, rx: 0, ry: 0 }, // PAUSE Maya
+  // Maya (Center at Z=-45750, Camera holds at Z=-44400, zoomed out ~600 units)
+  { p: 0.705, x: 0, y: -11750, z: -43400, rx: 0, ry: 0 },
+  { p: 0.720, x: 0, y: -11750, z: -44400, rx: 0, ry: 0 },
+  { p: 0.735, x: 0, y: -11750, z: -44400, rx: 0, ry: 0 }, // PAUSE Maya (Zoomed out)
   { p: 0.755, x: 0, y: -11750, z: -46500, rx: 0, ry: 0 },
   
   // PyRAmid (Center at Z=-49000, Camera holds at Z=-48520, zoomed in ~370 units closer)
@@ -388,37 +391,37 @@ export const TimelineManager = () => {
     } else {
       newZones = {
         intro: p < 0.025,
-        w_matrix_intro: p >= 0.000 && p < 0.035,
+        w_matrix_intro: p >= 0.000 && p < 0.038,
         mindwave: p >= 0.028 && p < 0.055,
-        wormhole_ice: p >= 0.042 && p < 0.125,
+        wormhole_ice: p >= 0.038 && p < 0.135,
         icebreaker: p >= 0.105 && p < 0.165, 
-        wormhole_sound: p >= 0.142 && p < 0.198,
+        wormhole_sound: p >= 0.135 && p < 0.200,
         interstellar: p >= 0.185 && p < 0.230, 
-        w_legal: p >= 0.208 && p < 0.245,
+        w_legal: p >= 0.200 && p < 0.248,
         legal: p >= 0.235 && p < 0.270,
-        w_autopilot: p >= 0.252 && p < 0.290,
+        w_autopilot: p >= 0.248 && p < 0.293,
         autopilot: p >= 0.280 && p < 0.315,
-        w_clove: p >= 0.298 && p < 0.338,
+        w_clove: p >= 0.293 && p < 0.345,
         clove: p >= 0.325 && p < 0.370,
-        w_fantasy: p >= 0.355 && p < 0.412,
+        w_fantasy: p >= 0.345 && p < 0.413,
         fantasy: p >= 0.400 && p < 0.435,
-        w_contango: p >= 0.418 && p < 0.462,
+        w_contango: p >= 0.413 && p < 0.463,
         contango: p >= 0.450 && p < 0.485,
-        w_sentaient: p >= 0.468 && p < 0.498,
+        w_sentaient: p >= 0.463 && p < 0.505,
         sentaient: p >= 0.488 && p < 0.528,
-        w_elevate: p >= 0.515 && p < 0.545,
+        w_elevate: p >= 0.505 && p < 0.548,
         elevate: p >= 0.535 && p < 0.568,
-        w_sphinx: p >= 0.555 && p < 0.605,
+        w_sphinx: p >= 0.548 && p < 0.610,
         sphinx: p >= 0.595 && p < 0.630,
-        w_liquid: p >= 0.618 && p < 0.665,
+        w_liquid: p >= 0.610 && p < 0.668,
         liquid: p >= 0.652 && p < 0.690,
-        w_maya: p >= 0.672 && p < 0.725,
+        w_maya: p >= 0.668 && p < 0.728,
         maya: p >= 0.712 && p < 0.750,
-        w_pyramid: p >= 0.732 && p < 0.798,
+        w_pyramid: p >= 0.728 && p < 0.803,
         pyramid: p >= 0.785 && p < 0.825,
-        w_matrix: p >= 0.812 && p < 0.865,
+        w_matrix: p >= 0.803 && p < 0.873,
         matrix: p >= 0.852 && p < 0.898,
-        w_lightspeed: p >= 0.882 && p < 0.938,
+        w_lightspeed: p >= 0.873 && p <= 1.000,
         lightspeed: p >= 0.925
       };
     }
@@ -489,9 +492,6 @@ export const TimelineManager = () => {
 
   return (
     <group>
-      {/* Universal Direct Hyperspace Teleport Wormhole */}
-      <WormholeTeleport />
-
       <MiniWorldsHub visible={activeZones.intro} />
       <WormholeMatrix startZ={20} endZ={-1100} visible={activeZones.w_matrix_intro} />
       
@@ -503,20 +503,20 @@ export const TimelineManager = () => {
       {/* Icebreaker Cavern */}
       <WorldIcebreaker position={[0, -4000, -2550]} visible={activeZones.icebreaker} />
       
-      <WormholeGeneric position={[0, -4000, -5000]} rotation={[Math.PI/2, 0, 0]} length={3200} color="#ff00ff" speed={25.0} visible={activeZones.wormhole_sound} />
+      <WormholeSoundwaves position={[0, -4000, -5000]} rotation={[Math.PI/2, 0, 0]} length={3200} visible={activeZones.wormhole_sound} />
 
       {/* Interstellar */}
       <Interstellar position={[0, -4000, -7550]} rotation={[0, 0, 0]} visible={activeZones.interstellar} />
 
-      <WormholeGeneric position={[0, -4000, -9050]} rotation={[Math.PI/2, 0, 0]} length={1800} color="#d4af37" speed={25.0} visible={activeZones.w_legal} />
+      <WormholeLegal position={[0, -4000, -9050]} rotation={[Math.PI/2, 0, 0]} length={1800} visible={activeZones.w_legal} />
       
       <LegalEagle position={[0, -4000, -10550]} rotation={[0, 0, 0]} visible={activeZones.legal} />
 
-      <WormholeGeneric position={[0, -4000, -12200]} rotation={[Math.PI/2, 0, 0]} length={1500} color="#00ffff" speed={40.0} visible={activeZones.w_autopilot} />
+      <WormholeAutopilot position={[0, -4000, -12200]} rotation={[Math.PI/2, 0, 0]} length={1500} visible={activeZones.w_autopilot} />
 
       <WorldAutopilot position={[0, -4000, -13550]} rotation={[0, 0, 0]} visible={activeZones.autopilot} />
 
-      <WormholeGeneric position={[0, -4000, -15200]} rotation={[Math.PI/2, 0, 0]} length={1500} color="#ff00ff" speed={40.0} visible={activeZones.w_clove} />
+      <WormholeClove position={[0, -4000, -15200]} rotation={[Math.PI/2, 0, 0]} length={1500} visible={activeZones.w_clove} />
 
       <WorldCloveH2O position={[0, -4000, -16550]} rotation={[0, 0, 0]} visible={activeZones.clove} />
 
@@ -528,7 +528,7 @@ export const TimelineManager = () => {
 
       <ContangoQuant position={[0, -11750, -24800]} rotation={[0, 0, 0]} visible={activeZones.contango} />
 
-      <WormholeGeneric position={[0, -11750, -27125]} rotation={[Math.PI/2, 0, 0]} length={4000} color="#60a9ff" speed={30.0} visible={activeZones.w_sentaient} />
+      <WormholeSentaient position={[0, -11750, -27125]} rotation={[Math.PI/2, 0, 0]} length={4000} visible={activeZones.w_sentaient} />
 
       <WorldSentaient position={[0, -11750, -29350]} rotation={[0, 0, 0]} visible={activeZones.sentaient} />
       

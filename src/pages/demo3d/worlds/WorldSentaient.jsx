@@ -55,7 +55,7 @@ export default function WorldSentaient({ position, rotation, visible }) {
 
     // 1. Kinetic Toroidal Field Dynamic Rotation & Breathing
     if (centralToroidRef.current) {
-      centralToroidRef.current.position.y = 50 + Math.sin(t * 1.4) * 8;
+      centralToroidRef.current.position.y = Math.sin(t * 1.4) * 8;
       centralToroidRef.current.rotation.z = t * 0.22;
       centralToroidRef.current.rotation.x = Math.sin(t * 0.5) * 0.14;
       centralToroidRef.current.rotation.y = Math.cos(t * 0.4) * 0.1;
@@ -100,8 +100,8 @@ export default function WorldSentaient({ position, rotation, visible }) {
       <ambientLight intensity={0.45} color="#0c1626" />
       <directionalLight position={[700, 800, -200]} intensity={3.8} color="#60a9ff" />
       <directionalLight position={[-700, 700, 300]} intensity={2.5} color="#38bdf8" />
-      <pointLight position={[0, 50, -550]} intensity={30} distance={1800} color="#60a9ff" />
-      <pointLight position={[0, 180, -550]} intensity={25} distance={1500} color="#38bdf8" />
+      <pointLight position={[0, 10, -550]} intensity={30} distance={1800} color="#60a9ff" />
+      <pointLight position={[0, 140, -550]} intensity={25} distance={1500} color="#38bdf8" />
       <pointLight position={[0, -120, -550]} intensity={20} distance={1200} color="#fbbf24" />
 
       {/* Atmospheric SentAIent Blue Quantum Sparkles */}
@@ -153,7 +153,7 @@ export default function WorldSentaient({ position, rotation, visible }) {
       {/* ------------------------------------------------------------- */}
       {/* 2. THE MONUMENTAL KINETIC TOROIDAL FIELD NEXUS                */}
       {/* ------------------------------------------------------------- */}
-      <group position={[0, 50, -550]}>
+      <group position={[0, 10, -550]}>
 
         {/* Primary Toroidal Magnetic Flux Shell */}
         <group ref={centralToroidRef}>
@@ -332,34 +332,18 @@ export default function WorldSentaient({ position, rotation, visible }) {
       <group position={[0, 280, -420]}>
         {/* Floating High-Res sentAIent Logo */}
         <Float speed={2} rotationIntensity={0.05} floatIntensity={0.35}>
-          <mesh position={[0, 42, 0]}>
+          <mesh position={[0, 24, 0]}>
             <planeGeometry args={[260, 65]} />
             <meshBasicMaterial map={logoTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
           </mesh>
         </Float>
 
-        {/* sentAIent Title */}
-        <Text 
-          position={[0, -18, 0]} 
-          fontSize={44} 
-          color="#ffffff" 
-          outlineWidth={1.8}
-          outlineColor="#0284c7"
-          anchorX="center" 
-          anchorY="middle"
-          letterSpacing={0.12}
-          font="/fonts/Roboto.woff" 
-          fallbackFonts={[]}
-        >
-          sentAIent
-        </Text>
-
         {/* Multi-Industry Subtitle */}
         <Text 
-          position={[0, -56, 0]} 
-          fontSize={15} 
+          position={[0, -28, 0]} 
+          fontSize={24} 
           color="#60a9ff" 
-          outlineWidth={0.8}
+          outlineWidth={1.2}
           outlineColor="#030816"
           anchorX="center" 
           anchorY="middle"
