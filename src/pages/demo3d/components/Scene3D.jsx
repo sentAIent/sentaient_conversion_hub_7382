@@ -848,9 +848,9 @@ const Scene3D = () => {
       {/* Cinematic Post-Processing - High-Performance Zero-Allocation */}
       <EffectComposer disableNormalPass multisampling={0}>
         <Bloom 
-          luminanceThreshold={0.90} 
+          luminanceThreshold={0.82} 
           mipmapBlur 
-          intensity={0.88} 
+          intensity={1.15} 
         />
       </EffectComposer>
     </Canvas>
