@@ -189,11 +189,18 @@ const HTMLStations = () => {
 
     // World overlay visibility and content
     if (overlayRef.current) {
-        // Find which world we are currently in
-        const world = WORLDS_DATA.find(w => progress >= w.startP - 0.01 && progress <= w.endP + 0.01);
+        // Dossier card MUST NOT show during wormhole transit or in the Home Hub
+        const isWarping = window._isTransitActive;
+        const inHub = progress < 0.025;
+        
+        let world = null;
+        if (!isWarping && !inHub) {
+          // Find matching world at current arrival position
+          world = WORLDS_DATA.find(w => Math.abs(progress - w.p) <= 0.018);
+        }
         
         if (world) {
-            // We are inside a world
+            // We have arrived inside a world
             overlayRef.current.style.opacity = '1';
             overlayRef.current.style.pointerEvents = 'auto';
             

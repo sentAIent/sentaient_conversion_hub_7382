@@ -5,21 +5,21 @@ import { WORLD_PAUSE_STATIONS, startWorldPause, clearActiveWorldPause } from './
 
 export const STATIONS = [
   { id: 'hub', name: 'Home Hub', p: 0.000, duration: 1600, color: '#00E5FF' },
-  { id: 'mindwave', name: 'MindWave', p: 0.038, duration: 1600, color: '#38BDF8' },
-  { id: 'icebreaker', name: 'Icebreaker', p: 0.120, duration: 2000, color: '#FF6600' },
-  { id: 'interstellar', name: 'Interstellar', p: 0.200, duration: 1600, color: '#00D2FF' },
-  { id: 'legal', name: 'Legal Eagle', p: 0.248, duration: 1600, color: '#D4AF37' },
-  { id: 'autopilot', name: 'Autopilot', p: 0.293, duration: 1600, color: '#10B981' },
-  { id: 'clove', name: 'CloveH2O', p: 0.345, duration: 1600, color: '#FF00FF' },
-  { id: 'fantasy', name: 'FantasyQuant', p: 0.413, duration: 2000, color: '#00FF88' },
-  { id: 'contango', name: 'Contango', p: 0.463, duration: 1600, color: '#FFD700' },
-  { id: 'sentaient', name: 'Sentaient', p: 0.505, duration: 1600, color: '#60A9FF' },
-  { id: 'elevate', name: 'Elevate', p: 0.548, duration: 1600, color: '#00FFFF' },
-  { id: 'sphinx', name: 'Sphinx', p: 0.610, duration: 1600, color: '#F59E0B' },
-  { id: 'liquid', name: 'Liquid', p: 0.668, duration: 1600, color: '#00FF88' },
-  { id: 'maya', name: 'Maya', p: 0.728, duration: 1600, color: '#EAB308' },
-  { id: 'pyramid', name: 'Pyramid', p: 0.803, duration: 1600, color: '#00E5FF' },
-  { id: 'matrix', name: 'Matrix', p: 0.873, duration: 1600, color: '#00FF44' },
+  { id: 'mindwave', name: 'MindWave', p: 0.038, duration: 1800, color: '#38BDF8' },
+  { id: 'icebreaker', name: 'Icebreaker', p: 0.135, duration: 2000, color: '#FF6600' },
+  { id: 'interstellar', name: 'Interstellar', p: 0.200, duration: 1800, color: '#00D2FF' },
+  { id: 'legal', name: 'Legal Eagle', p: 0.248, duration: 1800, color: '#D4AF37' },
+  { id: 'autopilot', name: 'Autopilot', p: 0.293, duration: 1800, color: '#10B981' },
+  { id: 'clove', name: 'CloveH2O', p: 0.345, duration: 1800, color: '#FF00FF' },
+  { id: 'fantasy', name: 'FantasyQuant', p: 0.413, duration: 2200, color: '#00FF88' },
+  { id: 'contango', name: 'Contango', p: 0.463, duration: 1800, color: '#FFD700' },
+  { id: 'sentaient', name: 'Sentaient', p: 0.505, duration: 1800, color: '#60A9FF' },
+  { id: 'elevate', name: 'Elevate', p: 0.548, duration: 1800, color: '#00FFFF' },
+  { id: 'sphinx', name: 'Sphinx', p: 0.610, duration: 1800, color: '#F59E0B' },
+  { id: 'liquid', name: 'Liquid', p: 0.668, duration: 1800, color: '#00FF88' },
+  { id: 'maya', name: 'Maya', p: 0.728, duration: 1800, color: '#EAB308' },
+  { id: 'pyramid', name: 'Pyramid', p: 0.803, duration: 1800, color: '#00E5FF' },
+  { id: 'matrix', name: 'Matrix', p: 0.873, duration: 1800, color: '#00FF44' },
   { id: 'lightspeed', name: 'LightSpeed', p: 0.945, duration: 1800, color: '#00FFFF' }
 ];
 
@@ -36,11 +36,15 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
   clearActiveWorldPause();
   
   if (clampedIndex === 2) {
-    window.icebreakerThaw = 0.0;
-    window._icebreakerMeltState = 'idle';
-    window._icebreakerCam = null;
-    window._icebreakerLockCamera = false;
-    window.icebreakerThawLocked = false;
+    if (window._icebreakerMeltState !== 'completed') {
+      window.icebreakerThaw = 0.0;
+      window._icebreakerMeltState = 'idle';
+      window._icebreakerCam = null;
+      window._icebreakerLockCamera = false;
+      window.icebreakerThawLocked = false;
+    } else {
+      window.icebreakerThaw = 1.0;
+    }
   } else if (clampedIndex > 2) {
     window.icebreakerThaw = 1.0;
     window._icebreakerMeltState = 'completed';
@@ -51,6 +55,12 @@ export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete 
     window._icebreakerLockCamera = false;
     window.icebreakerThawLocked = false;
     window._isWorldActionActive = false;
+  } else if (clampedIndex < 2) {
+    window.icebreakerThaw = 0.0;
+    window._icebreakerMeltState = 'idle';
+    window._icebreakerCam = null;
+    window._icebreakerLockCamera = false;
+    window.icebreakerThawLocked = false;
   }
   
   window._cancelWarp = false;
@@ -200,11 +210,15 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
   
   // When warping away from or to Icebreaker, reset ice cave so it is frozen solid before entering
   if (clampedIndex === 2) {
-    window.icebreakerThaw = 0.0;
-    window._icebreakerMeltState = 'idle';
-    window._icebreakerCam = null;
-    window._icebreakerLockCamera = false;
-    window.icebreakerThawLocked = false;
+    if (window._icebreakerMeltState !== 'completed') {
+      window.icebreakerThaw = 0.0;
+      window._icebreakerMeltState = 'idle';
+      window._icebreakerCam = null;
+      window._icebreakerLockCamera = false;
+      window.icebreakerThawLocked = false;
+    } else {
+      window.icebreakerThaw = 1.0;
+    }
   } else if (clampedIndex > 2) {
     window.icebreakerThaw = 1.0;
     window._icebreakerMeltState = 'completed';
@@ -215,6 +229,12 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
     window._icebreakerLockCamera = false;
     window.icebreakerThawLocked = false;
     window._isWorldActionActive = false;
+  } else if (clampedIndex < 2) {
+    window.icebreakerThaw = 0.0;
+    window._icebreakerMeltState = 'idle';
+    window._icebreakerCam = null;
+    window._icebreakerLockCamera = false;
+    window.icebreakerThawLocked = false;
   }
   
   window._cancelWarp = false;
@@ -224,17 +244,33 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
   const startP = window._warpProgress !== undefined 
     ? window._warpProgress 
     : (window._currentProgress !== undefined ? window._currentProgress : 0);
-  const endP = targetStation.p;
   
-  // Sequential transit between adjacent worlds: smooth 1500ms flow through connecting wormhole
-  const duration = customDuration || 1500;
+  // For Icebreaker: if not yet thawed, arrive at cave entrance 0.120 to trigger melt; if completed, land on island 0.135
+  const endP = (clampedIndex === 2 && window._icebreakerMeltState !== 'completed')
+    ? 0.120 
+    : targetStation.p;
+  
+  // Sequential transit between worlds: majestic 2000ms flow through connecting wormhole
+  const duration = customDuration || 2000;
   const startTime = performance.now();
+
+  // Engage universal relativistic warp speed conduit & FOV dilation
+  window._teleportWarp = {
+    active: true,
+    opacity: 0.0,
+    progress: 0.0,
+    color: targetStation.color || '#00E5FF',
+    targetStationId: targetStation.id,
+    startStationId: (STATIONS[currentIdx] || STATIONS[0]).id
+  };
   
   const step = (now) => {
     if (window._cancelWarp) {
       window._isTransitActive = false;
       window._warpProgress = undefined;
       window._isProgrammaticScroll = false;
+      window._teleportFovBoost = 0;
+      if (window._teleportWarp) window._teleportWarp.active = false;
       activeAnimId = null;
       return;
     }
@@ -242,17 +278,31 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
     const elapsed = now - startTime;
     const t = Math.min(1.0, elapsed / duration);
     
-    // Smooth cubic ease-in-out for fluid acceleration into the wormhole and gentle deceleration at destination
+    // Smooth quintic ease-in-out for fluid acceleration into wormhole and gentle deceleration at destination
     const ease = t < 0.5 
-      ? 4 * t * t * t 
-      : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      ? 16 * t * t * t * t * t 
+      : 1 - Math.pow(-2 * t + 2, 5) / 2;
       
     const currentP = startP + (endP - startP) * ease;
     window._warpProgress = currentP;
+
+    // Dynamic FOV warp speed dilation (+12 deg at peak speed)
+    window._teleportFovBoost = Math.sin(t * Math.PI) * 12.0;
+
+    // Relativistic warp energy conduit envelope
+    if (window._teleportWarp) {
+      window._teleportWarp.opacity = Math.sin(t * Math.PI) * 0.82;
+      window._teleportWarp.progress = t;
+    }
     
     if (t < 1.0) {
       activeAnimId = requestAnimationFrame(step);
     } else {
+      window._teleportFovBoost = 0;
+      if (window._teleportWarp) {
+        window._teleportWarp.active = false;
+      }
+
       if (window._scrollObj) {
         window._scrollObj.offset = endP;
       }
@@ -265,7 +315,7 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
         window._scrollEl.style.overflow = 'auto';
       }
       window._currentStationIndex = clampedIndex;
-      window._currentProgress = targetStation.p;
+      window._currentProgress = endP;
       const pauseStation = WORLD_PAUSE_STATIONS.find(s => s.id === targetStation.id);
       if (pauseStation) {
         startWorldPause(pauseStation);

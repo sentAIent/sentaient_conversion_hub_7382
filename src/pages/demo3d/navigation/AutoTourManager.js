@@ -156,13 +156,13 @@ class AutoTourEngine {
     this.notify();
 
     // Use forceSequential = true so it flies sequentially through connecting wormhole
-    goToStation(stationIndex, 1800, () => {
+    goToStation(stationIndex, 2000, () => {
       this.isTransit = false;
       this.currentStationIndex = stationIndex;
       this.remainingSeconds = this.seconds;
       this.notify();
 
-      if (stationIndex === 2 && window._icebreakerMeltState === 'running') {
+      if (stationIndex === 2 && window._icebreakerMeltState !== 'completed') {
         // Wait for the ice cave to thaw into the island before starting the world dwell countdown
         const checkMelt = setInterval(() => {
           if (!this.isActive || this.currentStationIndex !== 2) {
@@ -173,7 +173,7 @@ class AutoTourEngine {
             clearInterval(checkMelt);
             this.startCountdown();
           }
-        }, 200);
+        }, 150);
       } else {
         this.startCountdown();
       }

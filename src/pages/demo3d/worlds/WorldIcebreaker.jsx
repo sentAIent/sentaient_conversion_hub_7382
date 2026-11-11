@@ -251,6 +251,7 @@ const meltFragmentShader = `
 
 const AbstractCavern = ({ startZ, endZ }) => {
   const meshRef = useRef();
+  const sphereRef = useRef();
   const materialRef = useRef();
   const [cavernTex, setCavernTex] = useState(null);
   
@@ -279,6 +280,9 @@ const AbstractCavern = ({ startZ, endZ }) => {
     if (meshRef.current) {
       meshRef.current.visible = thaw < 0.99;
     }
+    if (sphereRef.current) {
+      sphereRef.current.visible = thaw < 0.99;
+    }
     if (materialRef.current) {
       uniforms.uThaw.value = thaw;
       uniforms.uTime.value = state.clock.elapsedTime;
@@ -302,7 +306,7 @@ const AbstractCavern = ({ startZ, endZ }) => {
           side={THREE.BackSide}
         />
       </mesh>
-      <mesh position={[0, 0, 1300]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh ref={sphereRef} position={[0, 0, 1300]} rotation={[Math.PI / 2, 0, 0]}>
          <sphereGeometry args={[120, 64, 64]} />
          <shaderMaterial
             vertexShader={meltVertexShader}
@@ -627,14 +631,14 @@ export const runIcebreakerMelt = (onComplete) => {
       window.icebreakerThawLocked = false;
       window._icebreakerLockCamera = false;
       window._isWorldActionActive = false;
-      window._currentProgress = 0.131;
+      window._currentProgress = 0.135;
       if (window._scrollObj) {
-        window._scrollObj.offset = 0.131;
+        window._scrollObj.offset = 0.135;
       }
       if (window._scrollEl && !window._isTransitActive) {
         const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
         if (maxScroll > 0) {
-          window._scrollEl.scrollTop = 0.131 * maxScroll;
+          window._scrollEl.scrollTop = 0.135 * maxScroll;
         }
       }
       unlockIcebreakerInput();
@@ -697,9 +701,9 @@ const IcebreakerController = () => {
       window.icebreakerThaw = 1.0;
     }
 
-    // Automatically trigger melt sequence when user is in Icebreaker pause zone (p between 0.115 and 0.142)
-    // Only trigger when not in transit to a different station
-    if (!window._isTransitActive && p >= 0.115 && p <= 0.142) {
+    // Automatically trigger melt sequence when arriving at frozen cave entrance (p between 0.115 and 0.125)
+    // Only trigger when not in transit to a different station and not already completed
+    if (!window._isTransitActive && p >= 0.115 && p <= 0.125) {
       if (!window._icebreakerMeltState || window._icebreakerMeltState === 'idle') {
         runIcebreakerMelt();
       }
