@@ -112,6 +112,18 @@ export function initCoachModal() {
     });
 
     closeBtn.addEventListener('click', closeCoachModal);
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeCoachModal();
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            closeCoachModal();
+        }
+    });
     
     // Wire up Voice Atmosphere selector and live preview
     populateVoiceSelector();

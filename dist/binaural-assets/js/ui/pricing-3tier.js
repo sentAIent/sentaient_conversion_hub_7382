@@ -323,8 +323,11 @@ function createPricingModal(currentTier, dynamicPricing = null) {
             </div>
             
             <!-- Footer -->
-            <div style="text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 32px; margin-top: 48px;">
-                <p style="font-size: 14px; color: rgba(255, 255, 255, 0.4); font-weight: 500;">Questions? Contact founders@mindwave.com</p>
+            <div style="text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 24px; margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                <button id="pricingLoginBtn" style="background: none; border: none; color: rgba(255, 255, 255, 0.7); font-size: 13px; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255, 255, 255, 0.7)'">
+                    Already subscribed? <strong style="color: #38bdf8;">Log in to restore access</strong>
+                </button>
+                <p style="font-size: 13px; color: rgba(255, 255, 255, 0.4); font-weight: 500; margin: 0;">Questions? Contact founders@mindwave.com</p>
             </div>
 
         </div>
@@ -450,6 +453,33 @@ function createPricingModal(currentTier, dynamicPricing = null) {
                 couponInput.classList.add('success-pulse');
             }
         };
+
+        // Auto-apply stored discount code if present (e.g. from Exit Intent 50% off)
+        try {
+            const storedDiscount = localStorage.getItem('mindwave_discount_code');
+            if (storedDiscount) {
+                inputCont.classList.remove('hidden');
+                if (toggleBtn) toggleBtn.style.display = 'none';
+                couponInput.value = storedDiscount.trim().toUpperCase();
+                // Trigger auto-apply
+                setTimeout(() => {
+                    if (applyBtn) applyBtn.click();
+                }, 100);
+            }
+        } catch (e) {
+            console.warn('[Pricing] Error loading stored discount:', e);
+        }
+    }
+
+    // Handle Login Button
+    const pricingLoginBtn = modal.querySelector('#pricingLoginBtn');
+    if (pricingLoginBtn) {
+        pricingLoginBtn.addEventListener('click', () => {
+            hidePricingModal();
+            if (window.openAuthModal) {
+                window.openAuthModal();
+            }
+        });
     }
 
     // Handle Referral Button
@@ -473,8 +503,6 @@ function createPricingModal(currentTier, dynamicPricing = null) {
     const inquiryBtn = modal.querySelector('#inquiryBtn');
     if (inquiryBtn) {
         inquiryBtn.addEventListener('click', () => {
-            // Optional: hide the pricing modal if you prefer
-            // hidePricingModal(); 
             showInquiryForm();
         });
     }
@@ -493,6 +521,15 @@ function createPricingModal(currentTier, dynamicPricing = null) {
             hidePricingModal();
         }
     });
+
+    // Close on Escape key
+    const escListener = (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            hidePricingModal();
+            document.removeEventListener('keydown', escListener);
+        }
+    };
+    document.addEventListener('keydown', escListener);
 
     return modal;
 }

@@ -6,8 +6,8 @@ export async function initPaywallModal() {
     if (document.getElementById('paywall-modal')) return;
 
     const modalHTML = `
-        <div id="paywall-modal" class="fixed inset-0 bg-black/80 backdrop-blur-xl z-[9999] hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
-            <div class="bg-black/60 border border-white/10 rounded-3xl p-8 max-w-md w-full relative overflow-hidden flex flex-col items-center text-center shadow-2xl">
+        <div id="paywall-modal" class="fixed inset-0 bg-black/85 backdrop-blur-xl z-[9999] hidden flex items-center justify-center p-3 sm:p-4 transition-opacity duration-300 opacity-0">
+            <div class="bg-black/75 border border-white/10 rounded-3xl p-6 sm:p-8 max-w-md w-full max-h-[92vh] max-h-[92dvh] overflow-y-auto custom-scrollbar relative flex flex-col items-center text-center shadow-2xl">
                 <!-- Close Button -->
                 <button id="pw-close-btn" class="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white flex items-center justify-center transition-all text-lg cursor-pointer" title="Close" aria-label="Close">
                     &times;

@@ -118,11 +118,15 @@ function showEmailCaptureModal() {
         <div style="
             max-width: 440px;
             width: 100%;
+            max-height: min(92vh, 92dvh);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-sizing: border-box;
             background: linear-gradient(180deg, rgba(30, 35, 50, 0.8), rgba(15, 20, 30, 0.95));
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-top: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 32px;
-            padding: 48px 40px;
+            padding: clamp(24px, 4vw, 40px) clamp(20px, 4vw, 36px);
             text-align: center;
             animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
