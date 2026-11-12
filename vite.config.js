@@ -1,11 +1,32 @@
 import { defineConfig } from 'vite';
 import path from 'path';
+import fs from 'fs';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
 import { sri } from 'vite-plugin-sri3';
 
 export default defineConfig({
   plugins: [
+    {
+      name: 'serve-static-subapps',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const rawUrl = req.url || '';
+          const urlPath = rawUrl.split('?')[0];
+          const subapps = ['maya', 'sphinx', 'legaleagle', 'contango', 'lightspeed', 'icebreaker', 'icebusiness', 'iceadmin'];
+          for (const app of subapps) {
+            if (urlPath === `/${app}` || urlPath === `/${app}/`) {
+              const filePath = path.resolve(__dirname, `public/${app}/index.html`);
+              if (fs.existsSync(filePath)) {
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                return fs.createReadStream(filePath).pipe(res);
+              }
+            }
+          }
+          next();
+        });
+      }
+    },
     react(),
     // sri(), // Temporarily disabled: crashes behind network proxies when fetching external CDN hashes
     VitePWA({

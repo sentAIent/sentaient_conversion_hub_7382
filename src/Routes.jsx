@@ -42,7 +42,7 @@ const PageLoader = () => (
 
 const MayaRedirect = () => {
   React.useEffect(() => {
-    window.location.replace('/maya/');
+    window.location.replace('/maya/index.html');
   }, []);
   return <PageLoader />;
 };
