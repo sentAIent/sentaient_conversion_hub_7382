@@ -2,18 +2,18 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const WormholeWaterslide = ({ position, rotation, length = 8000, visible = true }) => {
+const WormholeWaterslide = ({ position, rotation, length = 7800, visible = true }) => {
   const materialRef = useRef();
   const ringsRef = useRef();
 
   useFrame((state) => {
     if (!visible || !materialRef.current) return;
     const time = state.clock.getElapsedTime();
-    // Simulate rushing water by animating the texture offset rapidly
-    materialRef.current.map.offset.y = -time * 3.0;
+    // Simulate rushing water by animating the texture offset smoothly at half speed
+    materialRef.current.map.offset.y = -time * 1.5;
     
     if (ringsRef.current) {
-      ringsRef.current.rotation.y = time * 2.0; // Spin the rings
+      ringsRef.current.rotation.y = time * 1.0; // Spin the rings
     }
   });
 

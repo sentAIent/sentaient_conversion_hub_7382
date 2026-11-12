@@ -114,12 +114,12 @@ export const SCROLL_TIMELINE = [
   { p: 0.360, x: 0, y: -3980, z: -15850, rx: 0, ry: 0 }, // PAUSE CloveH2O
   
   // FantasyQuant Waterslide (Drop straight down from CloveH2O Z=-16550)
-  { p: 0.368, x: 0, y: -4200, z: -16550, rx: -0.4, ry: 0 }, // Begin descent
-  { p: 0.380, x: 0, y: -6800, z: -16550, rx: -1.2, ry: 0 }, // Plunging through waterslide
-  { p: 0.395, x: 0, y: -10200, z: -16550, rx: -1.0, ry: 0 }, // Leveling out towards bottom
-  { p: 0.405, x: 0, y: -11400, z: -16600, rx: -0.4, ry: 0 }, // Entering stadium
-  { p: 0.412, x: 0, y: -11450, z: -16650, rx: -0.2, ry: 0 }, // Arrive FantasyQuant (Level out gently)
-  { p: 0.422, x: 0, y: -11450, z: -16650, rx: -0.2, ry: 0 }, // PAUSE FantasyQuant
+  { p: 0.368, x: 0, y: -4150, z: -16200, rx: -0.22, ry: 0 }, // Smooth curved dive entry
+  { p: 0.380, x: 0, y: -6200, z: -16600, rx: -0.60, ry: 0 }, // Fluid glide down waterslide
+  { p: 0.395, x: 0, y: -9200, z: -16600, rx: -0.55, ry: 0 }, // Descending smoothly towards stadium
+  { p: 0.405, x: 0, y: -11100, z: -16620, rx: -0.20, ry: 0 }, // Flared exit curving into stadium
+  { p: 0.412, x: 0, y: -11450, z: -16650, rx: 0, ry: 0 }, // Arrive FantasyQuant (Level out facing field)
+  { p: 0.422, x: 0, y: -11450, z: -16650, rx: 0, ry: 0 }, // PAUSE FantasyQuant
   { p: 0.430, x: 0, y: -11750, z: -17800, rx: 0, ry: 0 }, // Exit FantasyQuant
 
   // Candlesticks Wormhole (Long) -> now leads to Contango
@@ -135,12 +135,11 @@ export const SCROLL_TIMELINE = [
   { p: 0.485, x: 0, y: -11750, z: -28050, rx: 0, ry: 0 }, 
   { p: 0.492, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // Arrive Sentaient
   { p: 0.518, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // PAUSE Sentaient (Hold steady to view animation)
-  { p: 0.528, x: 0, y: -11750, z: -31000, rx: 0, ry: 0 }, // Exit Sentaient into Elevate
-
-  // Elevate (Center at Z=-33000)
-  { p: 0.540, x: 0, y: -11750, z: -33000, rx: 0, ry: 0 }, // Arrive Elevate
-  { p: 0.555, x: 0, y: -11750, z: -33000, rx: 0, ry: 0 }, // PAUSE Elevate
-  { p: 0.570, x: 0, y: -11750, z: -34000, rx: 0, ry: 0 }, // Fly through
+  { p: 0.528, x: 0, y: -11750, z: -30900, rx: 0, ry: 0 }, // Exit Sentaient into Elevate
+  { p: 0.536, x: 0, y: -10839, z: -31580, rx: 0.22, ry: 0 }, // Ascending through glacial wormhole
+  { p: 0.542, x: 0, y: -9928, z: -32260, rx: -0.15, ry: 0 }, // Arrive Elevate summit (Aligns 1:1 with peak cam)
+  { p: 0.556, x: 0, y: -9928, z: -32260, rx: -0.15, ry: 0 }, // PAUSE Elevate (Panoramic summit view)
+  { p: 0.570, x: 0, y: -11750, z: -34000, rx: 0, ry: 0 }, // Fly through into Sphinx
   
   // Sphinx (Center at Z=-37000, Camera holds at Z=-36680, zoomed in)
   { p: 0.580, x: 0, y: -11750, z: -35200, rx: 0, ry: 0 },
@@ -409,14 +408,14 @@ export const TimelineManager = () => {
         autopilot: p >= 0.278 && p < 0.315,
         w_clove: p >= 0.305 && p < 0.335,
         clove: p >= 0.325 && p < 0.370,
-        w_fantasy: p >= 0.362 && p < 0.410,
+        w_fantasy: p >= 0.362 && p < 0.412,
         fantasy: p >= 0.395 && p < 0.438,
         w_contango: p >= 0.428 && p < 0.458,
         contango: p >= 0.448 && p < 0.480,
         w_sentaient: p >= 0.472 && p < 0.498,
         sentaient: p >= 0.488 && p < 0.522,
-        w_elevate: p >= 0.522 && p < 0.542,
-        elevate: p >= 0.535 && p < 0.575,
+        w_elevate: p >= 0.524 && p < 0.543,
+        elevate: p >= 0.534 && p < 0.575,
         w_sphinx: p >= 0.565 && p < 0.605,
         sphinx: p >= 0.592 && p < 0.635,
         w_liquid: p >= 0.622 && p < 0.662,
@@ -434,7 +433,7 @@ export const TimelineManager = () => {
 
     // Unconditionally ensure wormholes are completely hidden at any world's focal point
     const isAtAnyFocalPoint = window._isWorldActionActive || 
-      WORLD_PAUSE_STATIONS.some(st => Math.abs(st.p - p) < 0.012);
+      WORLD_PAUSE_STATIONS.some(st => Math.abs(st.p - p) < 0.005);
     if (isAtAnyFocalPoint) {
       newZones.w_mindwave = false;
       newZones.wormhole_ice = false;
@@ -549,7 +548,7 @@ export const TimelineManager = () => {
 
       <WorldCloveH2O position={[0, -4000, -16550]} rotation={[0, 0, 0]} visible={activeZones.clove} />
 
-      <WormholeWaterslide position={[0, -7800, -16550]} rotation={[0, 0, 0]} length={14000} visible={activeZones.w_fantasy} />
+      <WormholeWaterslide position={[0, -7715, -16600]} rotation={[0, 0, 0]} length={7800} visible={activeZones.w_fantasy} />
 
       <WorldFantasyQuant position={[0, -11700, -17500]} rotation={[0, 0, 0]} visible={activeZones.fantasy} />
 
@@ -561,7 +560,7 @@ export const TimelineManager = () => {
 
       <WorldSentaient position={[0, -11750, -29350]} rotation={[0, 0, 0]} visible={activeZones.sentaient} />
       
-      <WormholeElevate position={[0, -11750, -31175]} rotation={[Math.PI/2, 0, 0]} length={2400} visible={activeZones.w_elevate} />
+      <WormholeElevate position={[0, -10839, -31580]} rotation={[Math.PI / 2 - 0.93, 0, 0]} length={2400} visible={activeZones.w_elevate} />
       <WorldElevate position={[0, -11750, -33000]} visible={activeZones.elevate} />
       
       <WormholeSphinx position={[0, -11750, -35000]} rotation={[Math.PI/2, 0, 0]} length={5200} visible={activeZones.w_sphinx} />

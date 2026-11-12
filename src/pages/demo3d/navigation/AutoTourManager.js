@@ -155,8 +155,8 @@ class AutoTourEngine {
     this.remainingSeconds = this.seconds;
     this.notify();
 
-    // Use forceSequential = true so it flies sequentially through connecting wormhole
-    goToStation(stationIndex, 2000, () => {
+    // Use forceSequential = true so it flies sequentially through connecting wormhole (half speed)
+    goToStation(stationIndex, 4000, () => {
       this.isTransit = false;
       this.currentStationIndex = stationIndex;
       this.remainingSeconds = this.seconds;

@@ -4,28 +4,28 @@ import { useEffect } from 'react';
 import { WORLD_PAUSE_STATIONS, startWorldPause, clearActiveWorldPause } from './WorldPauseManager';
 
 export const STATIONS = [
-  { id: 'hub', name: 'Home Hub', p: 0.000, duration: 1600, color: '#00E5FF' },
-  { id: 'mindwave', name: 'MindWave', p: 0.038, duration: 1800, color: '#38BDF8' },
-  { id: 'icebreaker', name: 'Icebreaker', p: 0.135, duration: 2000, color: '#FF6600' },
-  { id: 'interstellar', name: 'Interstellar', p: 0.200, duration: 1800, color: '#00D2FF' },
-  { id: 'legal', name: 'Legal Eagle', p: 0.248, duration: 1800, color: '#D4AF37' },
-  { id: 'autopilot', name: 'Autopilot', p: 0.293, duration: 1800, color: '#10B981' },
-  { id: 'clove', name: 'CloveH2O', p: 0.345, duration: 1800, color: '#FF00FF' },
-  { id: 'fantasy', name: 'FantasyQuant', p: 0.413, duration: 2200, color: '#00FF88' },
-  { id: 'contango', name: 'Contango', p: 0.463, duration: 1800, color: '#FFD700' },
-  { id: 'sentaient', name: 'Sentaient', p: 0.505, duration: 1800, color: '#60A9FF' },
-  { id: 'elevate', name: 'Elevate', p: 0.548, duration: 1800, color: '#00FFFF' },
-  { id: 'sphinx', name: 'Sphinx', p: 0.610, duration: 1800, color: '#F59E0B' },
-  { id: 'liquid', name: 'Liquid', p: 0.668, duration: 1800, color: '#00FF88' },
-  { id: 'maya', name: 'Maya', p: 0.728, duration: 1800, color: '#EAB308' },
-  { id: 'pyramid', name: 'Pyramid', p: 0.803, duration: 1800, color: '#00E5FF' },
-  { id: 'matrix', name: 'Matrix', p: 0.873, duration: 1800, color: '#00FF44' },
-  { id: 'lightspeed', name: 'LightSpeed', p: 0.945, duration: 1800, color: '#00FFFF' }
+  { id: 'hub', name: 'Home Hub', p: 0.000, duration: 3200, color: '#00E5FF' },
+  { id: 'mindwave', name: 'MindWave', p: 0.038, duration: 3600, color: '#38BDF8' },
+  { id: 'icebreaker', name: 'Icebreaker', p: 0.135, duration: 4000, color: '#FF6600' },
+  { id: 'interstellar', name: 'Interstellar', p: 0.200, duration: 3600, color: '#00D2FF' },
+  { id: 'legal', name: 'Legal Eagle', p: 0.248, duration: 3600, color: '#D4AF37' },
+  { id: 'autopilot', name: 'Autopilot', p: 0.293, duration: 3600, color: '#10B981' },
+  { id: 'clove', name: 'CloveH2O', p: 0.345, duration: 3600, color: '#FF00FF' },
+  { id: 'fantasy', name: 'FantasyQuant', p: 0.413, duration: 4400, color: '#00FF88' },
+  { id: 'contango', name: 'Contango', p: 0.463, duration: 3600, color: '#FFD700' },
+  { id: 'sentaient', name: 'Sentaient', p: 0.505, duration: 3600, color: '#60A9FF' },
+  { id: 'elevate', name: 'Elevate', p: 0.548, duration: 3600, color: '#00FFFF' },
+  { id: 'sphinx', name: 'Sphinx', p: 0.610, duration: 3600, color: '#F59E0B' },
+  { id: 'liquid', name: 'Liquid', p: 0.668, duration: 3600, color: '#00FF88' },
+  { id: 'maya', name: 'Maya', p: 0.728, duration: 3600, color: '#EAB308' },
+  { id: 'pyramid', name: 'Pyramid', p: 0.803, duration: 3600, color: '#00E5FF' },
+  { id: 'matrix', name: 'Matrix', p: 0.873, duration: 3600, color: '#00FF44' },
+  { id: 'lightspeed', name: 'LightSpeed', p: 0.945, duration: 3600, color: '#00FFFF' }
 ];
 
 let activeAnimId = null;
 
-export const directTeleportTo = (targetIndex, customDuration = 1350, onComplete = null) => {
+export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete = null) => {
   const clampedIndex = Math.max(0, Math.min(STATIONS.length - 1, targetIndex));
   const targetStation = STATIONS[clampedIndex];
   
@@ -197,7 +197,7 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
   const isAdjacent = Math.abs(clampedIndex - currentIdx) <= 1;
   const isHubTransition = currentIdx === 0 || clampedIndex === 0;
   if (!forceSequential && (!isAdjacent || isHubTransition)) {
-    return directTeleportTo(clampedIndex, customDuration || 1350, onComplete);
+    return directTeleportTo(clampedIndex, customDuration || 2700, onComplete);
   }
   
   const targetStation = STATIONS[clampedIndex];
@@ -250,8 +250,8 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
     ? 0.120 
     : targetStation.p;
   
-  // Sequential transit between worlds: majestic 2000ms flow through connecting wormhole
-  const duration = customDuration || 2000;
+  // Sequential transit between worlds: majestic 4000ms flow through connecting wormhole (half speed)
+  const duration = customDuration || targetStation?.duration || 4000;
   const startTime = performance.now();
 
   // Engage universal relativistic warp speed conduit & FOV dilation
