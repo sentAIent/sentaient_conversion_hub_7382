@@ -75,6 +75,11 @@
   status = 200
 
 [[redirects]]
+  from = "/maya/"
+  to = "/maya/index.html"
+  status = 200
+
+[[redirects]]
   from = "/maya/*"
   to = "/maya/index.html"
   status = 200

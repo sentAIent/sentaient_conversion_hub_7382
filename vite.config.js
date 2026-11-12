@@ -29,9 +29,21 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,glb,json}'],
+        globPatterns: ['assets/**/*.{js,css}', 'index.html', '*.{png,ico,json}'],
+        globIgnores: ['maya/**', 'sphinx/**', 'legaleagle/**', 'contango/**', 'lightspeed/**', 'icebreaker/**', 'icebusiness/**', 'iceadmin/**', 'binaural-assets/**'],
         maximumFileSizeToCacheInBytes: 50 * 1024 * 1024,
-        navigateFallback: '/index.html'
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [
+          /^\/maya/,
+          /^\/sphinx/,
+          /^\/legaleagle/,
+          /^\/contango/,
+          /^\/lightspeed/,
+          /^\/icebreaker/,
+          /^\/icebusiness/,
+          /^\/iceadmin/,
+          /^\/interstellar-game/
+        ]
       }
     })
   ],
