@@ -38,6 +38,7 @@ import {
   RouteSubLeg
 } from '../lib/directionsService';
 import { UserTier } from '../lib/useSettings';
+import { VEHICLE_PROFILES } from '../lib/routing/bugOutRoutingEngine';
 
 export interface RoutePoint {
   label: string;
@@ -114,6 +115,7 @@ export function DirectionsPanel({
   const [timeMode, setTimeMode] = useState<'now' | 'custom'>('now');
   const [customTime, setCustomTime] = useState('');
   const [routingStrategy, setRoutingStrategy] = useState<RoutingStrategy>('fastest');
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('overland_4x4');
   const [waypoints, setWaypoints] = useState<RoutePoint[]>([]);
   const [isGuidanceMode, setIsGuidanceMode] = useState(false);
   
@@ -127,7 +129,10 @@ export function DirectionsPanel({
     avoidClosedRoads: true,
     avoidFloodedAreas: true,
     avoidCrimeAreas: false,
-    avoidToxicPlumes: true
+    avoidToxicPlumes: true,
+    avoidWildfires: true,
+    avoidChemicalSpray: true,
+    avoidDamBreach: true
   });
 
   // Selected Alternative Route
@@ -341,7 +346,8 @@ export function DirectionsPanel({
         avoidanceOptions
       );
       setResult(res);
-      setSelectedAltId(routingStrategy === 'stealth' ? 'opt-stealth' :
+      setSelectedAltId(routingStrategy === 'bug_out' ? 'opt-bug-out' :
+                        (routingStrategy === 'stealth' || routingStrategy === 'flock_hopper') ? 'opt-stealth' :
                         routingStrategy === 'shortest' ? 'opt-shortest' :
                         routingStrategy === 'eco_no_tolls' ? 'opt-eco' : 'opt-fastest');
       onRouteCalculated(res);
@@ -774,11 +780,11 @@ export function DirectionsPanel({
                 onClick={() => toggleAvoidance('avoidCameras')}
                 className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
                   avoidanceOptions.avoidCameras 
-                    ? 'bg-purple-950/80 border-purple-400 text-purple-200 font-bold shadow-[0_0_8px_rgba(168,85,247,0.3)]' 
+                    ? 'bg-purple-950/90 border-purple-400 text-purple-200 font-bold shadow-[0_0_12px_rgba(168,85,247,0.4)]' 
                     : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
                 }`}
               >
-                <span>📸 Avoid ALPR/Cones</span>
+                <span>🛡️ Flock Hopper (0 Cameras)</span>
                 {avoidanceOptions.avoidCameras && <Check size={11} className="text-purple-400" />}
               </button>
 
@@ -846,6 +852,162 @@ export function DirectionsPanel({
                 <span>☣️ Toxic Plume Cones</span>
                 {avoidanceOptions.avoidToxicPlumes && <Check size={11} className="text-purple-400" />}
               </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidWildfires')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidWildfires 
+                    ? 'bg-orange-950/80 border-orange-400 text-orange-200 font-bold shadow-[0_0_8px_rgba(249,115,22,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🔥 Active Wildfires</span>
+                {avoidanceOptions.avoidWildfires && <Check size={11} className="text-orange-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidChemicalSpray')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidChemicalSpray 
+                    ? 'bg-emerald-950/80 border-emerald-400 text-emerald-200 font-bold shadow-[0_0_8px_rgba(16,185,129,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🧪 Chemical Spray Zones</span>
+                {avoidanceOptions.avoidChemicalSpray && <Check size={11} className="text-emerald-400" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleAvoidance('avoidDamBreach')}
+                className={`px-2 py-1.5 rounded-lg border text-left flex items-center justify-between transition-all ${
+                  avoidanceOptions.avoidDamBreach 
+                    ? 'bg-cyan-950/80 border-cyan-400 text-cyan-200 font-bold shadow-[0_0_8px_rgba(6,182,212,0.3)]' 
+                    : 'bg-black/50 border-gray-800 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span>🌊 Dam Breach Basins</span>
+                {avoidanceOptions.avoidDamBreach && <Check size={11} className="text-cyan-400" />}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Routing Strategy Profile */}
+        <div className="p-2 bg-slate-900/60 border border-cyan-900/50 rounded-xl space-y-1.5">
+          <div className="flex justify-between items-center text-[10px] font-bold text-cyan-300">
+            <span className="flex items-center gap-1">🧭 ROUTING STRATEGY</span>
+            {routingStrategy === 'flock_hopper' && (
+              <span className="text-[9px] bg-purple-500/20 text-purple-300 border border-purple-500/50 px-1.5 py-0.5 rounded font-black animate-pulse">
+                🛡️ 0 CAMERAS
+              </span>
+            )}
+            {routingStrategy === 'bug_out' && (
+              <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/50 px-1.5 py-0.5 rounded font-black animate-pulse">
+                🛡️ CHOKE-POINT EVASION
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-5 gap-1 text-[9px]">
+            <button
+              type="button"
+              onClick={() => setRoutingStrategy('fastest')}
+              className={`py-1.5 px-0.5 rounded-lg border text-center transition-all ${
+                routingStrategy === 'fastest'
+                  ? 'bg-cyan-950/80 border-cyan-400 text-cyan-200 font-bold shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                  : 'bg-black/50 border-gray-800 text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              ⚡ Fast
+            </button>
+            <button
+              type="button"
+              onClick={() => setRoutingStrategy('shortest')}
+              className={`py-1.5 px-0.5 rounded-lg border text-center transition-all ${
+                routingStrategy === 'shortest'
+                  ? 'bg-cyan-950/80 border-cyan-400 text-cyan-200 font-bold shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                  : 'bg-black/50 border-gray-800 text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              📏 Short
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRoutingStrategy('flock_hopper');
+                setAvoidanceOptions(prev => ({ ...prev, avoidCameras: true }));
+              }}
+              className={`py-1.5 px-0.5 rounded-lg border text-center transition-all ${
+                routingStrategy === 'flock_hopper'
+                  ? 'bg-purple-950/90 border-purple-400 text-purple-200 font-bold shadow-[0_0_12px_rgba(168,85,247,0.4)]'
+                  : 'bg-black/50 border-gray-800 text-purple-400 hover:text-purple-300'
+              }`}
+              title="Avoid all Flock Safety, Axon, and ALPR surveillance cameras"
+            >
+              🛡️ Flock
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRoutingStrategy('eco_no_tolls');
+                setAvoidanceOptions(prev => ({ ...prev, avoidTolls: true }));
+              }}
+              className={`py-1.5 px-0.5 rounded-lg border text-center transition-all ${
+                routingStrategy === 'eco_no_tolls'
+                  ? 'bg-emerald-950/80 border-emerald-400 text-emerald-200 font-bold shadow-[0_0_8px_rgba(16,185,129,0.3)]'
+                  : 'bg-black/50 border-gray-800 text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              🌿 Eco
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRoutingStrategy('bug_out');
+                setAvoidanceOptions(prev => ({ ...prev, avoidCameras: true, avoidHighways: true, avoidTolls: true, avoidClosedRoads: true }));
+              }}
+              className={`py-1.5 px-0.5 rounded-lg border text-center transition-all ${
+                routingStrategy === 'bug_out'
+                  ? 'bg-amber-950/90 border-amber-400 text-amber-200 font-bold shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                  : 'bg-black/50 border-gray-800 text-amber-400 hover:text-amber-300'
+              }`}
+              title="Bug-out off-grid evacuation corridor bypassing highway funnels, bridge choke-points, and cameras"
+            >
+              🚨 Bug-Out
+            </button>
+          </div>
+
+          {/* Vehicle Profile Chips for Bug-Out Strategy */}
+          {routingStrategy === 'bug_out' && (
+            <div className="pt-1.5 border-t border-amber-900/40 space-y-1">
+              <div className="flex justify-between items-center text-[9px] text-amber-300 font-bold uppercase tracking-wider">
+                <span>Vehicle Clearance Profile</span>
+                <span className="text-gray-400">{VEHICLE_PROFILES[selectedVehicle]?.name || 'Overland 4x4'}</span>
+              </div>
+              <div className="grid grid-cols-5 gap-1 text-[9px]">
+                {Object.values(VEHICLE_PROFILES).map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setSelectedVehicle(v.id)}
+                    className={`py-1 px-0.5 rounded border text-center transition-all ${
+                      selectedVehicle === v.id
+                        ? 'bg-amber-900/60 border-amber-400 text-amber-200 font-bold shadow-[0_0_6px_rgba(245,158,11,0.3)]'
+                        : 'bg-black/40 border-gray-800 text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <div>{v.icon}</div>
+                    <div className="text-[8px] truncate">{v.id.split('_')[0]}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between items-center text-[8px] text-amber-400/80 px-1 pt-0.5">
+                <span>Range: {VEHICLE_PROFILES[selectedVehicle]?.rangeMiles} mi</span>
+                <span>Clearance: {VEHICLE_PROFILES[selectedVehicle]?.clearanceInches}&quot;</span>
+                <span>Fuel: {VEHICLE_PROFILES[selectedVehicle]?.fuelType}</span>
+              </div>
             </div>
           )}
         </div>
@@ -946,6 +1108,11 @@ export function DirectionsPanel({
                     <div className="flex justify-between items-baseline mb-1">
                       <div className="flex items-center gap-1.5 font-bold text-xs">
                         <span className={isSelected ? 'text-cyan-300' : 'text-white'}>{alt.label}</span>
+                        {alt.cameraExposureCount === 0 && (
+                          <span className="text-[9px] bg-purple-900/60 text-purple-300 border border-purple-500/50 px-1 py-0.2 rounded font-black">
+                            🛡️ 0 ALPR
+                          </span>
+                        )}
                         {isSelected && <span className="text-[9px] bg-cyan-500 text-black px-1.5 py-0.2 rounded font-black">ACTIVE</span>}
                       </div>
                       <div className="text-right">
@@ -966,8 +1133,8 @@ export function DirectionsPanel({
                     <div className="grid grid-cols-3 gap-1 pt-1.5 border-t border-gray-800/80 text-center text-[10px]">
                       <div className="bg-black/40 p-1 rounded border border-gray-800">
                         <span className="text-[9px] text-gray-500 block">CAMERAS</span>
-                        <span className={alt.cameraExposureCount === 0 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
-                          {alt.cameraExposureCount === 0 ? '🛡️ 0 ALPR' : `📸 ${alt.cameraExposureCount}`}
+                        <span className={alt.cameraExposureCount === 0 ? 'text-purple-400 font-bold' : 'text-amber-400 font-bold'}>
+                          {alt.cameraExposureCount === 0 ? `🛡️ 0 ALPR (${alt.threatScorecard.camerasAvoidedCount || 0} avoided)` : `📸 ${alt.cameraExposureCount}`}
                         </span>
                       </div>
                       <div className="bg-black/40 p-1 rounded border border-gray-800">

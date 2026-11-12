@@ -846,3 +846,15 @@ export function searchCuratedLocations(query: string, maxResults = 6): CuratedLo
 
   return matches.slice(0, maxResults).map(m => m.location);
 }
+
+export function getLakesGeoJSON(): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  return {
+    type: 'FeatureCollection',
+    features: CURATED_LAKES.map(lake => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [lake.lon, lake.lat] },
+      properties: { ...lake }
+    }))
+  };
+}
+

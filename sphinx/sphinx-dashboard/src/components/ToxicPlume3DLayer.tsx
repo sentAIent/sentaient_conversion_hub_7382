@@ -6,6 +6,7 @@ import {
   GLOBAL_TOXIC_SITES
 } from '../lib/intelligence/toxicSitesData';
 import { ToxicPlumeEngine } from '../lib/intelligence/toxicPlumeEngine';
+import { WindPlumeEngine } from '../lib/intelligence/windPlumeEngine';
 import { AlertTriangle, Biohazard, Skull, Droplets, Compass } from 'lucide-react';
 
 interface ToxicPlume3DLayerProps {
@@ -32,6 +33,29 @@ export const ToxicPlume3DLayer: React.FC<ToxicPlume3DLayerProps> = ({
     if (!visible) return null;
     return ToxicPlumeEngine.computeFacilityExtrusionsGeoJSON(GLOBAL_TOXIC_SITES);
   }, [visible]);
+
+  // Atmospheric wind-driven advection plume GeoJSON
+  const windPlumesGeoJson = useMemo(() => {
+    if (!visible) return null;
+    const targetSite = (selectedSiteId ? GLOBAL_TOXIC_SITES.find(s => s.site_id === selectedSiteId) : null) || GLOBAL_TOXIC_SITES[0];
+    if (!targetSite) return null;
+    return WindPlumeEngine.calculateAtmosphericPlume(
+      {
+        id: targetSite.site_id,
+        name: targetSite.name,
+        type: 'CHEMICAL_TOXIC',
+        coordinates: targetSite.coordinates,
+        emissionRateKgSec: 15.0,
+        effectiveHeightMeters: 25.0
+      },
+      {
+        speedMph: 14.5,
+        bearingDeg: targetSite.flow_direction_deg || 45,
+        stabilityClass: 'D'
+      },
+      4
+    );
+  }, [visible, selectedSiteId]);
 
   // 3. Filter sites in viewport if bbox provided
   const visibleSites = useMemo(() => {
@@ -108,6 +132,29 @@ export const ToxicPlume3DLayer: React.FC<ToxicPlume3DLayerProps> = ({
               'line-width': 2.5,
               'line-opacity': 0.95,
               'line-dasharray': [4, 3]
+            }}
+          />
+        </Source>
+      )}
+
+      {/* Wind-Driven Atmospheric Dispersion Plume Layer */}
+      {windPlumesGeoJson && (
+        <Source id="wind-plumes-source" type="geojson" data={windPlumesGeoJson as any}>
+          <Layer
+            id="wind-plumes-fill"
+            type="fill"
+            paint={{
+              'fill-color': ['get', 'fillColor'],
+              'fill-opacity': ['get', 'fillOpacity']
+            }}
+          />
+          <Layer
+            id="wind-plumes-line"
+            type="line"
+            paint={{
+              'line-color': ['get', 'strokeColor'],
+              'line-width': 2,
+              'line-dasharray': [3, 2]
             }}
           />
         </Source>

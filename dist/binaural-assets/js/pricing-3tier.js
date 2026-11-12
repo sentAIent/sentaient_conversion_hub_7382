@@ -49,16 +49,6 @@ const PRICING_CONFIG = {
         limitText: "Unlimited Play",
         active: true,
         warning: "🔥 20% off for the first 500"
-    },
-    lifetime: {
-        name: "Eternity",
-        price: "$488.88",
-        period: "/once",
-        productId: "lifetime",
-        description: "Pay once, own it forever",
-        limitText: "Unlimited Forever",
-        active: true,
-        warning: "🔥 Best Value"
     }
 };
 
@@ -315,65 +305,11 @@ function createPricingModal(currentTier, dynamicPricing = null) {
                 </div>
             </div>
 
-            <!-- Special Lifetime Offer Section - Spans Full Width -->
-            <div id="lifetimeOfferSec" style="width: 100%; clear: both; background: linear-gradient(145deg, rgba(251, 191, 36, 0.15), rgba(180, 83, 9, 0.25)); border: 2px solid #fbbf24; border-radius: 24px; padding: 48px; position: relative; margin-bottom: 40px; box-shadow: 0 0 50px rgba(251, 191, 36, 0.25); overflow: hidden;">
-                <!-- Animated background element -->
-                <div style="position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(251, 191, 36, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
-                
-                <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: center; position: relative; z-index: 1;">
-                    <!-- Left Side: Price & CTA -->
-                    <div style="flex: 1; min-width: 300px;">
-                        <div style="background: #fbbf24; padding: 4px 16px; border-radius: 20px; font-size: 11px; font-weight: 900; color: black; text-transform: uppercase; display: inline-block; margin-bottom: 16px; letter-spacing: 1px;">Special Limited Offer</div>
-                        <h3 style="font-size: 36px; font-weight: 800; color: white; margin-bottom: 12px;">${PRICING_CONFIG.lifetime.name}</h3>
-                        <p style="font-size: 18px; color: #fcd34d; margin-bottom: 24px;">One-time payment. Every feature. Forever.</p>
-                        
-                        <div style="margin-bottom: 32px;">
-                            <span style="font-size: 64px; font-weight: 900; color: white;">${PRICING_CONFIG.lifetime.price}</span>
-                            <span style="font-size: 18px; color: var(--text-muted); text-decoration: line-through; margin-left: 12px;">$999</span>
-                            <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 8px; display: inline-block; margin-top: 12px; animation: pulse 2.5s infinite;">
-                                🔥 Only ${isFull ? 'a few' : spots} Zen Member spots left
-                            </div>
-                        </div>
-
-                        <button id="upgradeBtnLifetime" style="width: 100%; max-width: 400px; padding: 20px 40px; background: #fbbf24; border: none; border-radius: 16px; color: black; font-size: 20px; font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);">
-                            Get Eternity Access
-                        </button>
-                    </div>
-
-                    <!-- Right Side: Features -->
-                    <div style="flex: 1.2; min-width: 320px; background: rgba(0,0,0,0.2); border-radius: 16px; padding: 32px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
-                                <span style="font-size: 20px; color: #fbbf24;">★</span> Unlimited Cloud Saves
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
-                                <span style="font-size: 20px; color: #fbbf24;">★</span> All Premium Visuals
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
-                                <span style="font-size: 20px; color: #fbbf24;">★</span> Commercial License
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
-                                <span style="font-size: 20px; color: #fbbf24;">★</span> Future Beta Access
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
-                                <span style="font-size: 20px; color: #fbbf24;">★</span> VIP Support
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px; color: white; font-weight: 500;">
-                                <span style="font-size: 20px; color: #fbbf24;">★</span> Ad-Free Forever
-                            </div>
-                        </div>
-                        <div style="margin-top: 32px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
-                            <p style="font-size: 13px; color: var(--text-muted); font-style: italic;">"The best investment I've made in my mental performance." — David K., Software Engineer</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Testimonials Directly Under Lifetime Offer -->
-                <div style="margin-top: 48px; border-top: 1px solid rgba(251, 191, 36, 0.2); padding-top: 40px;">
-                    <h4 style="text-align: center; color: #fcd34d; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 32px; font-weight: 800;">Real Results from Eternity Members</h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                        ${renderTestimonials()}
-                    </div>
+            <!-- Testimonials -->
+            <div style="margin: 40px 0 32px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 36px;">
+                <h4 style="text-align: center; color: rgba(255, 255, 255, 0.7); font-size: 13px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 28px; font-weight: 700;">Real Results from MindWave Members</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+                    ${renderTestimonials()}
                 </div>
             </div>
             
@@ -411,14 +347,6 @@ function createPricingModal(currentTier, dynamicPricing = null) {
     // Handle Nirvana Upgrade Click
     const upgradeBtnPro = modal.querySelector('#upgradeBtnPro');
 
-    // Handle Lifetime Upgrade Click
-    const upgradeBtnLifetime = modal.querySelector('#upgradeBtnLifetime');
-    if (upgradeBtnLifetime) {
-        upgradeBtnLifetime.addEventListener('click', () => {
-            const coupon = modal.querySelector('#couponCodeInput')?.value.trim();
-            handleUpgrade(PRICING_CONFIG.lifetime.productId, 'oneTime', coupon);
-        });
-    }
 
     // Handle Subscription Upgrade Clicks (passing coupon)
     if (upgradeBtnMeditation) {

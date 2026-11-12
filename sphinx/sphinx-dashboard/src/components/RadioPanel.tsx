@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Radio, Activity, Users, Settings2, X, Globe, Play, Square, Volume2 } from 'lucide-react';
+import { SdrTab } from './radio/SdrTab';
+import { MeshTab } from './radio/MeshTab';
 
 interface RadioStation {
   name: string;
@@ -56,7 +58,6 @@ const GLOBAL_STATIONS: RadioStation[] = [
 
 export const RadioPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState<'web' | 'sdr' | 'mesh'>('web');
-  const [sdrMode, setSdrMode] = useState<'adsb' | 'scan' | 'off'>('off');
   const [selectedStation, setSelectedStation] = useState<RadioStation | null>(GLOBAL_STATIONS[2]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [decadeFilter, setDecadeFilter] = useState<string>('all');
@@ -197,76 +198,8 @@ export const RadioPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </div>
         )}
 
-        {activeTab === 'sdr' && (
-          <div className="space-y-3">
-            <div className="bg-blue-950/30 border border-blue-900/50 p-2.5 rounded flex justify-between items-center">
-              <div>
-                <div className="text-xs text-blue-300 font-bold mb-0.5">ADS-B (AIRCRAFT TRACKING)</div>
-                <div className="text-[11px] text-gray-400">Decode 1090MHz transponders via dump1090</div>
-              </div>
-              <button 
-                onClick={async () => {
-                  const newMode = sdrMode === 'adsb' ? 'off' : 'adsb';
-                  setSdrMode(newMode);
-                  try {
-                    await fetch('http://localhost:3117/api/radio/adsb', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ action: newMode === 'adsb' ? 'start' : 'stop' })
-                    });
-                  } catch(e) {}
-                }}
-                className={`px-3 py-1 rounded text-xs transition-all ${sdrMode === 'adsb' ? 'bg-red-900/50 text-red-400 border border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-900/20 text-blue-500 border border-blue-900 hover:bg-blue-900/40'}`}
-              >
-                {sdrMode === 'adsb' ? 'STOP' : 'START'}
-              </button>
-            </div>
-
-            <div className="bg-blue-950/30 border border-blue-900/50 p-2.5 rounded flex justify-between items-center">
-              <div>
-                <div className="text-xs text-blue-300 font-bold mb-0.5">RF FREQUENCY SCANNER</div>
-                <div className="text-[11px] text-gray-400">Detect active police/fire/EMS bands</div>
-              </div>
-              <button 
-                onClick={async () => {
-                  const newMode = sdrMode === 'scan' ? 'off' : 'scan';
-                  setSdrMode(newMode);
-                  try {
-                    await fetch('http://localhost:3117/api/radio/scan', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ action: newMode === 'scan' ? 'start' : 'stop' })
-                    });
-                  } catch(e) {}
-                }}
-                className={`px-3 py-1 rounded text-xs transition-all ${sdrMode === 'scan' ? 'bg-red-900/50 text-red-400 border border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-blue-900/20 text-blue-500 border border-blue-900 hover:bg-blue-900/40'}`}
-              >
-                {sdrMode === 'scan' ? 'STOP' : 'START'}
-              </button>
-            </div>
-
-            <div className="border-t border-blue-900/50 pt-2">
-              <div className="text-[11px] text-gray-500 mb-1">SDR LOG:</div>
-              <div className="bg-black border border-gray-800 rounded p-2 text-[11px] text-green-500 h-24 overflow-y-auto">
-                {sdrMode === 'off' && <span className="text-gray-600">SDR Controller Idle...</span>}
-                {sdrMode === 'adsb' && <span>[dump1090] Listening on port 30003... waiting for aircraft packets...</span>}
-                {sdrMode === 'scan' && <span>[rtl_power] Scanning 136Mhz-174Mhz...</span>}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'mesh' && (
-          <div className="space-y-3">
-             <div className="flex justify-between items-center text-xs mb-2">
-                <span className="text-gray-400">STATUS: <span className="text-red-500">DISCONNECTED</span></span>
-                <button className="flex items-center gap-1 text-blue-400 hover:text-blue-300"><Settings2 size={13} /> COM PORT</button>
-             </div>
-             <div className="text-xs text-gray-500 text-center mt-12">
-                NO MESHTASTIC NODE DETECTED ON SERIAL/USB
-             </div>
-          </div>
-        )}
+        {activeTab === 'sdr' && <SdrTab />}
+        {activeTab === 'mesh' && <MeshTab />}
       </div>
     </div>
   );

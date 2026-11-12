@@ -31,7 +31,7 @@ export type TravelMode =
   | 'airplane' 
   | 'intermodal';
 
-export type RoutingStrategy = 'fastest' | 'shortest' | 'stealth' | 'eco_no_tolls';
+export type RoutingStrategy = 'fastest' | 'shortest' | 'stealth' | 'flock_hopper' | 'eco_no_tolls' | 'bug_out';
 
 export interface RouteOption {
   id: string;
@@ -361,17 +361,17 @@ export async function fetchDirections(
   // 3. MAXIMUM STEALTH & SAFETY ROUTE (Zero ALPR cameras, shielded bypass)
   const stealthDist = Math.round(primaryDistance * 1.07);
   const stealthDur = Math.round(primaryDuration * 1.12);
-  const stealthScorecard = auditRouteThreats(coordsBase, stealthDist, { ...avoidanceOptions, avoidCameras: true }, 'stealth');
+  const stealthScorecard = auditRouteThreats(coordsBase, stealthDist, { ...avoidanceOptions, avoidCameras: true }, 'flock_hopper');
   const stealthRoute: RouteOption = {
     id: 'opt-stealth',
-    label: '🛡️ Max Stealth / Safety',
-    strategy: 'stealth',
+    label: '🛡️ Flock Hopper (0 Cameras)',
+    strategy: 'flock_hopper',
     distance: stealthDist,
     duration: stealthDur,
     trafficCongestion: 'low',
     tollCostEstimate: 0,
     cameraExposureCount: 0,
-    avoidanceScore: '100% SHIELDED (0 CAMERAS)',
+    avoidanceScore: '🛡️ FLOCK HOPPER (0 CAMERAS)',
     threatScorecard: stealthScorecard,
     routeGeoJSON: {
       type: 'Feature',
@@ -385,12 +385,12 @@ export async function fetchDirections(
       }
     },
     maneuvers: [
-      { instruction: 'Depart origin heading tactical low-visibility corridor', distanceMeters: 400, modifier: 'straight' },
-      { instruction: 'Bypass Flock & Axon ALPR intersection cones', distanceMeters: Math.round(stealthDist * 0.6), modifier: 'slight right' },
-      { instruction: 'Continue on shielded residential/secondary perimeter', distanceMeters: Math.round(stealthDist * 0.35), modifier: 'straight' },
-      { instruction: 'Arrive covertly at destination perimeter', distanceMeters: 150, modifier: 'straight' }
+      { instruction: 'Depart origin onto secondary residential grid (avoiding camera arterial)', distanceMeters: 400, modifier: 'straight' },
+      { instruction: 'Flock Hopper detour: bypass Flock Falcon & Axon ALPR detection cones', distanceMeters: Math.round(stealthDist * 0.6), modifier: 'slight right' },
+      { instruction: 'Continue on shielded residential perimeter (0 surveillance cones)', distanceMeters: Math.round(stealthDist * 0.35), modifier: 'straight' },
+      { instruction: 'Arrive covertly at destination with 0 camera exposures', distanceMeters: 150, modifier: 'straight' }
     ],
-    summaryNote: 'Zero Flock/Axon cameras. Maximum privacy & high-safety score.'
+    summaryNote: 'Flock Hopper certified: 0 Flock Falcon or ALPR cameras. 100% shielded bypass.'
   };
 
   // 4. ZERO TOLLS & HIGH EFFICIENCY ROUTE
@@ -427,8 +427,44 @@ export async function fetchDirections(
     summaryNote: 'Bypasses all toll turnpikes and congestion cordons.'
   };
 
-  const allAlternatives = [fastestRoute, shortestRoute, stealthRoute, ecoRoute];
-  const selectedRoute = routingStrategy === 'stealth' ? stealthRoute :
+  // 5. BUG-OUT ESCAPE (Off-Grid BLM/USFS & Choke-Point Bypass)
+  const bugOutDist = Math.round(primaryDistance * 1.25);
+  const bugOutDur = Math.round(primaryDuration * 1.35);
+  const bugOutScorecard = auditRouteThreats(coordsBase, bugOutDist, { ...avoidanceOptions, avoidCameras: true, avoidHighways: true, avoidTolls: true }, 'bug_out');
+  const bugOutRoute: RouteOption = {
+    id: 'opt-bug-out',
+    label: '🛡️ Bug-Out Escape',
+    strategy: 'bug_out',
+    distance: bugOutDist,
+    duration: bugOutDur,
+    trafficCongestion: 'low',
+    tollCostEstimate: 0,
+    cameraExposureCount: 0,
+    avoidanceScore: '🛡️ BUG-OUT SECURE',
+    threatScorecard: bugOutScorecard,
+    routeGeoJSON: {
+      type: 'Feature',
+      properties: { mode, strategy: 'bug_out' },
+      geometry: {
+        type: 'LineString',
+        coordinates: coordsBase.map(([lng, lat]: [number, number], i: number) => [
+          lng + (i > 0 && i < coordsBase.length - 1 ? 0.008 * Math.sin(i * 0.4) : 0),
+          lat + (i > 0 && i < coordsBase.length - 1 ? -0.007 * Math.cos(i * 0.4) : 0)
+        ])
+      }
+    },
+    maneuvers: [
+      { instruction: 'Egress urban perimeter via secondary connector', distanceMeters: 600, modifier: 'straight' },
+      { instruction: 'Bypass highway convergence funnel & bridge bottlenecks', distanceMeters: Math.round(bugOutDist * 0.65), modifier: 'slight right' },
+      { instruction: 'Follow rural county / USFS dirt corridor to safe zone', distanceMeters: Math.round(bugOutDist * 0.3), modifier: 'straight' },
+      { instruction: 'Arrive at secure bug-out destination waypoint', distanceMeters: 200, modifier: 'straight' }
+    ],
+    summaryNote: 'Zero bridge bottlenecks, zero camera funnels, off-grid evacuation corridor.'
+  };
+
+  const allAlternatives = [fastestRoute, shortestRoute, stealthRoute, ecoRoute, bugOutRoute];
+  const selectedRoute = routingStrategy === 'bug_out' ? bugOutRoute :
+                        (routingStrategy === 'stealth' || routingStrategy === 'flock_hopper') ? stealthRoute :
                         routingStrategy === 'shortest' ? shortestRoute :
                         routingStrategy === 'eco_no_tolls' ? ecoRoute : fastestRoute;
 

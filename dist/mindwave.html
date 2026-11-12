@@ -194,27 +194,27 @@ window.resetGalaxySettings = function() {
 
         // Resilient audio button proxies ensuring immediate reactivity
         window.applyPreset = window.applyPreset || function(presetKey, btn) {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (m.applyPreset) m.applyPreset(presetKey, btn);
             }).catch(e => console.error('[Proxy] applyPreset error:', e));
         };
         window.applyComboPreset = window.applyComboPreset || function(comboId, btn) {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (m.applyComboPreset) m.applyComboPreset(comboId, btn);
             }).catch(e => console.error('[Proxy] applyComboPreset error:', e));
         };
         window.handlePlayClick = window.handlePlayClick || function(btn) {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (m.handlePlayClick) m.handlePlayClick(btn);
             }).catch(e => console.error('[Proxy] handlePlayClick error:', e));
         };
         window.handleHyperGammaClick = window.handleHyperGammaClick || function(btn) {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (m.handleHyperGammaClick) m.handleHyperGammaClick(btn);
             }).catch(e => console.error('[Proxy] handleHyperGammaClick error:', e));
         };
         window.startSweepPreset = window.startSweepPreset || function(key) {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (m.startSweepPreset) m.startSweepPreset(key);
             }).catch(e => console.error('[Proxy] startSweepPreset error:', e));
         };
@@ -236,32 +236,32 @@ window.resetGalaxySettings = function() {
             }).catch(e => console.error('[Proxy] triggerDjSound error:', e));
         };
         window.showInfoModal = window.showInfoModal || function(key) {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (window.showInfoModal) window.showInfoModal(key);
             }).catch(e => console.error('[Proxy] showInfoModal error:', e));
         };
         window.saveCurrentScenePrompt = window.saveCurrentScenePrompt || function() {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (window.saveCurrentScenePrompt) window.saveCurrentScenePrompt();
             }).catch(e => console.error('[Proxy] saveCurrentScenePrompt error:', e));
         };
         window.favoriteActiveBeat = window.favoriteActiveBeat || function() {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (window.favoriteActiveBeat) window.favoriteActiveBeat();
             }).catch(e => console.error('[Proxy] favoriteActiveBeat error:', e));
         };
         window.favoriteCurrentCymatics = window.favoriteCurrentCymatics || function(classId) {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (window.favoriteCurrentCymatics) window.favoriteCurrentCymatics(classId);
             }).catch(e => console.error('[Proxy] favoriteCurrentCymatics error:', e));
         };
         window.filterFavorites = window.filterFavorites || function(cat) {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (window.filterFavorites) window.filterFavorites(cat);
             }).catch(e => console.error('[Proxy] filterFavorites error:', e));
         };
         window.saveActiveColorFavorite = window.saveActiveColorFavorite || function(color) {
-            import('/assets/controls_v3-CIJHz8kh.js').then(m => {
+            import('/assets/controls_v3-BhYQcrum.js').then(m => {
                 if (window.saveActiveColorFavorite) window.saveActiveColorFavorite(color);
             }).catch(e => console.error('[Proxy] saveActiveColorFavorite error:', e));
         };
@@ -439,12 +439,12 @@ window.resetGalaxySettings = function() {
         }
     </script>
 <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
-  <script type="module" crossorigin src="/assets/mindwave-COJlxd5N.js"></script>
+  <script type="module" crossorigin src="/assets/mindwave-CKNI4rMx.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/preload-helper-CS1eXPs2.js">
-  <link rel="modulepreload" crossorigin href="/assets/bootloader-D0fzHtyB.js">
-  <link rel="modulepreload" crossorigin href="/assets/main_vFINAL-C8okfv41.js">
+  <link rel="modulepreload" crossorigin href="/assets/bootloader-JnCNTMeM.js">
+  <link rel="modulepreload" crossorigin href="/assets/main_vFINAL-CBmehbnE.js">
   <link rel="stylesheet" crossorigin href="/assets/bootloader-D8gydro4.css">
-  <link rel="stylesheet" crossorigin href="/assets/main_vFINAL-BdZYZZ4v.css">
+  <link rel="stylesheet" crossorigin href="/assets/main_vFINAL-BKp4VZKv.css">
 <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
 <body class="w-full relative min-h-screen bg-slate-900 text-slate-200 antialiased selection:bg-cyan-500 selection:text-white">
 <!-- UNIFIED COMMAND CENTER (Moved to root for z-index) -->
@@ -466,6 +466,10 @@ window.resetGalaxySettings = function() {
 <!-- FIX: relative positioning allows natural scrolling -->
 <div class="relative w-full min-h-screen z-10 flex flex-col pointer-events-none" id="appOverlay">
 <header class="fixed top-0 left-0 right-0 z-[100] p-2 pointer-events-none flex justify-center">
+<a href="/" class="absolute left-4 top-4 pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 hover:bg-black/90 border border-white/15 hover:border-[var(--accent)] text-white/70 hover:text-white transition-all text-xs font-mono tracking-wider shadow-lg backdrop-blur-md no-underline" title="Return to SentAIent Hub">
+  <span class="text-sm leading-none">←</span>
+  <span class="font-bold text-[11px]">HUB</span>
+</a>
 <!-- Main Control Panel - Responsive & Centered -->
 <div class="glass-lux rounded-2xl px-5 py-4 pointer-events-auto flex flex-wrap items-center justify-center gap-4 w-full max-w-full md:max-w-[calc(100vw-320px)] opacity-0 no-transition ui-fade-target shadow-2xl" id="topControlBar">
 <!-- Status Indicator -->
@@ -1227,6 +1231,105 @@ window.resetGalaxySettings = function() {
 <button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group h-[50px]" onclick="applyPreset('heal-963', this)" title="Divine consciousness">
 <span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">963 Hz</span>
 <span class="text-[9px] text-[var(--text-muted)] mt-0.5">Crown Oneness</span>
+</button>
+</div>
+</div>
+
+<!-- SECTION: Organ & Cellular Resonance -->
+<div class="sidebar-section">
+<div class="py-4 flex items-center justify-center shrink-0 gap-5">
+<div class="h-px flex-1 bg-white/10"></div>
+<h3 class="premium-label text-white">Organ &amp; Body Resonance</h3>
+<button aria-label="Info" class="transition-colors" onclick="showInfoModal('organs')" style="background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted) !important;">
+<svg fill="none" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="12" xmlns="http://www.w3.org/2000/svg">
+<circle cx="12" cy="12" r="10"></circle>
+<line x1="12" x2="12" y1="16" y2="12"></line>
+<line x1="12" x2="12.01" y1="8" y2="8"></line>
+</svg>
+</button>
+<div class="h-px flex-1 bg-white/10"></div>
+</div>
+<!-- Organ Grid - 2 Column Grid -->
+<div class="grid grid-cols-2 gap-2 shrink-0">
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-teeth', this)" title="Teeth &amp; Oral Matrix (528 Hz) - Enamel remineralization and dental pulp vitality">
+<div class="flex items-center gap-1.5"><span class="text-xs">🦷</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">528.0 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Teeth &amp; Enamel</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-brain', this)" title="Brain &amp; Central Nervous System (315.8 Hz) - Synaptic clarity, neuroplasticity, CNS calm">
+<div class="flex items-center gap-1.5"><span class="text-xs">🧠</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">315.8 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Brain &amp; CNS</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-heart', this)" title="Heart &amp; Cardiovascular (341.3 Hz) - Cardiac coherence, arterial circulation">
+<div class="flex items-center gap-1.5"><span class="text-xs">🫀</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">341.3 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Heart</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-lungs', this)" title="Lungs &amp; Respiratory (220.0 Hz) - Bronchial cellular oxygenation, diaphragmatic calm">
+<div class="flex items-center gap-1.5"><span class="text-xs">🫁</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">220.0 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Lungs</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-liver', this)" title="Liver &amp; Hepatic System (317.8 Hz) - Hepatic detoxification, bile flow, enzyme synthesis">
+<div class="flex items-center gap-1.5"><span class="text-xs">🌿</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">317.8 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Liver</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-kidneys', this)" title="Kidneys &amp; Renal Balance (319.9 Hz) - Fluid filtration, adrenal equilibrium, electrolyte harmony">
+<div class="flex items-center gap-1.5"><span class="text-xs">💧</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">319.9 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Kidneys</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-stomach', this)" title="Stomach &amp; Gastric Matrix (110.0 Hz) - Vagal nerve digestion, stomach lining soothing">
+<div class="flex items-center gap-1.5"><span class="text-xs">🍲</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">110.0 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Stomach</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-gut', this)" title="Intestines &amp; Colon (281.0 Hz) - Gut-brain axis, peristalsis, microbiome balance">
+<div class="flex items-center gap-1.5"><span class="text-xs">🧬</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">281.0 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Intestines &amp; Gut</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-pancreas', this)" title="Pancreas &amp; Glycemic Regulation (117.3 Hz) - Beta-cell harmony, metabolic enzymes">
+<div class="flex items-center gap-1.5"><span class="text-xs">✨</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">117.3 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Pancreas</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-spleen', this)" title="Spleen &amp; Lymphatic System (317.8 Hz) - Immune cellular defense, lymph filtration">
+<div class="flex items-center gap-1.5"><span class="text-xs">🛡️</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">317.8 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Spleen &amp; Lymph</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-gallbladder', this)" title="Gallbladder &amp; Biliary Duct (164.3 Hz) - Bile excretion, fat digestion">
+<div class="flex items-center gap-1.5"><span class="text-xs">🧪</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">164.3 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Gallbladder</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-bladder', this)" title="Bladder &amp; Urinary Matrix (352.0 Hz) - Pelvic smooth muscle relaxation, urinary tone">
+<div class="flex items-center gap-1.5"><span class="text-xs">🌊</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">352.0 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Bladder</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-thyroid', this)" title="Thyroid &amp; Metabolism (295.8 Hz) - Hormonal regulation, metabolic homeostasis">
+<div class="flex items-center gap-1.5"><span class="text-xs">🦋</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">295.8 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Thyroid</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-adrenals', this)" title="Adrenal Glands (492.8 Hz) - Cortisol balance, adrenal fatigue recovery, stamina">
+<div class="flex items-center gap-1.5"><span class="text-xs">⚡</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">492.8 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Adrenals</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-bones', this)" title="Bones &amp; Skeletal Structure (418.3 Hz) - Osteoblast stimulation, bone mineral density">
+<div class="flex items-center gap-1.5"><span class="text-xs">🦴</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">418.3 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Bones &amp; Skeleton</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-muscles', this)" title="Muscles &amp; Fascia (324.0 Hz) - Myofascial release, lactic acid clearance, tension ease">
+<div class="flex items-center gap-1.5"><span class="text-xs">💪</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">324.0 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Muscles &amp; Fascia</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-blood', this)" title="Blood &amp; Circulation (321.9 Hz) - Nitric oxide dilation, hemoglobin oxygenation">
+<div class="flex items-center gap-1.5"><span class="text-xs">🩸</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">321.9 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Blood &amp; Circulation</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-skin', this)" title="Skin &amp; Collagen (494.0 Hz) - Dermal fibroblast renewal, cellular elasticity">
+<div class="flex items-center gap-1.5"><span class="text-xs">🌸</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">494.0 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Skin &amp; Collagen</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-eyes', this)" title="Eyes &amp; Vision (352.0 Hz) - Optic nerve rest, retinal relaxation, screen fatigue">
+<div class="flex items-center gap-1.5"><span class="text-xs">👁️</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">352.0 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Eyes &amp; Vision</span>
+</button>
+<button class="preset-btn flex flex-col items-center justify-center glass-pill border border-white/5 hover:bg-white/10 hover:border-[var(--accent)] transition-all group relative h-[52px]" onclick="applyPreset('organ-spine', this)" title="Spine &amp; Vertebrae (136.1 Hz) - Spinal alignment, cerebrospinal fluid resonance">
+<div class="flex items-center gap-1.5"><span class="text-xs">🧘</span><span class="text-xs font-bold text-[var(--accent)] text-opacity-80 group-hover:text-opacity-100">136.1 Hz</span></div>
+<span class="text-[9px] text-[var(--text-muted)] mt-0.5 truncate max-w-full px-1">Spine &amp; Alignment</span>
 </button>
 </div>
 </div>
@@ -5002,13 +5105,14 @@ window.resetGalaxySettings = function() {
                     alert('Loading purchase verification... Please try again in a moment.');
                     return;
                 }
-                const hasAccess = await window.paywall.hasPurchasedApp();
+                const isPremium = (await import('/assets/stripe-simple-lbnaObyd.js')).isPremiumUser;
+                const hasAccess = await isPremium().catch(() => false);
                 if (!hasAccess) {
-                    if (window.showToast) window.showToast('Redirecting to Lifetime upgrade...', 'info');
-                    if (window.paywall && window.paywall.goToCheckout) {
-                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
+                    if (window.showToast) window.showToast('App download requires a Premium membership.', 'info');
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Premium Members. Please upgrade to unlock.");
                     }
                     return;
                 }
@@ -5034,18 +5138,14 @@ window.resetGalaxySettings = function() {
 
         if (installAccept) {
             installAccept.addEventListener('click', async () => {
-                // STRICT PAYWALL CHECK: Source Code / App Download ($350)
-                if (!window.paywall) {
-                    alert('Loading purchase verification... Please try again in a moment.');
-                    return;
-                }
-                const hasAccess = await window.paywall.hasPurchasedApp();
+                const isPremium = (await import('/assets/stripe-simple-lbnaObyd.js')).isPremiumUser;
+                const hasAccess = await isPremium().catch(() => false);
                 if (!hasAccess) {
-                    if (window.showToast) window.showToast('Redirecting to Lifetime upgrade...', 'info');
-                    if (window.paywall && window.paywall.goToCheckout) {
-                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
+                    if (window.showToast) window.showToast('App download requires a Premium membership.', 'info');
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Premium Members. Please upgrade to unlock.");
                     }
                     return;
                 }
@@ -5245,7 +5345,7 @@ window.resetGalaxySettings = function() {
 <div class="modal fixed inset-0 z-[200] flex items-center justify-center p-4 hidden" id="authModal" style="background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px);">
 <div class="w-full max-w-md mx-4" style="animation: modalFadeIn 0.3s ease-out;">
 <!-- Card -->
-<div class="relative" style="background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
+<div class="relative" style="background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); max-height: min(92vh, 92dvh); overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box;">
 <!-- Gradient accent bar -->
 <div style="height: 3px; background: linear-gradient(90deg, #60a9ff 0%, #60a9ff 50%, #06b6d4 100%); border-radius: 24px 24px 0 0;">
 </div>

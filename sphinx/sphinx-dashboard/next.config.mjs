@@ -1,7 +1,13 @@
 /** @type {import('next').NextConfig} */
 const isExport = process.env.NEXT_EXPORT === 'true';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const nextConfig = {
+  outputFileTracingRoot: __dirname,
   transpilePackages: ['react-map-gl', 'maplibre-gl'],
   ...(isExport ? {
     output: 'export',

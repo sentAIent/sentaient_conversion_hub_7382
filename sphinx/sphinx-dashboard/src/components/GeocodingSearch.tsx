@@ -245,7 +245,7 @@ export function GeocodingSearch({ onLocationSelected, placeholder = "Search loca
       </form>
 
       {showDropdown && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-96 max-w-[calc(100vw-24px)] bg-black/95 border border-cyan-800/80 rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.85)] backdrop-blur-xl overflow-hidden z-50 divide-y divide-cyan-900/30">
+        <div className="absolute top-full left-0 mt-1.5 w-full sm:w-96 max-w-[calc(100vw-24px)] max-h-[min(420px,calc(100vh-100px))] overflow-y-auto no-scrollbar bg-black/95 border border-cyan-800/80 rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.85)] backdrop-blur-xl z-50 divide-y divide-cyan-900/30">
           {suggestions.map((sugg) => (
             <button
               type="button"

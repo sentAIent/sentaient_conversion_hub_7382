@@ -351,11 +351,11 @@
         }
     </script>
     <!-- Firebase SDKs removed to prevent blocking. Logic is in js/services/firebase.js -->
-  <script type="module" crossorigin src="/assets/mindwave-friday-DPavxay5.js"></script>
+  <script type="module" crossorigin src="/assets/mindwave-friday-EWwfxku6.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/preload-helper-CS1eXPs2.js">
-  <link rel="modulepreload" crossorigin href="/assets/bootloader-D0fzHtyB.js">
+  <link rel="modulepreload" crossorigin href="/assets/bootloader-JnCNTMeM.js">
   <link rel="stylesheet" crossorigin href="/assets/bootloader-D8gydro4.css">
-  <link rel="stylesheet" crossorigin href="/assets/main_vFINAL-BdZYZZ4v.css">
+  <link rel="stylesheet" crossorigin href="/assets/main_vFINAL-BKp4VZKv.css">
   <link rel="stylesheet" crossorigin href="/assets/sophisticated-ui-CPbQeSmY.css">
 <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
 
@@ -3024,13 +3024,14 @@
                     alert('Loading purchase verification... Please try again in a moment.');
                     return;
                 }
-                const hasAccess = await window.paywall.hasPurchasedApp();
+                const isPremium = (await import('/assets/stripe-simple-lbnaObyd.js')).isPremiumUser;
+                const hasAccess = await isPremium().catch(() => false);
                 if (!hasAccess) {
-                    if (window.showToast) window.showToast('Redirecting to Lifetime upgrade...', 'info');
-                    if (window.paywall && window.paywall.goToCheckout) {
-                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
+                    if (window.showToast) window.showToast('App download requires a Premium membership.', 'info');
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Premium Members. Please upgrade to unlock.");
                     }
                     return;
                 }
@@ -3056,18 +3057,14 @@
 
         if (installAccept) {
             installAccept.addEventListener('click', async () => {
-                // STRICT PAYWALL CHECK: Source Code / App Download ($350)
-                if (!window.paywall) {
-                    alert('Loading purchase verification... Please try again in a moment.');
-                    return;
-                }
-                const hasAccess = await window.paywall.hasPurchasedApp();
+                const isPremium = (await import('/assets/stripe-simple-lbnaObyd.js')).isPremiumUser;
+                const hasAccess = await isPremium().catch(() => false);
                 if (!hasAccess) {
-                    if (window.showToast) window.showToast('Redirecting to Lifetime upgrade...', 'info');
-                    if (window.paywall && window.paywall.goToCheckout) {
-                        window.paywall.goToCheckout('lifetime', 'oneTime', null);
+                    if (window.showToast) window.showToast('App download requires a Premium membership.', 'info');
+                    if (window.showPricingModal) {
+                        window.showPricingModal();
                     } else {
-                        alert("The Downloadable App is exclusive to Lifetime Members. Please upgrade to unlock.");
+                        alert("The Downloadable App is exclusive to Premium Members. Please upgrade to unlock.");
                     }
                     return;
                 }
@@ -3286,7 +3283,7 @@
         <div class="w-full max-w-md mx-4" style="animation: modalFadeIn 0.3s ease-out;">
             <!-- Card -->
             <div class="relative"
-                style="background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
+                style="background: linear-gradient(180deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 26, 0.98) 100%); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); max-height: min(92vh, 92dvh); overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box;">
 
                 <!-- Gradient accent bar -->
                 <div

@@ -105,35 +105,6 @@ export const PRICING_TIERS = {
             pricelock: true,
             commercialUse: true
         }
-    },
-    lifetime: {
-        name: 'Eternity',
-        description: 'One-time payment for forever access',
-        oneTimePrice: 199,
-        stripe: {
-            oneTime: ENV.VITE_STRIPE_LIFETIME_LINK || 'https://buy.stripe.com/9B6dR11Zu5rFc9t8mfgfu05'
-        },
-        features: {
-            presets: null,
-            sessionLimit: null,
-            dailySessions: null,
-            journeyLessons: null,
-            sleepStories: null,
-            visualizer: 'premium',
-            customMixes: true,
-            analytics: true,
-            ads: false,
-            offline: true,
-            aiRecommendations: true,
-            breathingExercises: true,
-            videoBackgrounds: true,
-            prioritySupport: true,
-            earlyAccess: true,
-            exportMp3: true,
-            healthIntegrations: true,
-            community: true,
-            pricelock: true
-        }
     }
 };
 

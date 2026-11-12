@@ -86,7 +86,32 @@ export interface UserSettings {
     snowboard_trails: boolean;
     historical_cameras: boolean;
     community_reports: boolean;
+    weather_clouds: boolean;
+    weather_pressure: boolean;
+    weather_apple_hud: boolean;
+    atmospheric_radar: boolean;
+    chemical_spraying: boolean;
+    power_lines: boolean;
+    utility_companies: boolean;
+    fiber_cables: boolean;
+    hospitals: boolean;
+    urgent_care: boolean;
+    military_bunkers: boolean;
+    citizen_bunkers: boolean;
+    bomb_storage_depots: boolean;
+    military_bases: boolean;
+    dams: boolean;
+    flood_zones: boolean;
+    dam_inundation: boolean;
+    elevation_topography: boolean;
+    farms_ranches: boolean;
+    medicinal_flora: boolean;
+    fuel_pipelines: boolean;
+    water_aqueducts: boolean;
+    strategic_facilities: boolean;
+    [key: string]: boolean | undefined;
   };
+  basemap_mode?: 'street' | 'dark' | 'satellite';
   satellite_provider?: 'hd_arcgis' | 'nasa_viirs' | 'nasa_modis' | 'goes_live';
   tier?: 'free' | 'pro' | 'sovereign';
   clustering_enabled: boolean;
@@ -144,7 +169,31 @@ const DEFAULT_SETTINGS: UserSettings = {
     snowboard_trails: true,
     historical_cameras: false,
     community_reports: true,
+    weather_clouds: false,
+    weather_pressure: false,
+    weather_apple_hud: false,
+    atmospheric_radar: false,
+    chemical_spraying: false,
+    power_lines: false,
+    utility_companies: false,
+    fiber_cables: false,
+    hospitals: false,
+    urgent_care: false,
+    military_bunkers: false,
+    citizen_bunkers: false,
+    bomb_storage_depots: false,
+    military_bases: false,
+    dams: false,
+    flood_zones: false,
+    dam_inundation: false,
+    elevation_topography: true,
+    farms_ranches: false,
+    medicinal_flora: false,
+    fuel_pipelines: false,
+    water_aqueducts: false,
+    strategic_facilities: false,
   },
+  basemap_mode: 'street',
   satellite_provider: 'hd_arcgis',
   tier: 'free',
   clustering_enabled: true,
@@ -168,6 +217,7 @@ export function useSettings() {
           return {
             ...DEFAULT_SETTINGS,
             ...parsed,
+            basemap_mode: parsed.basemap_mode || (parsed.layers?.satellite ? 'satellite' : 'street'),
             layers: { ...DEFAULT_SETTINGS.layers, ...(parsed.layers || {}) },
             cursor: { ...DEFAULT_SETTINGS.cursor, ...(parsed.cursor || {}) }
           };
@@ -179,12 +229,13 @@ export function useSettings() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     async function loadSettings() {
       try {
         const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         if (!isLocal) return;
 
-        const pRes = await fetch('http://127.0.0.1:3117/api/profile/pins');
+        const pRes = await fetch('http://127.0.0.1:3117/api/profile/pins', { signal: AbortSignal.timeout(300) });
         if (pRes.ok) {
           const pData = await pRes.json();
           if (pData.pins && Array.isArray(pData.pins)) {
@@ -205,7 +256,7 @@ export function useSettings() {
       } catch (e) {}
 
       if (!isSupabaseConfigured()) {
-        setLoading(false);
+        if (isMounted) setLoading(false);
         return;
       }
       try {
@@ -225,62 +276,69 @@ export function useSettings() {
             saved_locations: data.saved_locations || [],
             custom_pins: data.custom_pins || [],
             default_timeframe: data.default_timeframe,
+            basemap_mode: data.basemap_mode || (data.layers?.satellite ? 'satellite' : 'street'),
             layers: { ...DEFAULT_SETTINGS.layers, ...(data.layers || {}) },
             clustering_enabled: data.clustering_enabled ?? DEFAULT_SETTINGS.clustering_enabled,
             cursor: { ...DEFAULT_SETTINGS.cursor, ...(data.cursor || {}) }
           };
-          setSettings(remoteSettings);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteSettings));
+          if (isMounted) {
+            setSettings(remoteSettings);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteSettings));
+            }
           }
         }
       } catch (err) {
         // Fallback already loaded from localStorage/defaults
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
     loadSettings();
+    return () => { isMounted = false; };
   }, []);
 
   const updateSettings = async (updates: Partial<UserSettings>) => {
-    const newSettings = { ...settings, ...updates };
-    setSettings(newSettings);
+    let latestSettings: UserSettings | null = null;
+    setSettings(prev => {
+      const mergedLayers = updates.layers ? { ...prev.layers, ...updates.layers } : prev.layers;
+      const nextSettings = { ...prev, ...updates, layers: mergedLayers };
+      latestSettings = nextSettings;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSettings));
+        } catch (e) {}
+      }
+      return nextSettings;
+    });
 
-    if (typeof window !== 'undefined') {
+    if (updates.custom_pins && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
+        fetch('http://127.0.0.1:3117/api/profile/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ custom_pins: updates.custom_pins }),
+          signal: AbortSignal.timeout(500)
+        }).catch(() => {});
       } catch (e) {}
     }
 
-    if (newSettings.custom_pins) {
-      try {
-        const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-        if (isLocal) {
-          fetch('http://127.0.0.1:3117/api/profile/sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ custom_pins: newSettings.custom_pins })
-          }).catch(() => {});
-        }
-      } catch (e) {}
-    }
-
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured() || !latestSettings) return;
 
     try {
+      const s = latestSettings as UserSettings;
       await supabase
         .from('user_settings')
         .upsert({
           id: DEMO_USER_ID,
-          home_location: newSettings.home_location,
-          saved_locations: newSettings.saved_locations,
-          custom_pins: newSettings.custom_pins,
-          default_timeframe: newSettings.default_timeframe,
-          layers: newSettings.layers,
-          clustering_enabled: newSettings.clustering_enabled,
-          tier: newSettings.tier,
-          cursor: newSettings.cursor,
+          home_location: s.home_location,
+          saved_locations: s.saved_locations,
+          custom_pins: s.custom_pins,
+          default_timeframe: s.default_timeframe,
+          layers: s.layers,
+          clustering_enabled: s.clustering_enabled,
+          tier: s.tier,
+          cursor: s.cursor,
           updated_at: new Date().toISOString()
         });
     } catch (e) {}

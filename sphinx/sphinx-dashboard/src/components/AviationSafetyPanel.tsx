@@ -30,7 +30,7 @@ export const AviationSafetyPanel: React.FC<AviationSafetyPanelProps> = ({
   const hiredSummary = getProfessionalAviationSummary();
 
   return (
-    <div className="fixed inset-0 sm:inset-auto sm:top-14 sm:right-6 sm:bottom-6 sm:w-[580px] sm:max-w-[calc(100vw-1.5rem)] sm:max-h-[calc(100vh-5rem)] z-50 flex flex-col bg-slate-950/95 border border-sky-800/80 rounded-none sm:rounded-2xl shadow-[0_15px_60px_rgba(0,0,0,0.9)] backdrop-blur-2xl font-mono text-white overflow-hidden animate-in fade-in slide-in-from-right-4 duration-200">
+    <div className="fixed inset-0 sm:inset-auto sm:top-14 sm:right-6 sm:bottom-6 sm:w-[min(580px,calc(100vw-2rem))] sm:max-h-[calc(100vh-5rem)] z-50 flex flex-col bg-slate-950/95 border border-sky-800/80 rounded-none sm:rounded-2xl shadow-[0_15px_60px_rgba(0,0,0,0.9)] backdrop-blur-2xl font-mono text-white overflow-hidden animate-in fade-in slide-in-from-right-4 duration-200">
       {/* Header */}
       <div className="px-4 py-3 bg-gradient-to-r from-sky-950/80 via-black to-slate-950/80 border-b border-sky-900/60 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">

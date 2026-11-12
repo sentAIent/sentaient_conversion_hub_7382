@@ -470,6 +470,7 @@ const HTMLStations = () => {
           </div>
 
           {/* Action Bar */}
+          {/* Action Bar */}
           <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
             
             {/* Primary Action: Enter App */}

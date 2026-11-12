@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { CursorSettings } from '../lib/useSettings';
 
 export const CURSOR_SHAPES: Record<string, {
@@ -94,42 +94,25 @@ export const CURSOR_SHAPES: Record<string, {
 };
 
 export function CustomCursor({ settings }: { settings?: CursorSettings }) {
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  const shape = settings?.shape || 'sun';
+  const color = settings?.color || '#00e5ff';
+  const secondary = settings?.secondaryColor || '#fb7185';
+  const opacity = settings?.opacity ?? 1.0;
 
-    let styleTag = document.getElementById('sphinx-custom-cursor-style') as HTMLStyleElement | null;
-    if (!styleTag) {
-      styleTag = document.createElement('style');
-      styleTag.id = 'sphinx-custom-cursor-style';
-      document.head.appendChild(styleTag);
-    }
-
-    const shape = settings?.shape || 'sun';
-    const color = settings?.color || '#00e5ff';
-    const secondary = settings?.secondaryColor || '#fb7185';
-    const opacity = settings?.opacity ?? 1.0;
-
+  const css = useMemo(() => {
     if (shape === 'default') {
-      styleTag.textContent = '';
-      return;
+      return `*, *::before, *::after { cursor: auto !important; }`;
     }
 
     let cursorUrl = '';
-
     if (shape === 'sun2') {
-      cursorUrl = `url('/tribal-sun-cursor.png') 16 16, auto`;
+      cursorUrl = `url('/sphinx/tribal-sun-cursor.png') 16 16, url('/tribal-sun-cursor.png') 16 16, auto`;
     } else {
       const generator = CURSOR_SHAPES[shape]?.create;
-      if (!generator) {
-        styleTag.textContent = '';
-        return;
-      }
+      if (!generator) return '';
 
       const svg = generator(color, secondary);
-      if (!svg) {
-        styleTag.textContent = '';
-        return;
-      }
+      if (!svg) return '';
 
       let finalSvg = svg;
       if (opacity !== 1.0) {
@@ -139,25 +122,30 @@ export function CustomCursor({ settings }: { settings?: CursorSettings }) {
       cursorUrl = `url("data:image/svg+xml,${encodeURIComponent(finalSvg)}") 16 16, auto`;
     }
 
-    styleTag.textContent = `
-      html, body, a, button, [role="button"], input, select, textarea, .cursor-pointer, .maplibregl-canvas, .maplibregl-canvas-container {
+    return `
+      *, *::before, *::after {
         cursor: ${cursorUrl} !important;
       }
-      .cursor-ns-resize { cursor: ns-resize !important; }
-      .cursor-ew-resize { cursor: ew-resize !important; }
-      .cursor-nwse-resize { cursor: nwse-resize !important; }
-      .cursor-nesw-resize { cursor: nesw-resize !important; }
-      .cursor-grab { cursor: grab !important; }
-      .cursor-grabbing { cursor: grabbing !important; }
-      .cursor-crosshair { cursor: crosshair !important; }
+      .cursor-ns-resize, .cursor-ns-resize * { cursor: ns-resize !important; }
+      .cursor-ew-resize, .cursor-ew-resize * { cursor: ew-resize !important; }
+      .cursor-nwse-resize, .cursor-nwse-resize * { cursor: nwse-resize !important; }
+      .cursor-nesw-resize, .cursor-nesw-resize * { cursor: nesw-resize !important; }
+      .cursor-grab, .cursor-grab * { cursor: grab !important; }
+      .cursor-grabbing, .cursor-grabbing * { cursor: grabbing !important; }
+      .cursor-crosshair, .cursor-crosshair * { cursor: crosshair !important; }
     `;
+  }, [shape, color, secondary, opacity]);
 
-    return () => {
-      if (styleTag) {
-        styleTag.textContent = '';
-      }
-    };
-  }, [settings?.shape, settings?.color, settings?.secondaryColor, settings?.opacity]);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    let el = document.getElementById('sphinx-custom-cursor-style');
+    if (!el) {
+      el = document.createElement('style');
+      el.id = 'sphinx-custom-cursor-style';
+      document.head.appendChild(el);
+    }
+    el.textContent = css;
+  }, [css]);
 
   return null;
 }

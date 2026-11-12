@@ -37,13 +37,14 @@ export const SphinxAIAssistant: React.FC<SphinxAIAssistantProps> = ({
       text: `### 🧠 SPHINX TACTICAL AI ONLINE
 I am grounded in your live geospatial map feed and intelligence databases.
 
-**I can answer in-depth inquiries including:**
-- **Crime in any city and neighborhood** (e.g., *"What is the crime breakdown in Chicago by neighborhood?"*)
-- **Aviation safety analytics** (e.g., *"Tell me the frequency of airplane crashes by day of the week."*)
-- **Live map threats & sensor telemetry** (active wildfires, seismic shocks, wind vectors, and dropped pins)
-- **Deep multi-source research** on demand with verified statistical tables.
+- **Law, Constitutions & Sovereignty** (Black's Law 1st-6th, Latin maxims, Federal/50 State Constitutions)
+- **Critical Infrastructure & Dams** (Dam breach inundation, 500kV power grid cascades, subsea cables, data centers)
+- **Tactical Survival & Defense** (Water potability, foraging flora, civil food storage, expat evacuation, CBRN fallout)
+- **Comms, SIGINT & Space** (Ham repeaters, LoRa mesh, RTL-SDR WebUSB, orbital reconnaissance satellites, EMP)
+- **Geospatial Analytics** (Bug-out routes, Rothermel wildfire spread, Doppler radar, BLM land ownership)
+- **Crime, Aviation & Sensors** (Neighborhood crime, crash day stats, ALPR cameras, live telemetry)
 
-Select a quick query below or type your inquiry.`,
+Select a quick prompt below or type any question across all intelligence domains.`,
       sources: ['Sphinx Central Core', 'NTSB Historical Records', 'FBI UCR / OpenData', 'Live Telemetry Sensors'],
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
@@ -128,13 +129,28 @@ Select a quick query below or type your inquiry.`,
   }, [isOpen, initialQuery]);
 
   const quickPrompts = [
+    { label: "⚖️ Black's Law: Driver vs Traveler", query: "What is the Black's Law Dictionary definition of driver vs traveler and its constitutional implications?" },
+    { label: "📜 Legal Maxim: Ignorantia Juris", query: "Explain the legal maxim Ignorantia juris non excusat and its application to statutory notice." },
+    { label: "💧 Water potability & boil formulas", query: "What is the altitude-adjusted boiling time and purification protocol for natural subalpine water sources?" },
+    { label: "☀️ Space weather & EMP vulnerability", query: "What is the current planetary Kp index and what are the GIC power grid risks of a coronal mass ejection?" },
+    { label: "🌊 Oroville Dam breach floodwave", query: "What is the peak discharge and downstream wave arrival time if Oroville Dam suffers a catastrophic failure?" },
+    { label: "⚡ 500kV Path 15 grid cascade collapse", query: "Simulate an N-1 cascade failure starting at Los Banos 500kV substation and detail downstream impacts." },
+    { label: "☣️ Toxic chemical plume & OSHA IDLH", query: "What are the OSHA PEL and IDLH thresholds for chlorine gas and anhydrous ammonia plumes?" },
+    { label: "🍄 Morel foraging & toxic lookalikes", query: "How do I identify Yellow Morel mushrooms and avoid toxic false morel lookalikes?" },
     { label: '🌦️ Historical weather & rain/snow accum (Denver)', query: 'Show historical weather data for Denver including temps, rain/snow accumulation, and wind.' },
     { label: '❄️ Historical freeze & snow records (Chicago)', query: 'What was the historical temperature, snowfall accumulation, and peak wind gusts in Chicago during the winter?' },
     { label: '✈️ Hired pilot flight safety (Part 121/135)', query: 'Break down airplane crashes by day of the week for commercial and private flights piloted by professional hired pilots.' },
     { label: '✈️ Airplane crashes by day of week', query: 'Tell me the frequency of airplane crashes by day of the week.' },
     { label: '📸 Flock & Axon ALPR tracking', query: 'Analyze Flock Safety, Axon, and Ring surveillance cameras and show directional sightlines.' },
     { label: '🚨 Chicago crime by neighborhood', query: 'Analyze crime in Chicago by neighborhood with safety scores.' },
-    { label: '🔥 Active map threat synthesis', query: 'Synthesize all active map threats, fire spread risk, and live wind in current view.' }
+    { label: '🔥 Active map threat synthesis', query: 'Synthesize all active map threats, fire spread risk, and live wind in current view.' },
+    { label: "🛡️ 72-Hour pack & food storage math", query: "What is the optimal caloric density and Mylar oxygen absorber calculation for emergency food storage?" },
+    { label: "🌐 Expat consular evacuation protocols", query: "What are the Non-Combatant Evacuation Operation (NEO) protocols and safe haven countries during civil unrest?" },
+    { label: "🛰️ KH-11 spy satellite concealment", query: "When does the next optical or SAR reconnaissance satellite pass overhead and what are the concealment windows?" },
+    { label: "📶 LoRa 915MHz Meshtastic mesh comms", query: "How does LoRa Chirp Spread Spectrum mesh routing work for off-grid communications?" },
+    { label: "🗺️ BLM & USFS public land boundaries", query: "What are the dispersed camping regulations and jurisdiction rules on BLM public lands vs private parcels?" },
+    { label: "🧠 40Hz Gamma binaural entrainment", query: "Explain how 40Hz gamma and 7.83Hz Schumann binaural beats affect tactical cognitive entrainment." },
+    { label: "🌐 Subsea fiber cables & Ashburn IXP", query: "What are the primary transoceanic submarine fiber cable landing points and vulnerabilities of the Ashburn data center hub?" }
   ];
 
   const activePrompts = isDeepResearch ? DEEP_RESEARCH_PROMPTS : quickPrompts;

@@ -1,0 +1,499 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-0",
+        "name": "Cheyenne Mountain Complex (NORAD Alternate Command)",
+        "category": "bunker",
+        "sub_type": "Deep Underground Command Bunker",
+        "country": "United States",
+        "description": "Hardened nuclear bunker built 2,000 feet into granite. 15 three-story steel buildings mounted on heavy-duty coil springs to absorb blast shockwaves.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -104.8467,
+          38.7442
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-1",
+        "name": "Raven Rock Mountain Complex (Site R / Underground Pentagon)",
+        "category": "bunker",
+        "sub_type": "Continuity of Government Bunker",
+        "country": "United States",
+        "description": "Underground military command center hollowed out inside Raven Rock mountain near Blue Ridge Summit. Serves as emergency relocation for DoD leadership.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -77.4194,
+          39.7336
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-2",
+        "name": "The Greenbrier Bunker (Project Greek Island)",
+        "category": "bunker",
+        "sub_type": "Classified Congressional Nuclear Fallout Shelter",
+        "country": "United States",
+        "description": "Secret bunker built under the West Virginia resort with a 25-ton blast door, dormitories, hospital, and broadcast facilities for Congress.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -80.3069,
+          37.7889
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-3",
+        "name": "Mount Weather Emergency Operations Center",
+        "category": "bunker",
+        "sub_type": "FEMA / Continuity of Government Facility",
+        "country": "United States",
+        "description": "Subterranean facility in the Blue Ridge Mountains designed to house senior civilian and military leaders during a national catastrophe.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -77.8894,
+          39.0628
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-4",
+        "name": "Titan Missile Museum (Complex 571-7)",
+        "category": "missile_silo",
+        "sub_type": "ICBM Launch Complex",
+        "country": "United States",
+        "description": "Only preserved Titan II intercontinental ballistic missile site in the world. Includes 146-foot launch duct, rocket, blast-lock doors, and underground launch control center.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.9931,
+          31.9036
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-5",
+        "name": "HAARP Research Facility",
+        "category": "radar_array",
+        "sub_type": "Ionospheric Research & RF Transmitter Array",
+        "country": "United States",
+        "description": "High-power radio transmitter facility with 180 crossed dipole antennas used to study the ionosphere and aurora.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -145.15,
+          62.3917
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-6",
+        "name": "Duga Over-the-Horizon Radar (The Russian Woodpecker)",
+        "category": "radar_array",
+        "sub_type": "Soviet Early-Warning ABM Radar",
+        "country": "Ukraine",
+        "description": "Massive steel antenna array 150m tall and 500m wide near Chernobyl. Emitted an infamous 10Hz repetitive tapping signal on shortwave worldwide.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          30.0658,
+          51.3056
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-7",
+        "name": "Derinkuyu Underground City",
+        "category": "subterranean",
+        "sub_type": "Ancient Multi-Level Underground Metropolis",
+        "country": "Turkey",
+        "description": "Carved deep into volcanic rock extending 85 meters down across 18 levels. Accommodated up to 20,000 people with ventilation shafts, wells, and rolling stone doors.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          34.7347,
+          38.3739
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-8",
+        "name": "Svalbard Global Seed Vault (Doomsday Vault)",
+        "category": "bunker",
+        "sub_type": "Global Agricultural Genebank",
+        "country": "Norway",
+        "description": "Buried 130 meters into permafrost on Spitsbergen island. Designed to withstand nuclear war, asteroid strikes, and climate disasters.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          15.4914,
+          78.238
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-9",
+        "name": "Teufelsberg NSA Listening Station",
+        "category": "abandoned",
+        "sub_type": "Cold War SIGINT Station",
+        "country": "Germany",
+        "description": "Artificial hill built from 26 million cubic meters of WWII rubble in West Berlin, topped with iconic geodesic radomes for intercepting Eastern Bloc radio traffic.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.2411,
+          52.4972
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-10",
+        "name": "Burlington Bunker (Central Government War HQ)",
+        "category": "bunker",
+        "sub_type": "Secret Underground Nuclear City",
+        "country": "United Kingdom",
+        "description": "35-acre subterranean city constructed 100 feet beneath an abandoned quarry in Wiltshire. Had underground hospital, bakeries, telephone exchange, and BBC studio.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.2222,
+          51.4286
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-11",
+        "name": "Kelvedon Hatch Secret Nuclear Bunker",
+        "category": "bunker",
+        "sub_type": "Regional Government HQ (RGHQ)",
+        "country": "United Kingdom",
+        "description": "Three-level bunker 125 feet underground hidden beneath a mock ordinary farmhouse in Essex, built to sustain 600 military and civil personnel for 3 months.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.2833,
+          51.6667
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-12",
+        "name": "Catacombs of Paris (Ossuary & Underground Quarries)",
+        "category": "subterranean",
+        "sub_type": "Underground Labyrinth & Bone Ossuary",
+        "country": "France",
+        "description": "Over 300 kilometers of subterranean quarry tunnels beneath the streets of Paris holding remains of more than 6 million people.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3325,
+          48.8338
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-13",
+        "name": "Mount Yamantau (Kosvinsky Kamen Command Center)",
+        "category": "bunker",
+        "sub_type": "Classified Russian Military Underground Complex",
+        "country": "Russia",
+        "description": "Extensive military facility mined deep inside quartz mountain in the Southern Urals, connected by secret rail lines. Believed to be a nuclear command post.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          58.1039,
+          54.2547
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-14",
+        "name": "Buzludzha Monument",
+        "category": "abandoned",
+        "sub_type": "Decommissioned UFO-Shaped Concrete Megastructure",
+        "country": "Bulgaria",
+        "description": "Monumental saucer-shaped concrete amphitheater built atop a mountain peak, now abandoned with weather-beaten mosaics and crumbling spire.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.3942,
+          42.7358
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-15",
+        "name": "Door to Hell (Darvaza Gas Crater)",
+        "category": "anomaly",
+        "sub_type": "Perpetually Burning Natural Gas Methane Sinkhole",
+        "country": "Turkmenistan",
+        "description": "70-meter wide gas crater set on fire by Soviet engineers in 1971 expecting it to burn out in weeks; has burned continuously for over 50 years.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          58.4397,
+          40.2525
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-16",
+        "name": "Richat Structure (Eye of the Sahara)",
+        "category": "anomaly",
+        "sub_type": "Deeply Eroded 40km Geologic Dome",
+        "country": "Mauritania",
+        "description": "Concentric ring formation visible from orbit, historically used by Gemini astronauts as a landmark. Formed by a deeply eroded magmatic dome.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -11.4016,
+          21.1269
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-17",
+        "name": "Wieliczka Salt Mine Underground Cathedral",
+        "category": "subterranean",
+        "sub_type": "Subterranean Salt City & Carved Chapels",
+        "country": "Poland",
+        "description": "Reaches depths of 327 meters across 287 kilometers of tunnels, featuring subterranean saline lakes, chapels, and statues sculpted out of rock salt.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          20.05,
+          49.9833
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-18",
+        "name": "Area 51 (Groom Lake / Homey Airport)",
+        "category": "military",
+        "sub_type": "Classified US Air Force Flight Test Facility",
+        "country": "United States",
+        "description": "Remote detachment of Edwards AFB inside Nevada Test and Training Range, birthplace of the U-2, SR-71 Blackbird, and F-117 Nighthawk.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.793,
+          37.2431
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-19",
+        "name": "Pine Gap Joint Defence Facility",
+        "category": "radar_array",
+        "sub_type": "Satellite Ground Station & ECHELON SIGINT Site",
+        "country": "Australia",
+        "description": "Joint US-Australian surveillance station in the Outback with dozens of large radomes tracking geostationary spy satellites and intercepting telemetry.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          133.737,
+          -23.799
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-20",
+        "name": "RAF Menwith Hill",
+        "category": "radar_array",
+        "sub_type": "NSA / ECHELON Electronic Intercept Facility",
+        "country": "United Kingdom",
+        "description": "Known for its distinctive white golf-ball radomes; one of the largest electronic monitoring and satellite interception ground stations in the world.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -1.6881,
+          53.9989
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-21",
+        "name": "Son Doong Cave (World’s Largest Cave Passage)",
+        "category": "subterranean",
+        "sub_type": "Subterranean Megacave with Jungle and River",
+        "country": "Vietnam",
+        "description": "Colossal cave passage large enough to fit an entire 40-story skyscraper city block. Has its own localized weather system, clouds, and primeval jungle inside.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.2872,
+          17.4589
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-22",
+        "name": "Yucca Mountain Nuclear Waste Repository",
+        "category": "subterranean",
+        "sub_type": "Deep Geologic Isolation Repository",
+        "country": "United States",
+        "description": "Multi-billion dollar underground repository excavated 1,000 feet into volcanic tuff inside the Nevada desert for high-level radioactive storage.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -116.4297,
+          36.8525
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-23",
+        "name": "Maunsell Sea Forts (Red Sands & Shivering Sands)",
+        "category": "abandoned",
+        "sub_type": "WWII Offshore Fort Towers",
+        "country": "United Kingdom",
+        "description": "Stilt-mounted steel and concrete defensive towers placed in the Thames Estuary to defend against German air raids, later host to pirate radio stations.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.9856,
+          51.4686
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-24",
+        "name": "Wolf’s Lair (Wolfsschanze)",
+        "category": "bunker",
+        "sub_type": "Reinforced Concrete Military Bunker Complex",
+        "country": "Poland",
+        "description": "Heavily fortified military headquarters in the Masurian woods with 8-meter thick reinforced concrete walls, site of the July 20 assassination attempt.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          21.4947,
+          54.0806
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "obscura-25",
+        "name": "Balleny Fracture Zone Megaliths / Oceanic Gravity Anomaly",
+        "category": "anomaly",
+        "sub_type": "Subsea Tectonic Rift Anomaly",
+        "country": "Southern Ocean",
+        "description": "Deep seismic fracture zone in the Southern Ocean with unusual gravimetric variance and ultra-deep bathymetric trenches.",
+        "type": "atlas_obscura"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165,
+          -65
+        ]
+      }
+    }
+  ]
+}

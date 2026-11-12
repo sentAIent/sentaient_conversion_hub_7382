@@ -4726,14 +4726,16 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
     const isCymaticsActive = viz && viz.activeModes && viz.activeModes.has('cymatics');
 
     if (!isCymaticsActive) {
-        const { BRAINWAVE_VISUALS, HEALING_VISUALS } = await import('../state.js');
+        const { BRAINWAVE_VISUALS, HEALING_VISUALS, ORGAN_VISUALS } = await import('../state.js');
         
         let targetVisuals = null;
         if (BRAINWAVE_VISUALS && BRAINWAVE_VISUALS[type]) {
             targetVisuals = BRAINWAVE_VISUALS[type];
         } else if (HEALING_VISUALS && HEALING_VISUALS[type]) {
             targetVisuals = HEALING_VISUALS[type];
-        } else if (type.startsWith('heal-')) {
+        } else if (ORGAN_VISUALS && ORGAN_VISUALS[type]) {
+            targetVisuals = ORGAN_VISUALS[type];
+        } else if (type.startsWith('heal-') || type.startsWith('organ-')) {
             // Fallback for custom healing frequencies
             let fallbackVisuals = ['matrix', 'particles'];
             const freq = parseInt(type.split('-')[1]);
@@ -4851,6 +4853,28 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
 
         // Hyper-Gamma (40-100Hz) - Extended range
         case 'hyper-gamma': base = 640; beat = 80; color = '#f59e0b'; break; // Amber - higher octave
+
+        // --- HUMAN ORGAN & BODY RESONANCE FREQUENCIES ---
+        case 'organ-teeth': base = 528.0; beat = 7.83; color = '#e2e8f0'; window.setCymaticState?.(22, 16); break; // Teeth & Enamel / Oral Matrix
+        case 'organ-brain': base = 315.8; beat = 10.0; color = '#a855f7'; window.setCymaticState?.(19, 4); break;  // Brain & Central Nervous System
+        case 'organ-heart': base = 341.3; beat = 5.5; color = '#ef4444'; window.setCymaticState?.(22, 18); break;  // Heart & Cardiovascular
+        case 'organ-lungs': base = 220.0; beat = 5.5; color = '#38bdf8'; window.setCymaticState?.(21, 2); break;   // Lungs & Respiratory
+        case 'organ-liver': base = 317.8; beat = 6.0; color = '#10b981'; window.setCymaticState?.(22, 12); break;  // Liver & Hepatic Matrix
+        case 'organ-kidneys': base = 319.9; beat = 5.5; color = '#06b6d4'; window.setCymaticState?.(22, 9); break; // Kidneys & Renal Fluid
+        case 'organ-stomach': base = 110.0; beat = 4.5; color = '#f59e0b'; window.setCymaticState?.(20, 1); break; // Stomach & Gastric Motility
+        case 'organ-gut': base = 281.0; beat = 7.83; color = '#d97706'; window.setCymaticState?.(22, 14); break;   // Intestines & Microbiome
+        case 'organ-pancreas': base = 117.3; beat = 5.5; color = '#eab308'; window.setCymaticState?.(13, 6); break;// Pancreas & Glycemic
+        case 'organ-spleen': base = 317.8; beat = 8.5; color = '#8b5cf6'; window.setCymaticState?.(8, 7); break;   // Spleen & Lymphatic System
+        case 'organ-gallbladder': base = 164.3; beat = 5.5; color = '#84cc16'; window.setCymaticState?.(11, 3); break; // Gallbladder & Biliary Duct
+        case 'organ-bladder': base = 352.0; beat = 6.0; color = '#0ea5e9'; window.setCymaticState?.(21, 0); break; // Bladder & Pelvic Matrix
+        case 'organ-thyroid': base = 295.8; beat = 10.0; color = '#3b82f6'; window.setCymaticState?.(22, 13); break;// Thyroid & Metabolism
+        case 'organ-adrenals': base = 492.8; beat = 7.83; color = '#ec4899'; window.setCymaticState?.(22, 22); break;// Adrenal Glands & Vitality
+        case 'organ-bones': base = 418.3; beat = 12.0; color = '#f8fafc'; window.setCymaticState?.(14, 9); break;  // Bones & Skeletal Matrix
+        case 'organ-muscles': base = 324.0; beat = 8.0; color = '#f97316'; window.setCymaticState?.(15, 4); break;  // Muscles & Fascial Release
+        case 'organ-blood': base = 321.9; beat = 10.0; color = '#dc2626'; window.setCymaticState?.(22, 20); break;  // Blood Circulation & Hemoglobin
+        case 'organ-skin': base = 494.0; beat = 7.83; color = '#fb7185'; window.setCymaticState?.(6, 8); break;    // Skin & Collagen Rejuvenation
+        case 'organ-eyes': base = 352.0; beat = 10.0; color = '#22d3ee'; window.setCymaticState?.(12, 7); break;   // Eyes & Retinal Rest
+        case 'organ-spine': base = 136.1; beat = 5.5; color = '#6366f1'; window.setCymaticState?.(22, 10); break;  // Spine & Vertebral Alignment
     }
 
 
@@ -6216,6 +6240,99 @@ const INFO_CONTENT = {
                     <div class="flex items-center gap-3 text-sm">
                         <span class="font-mono font-bold text-[var(--accent)] w-12 text-right">963Hz</span>
                         <div class="flex flex-col"><span class="font-bold text-white/90">Oneness</span><span class="text-[10px] text-white/50">Divine consciousness</span></div>
+                    </div>
+                </div>
+            </div>
+        `
+    },
+    organs: {
+        title: "🧬 Organ & Body Resonance",
+        emoji: "🫀",
+        content: `
+            <div class="space-y-4">
+                <p class="text-white/80 leading-relaxed font-sans">
+                    Bio-acoustic and harmonic frequencies tuned to the resonant signatures of human organs and physiological systems, based on acoustic cellular research.
+                </p>
+                <div class="bg-white/5 p-3 rounded-lg border border-white/5 space-y-2 font-sans max-h-[300px] overflow-y-auto custom-scrollbar">
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">528Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Teeth & Enamel</span><span class="text-[10px] text-white/50">Oral matrix remineralization & pulp vitality</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">315.8Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Brain & CNS</span><span class="text-[10px] text-white/50">Neuroplasticity, synaptic calm & cognitive focus</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">341.3Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Heart</span><span class="text-[10px] text-white/50">Cardiac coherence & vascular rhythm</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">220Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Lungs & Respiratory</span><span class="text-[10px] text-white/50">Bronchial cellular oxygenation & breath depth</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">317.8Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Liver</span><span class="text-[10px] text-white/50">Hepatic detox & metabolic filtration</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">319.9Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Kidneys</span><span class="text-[10px] text-white/50">Renal fluid balance & cellular hydration</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">110Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Stomach</span><span class="text-[10px] text-white/50">Gastric lining soothing & vagal digestive tone</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">281Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Intestines & Colon</span><span class="text-[10px] text-white/50">Gut-brain axis, peristalsis & microbiome harmony</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">117.3Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Pancreas</span><span class="text-[10px] text-white/50">Endocrine balance & digestive enzyme release</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">317.8Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Spleen & Lymph</span><span class="text-[10px] text-white/50">Lymphatic drainage & immune defense</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">164.3Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Gallbladder</span><span class="text-[10px] text-white/50">Biliary flow & lipid assimilation</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">352Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Bladder</span><span class="text-[10px] text-white/50">Pelvic floor relaxation & fluid regulation</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">295.8Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Thyroid</span><span class="text-[10px] text-white/50">Metabolic equilibrium & endocrine rhythm</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">492.8Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Adrenal Glands</span><span class="text-[10px] text-white/50">Cortisol regulation & adrenal fatigue recovery</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">418.3Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Bones & Skeleton</span><span class="text-[10px] text-white/50">Osteoblast density & structural strength</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">324Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Muscles & Fascia</span><span class="text-[10px] text-white/50">Myofascial tension relief & lactic recovery</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">321.9Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Blood Circulation</span><span class="text-[10px] text-white/50">Nitric oxide release & hemoglobin oxygenation</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">494Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Skin & Collagen</span><span class="text-[10px] text-white/50">Fibroblast regeneration & dermal elasticity</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">352Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Eyes & Vision</span><span class="text-[10px] text-white/50">Optic nerve soothing & retinal strain release</span></div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="font-mono font-bold text-[var(--accent)] w-14 text-right">136.1Hz</span>
+                        <div class="flex flex-col"><span class="font-bold text-white/90">Spine & Vertebrae</span><span class="text-[10px] text-white/50">Cerebrospinal fluid circulation & postural alignment</span></div>
                     </div>
                 </div>
             </div>

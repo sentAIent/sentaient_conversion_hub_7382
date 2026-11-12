@@ -136,7 +136,7 @@ export class WatchtowerService {
       for (const endpoint of endpoints) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const timeoutId = setTimeout(() => controller.abort(), 2500);
 
           const response = await fetch(endpoint, {
             method: 'POST',

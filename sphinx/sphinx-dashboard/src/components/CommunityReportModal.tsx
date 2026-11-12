@@ -270,15 +270,35 @@ export function CommunityReportModal({
                     <label className="block text-[10px] text-gray-400 mb-1 uppercase font-medium">
                       🧭 Sightline Direction ({direction}°)
                     </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="360"
-                      step="5"
-                      value={direction}
-                      onChange={(e) => setDirection(parseInt(e.target.value))}
-                      className="w-full accent-cyan-500"
-                    />
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {[
+                        { label: 'N', deg: 0 },
+                        { label: 'E', deg: 90 },
+                        { label: 'S', deg: 180 },
+                        { label: 'W', deg: 270 }
+                      ].map((c) => (
+                        <button
+                          key={c.label}
+                          type="button"
+                          onClick={() => setDirection(c.deg)}
+                          className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-colors ${direction === c.deg ? 'bg-cyan-900/90 border-cyan-400 text-cyan-200 font-bold' : 'bg-black/40 border-gray-800 text-gray-400 hover:text-white'}`}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                      <div className="flex items-center gap-1 ml-auto">
+                        {[-15, -5, 5, 15].map((delta) => (
+                          <button
+                            key={delta}
+                            type="button"
+                            onClick={() => setDirection((prev) => (prev + delta + 360) % 360)}
+                            className="px-1.5 py-0.5 text-[9px] font-mono rounded bg-gray-900 border border-gray-700 text-gray-300 hover:text-cyan-300"
+                          >
+                            {delta > 0 ? `+${delta}°` : `${delta}°`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
