@@ -15,6 +15,7 @@
 /maya /maya/index.html 200
 /maya/ /maya/index.html 200
 /maya/* /maya/index.html 200
+/avatars/* /maya/avatars/:splat 200
 /icelogin /index.html 200
 /icewaitlist /index.html 200
 /* /index.html 200

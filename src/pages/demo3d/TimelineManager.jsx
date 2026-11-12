@@ -393,42 +393,42 @@ export const TimelineManager = () => {
         lightspeed: activeId === 'lightspeed'
       };
     } else {
-      // Smooth preloading of 2-3 worlds in advance to eliminate frame hitching and shader compilation lag
+      // Precision world & wormhole zone activation (strictly mutually exclusive, zero bleed/spillover)
       newZones = {
         intro: p < 0.025,
         w_matrix_intro: p >= 0.000 && p < 0.038,
         w_mindwave: p >= 0.015 && p < 0.030,
         mindwave: p >= 0.022 && p < 0.065,
-        wormhole_ice: p >= 0.045 && p < 0.118,
-        icebreaker: p >= 0.045 && p < 0.170,
-        wormhole_sound: p >= 0.145 && p < 0.198,
-        interstellar: p >= 0.110 && p < 0.245,
-        w_legal: p >= 0.210 && p < 0.246,
-        legal: p >= 0.100 && p < 0.285, // Preloaded 2-3 worlds in advance
-        w_autopilot: p >= 0.258 && p < 0.292,
-        autopilot: p >= 0.160 && p < 0.330, // Preloaded 2-3 worlds in advance
-        w_clove: p >= 0.302 && p < 0.338,
-        clove: p >= 0.210 && p < 0.380, // Preloaded 2-3 worlds in advance
-        w_fantasy: p >= 0.355 && p < 0.412,
-        fantasy: p >= 0.270 && p < 0.445, // Preloaded 2-3 worlds in advance
-        w_contango: p >= 0.422 && p < 0.462,
-        contango: p >= 0.320 && p < 0.495, // Preloaded 2-3 worlds in advance
-        w_sentaient: p >= 0.472 && p < 0.502,
-        sentaient: p >= 0.370 && p < 0.535, // Preloaded 2-3 worlds in advance
-        w_elevate: p >= 0.520 && p < 0.546,
-        elevate: p >= 0.410 && p < 0.575, // Preloaded 2-3 worlds in advance
-        w_sphinx: p >= 0.560 && p < 0.608,
-        sphinx: p >= 0.460 && p < 0.640, // Preloaded 2-3 worlds in advance
-        w_liquid: p >= 0.620 && p < 0.666,
-        liquid: p >= 0.520 && p < 0.700, // Preloaded 2-3 worlds in advance
-        w_maya: p >= 0.675 && p < 0.726,
-        maya: p >= 0.580 && p < 0.760, // Preloaded 2-3 worlds in advance
-        w_pyramid: p >= 0.735 && p < 0.785,
-        pyramid: p >= 0.640 && p < 0.840, // Preloaded 2-3 worlds in advance
-        w_matrix: p >= 0.825 && p < 0.870,
-        matrix: p >= 0.700 && p < 0.910, // Preloaded 2-3 worlds in advance
-        w_lightspeed: p >= 0.885 && p < 0.940,
-        lightspeed: p >= 0.770 && p <= 1.000 // Preloaded 2-3 worlds in advance
+        wormhole_ice: p >= 0.048 && p < 0.120,
+        icebreaker: p >= 0.095 && p < 0.165,
+        wormhole_sound: p >= 0.145 && p < 0.195,
+        interstellar: p >= 0.180 && p < 0.228,
+        w_legal: p >= 0.215 && p < 0.245,
+        legal: p >= 0.235 && p < 0.272,
+        w_autopilot: p >= 0.260 && p < 0.290,
+        autopilot: p >= 0.278 && p < 0.315,
+        w_clove: p >= 0.305 && p < 0.335,
+        clove: p >= 0.325 && p < 0.370,
+        w_fantasy: p >= 0.362 && p < 0.410,
+        fantasy: p >= 0.395 && p < 0.438,
+        w_contango: p >= 0.428 && p < 0.458,
+        contango: p >= 0.448 && p < 0.480,
+        w_sentaient: p >= 0.472 && p < 0.498,
+        sentaient: p >= 0.488 && p < 0.522,
+        w_elevate: p >= 0.522 && p < 0.542,
+        elevate: p >= 0.535 && p < 0.575,
+        w_sphinx: p >= 0.565 && p < 0.605,
+        sphinx: p >= 0.592 && p < 0.635,
+        w_liquid: p >= 0.622 && p < 0.662,
+        liquid: p >= 0.650 && p < 0.695,
+        w_maya: p >= 0.680 && p < 0.722,
+        maya: p >= 0.710 && p < 0.755,
+        w_pyramid: p >= 0.740 && p < 0.795,
+        pyramid: p >= 0.785 && p < 0.835,
+        w_matrix: p >= 0.820 && p < 0.868,
+        matrix: p >= 0.852 && p < 0.905,
+        w_lightspeed: p >= 0.890 && p < 0.940,
+        lightspeed: p >= 0.925 && p <= 1.000
       };
     }
 
@@ -553,15 +553,15 @@ export const TimelineManager = () => {
 
       <WorldFantasyQuant position={[0, -11700, -17500]} rotation={[0, 0, 0]} visible={activeZones.fantasy} />
 
-      <WormholeContango position={[0, -11750, -21000]} length={11000} visible={activeZones.w_contango} />
+      <WormholeContango position={[0, -11750, -18200]} length={5500} visible={activeZones.w_contango} />
 
       <ContangoQuant position={[0, -11750, -24800]} rotation={[0, 0, 0]} visible={activeZones.contango} />
 
-      <WormholeSentaient position={[0, -11750, -27125]} rotation={[Math.PI/2, 0, 0]} length={6500} visible={activeZones.w_sentaient} />
+      <WormholeSentaient position={[0, -11750, -27075]} rotation={[Math.PI/2, 0, 0]} length={3200} visible={activeZones.w_sentaient} />
 
       <WorldSentaient position={[0, -11750, -29350]} rotation={[0, 0, 0]} visible={activeZones.sentaient} />
       
-      <WormholeElevate position={[0, -11750, -31500]} rotation={[Math.PI/2, 0, 0]} length={5000} visible={activeZones.w_elevate} />
+      <WormholeElevate position={[0, -11750, -31175]} rotation={[Math.PI/2, 0, 0]} length={2400} visible={activeZones.w_elevate} />
       <WorldElevate position={[0, -11750, -33000]} visible={activeZones.elevate} />
       
       <WormholeSphinx position={[0, -11750, -35000]} rotation={[Math.PI/2, 0, 0]} length={5200} visible={activeZones.w_sphinx} />

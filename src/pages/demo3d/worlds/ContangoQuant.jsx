@@ -66,16 +66,24 @@ const RollercoasterCarAndHUD = ({ worldPosition }) => {
   // Load the logo image
   const texture = useLoader(THREE.TextureLoader, '/assets/images/contango_quant_logo_new.png');
 
+  const scroll = useScroll();
+
   useFrame((state) => {
+    const curP = (window._isTransitActive && window._warpProgress !== undefined)
+      ? window._warpProgress 
+      : (window._currentProgress !== undefined ? window._currentProgress : (scroll ? scroll.offset : 0.463));
+    if (curP < 0.445 || curP > 0.485) {
+      if (rigRef.current) rigRef.current.visible = false;
+      return;
+    }
     if (rigRef.current) {
+      rigRef.current.visible = true;
       // Pin the rig to the camera's world position, transformed into local coordinates
       const camPos = state.camera.position.clone();
       const localPos = camPos.sub(new THREE.Vector3(...worldPosition));
       
       rigRef.current.position.copy(localPos);
       rigRef.current.rotation.copy(state.camera.rotation);
-
-
     }
   });
 
@@ -149,8 +157,18 @@ const CandlestickTunnel = ({ worldPosition }) => {
     });
   }, []);
 
+  const scroll = useScroll();
+
   useFrame((state) => {
+    const curP = (window._isTransitActive && window._warpProgress !== undefined)
+      ? window._warpProgress 
+      : (window._currentProgress !== undefined ? window._currentProgress : (scroll ? scroll.offset : 0.463));
+    if (curP < 0.445 || curP > 0.485) {
+      if (tunnelRef.current) tunnelRef.current.visible = false;
+      return;
+    }
     if (tunnelRef.current) {
+      tunnelRef.current.visible = true;
       const camPos = state.camera.position.clone();
       const localPos = camPos.sub(new THREE.Vector3(...worldPosition));
       
@@ -210,8 +228,10 @@ const WorldContango = ({ position, rotation, visible }) => {
     }
   });
 
+  if (!visible) return null;
+
   return (
-    <group visible={visible} position={position} rotation={rotation}>
+    <group position={position} rotation={rotation}>
       
       {/* Dark Ambient Environment */}
       <mesh>

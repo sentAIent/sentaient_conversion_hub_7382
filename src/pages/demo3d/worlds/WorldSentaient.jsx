@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
-import { Sparkles, Text, Float } from '@react-three/drei';
+import { Sparkles, Text, Float, useScroll } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ===========================================================================
@@ -91,7 +91,12 @@ export default function WorldSentaient({ position, rotation, visible }) {
     }
   });
 
-  if (!visible) return null;
+  const scroll = useScroll();
+  const curP = (window._isTransitActive && window._warpProgress !== undefined)
+    ? window._warpProgress 
+    : (window._currentProgress !== undefined ? window._currentProgress : (scroll ? scroll.offset : 0.505));
+
+  if (!visible || curP < 0.480 || curP > 0.528) return null;
 
   return (
     <group position={position} rotation={rotation}>
