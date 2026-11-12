@@ -40,6 +40,13 @@ const PageLoader = () => (
   </div>
 );
 
+const MayaRedirect = () => {
+  React.useEffect(() => {
+    window.location.href = '/maya/';
+  }, []);
+  return <PageLoader />;
+};
+
 const ProjectRoutes = () => {
   return (
     <BrowserRouter>
@@ -86,6 +93,8 @@ const ProjectRoutes = () => {
               <Route path="/fantasyquant" element={<SportsAnalytics />} />
               <Route path="/matrix" element={<MatrixChatDemo />} />
               <Route path="/sentaient" element={<Navigate to="/agent-studio" replace />} />
+              <Route path="/maya" element={<MayaRedirect />} />
+              <Route path="/maya/*" element={<MayaRedirect />} />
               <Route path="/autopilot" element={<AISolutionsExperienceCenter />} />
               <Route path="/pyramid" element={<AdminAnalyticsDashboard />} />
               {/* Legal Pages */}
