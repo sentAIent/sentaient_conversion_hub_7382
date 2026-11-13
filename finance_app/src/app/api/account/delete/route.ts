@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 export async function DELETE(req: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
@@ -15,8 +15,7 @@ export async function DELETE(req: Request) {
 
     // Use the Supabase Service Role key to hard-delete the user from auth.users
     // This will cascade and delete their profile and associated PII due to FK constraints
-    const { createClient } = require('@supabase/supabase-js');
-    const supabaseAdmin = createClient(
+    const supabaseAdmin = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );

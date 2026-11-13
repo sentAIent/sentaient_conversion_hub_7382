@@ -67,6 +67,16 @@
   status = 301
 
 [[redirects]]
+  from = "/liquid"
+  to = "https://sentaient-liquid.netlify.app/liquid/"
+  status = 301
+
+[[redirects]]
+  from = "/liquid/*"
+  to = "https://sentaient-liquid.netlify.app/liquid/:splat"
+  status = 301
+
+[[redirects]]
   from = "/sphinx"
   to = "/sphinx/index.html"
   status = 200

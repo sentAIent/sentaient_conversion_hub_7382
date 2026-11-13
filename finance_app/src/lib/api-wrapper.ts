@@ -11,7 +11,7 @@ export function withValidation<T>(schema: ZodSchema<T>, handler: RequestHandler<
       
       if (!result.success) {
         return NextResponse.json(
-          { error: 'Validation Error', details: result.error.errors },
+          { error: 'Validation Error', details: result.error.issues },
           { status: 400 }
         );
       }

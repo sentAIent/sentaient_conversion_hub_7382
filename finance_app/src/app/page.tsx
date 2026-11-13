@@ -1,7 +1,6 @@
 "use client";
 
 import { useEntity } from '@/context/EntityContext';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Wallet, TrendingUp, CreditCard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -69,59 +68,47 @@ export default function Dashboard() {
         {/* Cash Flow Chart */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Cash Flow (YTD)</h2>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={CASH_FLOW_DATA} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#6b7280'}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#6b7280'}} tickFormatter={(value) => `$${value/1000}k`} />
-                <RechartsTooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number) => [`$${value}`, undefined]}
-                />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                <Area type="monotone" name="Income" dataKey="income" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorIncome)" />
-                <Area type="monotone" name="Expenses" dataKey="expenses" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpenses)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-80 w-full flex flex-col justify-between pt-4">
+            <div className="flex items-center gap-6 text-xs text-gray-500 mb-2">
+              <span className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-emerald-500" /> Income
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-rose-500" /> Expenses
+              </span>
+            </div>
+            <div className="flex-1 flex items-end gap-3 pb-2 border-b border-gray-100">
+              {CASH_FLOW_DATA.map((d) => (
+                <div key={d.month} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative">
+                  <div className="w-full flex items-end justify-center gap-1 h-48">
+                    <div
+                      className="w-full max-w-[14px] bg-emerald-500/80 hover:bg-emerald-500 rounded-t transition-all"
+                      style={{ height: `${(d.income / 10000) * 100}%` }}
+                      title={`Income: $${d.income}`}
+                    />
+                    <div
+                      className="w-full max-w-[14px] bg-rose-500/80 hover:bg-rose-500 rounded-t transition-all"
+                      style={{ height: `${(d.expenses / 10000) * 100}%` }}
+                      title={`Expenses: $${d.expenses}`}
+                    />
+                  </div>
+                  <span className="text-xs font-mono text-gray-500">{d.month}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Revenue Breakdown */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Revenue Sources</h2>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={REVENUE_DATA}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {REVENUE_DATA.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <RechartsTooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number) => [`$${value}`, undefined]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="h-64 w-full flex items-center justify-center">
+            <svg viewBox="0 0 100 100" className="w-48 h-48 -rotate-90">
+              <circle cx="50" cy="50" r="36" fill="none" stroke="#3b82f6" strokeWidth="16" strokeDasharray="75 226" strokeDashoffset="0" />
+              <circle cx="50" cy="50" r="36" fill="none" stroke="#10b981" strokeWidth="16" strokeDasharray="56 226" strokeDashoffset="-75" />
+              <circle cx="50" cy="50" r="36" fill="none" stroke="#f59e0b" strokeWidth="16" strokeDasharray="56 226" strokeDashoffset="-131" />
+              <circle cx="50" cy="50" r="36" fill="none" stroke="#8b5cf6" strokeWidth="16" strokeDasharray="39 226" strokeDashoffset="-187" />
+            </svg>
           </div>
           
           <div className="mt-6 space-y-3">

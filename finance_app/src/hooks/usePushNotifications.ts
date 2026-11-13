@@ -47,12 +47,14 @@ export function usePushNotifications() {
         // In a real app, send this token to Supabase/backend to store it for the user
       });
 
-      FirebaseMessaging.addListener("pushNotificationReceived", (notification) => {
+      (FirebaseMessaging as any).addListener("notificationReceived", (notification: any) => {
         console.log("Push received:", notification);
       });
 
       // Register
-      await FirebaseMessaging.register();
+      if (typeof (FirebaseMessaging as any).register === 'function') {
+        await (FirebaseMessaging as any).register();
+      }
     } catch (error) {
       console.error("Error registering FCM", error);
     }
