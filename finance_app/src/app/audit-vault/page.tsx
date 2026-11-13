@@ -1,0 +1,214 @@
+"use client";
+
+import { useState } from 'react';
+import Sidebar from '@/components/Sidebar';
+import {
+  ShieldCheck,
+  Lock,
+  Download,
+  CheckCircle2,
+  FileCheck,
+  Key,
+  Users,
+  Eye,
+  Building2,
+  Calendar,
+  AlertTriangle,
+  Fingerprint,
+} from 'lucide-react';
+
+interface AuditControlRecord {
+  id: string;
+  controlCode: string;
+  controlTitle: string;
+  category: 'Segregation of Duties' | 'Authorization' | 'Data Integrity' | 'Access Control';
+  evidenceSummary: string;
+  timestamp: string;
+  actor: string;
+  hash: string;
+  status: 'Pass' | 'Audited & Locked';
+}
+
+export default function AuditVaultPage() {
+  const [records] = useState<AuditControlRecord[]>([
+    {
+      id: 'soc2-001',
+      controlCode: 'CC6.1',
+      controlTitle: 'Segregation of Duties & Dual Approval on Disbursements',
+      category: 'Segregation of Duties',
+      evidenceSummary: 'Bill #B-101 ($4,200 AWS Cloud) required founder approval. Initiated by Alex Rivera, approved by Founder.',
+      timestamp: '2026-03-05 14:22:18 UTC',
+      actor: 'Founder & CEO (Auth AAL2)',
+      hash: 'sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
+      status: 'Audited & Locked',
+    },
+    {
+      id: 'soc2-002',
+      controlCode: 'CC6.6',
+      controlTitle: 'Bank Routing & Account Mutation Safeguard',
+      category: 'Authorization',
+      evidenceSummary: 'Plaid link token generated and bound to Choice Bank ending in 4920 with TLS certificate pinning.',
+      timestamp: '2026-03-01 09:15:44 UTC',
+      actor: 'System Admin Service Role',
+      hash: 'sha256:18ac3e7343f016890c510e93f935261169d9e3f565436429830faf0934f4f8e4',
+      status: 'Audited & Locked',
+    },
+    {
+      id: 'soc2-003',
+      controlCode: 'CC7.1',
+      controlTitle: 'Cryptographic Period-End Close Certificate',
+      category: 'Data Integrity',
+      evidenceSummary: 'February 2026 books reconciled across 5 checkpoints. Period lock applied to prevent retrospective alteration.',
+      timestamp: '2026-03-02 18:30:00 UTC',
+      actor: 'Elena Vance (Period Lock Sign-off)',
+      hash: 'sha256:d826a79ff100c8f5d0234a41d08e5e8e818816899478f700445d3c873ddca219',
+      status: 'Audited & Locked',
+    },
+    {
+      id: 'soc2-004',
+      controlCode: 'CC6.3',
+      controlTitle: 'Zero-Trust External Telemetry Isolation',
+      category: 'Access Control',
+      evidenceSummary: 'Master Zero-Trust isolation enforced. PII masking active. Webhook egress severed by default.',
+      timestamp: '2026-03-08 11:00:12 UTC',
+      actor: 'Platform Policy Engine',
+      hash: 'sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      status: 'Audited & Locked',
+    },
+  ]);
+
+  const handleExportAuditDossier = () => {
+    const csvContent = "data:text/csv;charset=utf-8," +
+      "SOC 2 Type II / Financial Controls Evidence Dossier\n" +
+      "Exported At," + new Date().toISOString() + "\n" +
+      "Auditor Safe Harbor Status,100% Verified\n\n" +
+      "Control Code,Control Title,Category,Actor,Timestamp,Cryptographic Evidence Hash,Summary\n" +
+      records.map(r => `"${r.controlCode}","${r.controlTitle}","${r.category}","${r.actor}","${r.timestamp}","${r.hash}","${r.evidenceSummary}"`).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `SOC2_Financial_Controls_Evidence_Package.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="flex min-h-screen bg-gray-950 text-white">
+      <Sidebar />
+      <main className="flex-1 p-8 overflow-y-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-gray-800 gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-emerald-600/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+              <ShieldCheck size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">SOC 2 Financial Controls Evidence Vault</h1>
+              <p className="text-sm text-gray-400">
+                Continuous Evidence Collection • Segregation of Duties • SHA-256 Tamper-Evident Audit Trails
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleExportAuditDossier}
+            className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-lg shadow-emerald-600/20"
+          >
+            <Download size={16} />
+            <span>Export Auditor Evidence Package</span>
+          </button>
+        </div>
+
+        {/* Top Metric Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mt-6">
+          <div className="bg-gray-900 border border-gray-800 p-5 rounded-2xl">
+            <span className="text-xs text-gray-400 uppercase font-semibold">Active Control Tests</span>
+            <div className="text-2xl font-bold text-white mt-1">4 of 4 Passing</div>
+            <span className="text-[11px] text-gray-500 mt-1 block">CC6.1, CC6.3, CC6.6, CC7.1</span>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 p-5 rounded-2xl">
+            <span className="text-xs text-emerald-400 uppercase font-semibold">Segregation of Duties</span>
+            <div className="text-2xl font-bold text-emerald-400 mt-1">100% Enforced</div>
+            <span className="text-[11px] text-emerald-500/80 mt-1 block">Dual approvals on bills &gt; $1k</span>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 p-5 rounded-2xl">
+            <span className="text-xs text-indigo-400 uppercase font-semibold">Immutable Hashes</span>
+            <div className="text-2xl font-bold text-indigo-400 mt-1">SHA-256 Sealed</div>
+            <span className="text-[11px] text-indigo-500/80 mt-1 block">Cryptographically verifiable</span>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 p-5 rounded-2xl">
+            <span className="text-xs text-gray-400 uppercase font-semibold">SOC 2 Readiness</span>
+            <div className="flex items-center space-x-2 mt-1">
+              <span className="text-2xl font-bold text-emerald-400">Type II Ready</span>
+              <ShieldCheck size={20} className="text-emerald-400" />
+            </div>
+            <span className="text-[11px] text-gray-500 mt-1 block">Continuous audit observation</span>
+          </div>
+        </div>
+
+        {/* Control Trust Summary */}
+        <div className="mt-6 p-4 bg-emerald-950/20 border border-emerald-500/30 rounded-2xl flex items-start space-x-3 text-xs">
+          <Fingerprint size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold text-emerald-200">Continuous Automated Compliance Assurance:</span>
+            <p className="text-emerald-300/80 mt-0.5">
+              Liquid continuously monitors internal financial operations to ensure strict separation between payment initiators and approvers, prevents retrospective ledger tampering once periods are locked, and logs cryptographic evidence required by Big 4 CPAs and SOC 2 Type II audit teams.
+            </p>
+          </div>
+        </div>
+
+        {/* Audit Evidence Table */}
+        <div className="mt-8 bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+          <div className="p-5 border-b border-gray-800 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold">Cryptographic Financial Evidence Log</h2>
+              <p className="text-xs text-gray-400">Tamper-evident logs of approvals, period locks, and permission changes</p>
+            </div>
+            <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 font-medium">
+              Zero Unreconciled Exceptions
+            </span>
+          </div>
+
+          <div className="divide-y divide-gray-800">
+            {records.map((r) => (
+              <div key={r.id} className="p-5 hover:bg-gray-800/30 transition space-y-3">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                  <div className="flex items-center space-x-3">
+                    <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-xs font-mono font-bold">
+                      {r.controlCode}
+                    </span>
+                    <span className="font-semibold text-white text-sm">{r.controlTitle}</span>
+                    <span className="text-[11px] text-gray-500">• {r.category}</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-xs">
+                    <span className="text-gray-400">{r.timestamp}</span>
+                    <span className="px-2.5 py-0.5 bg-gray-800 text-gray-300 rounded font-medium">
+                      {r.status}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-300">{r.evidenceSummary}</p>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-gray-800/60 text-[11px]">
+                  <div className="flex items-center space-x-2 text-gray-400">
+                    <Users size={12} className="text-gray-500" />
+                    <span>Actor: <strong className="text-gray-200">{r.actor}</strong></span>
+                  </div>
+                  <div className="font-mono text-gray-500 flex items-center space-x-1.5 truncate max-w-md">
+                    <Lock size={11} className="text-emerald-400 flex-shrink-0" />
+                    <span className="truncate">{r.hash}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

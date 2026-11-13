@@ -60,6 +60,26 @@
   status = 200
 
 [[redirects]]
+  from = "/autopilot"
+  to = "https://sentaient-autopilot-hub.netlify.app/autopilot/"
+  status = 301
+
+[[redirects]]
+  from = "/autopilot/*"
+  to = "https://sentaient-autopilot-hub.netlify.app/autopilot/:splat"
+  status = 301
+
+[[redirects]]
+  from = "/liquid"
+  to = "https://sentaient-liquid.netlify.app/liquid/"
+  status = 301
+
+[[redirects]]
+  from = "/liquid/*"
+  to = "https://sentaient-liquid.netlify.app/liquid/:splat"
+  status = 301
+
+[[redirects]]
   from = "/sphinx"
   to = "/sphinx/index.html"
   status = 200
