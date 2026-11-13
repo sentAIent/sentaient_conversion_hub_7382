@@ -1028,14 +1028,14 @@ export default function WorldSphinx({ position, visible }) {
           SPHINX
         </Text>
 
-        {/* Subtitle */}
+        {/* Subtitle - Enlarged for High Legibility */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -42, 0]}
-          fontSize={16}
+          position={[0, -48, 0]}
+          fontSize={26}
           color="#f59e0b"
-          outlineWidth={0.8}
+          outlineWidth={1.2}
           outlineColor="#0b0804"
           anchorX="center"
           anchorY="middle"

@@ -137,8 +137,9 @@ const WorldMindWave = ({ position, visible }) => {
   
   useEffect(() => {
     window.mindwaveLocked = false;
-    new THREE.TextureLoader().load('/mindwave-logo.png', (tex) => {
+    new THREE.TextureLoader().load(`/mindwave-lotus-clean.png?v=${Date.now()}`, (tex) => {
       tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
       setLogoTex(tex);
     });
     new THREE.TextureLoader().load('/tribal-sun.png', (tex) => {
@@ -204,14 +205,14 @@ const WorldMindWave = ({ position, visible }) => {
 
     // Float and pulse logo nestled inside sun's inner circle
     if (logoRef.current) {
-      logoRef.current.position.y = 168 + Math.sin(time * 2) * 2;
-      logoRef.current.position.x = -1.2;
+      logoRef.current.position.y = 310 + Math.sin(time * 2) * 2;
+      logoRef.current.position.x = 0;
       logoRef.current.scale.set(sunScale, sunScale, 1);
       logoRef.current.rotation.y = 0; // Keep facing camera
     }
     
     if (sunRef.current) {
-      sunRef.current.position.y = 170 + Math.sin(time * 2) * 2;
+      sunRef.current.position.y = 310 + Math.sin(time * 2) * 2;
       sunRef.current.rotation.z = time * 0.1;
       sunRef.current.scale.set(sunScale, sunScale, 1);
     }
@@ -248,8 +249,8 @@ const WorldMindWave = ({ position, visible }) => {
       
       {/* Tribal Sun glowing behind logo */}
       {sunTex && (
-        <mesh ref={sunRef} position={[0, 170, -85]}>
-          <planeGeometry args={[140, 140]} />
+        <mesh ref={sunRef} position={[0, 310, -85]}>
+          <planeGeometry args={[315, 315]} />
           <meshBasicMaterial 
             map={sunTex} 
             transparent={true} 
@@ -264,14 +265,13 @@ const WorldMindWave = ({ position, visible }) => {
 
       {/* MindWave Logo (Nestled perfectly inside tribal sun inner circle) */}
       {logoTex && (
-        <mesh ref={logoRef} position={[-1.2, 168, -80]}>
-          <planeGeometry args={[165, 165]} />
+        <mesh ref={logoRef} position={[0, 310, -80]}>
+          <planeGeometry args={[143, 143]} />
           <meshBasicMaterial 
             map={logoTex} 
             transparent={true} 
             side={THREE.DoubleSide} 
             depthWrite={false}
-            blending={THREE.AdditiveBlending}
           />
         </mesh>
       )}

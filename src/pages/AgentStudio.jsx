@@ -15,6 +15,21 @@ import AppInfraOrchestrator from '../components/AppInfraOrchestrator';
 import RAGDocumentHub from '../components/RAGDocumentHub';
 import RepolyzeBlogAutomator from '../components/RepolyzeBlogAutomator';
 import EnterpriseIntegrationSuite from '../components/EnterpriseIntegrationSuite';
+import DistributedComputeRouter from '../components/DistributedComputeRouter';
+import GhostAutopilotAuditor from '../components/GhostAutopilotAuditor';
+import AutonomousABEngine from '../components/AutonomousABEngine';
+import ClientPortalWorkspace from '../components/ClientPortalWorkspace';
+import RevenueRecoveryEngine from '../components/RevenueRecoveryEngine';
+import MatrixWarRoom from '../components/MatrixWarRoom';
+import OmnichannelBridge from '../components/OmnichannelBridge';
+import PredictiveAttentionHeatmap from '../components/PredictiveAttentionHeatmap';
+import SelfHealingSentry from '../components/SelfHealingSentry';
+import PersonaPromptStudio from '../components/PersonaPromptStudio';
+import CompetitorPricingRadar from '../components/CompetitorPricingRadar';
+import ComplianceSentry from '../components/ComplianceSentry';
+import B2BNegotiationEngine from '../components/B2BNegotiationEngine';
+import PredictiveLTVAnalytics from '../components/PredictiveLTVAnalytics';
+import VoiceDevPod from '../components/VoiceDevPod';
 import CodeGraphViewer3D from '../components/CodeGraphViewer3D';
 import LocalWebLLM from '../components/LocalWebLLM';
 import QuantDataGrid from '../components/QuantDataGrid';
@@ -88,7 +103,22 @@ export default function AgentStudio() {
         infra: { x: 50, y: 1950 },
         ragHub: { x: 900, y: 1950 },
         blogAutomator: { x: 50, y: 2550 },
-        enterpriseSuite: { x: 900, y: 2550 }
+        enterpriseSuite: { x: 900, y: 2550 },
+        computeRouter: { x: 50, y: 3100 },
+        ghostAutopilot: { x: 900, y: 3100 },
+        abEngine: { x: 50, y: 3650 },
+        clientPortal: { x: 900, y: 3650 },
+        revenueRecovery: { x: 50, y: 4200 },
+        warRoom: { x: 900, y: 4200 },
+        omnichannel: { x: 50, y: 4750 },
+        attentionHeatmap: { x: 900, y: 4750 },
+        healingSentry: { x: 50, y: 5300 },
+        personaStudio: { x: 900, y: 5300 },
+        pricingRadar: { x: 50, y: 5850 },
+        complianceSentry: { x: 900, y: 5850 },
+        b2bNegotiation: { x: 50, y: 6400 },
+        predictiveLTV: { x: 900, y: 6400 },
+        voiceDevPod: { x: 50, y: 6950 }
     });
 
     const [activeDragCard, setActiveDragCard] = useState(null);
@@ -170,7 +200,22 @@ export default function AgentStudio() {
             infra: { x: 50, y: 1950 },
             ragHub: { x: 900, y: 1950 },
             blogAutomator: { x: 50, y: 2550 },
-            enterpriseSuite: { x: 900, y: 2550 }
+            enterpriseSuite: { x: 900, y: 2550 },
+            computeRouter: { x: 50, y: 3100 },
+            ghostAutopilot: { x: 900, y: 3100 },
+            abEngine: { x: 50, y: 3650 },
+            clientPortal: { x: 900, y: 3650 },
+            revenueRecovery: { x: 50, y: 4200 },
+            warRoom: { x: 900, y: 4200 },
+            omnichannel: { x: 50, y: 4750 },
+            attentionHeatmap: { x: 900, y: 4750 },
+            healingSentry: { x: 50, y: 5300 },
+            personaStudio: { x: 900, y: 5300 },
+            pricingRadar: { x: 50, y: 5850 },
+            complianceSentry: { x: 900, y: 5850 },
+            b2bNegotiation: { x: 50, y: 6400 },
+            predictiveLTV: { x: 900, y: 6400 },
+            voiceDevPod: { x: 50, y: 6950 }
         });
     };
 
@@ -871,6 +916,141 @@ export function probePort(server) {
                         <EnterpriseIntegrationSuite />
                     </div>
 
+                    {/* Draggable Card 21: Distributed Compute & Queue Router */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'computeRouter')}
+                        style={{ left: cardPositions.computeRouter?.x || 50, top: cardPositions.computeRouter?.y || 3100 }}
+                        className="absolute w-[800px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <DistributedComputeRouter />
+                    </div>
+
+                    {/* Draggable Card 22: Ghost Autopilot Auditor */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'ghostAutopilot')}
+                        style={{ left: cardPositions.ghostAutopilot?.x || 900, top: cardPositions.ghostAutopilot?.y || 3100 }}
+                        className="absolute w-[750px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <GhostAutopilotAuditor />
+                    </div>
+
+                    {/* Draggable Card 23: Autonomous A/B Conversion Engine */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'abEngine')}
+                        style={{ left: cardPositions.abEngine?.x || 50, top: cardPositions.abEngine?.y || 3650 }}
+                        className="absolute w-[800px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <AutonomousABEngine />
+                    </div>
+
+                    {/* Draggable Card 24: Multi-Tenant Workspace & Client Portal */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'clientPortal')}
+                        style={{ left: cardPositions.clientPortal?.x || 900, top: cardPositions.clientPortal?.y || 3650 }}
+                        className="absolute w-[750px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <ClientPortalWorkspace />
+                    </div>
+
+                    {/* Draggable Card 25: Revenue Recovery & Smart Dunning Engine */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'revenueRecovery')}
+                        style={{ left: cardPositions.revenueRecovery?.x || 50, top: cardPositions.revenueRecovery?.y || 4200 }}
+                        className="absolute w-[800px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <RevenueRecoveryEngine />
+                    </div>
+
+                    {/* Draggable Card 26: Matrix War Room • Live Multiplayer */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'warRoom')}
+                        style={{ left: cardPositions.warRoom?.x || 900, top: cardPositions.warRoom?.y || 4200 }}
+                        className="absolute w-[750px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <MatrixWarRoom />
+                    </div>
+
+                    {/* Draggable Card 27: Omnichannel Conversational Concierge */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'omnichannel')}
+                        style={{ left: cardPositions.omnichannel?.x || 50, top: cardPositions.omnichannel?.y || 4750 }}
+                        className="absolute w-[800px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <OmnichannelBridge />
+                    </div>
+
+                    {/* Draggable Card 28: Predictive Attention & Gaze Heatmap AI */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'attentionHeatmap')}
+                        style={{ left: cardPositions.attentionHeatmap?.x || 900, top: cardPositions.attentionHeatmap?.y || 4750 }}
+                        className="absolute w-[750px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <PredictiveAttentionHeatmap />
+                    </div>
+
+                    {/* Draggable Card 29: Self-Healing Webhook & Infrastructure Sentry */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'healingSentry')}
+                        style={{ left: cardPositions.healingSentry?.x || 50, top: cardPositions.healingSentry?.y || 5300 }}
+                        className="absolute w-[800px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <SelfHealingSentry />
+                    </div>
+
+                    {/* Draggable Card 30: Persona Studio & Prompt Guardrails */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'personaStudio')}
+                        style={{ left: cardPositions.personaStudio?.x || 900, top: cardPositions.personaStudio?.y || 5300 }}
+                        className="absolute w-[750px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <PersonaPromptStudio />
+                    </div>
+
+                    {/* Draggable Card 31: Dynamic Pricing & Competitor Radar */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'pricingRadar')}
+                        style={{ left: cardPositions.pricingRadar?.x || 50, top: cardPositions.pricingRadar?.y || 5850 }}
+                        className="absolute w-[800px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <CompetitorPricingRadar />
+                    </div>
+
+                    {/* Draggable Card 32: ADA & Regulatory Compliance Sentry */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'complianceSentry')}
+                        style={{ left: cardPositions.complianceSentry?.x || 900, top: cardPositions.complianceSentry?.y || 5850 }}
+                        className="absolute w-[750px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <ComplianceSentry />
+                    </div>
+
+                    {/* Draggable Card 33: B2B Wholesale RFQ & Negotiation Engine */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'b2bNegotiation')}
+                        style={{ left: cardPositions.b2bNegotiation?.x || 50, top: cardPositions.b2bNegotiation?.y || 6400 }}
+                        className="absolute w-[800px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <B2BNegotiationEngine />
+                    </div>
+
+                    {/* Draggable Card 34: Predictive Customer Lifetime Value (LTV) */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'predictiveLTV')}
+                        style={{ left: cardPositions.predictiveLTV?.x || 900, top: cardPositions.predictiveLTV?.y || 6400 }}
+                        className="absolute w-[750px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <PredictiveLTVAnalytics />
+                    </div>
+
+                    {/* Draggable Card 35: Voice DevPod • Autonomous Bug Patcher */}
+                    <div
+                        onMouseDown={(e) => handleCardMouseDown(e, 'voiceDevPod')}
+                        style={{ left: cardPositions.voiceDevPod?.x || 50, top: cardPositions.voiceDevPod?.y || 6950 }}
+                        className="absolute w-[800px] h-[520px] bg-slate-950/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl cursor-default flex flex-col z-10"
+                    >
+                        <VoiceDevPod />
+                    </div>
+
                     {/* DYNAMIC MIND MAP CARDS */}
                     {mindmapNodes.map((node) => (
                         <div
@@ -904,20 +1084,62 @@ export function probePort(server) {
                 </div>
 
                 {/* Bottom Zoom & Pan Controller Navigation */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-950/80 backdrop-blur border border-slate-800 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6 z-40 text-xs">
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-950/80 backdrop-blur border border-slate-800 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-5 z-40 text-xs">
                     <div className="flex items-center gap-2">
-                        <button onClick={() => handleZoom(-0.1)} className="p-1.5 hover:bg-slate-900 rounded text-slate-450">
+                        <button onClick={() => handleZoom(-0.1)} className="p-1.5 hover:bg-slate-900 rounded text-slate-450" title="Zoom Out">
                             <Icon name="Minus" size={14} />
                         </button>
                         <span className="text-slate-350 font-semibold font-mono w-10 text-center">{Math.round(zoom * 100)}%</span>
-                        <button onClick={() => handleZoom(0.1)} className="p-1.5 hover:bg-slate-900 rounded text-slate-450">
+                        <button onClick={() => handleZoom(0.1)} className="p-1.5 hover:bg-slate-900 rounded text-slate-450" title="Zoom In">
                             <Icon name="Plus" size={14} />
                         </button>
                     </div>
                     <div className="w-[1px] h-5 bg-slate-850" />
-                    <button onClick={resetCanvas} className="flex items-center gap-1.5 hover:bg-slate-900 px-3 py-1.5 rounded-lg text-slate-300">
+                    
+                    {/* Quick Jump Bookmarks */}
+                    <div className="flex items-center gap-1.5 font-medium">
+                        <button 
+                            onClick={() => { setPanOffset({ x: 0, y: 0 }); setZoom(1); }} 
+                            className="px-2.5 py-1 hover:bg-slate-900 rounded-md text-slate-400 hover:text-slate-200 transition-colors"
+                        >
+                            AI Core
+                        </button>
+                        <button 
+                            onClick={() => { setPanOffset({ x: 0, y: -1600 }); setZoom(0.85); }} 
+                            className="px-2.5 py-1 hover:bg-slate-900 rounded-md text-slate-400 hover:text-slate-200 transition-colors"
+                        >
+                            Infra & RAG
+                        </button>
+                        <button 
+                            onClick={() => { setPanOffset({ x: 0, y: -2800 }); setZoom(0.85); }} 
+                            className="px-2.5 py-1 hover:bg-slate-900 rounded-md text-cyan-400 hover:bg-cyan-500/10 transition-colors"
+                        >
+                            Autopilot & Queues
+                        </button>
+                        <button 
+                            onClick={() => { setPanOffset({ x: 0, y: -3900 }); setZoom(0.85); }} 
+                            className="px-2.5 py-1 hover:bg-slate-900 rounded-md text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                        >
+                            Revenue & War Room
+                        </button>
+                        <button 
+                            onClick={() => { setPanOffset({ x: 0, y: -4900 }); setZoom(0.85); }} 
+                            className="px-2.5 py-1 hover:bg-slate-900 rounded-md text-pink-400 hover:bg-pink-500/10 transition-colors"
+                        >
+                            Omnichannel & Sentry
+                        </button>
+                        <button 
+                            onClick={() => { setPanOffset({ x: 0, y: -6000 }); setZoom(0.85); }} 
+                            className="px-2.5 py-1 hover:bg-slate-900 rounded-md text-amber-400 hover:bg-amber-500/10 transition-colors"
+                        >
+                            B2B & DevPod
+                        </button>
+                    </div>
+
+                    <div className="w-[1px] h-5 bg-slate-850" />
+                    <button onClick={resetCanvas} className="flex items-center gap-1.5 hover:bg-slate-900 px-2.5 py-1 rounded-lg text-slate-400 hover:text-slate-200 transition-colors">
                         <Icon name="Maximize" size={12} />
-                        Reset Canvas
+                        Reset
                     </button>
                 </div>
 

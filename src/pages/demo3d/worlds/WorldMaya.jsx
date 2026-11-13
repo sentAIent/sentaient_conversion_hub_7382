@@ -1,85 +1,153 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { Text, Sparkles, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
-// ===========================================================================
-// WORLD MAYA: Empathetic AI Avatar & 24/7 Enterprise Representative
-// Sacred Holographic Lotus Sanctuary with Luminous Consciousness Pearl,
-// Blossoming Iridescent Petals, Conversational Voice Waveforms, and 4 Core Pillars.
-// ===========================================================================
-
+/**
+ * WORLD MAYA: Empathetic AI Avatar & 24/7 Enterprise Representative
+ * Redesigned as a Beautiful Holographic AI Avatar featuring:
+ * - Lifelike Sculpted Holographic Female AI Avatar with Graceful Visage, Ethereal Luminescent Eyes, Flowing Cybernetic Hair Tendrils, and Empathy Heart Core
+ * - Volumetric Holographic Light Projection Cone & Concentric High-Tech Emitter Dais
+ * - Audio-Reactive Conversational Voice Equalizer & Emotional Resonance Rings
+ * - Interactive Conversational Greeting & Dynamic Harmonic Feedback
+ * - High-Contrast Enterprise Intelligence Consoles & Official Maya Emblem
+ */
 export default function WorldMaya({ position, visible }) {
-  const lotusGroupRef = useRef();
-  const pearlRef = useRef();
-  const innerPetalsRef = useRef();
-  const midPetalsRef = useRef();
-  const outerPetalsRef = useRef();
-  const voiceRingsRef = useRef();
-  const satellitesRef = useRef();
+  const avatarGroupRef = useRef();
+  const headRef = useRef();
+  const eyesRef = useRef();
+  const lipsRef = useRef();
+  const hairLeftRef = useRef();
+  const hairRightRef = useRef();
+  const empathyHeartRef = useRef();
+  const projectorBeamRef = useRef();
+  const resonanceOrbitsRef = useRef();
+  const eqBarsRef = useRef();
+  const leftHudRef = useRef();
+  const rightHudRef = useRef();
 
-  // Load official Maya celestial lotus emblem
+  const [avatarHovered, setAvatarHovered] = useState(false);
+  const [speechActive, setSpeechActive] = useState(true);
+
+  // Load official Maya emblem
   const logoTex = useLoader(THREE.TextureLoader, '/maya_logo_final.png');
   logoTex.colorSpace = THREE.SRGBColorSpace;
 
-  // 4 Core Enterprise AI Pillars of Maya
-  const capabilitySatellites = useMemo(() => [
-    { title: 'Conversational Sales', code: 'SALES', color: '#f59e0b', angle: 0 },
-    { title: 'Compassionate Support', code: 'SUPPORT', color: '#38bdf8', angle: Math.PI / 2 },
-    { title: 'Habit & Wellness Coaching', code: 'COACH', color: '#10b981', angle: Math.PI },
-    { title: 'Enterprise Intelligence', code: 'INTEL', color: '#a855f7', angle: (3 * Math.PI) / 2 }
-  ], []);
+  // Web Audio chime feedback on avatar interaction
+  const playChime = (freq = 523.25, duration = 0.35, type = 'sine') => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch (e) {
+      // Gracefully handled if browser policy restricts autoplay
+    }
+  };
 
-  // Procedural petal geometry generation (curved, tapered lotus petal)
-  const petalGeometry = useMemo(() => {
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 0);
-    shape.bezierCurveTo(18, 25, 26, 70, 0, 110);
-    shape.bezierCurveTo(-26, 70, -18, 25, 0, 0);
-    const extrudeSettings = { depth: 2, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 1, bevelThickness: 1 };
-    return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  // 28 Equalizer Audio Frequency Columns forming a wide stage arc
+  const eqData = useMemo(() => {
+    return Array.from({ length: 28 }).map((_, i) => {
+      const angle = (i / 27) * Math.PI * 0.95 - Math.PI * 0.475;
+      const radius = 320;
+      return {
+        x: Math.sin(angle) * radius,
+        z: -Math.cos(angle) * radius + 120,
+        height: 30 + (i % 5) * 14,
+        speed: 2.2 + (i % 4) * 0.8,
+        phase: (i * 0.4),
+        color: i % 3 === 0 ? '#818cf8' : i % 3 === 1 ? '#38bdf8' : '#fb7185'
+      };
+    });
   }, []);
 
   useFrame((state) => {
     if (!visible) return;
     const t = state.clock.getElapsedTime();
 
-    // 1. Natural levitation of the entire sacred lotus sanctuary
-    if (lotusGroupRef.current) {
-      lotusGroupRef.current.position.y = 60 + Math.sin(t * 1.2) * 6;
-      lotusGroupRef.current.rotation.y = Math.sin(t * 0.25) * 0.08;
+    // 1. Organic Breathing & Lifelike Idle Motion of Maya Avatar
+    if (avatarGroupRef.current) {
+      avatarGroupRef.current.position.y = Math.sin(t * 1.5) * 6;
+      avatarGroupRef.current.rotation.y = Math.sin(t * 0.5) * 0.08;
     }
 
-    // 2. Empathy Heart Pearl Pulse (Simulating living consciousness & emotional awareness)
-    if (pearlRef.current) {
-      const pulse = 1.0 + Math.sin(t * 2.4) * 0.1 + Math.sin(t * 4.8) * 0.04;
-      pearlRef.current.scale.set(pulse, pulse, pulse);
-      pearlRef.current.rotation.y = t * 0.5;
+    // 2. Subtle Empathic Head Tilt & Expressive Eye Tracking
+    if (headRef.current) {
+      headRef.current.rotation.z = Math.sin(t * 0.8) * 0.04;
+      headRef.current.rotation.x = Math.sin(t * 1.1) * 0.03;
     }
 
-    // 3. Blossoming Petal Breathing Movement
-    if (innerPetalsRef.current) {
-      innerPetalsRef.current.rotation.y = t * 0.15;
-    }
-    if (midPetalsRef.current) {
-      midPetalsRef.current.rotation.y = -t * 0.12;
-    }
-    if (outerPetalsRef.current) {
-      outerPetalsRef.current.rotation.y = t * 0.08;
+    // 3. Ethereal Ocular Sensor Pulse (Blinking & Emotional Focus)
+    if (eyesRef.current) {
+      const blink = Math.pow(Math.sin(t * 0.65), 18);
+      const eyeScaleY = THREE.MathUtils.lerp(1.0, 0.1, blink);
+      eyesRef.current.scale.y = eyeScaleY;
     }
 
-    // 4. Conversational Voice Waveform Frequency Rings
-    if (voiceRingsRef.current) {
-      voiceRingsRef.current.children.forEach((ring, idx) => {
-        const s = 1.0 + Math.sin(t * 2.5 + idx * 0.8) * 0.06;
-        ring.scale.set(s, s, s);
-        ring.rotation.z = t * (idx % 2 === 0 ? 0.3 : -0.25);
+    // 4. Conversational Lips Audio Oscillation
+    if (lipsRef.current) {
+      const talkMod = speechActive ? (0.85 + Math.sin(t * 7.5) * 0.35 + Math.sin(t * 14.0) * 0.2) : 1.0;
+      lipsRef.current.scale.x = talkMod;
+      lipsRef.current.scale.y = 0.9 + Math.sin(t * 6.0) * 0.2;
+    }
+
+    // 5. Flowing Holographic Hair Tendrils (Gentle Cybernetic Breeze)
+    if (hairLeftRef.current) {
+      hairLeftRef.current.rotation.z = 0.15 + Math.sin(t * 1.4) * 0.06;
+      hairLeftRef.current.rotation.x = Math.sin(t * 1.2) * 0.08;
+    }
+    if (hairRightRef.current) {
+      hairRightRef.current.rotation.z = -0.15 - Math.sin(t * 1.4 + 0.5) * 0.06;
+      hairRightRef.current.rotation.x = Math.sin(t * 1.2 + 0.5) * 0.08;
+    }
+
+    // 6. Empathy Heart Matrix Emotional Core Pulse
+    if (empathyHeartRef.current) {
+      const heartPulse = 1.0 + Math.sin(t * 2.8) * 0.12 + (avatarHovered ? 0.2 : 0);
+      empathyHeartRef.current.scale.set(heartPulse, heartPulse, heartPulse);
+      empathyHeartRef.current.rotation.y = t * 0.8;
+    }
+
+    // 7. Projector Beam Light Shimmer
+    if (projectorBeamRef.current) {
+      projectorBeamRef.current.material.opacity = 0.32 + Math.sin(t * 3.2) * 0.08;
+    }
+
+    // 8. Harmonic Voice Resonance Orbits
+    if (resonanceOrbitsRef.current) {
+      resonanceOrbitsRef.current.children.forEach((orbit, idx) => {
+        const speed = (idx + 1) * 0.35;
+        orbit.rotation.z = t * (idx % 2 === 0 ? speed : -speed);
+        orbit.rotation.x = Math.sin(t * 0.5 + idx) * 0.3;
       });
     }
 
-    // 5. Orbiting AI Capability Satellites
-    if (satellitesRef.current) {
-      satellitesRef.current.rotation.y = -t * 0.22;
+    // 9. Audio Frequency Equalizer Dancing
+    if (eqBarsRef.current) {
+      eqBarsRef.current.children.forEach((bar, i) => {
+        const item = eqData[i];
+        if (item) {
+          const osc = 0.35 + 0.65 * Math.abs(Math.sin(t * item.speed + item.phase));
+          bar.scale.y = osc;
+        }
+      });
+    }
+
+    // 10. Subtle Hover of Intelligence HUDs
+    if (leftHudRef.current) {
+      leftHudRef.current.position.y = 80 + Math.sin(t * 1.4) * 6;
+    }
+    if (rightHudRef.current) {
+      rightHudRef.current.position.y = 80 + Math.sin(t * 1.4 + 1.2) * 6;
     }
   });
 
@@ -87,220 +155,520 @@ export default function WorldMaya({ position, visible }) {
 
   return (
     <group position={position}>
-      {/* Empathetic Ethereal Sanctuary Lighting */}
-      <ambientLight intensity={0.45} color="#160824" />
-      <directionalLight position={[700, 800, -300]} intensity={3.5} color="#fda4af" />
-      <directionalLight position={[-700, 600, 400]} intensity={2.4} color="#818cf8" />
-      <pointLight position={[0, 160, -700]} intensity={26} distance={1800} color="#f472b6" />
-      <pointLight position={[0, -100, -700]} intensity={18} distance={1200} color="#38bdf8" />
-      <pointLight position={[0, 80, -700]} intensity={20} distance={1000} color="#e0f2fe" />
+      {/* ------------------------------------------------------------- */}
+      {/* 1. LIGHTING & LUXURIOUS CYBERNETIC ATMOSPHERE                */}
+      {/* ------------------------------------------------------------- */}
+      <ambientLight intensity={0.5} color="#0c071e" />
+      <directionalLight position={[600, 800, 400]} intensity={3.5} color="#818cf8" />
+      <directionalLight position={[-600, 600, -300]} intensity={2.8} color="#fb7185" />
+      <pointLight position={[0, 160, -500]} intensity={24} distance={1500} color="#38bdf8" />
+      <pointLight position={[0, 40, -450]} intensity={20} distance={1000} color="#e0f2fe" />
+      <pointLight position={[0, 75, -550]} intensity={avatarHovered ? 26 : 16} distance={600} color="#f472b6" />
 
-      {/* Floating Stardust & Consciousness Motes */}
-      <Sparkles count={1100} scale={[2400, 1000, 2400]} size={12} speed={0.4} opacity={0.65} color="#fda4af" position={[0, 80, -700]} />
-      <Sparkles count={600} scale={[1600, 700, 1600]} size={9} speed={0.5} opacity={0.55} color="#38bdf8" position={[0, 100, -700]} />
-      <Sparkles count={400} scale={[1000, 500, 1000]} size={14} speed={0.3} opacity={0.7} color="#c084fc" position={[0, 140, -700]} />
+      {/* Atmospheric Consciousness Particles & Emotion Sparkles */}
+      <Sparkles count={900} scale={[2400, 1000, 2400]} size={11} speed={0.4} opacity={0.65} color="#818cf8" position={[0, 120, -550]} />
+      <Sparkles count={600} scale={[1800, 800, 1800]} size={9} speed={0.5} opacity={0.55} color="#fb7185" position={[0, 100, -550]} />
+      <Sparkles count={500} scale={[1400, 600, 1400]} size={13} speed={0.3} opacity={0.7} color="#38bdf8" position={[0, 140, -550]} />
 
-      {/* High-Gloss Obsidian Water Reflective Sanctuary Floor */}
-      <mesh position={[0, -220, -700]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[4400, 4400]} />
-        <meshStandardMaterial color="#05020a" roughness={0.08} metalness={0.96} />
+      {/* Reflective Deep Space Obsidian Ground Plane */}
+      <mesh position={[0, -215, -550]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[4800, 4800]} />
+        <meshStandardMaterial color="#030108" roughness={0.1} metalness={0.96} />
       </mesh>
 
-      {/* Concentric Empathy Harmonic Wave Inlays on the Floor */}
-      {[220, 380, 560, 760].map((radius, idx) => (
-        <mesh key={idx} position={[0, -218, -700]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[radius, radius + 3, 64]} />
+      {/* High-Gloss Obsidian Sanctuary Dais */}
+      <mesh position={[0, -210, -550]} rotation={[-Math.PI / 2, 0, Math.PI / 6]}>
+        <cylinderGeometry args={[460, 500, 24, 8]} />
+        <meshStandardMaterial color="#05030e" roughness={0.12} metalness={0.94} />
+      </mesh>
+
+      {/* Concentric Energy Inlay Rings on Dais Floor */}
+      {[240, 360, 470].map((radius, idx) => (
+        <mesh key={idx} position={[0, -196, -550]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[radius, radius + 4, 64]} />
           <meshBasicMaterial 
-            color={idx % 2 === 0 ? "#f472b6" : "#818cf8"} 
+            color={idx % 2 === 0 ? "#818cf8" : "#38bdf8"} 
             transparent 
-            opacity={0.38 - idx * 0.07} 
+            opacity={0.5 - idx * 0.12} 
+            side={THREE.DoubleSide}
           />
         </mesh>
       ))}
 
       {/* ------------------------------------------------------------- */}
-      {/* 1. THE BLOSSOMING SACRED LOTUS OF CONSCIOUSNESS               */}
+      {/* 2. HOLOGRAPHIC EMITTER BASE & VOLUMETRIC PROJECTION CONE       */}
       {/* ------------------------------------------------------------- */}
-      <group ref={lotusGroupRef} position={[0, 60, -700]}>
+      <group position={[0, -195, -550]}>
+        {/* Hologram Projector Ring Platform */}
+        <mesh position={[0, 4, 0]}>
+          <cylinderGeometry args={[130, 150, 12, 32]} />
+          <meshStandardMaterial color="#0e0a24" roughness={0.15} metalness={0.95} />
+        </mesh>
+        {/* Glowing Lapis Emitter Rim */}
+        <mesh position={[0, 10, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[115, 128, 48]} />
+          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={3.5} />
+        </mesh>
+        <pointLight position={[0, 25, 0]} color="#38bdf8" intensity={18} distance={400} />
 
-        {/* --- Central Radiant Consciousness Pearl --- */}
-        <group position={[0, 25, 0]}>
-          <mesh ref={pearlRef}>
-            <sphereGeometry args={[32, 32, 32]} />
-            <meshStandardMaterial 
-              color="#ffffff" 
-              emissive="#e0f2fe" 
-              emissiveIntensity={3.8} 
-              roughness={0.1} 
-              metalness={0.4} 
-            />
-          </mesh>
-          <pointLight color="#e0f2fe" intensity={22} distance={450} />
-
-          {/* Golden/Rose Spark Inner Radiance */}
-          <mesh scale={0.75}>
-            <sphereGeometry args={[32, 16, 16]} />
-            <meshStandardMaterial color="#fb7185" emissive="#f43f5e" emissiveIntensity={4.5} />
-          </mesh>
-        </group>
-
-        {/* --- Tier 1: Inner Petals (6 Blossom Blades curving up) --- */}
-        <group ref={innerPetalsRef} position={[0, 10, 0]}>
-          {Array.from({ length: 6 }).map((_, i) => {
-            const angle = (i / 6) * Math.PI * 2;
-            return (
-              <group key={i} rotation={[0, angle, 0]}>
-                <mesh 
-                  geometry={petalGeometry} 
-                  position={[0, 0, 22]} 
-                  rotation={[0.35, 0, 0]} 
-                  scale={[0.75, 0.75, 0.75]}
-                >
-                  <meshPhysicalMaterial 
-                    color="#c084fc" 
-                    emissive="#a855f7" 
-                    emissiveIntensity={1.8} 
-                    transparent 
-                    opacity={0.88} 
-                    roughness={0.12} 
-                    transmission={0.4} 
-                    side={THREE.DoubleSide} 
-                  />
-                </mesh>
-              </group>
-            );
-          })}
-        </group>
-
-        {/* --- Tier 2: Mid Petals (8 Graceful Lotus Petals) --- */}
-        <group ref={midPetalsRef} position={[0, 0, 0]}>
-          {Array.from({ length: 8 }).map((_, i) => {
-            const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
-            return (
-              <group key={i} rotation={[0, angle, 0]}>
-                <mesh 
-                  geometry={petalGeometry} 
-                  position={[0, -5, 36]} 
-                  rotation={[0.65, 0, 0]} 
-                  scale={[1.0, 1.0, 1.0]}
-                >
-                  <meshPhysicalMaterial 
-                    color="#38bdf8" 
-                    emissive="#0284c7" 
-                    emissiveIntensity={1.6} 
-                    transparent 
-                    opacity={0.82} 
-                    roughness={0.15} 
-                    transmission={0.45} 
-                    side={THREE.DoubleSide} 
-                  />
-                </mesh>
-              </group>
-            );
-          })}
-        </group>
-
-        {/* --- Tier 3: Outer Grand Petals (12 Sweeping Lotus Foundation Petals) --- */}
-        <group ref={outerPetalsRef} position={[0, -10, 0]}>
-          {Array.from({ length: 12 }).map((_, i) => {
-            const angle = (i / 12) * Math.PI * 2;
-            return (
-              <group key={i} rotation={[0, angle, 0]}>
-                <mesh 
-                  geometry={petalGeometry} 
-                  position={[0, -12, 54]} 
-                  rotation={[0.95, 0, 0]} 
-                  scale={[1.25, 1.25, 1.25]}
-                >
-                  <meshPhysicalMaterial 
-                    color="#fda4af" 
-                    emissive="#e11d48" 
-                    emissiveIntensity={1.4} 
-                    transparent 
-                    opacity={0.78} 
-                    roughness={0.18} 
-                    transmission={0.5} 
-                    side={THREE.DoubleSide} 
-                  />
-                </mesh>
-              </group>
-            );
-          })}
-        </group>
-
-        {/* ------------------------------------------------------------- */}
-        {/* 2. CONVERSATIONAL 3D VOICE FREQUENCY WAVEFORMS (SPEECH WAVES) */}
-        {/* ------------------------------------------------------------- */}
-        <group ref={voiceRingsRef} position={[0, 25, 0]}>
-          {/* Inner Frequency Ring */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[140, 2.2, 16, 80]} />
-            <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={3.0} />
-          </mesh>
-          {/* Mid Resonance Ring */}
-          <mesh rotation={[Math.PI / 2.3, 0.2, 0]}>
-            <torusGeometry args={[190, 1.8, 16, 80]} />
-            <meshStandardMaterial color="#818cf8" emissive="#6366f1" emissiveIntensity={2.5} />
-          </mesh>
-          {/* Outer Emotional Pulse Ring */}
-          <mesh rotation={[Math.PI / 1.8, -0.2, 0]}>
-            <torusGeometry args={[250, 1.5, 16, 80]} />
-            <meshStandardMaterial color="#f472b6" emissive="#db2777" emissiveIntensity={2.2} />
-          </mesh>
-        </group>
-
-        {/* ------------------------------------------------------------- */}
-        {/* 3. ORBITING AI CAPABILITY SATELLITES                          */}
-        {/* ------------------------------------------------------------- */}
-        <group ref={satellitesRef} position={[0, 25, 0]}>
-          {capabilitySatellites.map((sat, i) => {
-            const dist = 320;
-            const x = Math.cos(sat.angle) * dist;
-            const z = Math.sin(sat.angle) * dist;
-            return (
-              <group key={i} position={[x, 0, z]}>
-                {/* Luminous Node Core */}
-                <mesh>
-                  <octahedronGeometry args={[16, 0]} />
-                  <meshStandardMaterial color="#ffffff" emissive={sat.color} emissiveIntensity={3.2} />
-                </mesh>
-                <pointLight color={sat.color} intensity={8} distance={220} />
-
-                {/* Orbiting Halo */}
-                <mesh rotation={[Math.PI / 3, 0, 0]}>
-                  <torusGeometry args={[26, 1.2, 12, 32]} />
-                  <meshStandardMaterial color={sat.color} emissive={sat.color} emissiveIntensity={2.0} />
-                </mesh>
-
-                {/* Node Pill Tag */}
-                <Text
-                  font="/fonts/Roboto.woff"
-                  fallbackFonts={[]}
-                  position={[0, 32, 0]}
-                  fontSize={14}
-                  color="#ffffff"
-                  anchorX="center"
-                  anchorY="middle"
-                  outlineWidth={1.2}
-                  outlineColor="#0f172a"
-                >
-                  {sat.title}
-                </Text>
-              </group>
-            );
-          })}
-        </group>
+        {/* Volumetric Upward Projection Light Cone */}
+        <mesh ref={projectorBeamRef} position={[0, 160, 0]}>
+          <cylinderGeometry args={[95, 125, 310, 32, 1, true]} />
+          <meshBasicMaterial 
+            color="#38bdf8" 
+            transparent 
+            opacity={0.28} 
+            side={THREE.DoubleSide} 
+            blending={THREE.AdditiveBlending} 
+            depthWrite={false} 
+          />
+        </mesh>
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 4. FLOATING OFFICIAL MAYA EMBLEM & TITLE                      */}
+      {/* 3. BEAUTIFUL HOLOGRAPHIC AI AVATAR (MAYA)                      */}
       {/* ------------------------------------------------------------- */}
-      <group position={[0, 310, -450]}>
-        {/* Floating High-Res Maya Sacred Lotus Icon */}
-        <Float speed={2} rotationIntensity={0.06} floatIntensity={0.4}>
-          <mesh position={[0, 80, 0]}>
-            <planeGeometry args={[140, 112]} />
-            <meshBasicMaterial map={logoTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+      <group 
+        ref={avatarGroupRef} 
+        position={[0, 20, -550]}
+        onPointerOver={(e) => { e.stopPropagation(); setAvatarHovered(true); playChime(659.25, 0.35, 'triangle'); }}
+        onPointerOut={(e) => { e.stopPropagation(); setAvatarHovered(false); }}
+        onClick={(e) => { e.stopPropagation(); setSpeechActive(prev => !prev); playChime(523.25, 0.45, 'sine'); }}
+      >
+        {/* Holographic Torso, Neck, and Shoulders */}
+        <group position={[0, -40, 0]}>
+          {/* Elegant Tapered Cybernetic Shoulders / Bust */}
+          <mesh position={[0, 0, 0]}>
+            <cylinderGeometry args={[26, 42, 70, 24]} />
+            <meshStandardMaterial
+              color="#091b34"
+              emissive="#38bdf8"
+              emissiveIntensity={avatarHovered ? 2.4 : 1.6}
+              roughness={0.15}
+              metalness={0.88}
+              transparent
+              opacity={0.85}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+
+          {/* Holographic Wireframe Chest & Shoulder Armor Lattice */}
+          <mesh position={[0, 0, 0]}>
+            <cylinderGeometry args={[26.5, 42.5, 71, 24, 6, true]} />
+            <meshBasicMaterial
+              color="#c084fc"
+              wireframe
+              transparent
+              opacity={0.55}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+
+          {/* Graceful Cybernetic Neck */}
+          <mesh position={[0, 48, 0]}>
+            <cylinderGeometry args={[14, 18, 32, 20]} />
+            <meshStandardMaterial
+              color="#0f172a"
+              emissive="#818cf8"
+              emissiveIntensity={1.8}
+              roughness={0.12}
+              metalness={0.9}
+              transparent
+              opacity={0.88}
+            />
+          </mesh>
+          <mesh position={[0, 48, 0]}>
+            <cylinderGeometry args={[14.5, 18.5, 32, 16, 4, true]} />
+            <meshBasicMaterial color="#38bdf8" wireframe transparent opacity={0.45} blending={THREE.AdditiveBlending} depthWrite={false} />
+          </mesh>
+
+          {/* Glowing Empathy Heart Matrix Core in Center of Chest */}
+          <group ref={empathyHeartRef} position={[0, 5, 18]}>
+            <mesh>
+              <octahedronGeometry args={[14, 0]} />
+              <meshStandardMaterial
+                color="#ffffff"
+                emissive="#fb7185"
+                emissiveIntensity={avatarHovered ? 4.5 : 3.0}
+                metalness={0.9}
+                roughness={0.1}
+              />
+            </mesh>
+            <pointLight color="#f43f5e" intensity={12} distance={180} />
+          </group>
+        </group>
+
+        {/* Sculpted Holographic Head & Visage */}
+        <group ref={headRef} position={[0, 45, 0]}>
+          {/* Graceful Cranial Form */}
+          <mesh position={[0, 16, -2]}>
+            <sphereGeometry args={[26, 32, 28]} />
+            <meshStandardMaterial
+              color="#0d1b30"
+              emissive="#38bdf8"
+              emissiveIntensity={avatarHovered ? 2.2 : 1.4}
+              roughness={0.15}
+              metalness={0.85}
+              transparent
+              opacity={0.88}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+
+          {/* Stylized Facial Plane & Cheeks */}
+          <mesh position={[0, 12, 12]}>
+            <sphereGeometry args={[20, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.55]} scale={[0.88, 1.05, 0.85]} />
+            <meshStandardMaterial
+              color="#13233c"
+              emissive="#818cf8"
+              emissiveIntensity={1.6}
+              roughness={0.12}
+              metalness={0.9}
+              transparent
+              opacity={0.85}
+            />
+          </mesh>
+
+          {/* Ethereal Outer Holographic Face Scanline Lattice */}
+          <mesh position={[0, 14, 1]}>
+            <sphereGeometry args={[27.2, 28, 24]} />
+            <meshBasicMaterial
+              color="#a78bfa"
+              wireframe
+              transparent
+              opacity={0.45}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+
+          {/* Luminous Cybernetic Ocular Sensors (Expressive Almond Eyes) */}
+          <group ref={eyesRef} position={[0, 17, 24]}>
+            {/* Left Eye */}
+            <mesh position={[-9, 0, 0]}>
+              <sphereGeometry args={[4.2, 16, 16]} scale={[1.4, 0.85, 0.4]} />
+              <meshStandardMaterial color="#ffffff" emissive="#38bdf8" emissiveIntensity={5.0} />
+            </mesh>
+            {/* Right Eye */}
+            <mesh position={[9, 0, 0]}>
+              <sphereGeometry args={[4.2, 16, 16]} scale={[1.4, 0.85, 0.4]} />
+              <meshStandardMaterial color="#ffffff" emissive="#38bdf8" emissiveIntensity={5.0} />
+            </mesh>
+            {/* Soft Eye Aura Glow */}
+            <pointLight position={[0, 0, 4]} color="#38bdf8" intensity={8} distance={120} />
+          </group>
+
+          {/* Graceful Audio-Reactive Conversational Lips */}
+          <mesh ref={lipsRef} position={[0, 4.5, 23]}>
+            <torusGeometry args={[5.2, 1.2, 12, 24, Math.PI]} rotation={[Math.PI, 0, 0]} />
+            <meshStandardMaterial color="#fb7185" emissive="#f43f5e" emissiveIntensity={3.2} />
+          </mesh>
+
+          {/* Forehead Holographic Neural Node */}
+          <mesh position={[0, 27, 21]}>
+            <circleGeometry args={[2.8, 16]} />
+            <meshStandardMaterial color="#ffffff" emissive="#38bdf8" emissiveIntensity={4.0} />
+          </mesh>
+
+          {/* Flowing Luminescent Holographic Hair Tendrils (Left Side) */}
+          <group ref={hairLeftRef} position={[-20, 24, -2]}>
+            <mesh position={[-6, -28, 4]} rotation={[0.1, 0, 0.12]}>
+              <cylinderGeometry args={[2.5, 6.0, 75, 12]} />
+              <meshStandardMaterial
+                color="#818cf8"
+                emissive="#c084fc"
+                emissiveIntensity={2.5}
+                transparent
+                opacity={0.82}
+                roughness={0.1}
+                metalness={0.9}
+              />
+            </mesh>
+            <mesh position={[-8, -20, -10]} rotation={[-0.2, 0, 0.15]}>
+              <cylinderGeometry args={[2.0, 5.0, 65, 12]} />
+              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={2.2} transparent opacity={0.78} />
+            </mesh>
+          </group>
+
+          {/* Flowing Luminescent Holographic Hair Tendrils (Right Side) */}
+          <group ref={hairRightRef} position={[20, 24, -2]}>
+            <mesh position={[6, -28, 4]} rotation={[0.1, 0, -0.12]}>
+              <cylinderGeometry args={[2.5, 6.0, 75, 12]} />
+              <meshStandardMaterial
+                color="#818cf8"
+                emissive="#c084fc"
+                emissiveIntensity={2.5}
+                transparent
+                opacity={0.82}
+                roughness={0.1}
+                metalness={0.9}
+              />
+            </mesh>
+            <mesh position={[8, -20, -10]} rotation={[-0.2, 0, -0.15]}>
+              <cylinderGeometry args={[2.0, 5.0, 65, 12]} />
+              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={2.2} transparent opacity={0.78} />
+            </mesh>
+          </group>
+
+          {/* Crown Holographic Halo Diadem */}
+          <mesh position={[0, 36, -2]} rotation={[Math.PI / 2.3, 0, 0]}>
+            <torusGeometry args={[24, 1.4, 16, 48]} />
+            <meshStandardMaterial color="#ffd700" emissive="#f59e0b" emissiveIntensity={3.2} />
+          </mesh>
+        </group>
+
+        {/* Concentric Harmonic Voice Orbits Floating around Avatar */}
+        <group ref={resonanceOrbitsRef} position={[0, 20, 0]}>
+          {/* Inner Vocal Frequency Ring (Cyan) */}
+          <mesh rotation={[Math.PI / 2.2, 0.1, 0]}>
+            <torusGeometry args={[95, 2.2, 16, 80]} />
+            <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={3.2} metalness={0.9} roughness={0.1} />
+          </mesh>
+          {/* Mid Empathy Resonance Ring (Lavender) */}
+          <mesh rotation={[Math.PI / 1.8, -0.15, 0.2]}>
+            <torusGeometry args={[135, 1.8, 16, 80]} />
+            <meshStandardMaterial color="#818cf8" emissive="#6366f1" emissiveIntensity={2.8} metalness={0.9} roughness={0.1} />
+          </mesh>
+          {/* Outer Compassion Wave Ring (Rose) */}
+          <mesh rotation={[Math.PI / 2.0, 0.25, -0.1]}>
+            <torusGeometry args={[175, 1.5, 16, 80]} />
+            <meshStandardMaterial color="#fb7185" emissive="#e11d48" emissiveIntensity={2.5} metalness={0.9} roughness={0.1} />
+          </mesh>
+        </group>
+
+        {/* Floating Interactive Greeting Badge */}
+        <Float speed={1.8} rotationIntensity={0.02} floatIntensity={0.25}>
+          <group position={[0, 115, 30]}>
+            <mesh position={[0, 0, -2]}>
+              <planeGeometry args={[280, 42]} />
+              <meshBasicMaterial color="#090d16" transparent opacity={0.88} side={THREE.DoubleSide} />
+            </mesh>
+            <mesh position={[0, 0, -1]}>
+              <planeGeometry args={[282, 44]} />
+              <meshBasicMaterial color="#38bdf8" wireframe transparent opacity={0.5} />
+            </mesh>
+            <Text
+              font="/fonts/Roboto.woff"
+              fallbackFonts={[]}
+              position={[0, 8, 2]}
+              fontSize={11.5}
+              color="#38bdf8"
+              anchorX="center"
+              anchorY="middle"
+              letterSpacing={0.12}
+            >
+              ● MAYA LIVE CONVERSATIONAL AI ●
+            </Text>
+            <Text
+              font="/fonts/Roboto.woff"
+              fallbackFonts={[]}
+              position={[0, -8, 2]}
+              fontSize={9}
+              color="#ffffff"
+              anchorX="center"
+              anchorY="middle"
+            >
+              “Welcome! How can I assist your enterprise growth today?”
+            </Text>
+          </group>
+        </Float>
+      </group>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 4. CONVERSATIONAL VOICE EQUALIZER BARS (STAGE ARC IN FRONT)   */}
+      {/* ------------------------------------------------------------- */}
+      <group ref={eqBarsRef} position={[0, -180, -550]}>
+        {eqData.map((bar, i) => (
+          <group key={i} position={[bar.x, 0, bar.z]}>
+            <mesh position={[0, bar.height / 2, 0]}>
+              <boxGeometry args={[5.5, bar.height, 5.5]} />
+              <meshStandardMaterial 
+                color="#ffffff" 
+                emissive={bar.color} 
+                emissiveIntensity={3.2} 
+                roughness={0.1} 
+                metalness={0.9} 
+              />
+            </mesh>
+            <mesh position={[0, 1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[6, 16]} />
+              <meshBasicMaterial color={bar.color} />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 5. HIGH-TECH HOLOGRAPHIC INTELLIGENCE CONSOLES (READABLE)     */}
+      {/* ------------------------------------------------------------- */}
+      {/* Left Console: Neural Empathy */}
+      <group ref={leftHudRef} position={[-360, 80, -480]} rotation={[0, 0.36, 0]}>
+        <mesh position={[0, 0, 0]}>
+          <planeGeometry args={[260, 160]} />
+          <meshPhysicalMaterial 
+            color="#090d16" 
+            roughness={0.1} 
+            metalness={0.3} 
+            transmission={0.82} 
+            transparent 
+            opacity={0.9} 
+            side={THREE.DoubleSide} 
+          />
+        </mesh>
+        <mesh position={[0, 0, 1]}>
+          <planeGeometry args={[262, 162]} />
+          <meshBasicMaterial color="#38bdf8" wireframe transparent opacity={0.45} />
+        </mesh>
+
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, 54, 3]}
+          fontSize={17}
+          color="#38bdf8"
+          anchorX="left"
+          anchorY="middle"
+          letterSpacing={0.1}
+        >
+          NEURAL EMPATHY ARCHITECTURE
+        </Text>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, 26, 3]}
+          fontSize={22}
+          color="#ffffff"
+          anchorX="left"
+          anchorY="middle"
+          outlineWidth={1.0}
+          outlineColor="#0369a1"
+        >
+          COMPASSIONATE AI CORE
+        </Text>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, -6, 3]}
+          fontSize={14}
+          color="#e2e8f0"
+          anchorX="left"
+          anchorY="middle"
+        >
+          • Emotion Alignment: 99.8% Synchronized
+        </Text>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, -28, 3]}
+          fontSize={14}
+          color="#e2e8f0"
+          anchorX="left"
+          anchorY="middle"
+        >
+          • Voice Latency: &lt; 140ms Client WebGPU
+        </Text>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, -50, 3]}
+          fontSize={14}
+          color="#e2e8f0"
+          anchorX="left"
+          anchorY="middle"
+        >
+          • Dynamic Tone Modulation &amp; Active Listening
+        </Text>
+      </group>
+
+      {/* Right Console: Enterprise Capabilities */}
+      <group ref={rightHudRef} position={[360, 80, -480]} rotation={[0, -0.36, 0]}>
+        <mesh position={[0, 0, 0]}>
+          <planeGeometry args={[260, 160]} />
+          <meshPhysicalMaterial 
+            color="#090d16" 
+            roughness={0.1} 
+            metalness={0.3} 
+            transmission={0.82} 
+            transparent 
+            opacity={0.9} 
+            side={THREE.DoubleSide} 
+          />
+        </mesh>
+        <mesh position={[0, 0, 1]}>
+          <planeGeometry args={[262, 162]} />
+          <meshBasicMaterial color="#fb7185" wireframe transparent opacity={0.45} />
+        </mesh>
+
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, 54, 3]}
+          fontSize={17}
+          color="#fb7185"
+          anchorX="left"
+          anchorY="middle"
+          letterSpacing={0.1}
+        >
+          ENTERPRISE REPRESENTATIVE
+        </Text>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, 26, 3]}
+          fontSize={22}
+          color="#ffffff"
+          anchorX="left"
+          anchorY="middle"
+          outlineWidth={1.0}
+          outlineColor="#be123c"
+        >
+          AUTONOMOUS SALES DESK
+        </Text>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, -6, 3]}
+          fontSize={14}
+          color="#e2e8f0"
+          anchorX="left"
+          anchorY="middle"
+        >
+          • 24/7 Inbound Lead Qualification &amp; Demo Booking
+        </Text>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, -28, 3]}
+          fontSize={14}
+          color="#e2e8f0"
+          anchorX="left"
+          anchorY="middle"
+        >
+          • Multi-Lingual Speech Synthesis (20+ Languages)
+        </Text>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[-115, -50, 3]}
+          fontSize={14}
+          color="#e2e8f0"
+          anchorX="left"
+          anchorY="middle"
+        >
+          • 1-Line Web Concierge Script Embed
+        </Text>
+      </group>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 6. PROMINENT MAYA EMBLEM & CLEAR TITLE BRANDING               */}
+      {/* ------------------------------------------------------------- */}
+      <group position={[0, 230, -380]}>
+        {/* Floating High-Res Maya Logo Emblem - Crisp Normal Blending */}
+        <Float speed={2} rotationIntensity={0.04} floatIntensity={0.3}>
+          <mesh position={[0, 85, 0]}>
+            <planeGeometry args={[150, 122]} />
+            <meshBasicMaterial map={logoTex} transparent depthWrite={false} />
           </mesh>
         </Float>
 
@@ -308,14 +676,14 @@ export default function WorldMaya({ position, visible }) {
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, 10, 0]}
-          fontSize={48}
+          position={[0, 0, 0]}
+          fontSize={64}
           color="#ffffff"
-          outlineWidth={1.8}
+          outlineWidth={2.2}
           outlineColor="#4338ca"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.12}
+          letterSpacing={0.14}
         >
           MAYA
         </Text>
@@ -324,16 +692,16 @@ export default function WorldMaya({ position, visible }) {
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -28, 0]}
-          fontSize={15}
+          position={[0, -50, 0]}
+          fontSize={26}
           color="#818cf8"
-          outlineWidth={0.8}
-          outlineColor="#0f172a"
+          outlineWidth={1.2}
+          outlineColor="#090d16"
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.14}
         >
-          EMPATHETIC AI AVATAR & 24/7 CONCIERGE
+          EMPATHETIC AI AVATAR &amp; 24/7 ENTERPRISE CONCIERGE
         </Text>
       </group>
     </group>

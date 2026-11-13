@@ -7,7 +7,7 @@ import ToroidalSentaientCore from './ToroidalSentaientCore';
 const LogoMesh = ({ url, scaleX, scaleY }) => {
   const texture = useTexture(url);
   return (
-    <mesh scale={[70 * scaleX, 70 * scaleY, 1]} position={[0, 0, 0]}>
+    <mesh scale={[70 * scaleX, 70 * scaleY, 1]} position={[0, 0, 2]} renderOrder={100}>
       <planeGeometry args={[1, 1]} />
       <meshBasicMaterial map={texture} transparent={true} alphaTest={0.05} depthWrite={false} side={THREE.DoubleSide} toneMapped={false} />
     </mesh>
@@ -34,12 +34,13 @@ const getHolographicGlowTexture = () => {
   return _sharedGlowTex;
 };
 
-const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0 }) => {
+const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, appUrl, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0, hoverGlowMultiplier, coreGlowColor, glowColor }) => {
   const meshRef = useRef();
   const glowGroupRef = useRef();
   const containerRef = useRef();
   const isHovered = hoveredWorld === name;
   const isDimmed = hoveredWorld !== null && !isHovered;
+  const hoverGlow = isHovered ? (hoverGlowMultiplier !== undefined ? hoverGlowMultiplier : ((name === 'Matrix' || name === 'Contango') ? 0.87 : 1.0)) : 1.0;
   
   // Position card popup off to the side (outside the ring, never on top of the logos)
   const isRightSide = position[0] >= 0;
@@ -53,8 +54,9 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
   const scaleX = Array.isArray(logoScale) ? logoScale[0] : (typeof logoScale === 'number' ? logoScale : 1.0);
   const scaleY = Array.isArray(logoScale) ? logoScale[1] : 1.0;
   const baseDim = 74 * itemScale;
-  const glowW = Math.max(baseDim, baseDim * scaleX);
-  const glowH = Math.max(baseDim, baseDim * scaleY);
+  const glowRadiusScale = name === 'Legal Eagle' ? 1.20 : 1.0;
+  const glowW = baseDim * Math.min(1.25, Math.max(0.85, scaleX)) * glowRadiusScale;
+  const glowH = baseDim * Math.min(1.25, Math.max(0.85, scaleY)) * glowRadiusScale;
 
   React.useLayoutEffect(() => {
     if (containerRef.current) {
@@ -92,13 +94,17 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
       if (typeof e.preventDefault === 'function') e.preventDefault();
       if (typeof e.stopPropagation === 'function') e.stopPropagation();
     }
-    if (window._goToStation) {
+    if (window._goToStation || window.directTeleportTo) {
       let targetIdx = window.STATIONS ? window.STATIONS.findIndex(s => s.name.toLowerCase() === name.toLowerCase()) : -1;
       if (targetIdx === -1 && window.STATIONS) {
         targetIdx = window.STATIONS.findIndex(s => Math.abs(s.p - (targetP || 0)) < 0.03);
       }
       if (targetIdx !== -1) {
-        window._goToStation(targetIdx, 2400);
+        if (window.directTeleportTo) {
+          window.directTeleportTo(targetIdx);
+        } else {
+          window._goToStation(targetIdx, 1350);
+        }
         return;
       }
     }
@@ -122,43 +128,43 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
   return (
     <group position={position}>
       {/* Camera-Facing Pronounced Holographic Glow Aura (Remains behind logo throughout 360° spin) */}
-      <group ref={glowGroupRef} position={[0, 0, -4]}>
+      <group ref={glowGroupRef} position={[0, 0, -2]} renderOrder={20}>
         {glowTexture && (
           <>
-            {/* Layer 1: High-Intensity Luminous Core Backlight */}
-            <mesh scale={[glowW * 1.45, glowH * 1.45, 1]}>
+            {/* Layer 1: Core Backlight (Brand tinted) */}
+            <mesh scale={[glowW * 1.3, glowH * 1.3, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
-                color="#ffffff"
+                color={coreGlowColor || glowColor || (name === 'MindWave' ? '#38bdf8' : (name === 'Icebreaker' ? '#FFAA33' : (name === 'Contango' ? '#FFE066' : (name === 'Interstellar' ? '#38bdf8' : (name === 'Liquid' ? '#55FFAA' : color)))))}
                 transparent
-                opacity={(name === 'Liquid' ? 0.0 : 1.0) * (isHovered ? 0.95 : (isDimmed ? 0.35 : 0.65)) * glowMultiplier}
+                opacity={(isHovered ? 0.45 : (isDimmed ? 0.12 : 0.28)) * glowMultiplier * hoverGlow}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
             </mesh>
 
             {/* Layer 2: Vibrant Brand-Color Holographic Aura */}
-            <mesh scale={[glowW * 2.1, glowH * 2.1, 1]}>
+            <mesh scale={[glowW * 1.85, glowH * 1.85, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
-                color={color}
+                color={glowColor || (name === 'Icebreaker' ? '#FF6600' : (name === 'Contango' ? '#FFD700' : (name === 'Interstellar' ? '#00D2FF' : (name === 'Liquid' ? '#00FF88' : color))))}
                 transparent
-                opacity={(isHovered ? 1.0 : (isDimmed ? 0.45 : 0.88)) * glowMultiplier}
+                opacity={(isHovered ? 0.55 : (isDimmed ? 0.15 : 0.35)) * glowMultiplier * hoverGlow}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
             </mesh>
 
-            {/* Layer 3: Expansive Atmospheric Deep Bloom */}
-            <mesh scale={[glowW * 3.1, glowH * 3.1, 1]}>
+            {/* Layer 3: Atmospheric Deep Halo */}
+            <mesh scale={[glowW * 2.5, glowH * 2.5, 1]}>
               <planeGeometry args={[1, 1]} />
               <meshBasicMaterial
                 map={glowTexture}
-                color={color}
+                color={glowColor || (name === 'Icebreaker' ? '#FF5500' : (name === 'Contango' ? '#F59E0B' : (name === 'Interstellar' ? '#0284C7' : (name === 'Liquid' ? '#059669' : color))))}
                 transparent
-                opacity={(isHovered ? 0.65 : (isDimmed ? 0.20 : 0.42)) * glowMultiplier}
+                opacity={(isHovered ? 0.25 : (isDimmed ? 0.06 : 0.16)) * glowMultiplier * hoverGlow}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
@@ -167,7 +173,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
         )}
       </group>
 
-      <group ref={meshRef} onClick={handleClick}>
+      <group ref={meshRef} onClick={handleClick} position={[0, 0, 2]}>
         {/* Holographic Mini World Preview Diorama */}
         <group
           onPointerOver={(e) => { e.stopPropagation(); onHoverStart(); document.body.style.cursor = 'pointer'; }}
@@ -202,8 +208,8 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
             onPointerLeave={(e) => { e.stopPropagation(); onHoverEnd(); document.body.style.cursor = 'auto'; }}
             onClick={handleClick}
             style={{
-              width: '260px',
-              padding: '14px 18px',
+              width: '290px',
+              padding: '16px 20px',
               background: 'linear-gradient(135deg, rgba(8, 14, 28, 0.98) 0%, rgba(4, 7, 16, 0.99) 100%)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
@@ -216,7 +222,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
-              gap: '6px',
+              gap: '7px',
               animation: 'popupFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
               zIndex: 99999999,
               pointerEvents: 'auto',
@@ -238,7 +244,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               onPointerEnter={(e) => { e.stopPropagation(); onHoverStart(); }}
             />
               <div style={{
-                fontSize: '11px',
+                fontSize: '13px',
                 fontWeight: 800,
                 letterSpacing: '0.12em',
                 color: color,
@@ -251,10 +257,10 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               </div>
               {summary && (
                 <div style={{
-                  fontSize: '11px',
+                  fontSize: '14.5px',
                   fontWeight: 700,
                   color: '#ffffff',
-                  lineHeight: 1.35,
+                  lineHeight: 1.4,
                   letterSpacing: '0.01em',
                   textShadow: '0 1px 4px rgba(0,0,0,0.8)',
                   pointerEvents: 'none'
@@ -263,8 +269,8 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
                 </div>
               )}
               <div style={{
-                fontSize: '12px',
-                lineHeight: 1.5,
+                fontSize: '13.5px',
+                lineHeight: 1.55,
                 color: '#e2e8f0',
                 fontFamily: "'Inter', -apple-system, sans-serif",
                 fontWeight: 400,
@@ -274,6 +280,46 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               }}>
                 {description}
               </div>
+              {appUrl && (
+                <div style={{ marginTop: '8px', width: '100%', pointerEvents: 'auto' }}>
+                  <a
+                    href={appUrl}
+                    target={appUrl.startsWith('http') ? '_blank' : '_self'}
+                    rel={appUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    onClick={(e) => { e.stopPropagation(); }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      background: `linear-gradient(135deg, ${color}ee, ${color}88)`,
+                      color: '#ffffff',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      textDecoration: 'none',
+                      textTransform: 'uppercase',
+                      boxShadow: `0 4px 14px ${color}44`,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      border: '1px solid rgba(255, 255, 255, 0.25)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-1px) scale(1.02)';
+                      e.currentTarget.style.filter = 'brightness(1.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'none';
+                      e.currentTarget.style.filter = 'none';
+                    }}
+                  >
+                    Enter App
+                    <span style={{ fontSize: '12px', lineHeight: 1 }}>➔</span>
+                  </a>
+                </div>
+              )}
           </div>
         </Html>
       )}
@@ -336,22 +382,22 @@ export const getPrimitiveLogo = (name, color, hovered) => {
 };
 
 export const WORLDS_DATA = [
-  { name: 'Sentaient', startP: 0.485, p: 0.50, endP: 0.51, color: '#60A9FF', ringColor: '#FF8800', logoUrl: '/sentaient_logo_final.png', logoScale: [1.692, 0.315], summary: 'Autonomous AI Venture Studio & Multi-Industry Revenue Engines', description: 'The foundational intelligence nexus engineering proprietary autonomous platforms across FinTech, LegalTech, Health & BioTech, Defense, and Enterprise Cloud.' },
-  { name: 'CloveH2O', startP: 0.32, p: 0.36, endP: 0.37, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.584, 1.584], summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.' },
-  { name: 'MindWave', startP: 0.02, p: 0.040, endP: 0.06, color: '#60A9FF', ringColor: '#FF2A6D', logoUrl: '/mindwave-logo-light.png', logoScale: [1.555, 1.555], summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.' },
-  { name: 'Icebreaker', startP: 0.10, p: 0.135, endP: 0.16, color: '#00F0FF', ringColor: '#FF6600', logoUrl: '/icebreaker_logo.png', logoScale: [1.0, 1.0], summary: 'Real Content. Real Human Connections.', description: 'Thaw the social ice. Transform superficial online interactions into vibrant, authentic real-world connections and spontaneous events.' },
-  { name: 'Interstellar', startP: 0.16, p: 0.21, endP: 0.22, color: '#FF3F00', ringColor: '#00FFFF', logoUrl: '/interstellar_logo_final.png', logoScale: [1.287, 1.287], summary: 'Galactic Strategy & Space Conquest', description: 'Command deep-space starfleets, conquer uncharted solar systems, extract stellar resources, and build an invincible galactic empire.' },
-  { name: 'Elevate', startP: 0.520, p: 0.550, endP: 0.570, color: '#38BDF8', ringColor: '#FF8000', logoUrl: '/elevate_logo_final.png', logoScale: [1.365, 0.81], summary: '3D Freeride Snowboard Action with Live Mountain Weather, Snow Conditions & Gear Intelligence', description: 'Drop into high-stakes mountain freeriding with thrilling 3D snowboarding action, paired with a complete mountain companion that delivers real-time weather, live snowpack conditions, avalanche safety radar, and personalized gear optimization.' },
-  { name: 'FantasyQuant', startP: 0.37, p: 0.42, endP: 0.43, color: '#00E676', ringColor: '#FFD700', logoUrl: '/fantasyquant_wizard_bright.png', logoScale: [0.825, 1.10], summary: 'Sports Betting Intelligence & Quantitative Edge', description: 'Gain a mathematical advantage with algorithmic sports modeling, real-time odds discrepancies, and predictive simulation engines.' },
-  { name: 'Sphinx', startP: 0.580, p: 0.60, endP: 0.62, color: '#F59E0B', ringColor: '#00D2FF', logoUrl: '/sphinx_logo_final.png', logoScale: [1.142, 0.9], summary: 'Global Threat Intelligence & Unified Security', description: 'Protect assets worldwide with real-time natural disaster tracking, geopolitical threat monitoring, and centralized perimeter security.' },
-  { name: 'Legal Eagle', startP: 0.23, p: 0.255, endP: 0.265, color: '#A855F7', ringColor: '#FBBF24', logoUrl: '/legal_eagle_logo.png', logoScale: [1.032, 1.0], summary: 'Autonomous AI Legal Intelligence & Contract Defense', description: 'Audit contracts in seconds with eagle-eyed AI precision. Detect hidden liabilities, mitigate legal risks, and auto-draft favorable clauses.' },
-  { name: 'Maya', startP: 0.705, p: 0.725, endP: 0.745, color: '#818CF8', ringColor: '#FB7185', logoUrl: '/maya_logo_final.png', logoScale: [1.222, 1.0], summary: 'Empathetic AI Avatar & 24/7 Enterprise Representative', description: 'Engage customers around the clock with life-like conversational AI avatars for autonomous sales, compassionate support, and personal growth.' },
-  { name: 'LightSpeed', startP: 0.910, p: 0.93, endP: 0.99, color: '#00A3FF', ringColor: '#FFC800', logoUrl: '/lightspeed_logo_gold.png', logoScale: [0.829, 1.0], summary: 'Autonomous AI CTO & Enterprise Cyber-Defense', description: 'Deploy a self-healing cloud infrastructure protected by zero-trust cyber defense, sub-10ms global edge routing, and 99.999% SLA uptime.' },
-  { name: 'Liquid', startP: 0.645, p: 0.665, endP: 0.685, color: '#00FF88', ringColor: '#A855F7', logoUrl: '/liquid_logo_bold_v7.png', logoScale: [1.25, 1.25], glowMultiplier: 0.5, summary: 'Autonomous Accounting, Tax Intelligence & Token Forge', description: 'Distill enterprise financial complexity into instant clarity with automated tax liability calculation, live P&L auditing, and smart token minting.' },
-  { name: 'Contango', startP: 0.44, p: 0.47, endP: 0.475, color: '#22C55E', ringColor: '#FF7A00', logoUrl: '/assets/images/contango_quant_logo_new.png', logoScale: [1.0, 0.526], summary: 'Algorithmic Trading & High-Frequency Market Intelligence', description: 'Master market volatility with automated quant strategies, order book microstructure analytics, and macro liquidity tracking.' },
-  { name: 'PyRAmid', startP: 0.770, p: 0.79, endP: 0.82, color: '#00E5FF', ringColor: '#C084FC', logoUrl: '/pyramid_logo_final.png', logoScale: [1.005, 1.0], summary: 'Autonomous Business Ops Brain & Strategic Execution', description: 'Harness an AI executive that scans markets for high-margin opportunities, designs end-to-end strategic playbooks, and executes autonomously.' },
-  { name: 'Matrix', startP: 0.840, p: 0.865, endP: 0.900, color: '#00FF44', ringColor: '#D946EF', logoUrl: '/matrix_logo_bright.png', logoScale: [1.522, 0.363], summary: 'Autonomous Production Code Generation, Full-Stack Architecture & Deep Technical Research', description: 'Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors complex codebases, and conducts deep end-to-end debugging—leveraging technical research capabilities to parse complex documentation and frontier frameworks.' },
-  { name: 'Autopilot', startP: 0.275, p: 0.30, endP: 0.31, color: '#10B981', ringColor: '#FF3366', logoUrl: '/autopilot_logo.png', logoScale: [1.4, 0.766], summary: 'Enterprise Social Media Marketing Automation', description: 'Automate multi-channel brand growth with AI-driven content generation, scheduled omnichannel publishing, and predictive audience engagement.' }
+  { name: 'Sentaient', startP: 0.485, p: 0.505, endP: 0.525, color: '#60A9FF', ringColor: '#FF8800', logoUrl: '/sentaient_logo_final.png', logoScale: [1.692, 0.315], summary: 'Autonomous AI Venture Studio & Multi-Industry Revenue Engines', description: 'The foundational intelligence nexus engineering proprietary autonomous platforms across FinTech, LegalTech, Health & BioTech, Defense, and Enterprise Cloud.', appUrl: '/agent-studio' },
+  { name: 'CloveH2O', startP: 0.32, p: 0.36, endP: 0.37, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.584, 1.584], glowMultiplier: 1.265, summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.', appUrl: 'https://cloveh2o.com' },
+  { name: 'MindWave', startP: 0.02, p: 0.038, endP: 0.06, color: '#38BDF8', ringColor: '#FF2A6D', logoUrl: '/mindwave-ring-logo.png', logoScale: [1.555, 1.555], coreGlowColor: '#38BDF8', glowMultiplier: 1.265, summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.', appUrl: '/mindwave.html' },
+  { name: 'Icebreaker', startP: 0.10, p: 0.135, endP: 0.16, color: '#00F0FF', glowColor: '#FF6600', coreGlowColor: '#FFAA33', glowMultiplier: 1.265, ringColor: '#FF6600', logoUrl: '/icebreaker_logo.png', logoScale: [1.0, 1.0], summary: 'Real Content. Real Human Connections.', description: 'Thaw the social ice. Transform superficial online interactions into vibrant, authentic real-world connections and spontaneous events.', appUrl: '/icebreaker' },
+  { name: 'Interstellar', startP: 0.16, p: 0.21, endP: 0.22, color: '#FF3F00', glowColor: '#00D2FF', coreGlowColor: '#38BDF8', glowMultiplier: 1.10, ringColor: '#00FFFF', logoUrl: '/interstellar_logo_final.png', logoScale: [1.287, 1.287], summary: 'Galactic Strategy & Space Conquest', description: 'Command deep-space starfleets, conquer uncharted solar systems, extract stellar resources, and build an invincible galactic empire.', appUrl: '/interstellar-game/' },
+  { name: 'Elevate', startP: 0.520, p: 0.550, endP: 0.570, color: '#38BDF8', ringColor: '#FF8000', logoUrl: '/elevate_logo_final.png', logoScale: [1.365, 0.81], glowMultiplier: 1.265, summary: '3D Freeride Snowboard Action with Live Mountain Weather, Snow Conditions & Gear Intelligence', description: 'Drop into high-stakes mountain freeriding with thrilling 3D snowboarding action, paired with a complete mountain companion that delivers real-time weather, live snowpack conditions, avalanche safety radar, and personalized gear optimization.' },
+  { name: 'FantasyQuant', startP: 0.37, p: 0.42, endP: 0.43, color: '#00E676', ringColor: '#FFD700', logoUrl: '/fantasyquant_wizard_bright.png', logoScale: [0.825, 1.10], summary: 'Sports Betting Intelligence & Quantitative Edge', description: 'Gain a mathematical advantage with algorithmic sports modeling, real-time odds discrepancies, and predictive simulation engines.', appUrl: '/fantasyquant' },
+  { name: 'Sphinx', startP: 0.580, p: 0.60, endP: 0.62, color: '#F59E0B', ringColor: '#00D2FF', logoUrl: '/sphinx_logo_final.png', logoScale: [1.142, 0.9], glowMultiplier: 1.265, summary: 'Global Threat Intelligence & Unified Security', description: 'Protect assets worldwide with real-time natural disaster tracking, geopolitical threat monitoring, and centralized perimeter security.', appUrl: '/sphinx/' },
+  { name: 'Maya', startP: 0.705, p: 0.725, endP: 0.745, color: '#818CF8', ringColor: '#FB7185', logoUrl: '/maya_logo_final.png', logoScale: [1.222, 1.0], glowMultiplier: 1.265, summary: 'Empathetic AI Avatar & 24/7 Enterprise Representative', description: 'Engage customers around the clock with life-like conversational AI avatars for autonomous sales, compassionate support, and personal growth.', appUrl: '/maya/index.html' },
+  { name: 'Legal Eagle', startP: 0.23, p: 0.255, endP: 0.265, color: '#A855F7', ringColor: '#FBBF24', logoUrl: '/legal_eagle_logo.png', logoScale: [1.032, 1.0], glowMultiplier: 1.668, summary: 'Autonomous AI Legal Intelligence & Contract Defense', description: 'Audit contracts in seconds with eagle-eyed AI precision. Detect hidden liabilities, mitigate legal risks, and auto-draft favorable clauses.', appUrl: '/legaleagle/' },
+  { name: 'LightSpeed', startP: 0.910, p: 0.93, endP: 0.99, color: '#00A3FF', ringColor: '#FFC800', logoUrl: '/lightspeed_logo_gold.png', logoScale: [0.829, 1.0], glowMultiplier: 1.39, summary: 'Autonomous AI CTO & Enterprise Cyber-Defense', description: 'Deploy a self-healing cloud infrastructure protected by zero-trust cyber defense, sub-10ms global edge routing, and 99.999% SLA uptime.', appUrl: '/lightspeed/' },
+  { name: 'Liquid', startP: 0.645, p: 0.665, endP: 0.685, color: '#00FF88', glowColor: '#00FF88', coreGlowColor: '#55FFAA', ringColor: '#A855F7', logoUrl: '/liquid_logo_gold.png', logoScale: [1.25, 1.25], glowMultiplier: 0.765, summary: 'Autonomous Accounting, Tax Intelligence & Token Forge', description: 'Distill enterprise financial complexity into instant clarity with automated tax liability calculation, live P&L auditing, and smart token minting.' },
+  { name: 'Contango', startP: 0.44, p: 0.47, endP: 0.475, color: '#22C55E', glowColor: '#FFD700', coreGlowColor: '#FFE066', ringColor: '#FF7A00', logoUrl: '/assets/images/contango_quant_logo_new.png', logoScale: [1.0, 0.526], hoverGlowMultiplier: 0.87, summary: 'Algorithmic Trading & High-Frequency Market Intelligence', description: 'Master market volatility with automated quant strategies, order book microstructure analytics, and macro liquidity tracking.', appUrl: '/contango/' },
+  { name: 'Pyramid', startP: 0.770, p: 0.79, endP: 0.82, color: '#00E5FF', ringColor: '#C084FC', logoUrl: '/pyramid_logo_final.png', logoScale: [1.1, 1.1], summary: 'Autonomous Profit Engine & Strategic Execution', description: 'Harness an AI executive that scans markets for high-margin opportunities, designs end-to-end strategic playbooks, and executes autonomously.', appUrl: '/pyramid' },
+  { name: 'Matrix', startP: 0.840, p: 0.865, endP: 0.900, color: '#00FF44', ringColor: '#D946EF', logoUrl: '/matrix_logo_bright.png', logoScale: [1.522, 0.363], glowMultiplier: 0.90, hoverGlowMultiplier: 0.87, summary: 'Autonomous Production Code Generation, Full-Stack Architecture & Deep Technical Research', description: 'Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors complex codebases, and conducts deep end-to-end debugging—leveraging technical research capabilities to parse complex documentation and frontier frameworks.', appUrl: '/matrix' },
+  { name: 'Autopilot', startP: 0.275, p: 0.30, endP: 0.31, color: '#10B981', ringColor: '#FF3366', logoUrl: '/autopilot_logo.png', logoScale: [1.4, 0.766], glowMultiplier: 1.265, summary: 'Enterprise Social Media Marketing Automation', description: 'Automate multi-channel brand growth with AI-driven content generation, scheduled omnichannel publishing, and predictive audience engagement.', appUrl: '/autopilot' }
 ];
 
 export default function MiniWorldsHub({ visible = true }) {
@@ -371,30 +417,35 @@ export default function MiniWorldsHub({ visible = true }) {
     }, 600);
   };
   
-  const { size, viewport, camera } = useThree();
+  const { size } = useThree();
   const worlds = useMemo(() => WORLDS_DATA.filter(w => w.name !== 'Sentaient'), []);
 
-  // Real-time camera frustum viewport at Z = -500 (distance = 510 from camera Z = 10)
-  const currentViewport = viewport.getCurrentViewport(camera, [0, 0, -500]);
-  const visibleW = currentViewport.width;
-  const visibleH = currentViewport.height;
+  // Canonical Hub camera frustum viewport at Z = -500 (home camera at Z = 10, FOV = 75)
+  // Computing directly from screen aspect and canonical distance guarantees rock-solid stability
+  // and completely prevents the ring from stretching out when returning to the main page.
+  const aspect = size.width / (size.height || 1);
+  const canonicalDistance = 510;
+  const canonicalFov = 75;
+  const visibleH = 2 * Math.tan(((canonicalFov * Math.PI) / 180) / 2) * canonicalDistance;
+  const visibleW = visibleH * aspect;
 
-  // Screen edge safety padding
-  const safePadY = 40;
-  const safePadX = 45;
-  const maxRadiusY = (visibleH / 2) - safePadY;
+  // Screen edge safety padding - generous clearance for top header (80px) and bottom launcher (60px)
+  const safePadTop = 60;
+  const safePadBottom = 80;
+  const safePadX = 50;
+  const maxRadiusY = (visibleH - (safePadTop + safePadBottom)) / 2;
   const maxRadiusX = (visibleW / 2) - safePadX;
 
-  const dynamicRadius = Math.max(150, Math.min(maxRadiusX * 0.88, maxRadiusY * 0.85));
-  const itemScale = Math.max(0.65, Math.min(1.05, dynamicRadius / 220));
+  const dynamicRadius = Math.max(135, Math.min(maxRadiusX * 0.85, maxRadiusY * 0.88));
+  const itemScale = Math.max(0.60, Math.min(1.00, dynamicRadius / 225));
 
-  // Pure geometric vertical center in the window
-  const hubCenterY = 0;
+  // Center ring vertically in safe zone between header and bottom launcher
+  const hubCenterY = (safePadBottom - safePadTop) / 2;
 
   // Safe vertical bounds in 3D units so popup card is dynamically clamped and never cut off by header or bottom edge
   const screenH = size.height || 900;
   const safeTopPx = 80 + 15 + 140; // header (80px) + gap (15px) + card half-height (140px)
-  const safeBottomPx = 25 + 140;   // bottom gap (25px) + card half-height (140px)
+  const safeBottomPx = 65 + 15 + 140; // bottom launcher (65px) + gap (15px) + card half-height (140px)
   const safeMaxCardY = visibleH * (0.5 - safeTopPx / screenH);
   const safeMinCardY = visibleH * (safeBottomPx / screenH - 0.5);
 
@@ -422,6 +473,10 @@ export default function MiniWorldsHub({ visible = true }) {
     };
   });
 
+  const ringBandWidth = 50 * itemScale;
+  const ringInnerR = Math.max(10, dynamicRadius - ringBandWidth);
+  const ringOuterR = dynamicRadius + ringBandWidth;
+
   return (
     // Group centered dynamically in available safe vertical space below header
     <group ref={groupRef} position={[0, hubCenterY, -500]}>
@@ -429,16 +484,86 @@ export default function MiniWorldsHub({ visible = true }) {
 
       {/* Central SentAIent Toroidal Field Core */}
       <ToroidalSentaientCore
+        visible={visible}
         dynamicRadius={dynamicRadius}
         itemScale={itemScale}
         appPositions={appPositions}
         hoveredWorld={hoveredWorld}
         onClick={() => {
-          if (window._goToStation) {
-            window._goToStation(1, 2400);
+          if (window.directTeleportTo) {
+            window.directTeleportTo(1);
+          } else if (window._goToStation) {
+            window._goToStation(1, 1350);
           }
         }}
       />
+      
+      {/* Darker Holographic Contrast Ring Behind Ring of Logos */}
+      <group position={[0, 0, -8]}>
+        {/* Soft Ambient Cyan/Navy Bloom */}
+        <mesh position={[0, 0, -0.5]}>
+          <ringGeometry args={[ringInnerR - 6, ringOuterR + 6, 128]} />
+          <meshBasicMaterial
+            color="#002244"
+            transparent={true}
+            opacity={0.4}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Primary Dark Obsidian Contrast Band */}
+        <mesh position={[0, 0, 0]}>
+          <ringGeometry args={[ringInnerR, ringOuterR, 128]} />
+          <meshBasicMaterial
+            color="#030712"
+            transparent={true}
+            opacity={0.82}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Outer Cyan Cyber Laser Rim */}
+        <mesh position={[0, 0, 0.2]}>
+          <ringGeometry args={[ringOuterR - 1.2, ringOuterR + 1.2, 128]} />
+          <meshBasicMaterial
+            color="#00e5ff"
+            transparent={true}
+            opacity={0.5}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Inner Electric Blue Cyber Laser Rim */}
+        <mesh position={[0, 0, 0.2]}>
+          <ringGeometry args={[ringInnerR - 1.2, ringInnerR + 1.2, 128]} />
+          <meshBasicMaterial
+            color="#0088ff"
+            transparent={true}
+            opacity={0.5}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Subtle Central Orbit Track Wire */}
+        <mesh position={[0, 0, 0.1]}>
+          <ringGeometry args={[dynamicRadius - 0.6, dynamicRadius + 0.6, 128]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent={true}
+            opacity={0.16}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
       
       {worlds.map((w, idx) => {
         // Distribute worlds in a perfect ellipse/oval around the screen perimeter
@@ -461,6 +586,8 @@ export default function MiniWorldsHub({ visible = true }) {
             key={w.name}
             name={w.name}
             color={w.color}
+            glowColor={w.glowColor}
+            coreGlowColor={w.coreGlowColor}
             ringColor={w.ringColor}
             startP={w.startP}
             targetP={w.p}
@@ -469,6 +596,7 @@ export default function MiniWorldsHub({ visible = true }) {
             logoScale={w.logoScale}
             summary={w.summary}
             description={w.description}
+            appUrl={w.appUrl}
             position={[x, y, z]}
             scrollEl={scroll.el}
             hoveredWorld={hoveredWorld}
@@ -476,6 +604,7 @@ export default function MiniWorldsHub({ visible = true }) {
             safeMaxCardY={safeMaxCardY}
             safeMinCardY={safeMinCardY}
             glowMultiplier={w.glowMultiplier !== undefined ? w.glowMultiplier : 1.0}
+            hoverGlowMultiplier={w.hoverGlowMultiplier}
             onHoverStart={() => handleHoverStart(w.name)}
             onHoverEnd={() => handleHoverEnd(w.name)}
           />

@@ -2,7 +2,7 @@ import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const WormholeElevate = ({ position, rotation = [Math.PI / 2, 0, 0], length = 3200, radius = 220, visible = true }) => {
+const WormholeElevate = ({ position, rotation = [Math.PI / 2, 0, 0], length = 2400, radius = 250, visible = true }) => {
   const tunnelRef = useRef();
   const contourRingsRef = useRef();
   const snowFlurryRef = useRef();
@@ -43,14 +43,13 @@ const WormholeElevate = ({ position, rotation = [Math.PI / 2, 0, 0], length = 32
     if (!visible) return;
     const t = state.clock.getElapsedTime();
     if (tunnelRef.current) {
-      iceTexture.offset.y = -t * 3.5;
+      iceTexture.offset.y = -t * 1.75;
     }
     if (contourRingsRef.current) {
-      contourRingsRef.current.rotation.z = t * 0.4;
+      contourRingsRef.current.rotation.y = t * 0.2;
     }
     if (snowFlurryRef.current) {
-      snowFlurryRef.current.rotation.z = -t * 0.8;
-      snowFlurryRef.current.position.y = (Math.sin(t * 2) * 20);
+      snowFlurryRef.current.rotation.y = -t * 0.4;
     }
   });
 

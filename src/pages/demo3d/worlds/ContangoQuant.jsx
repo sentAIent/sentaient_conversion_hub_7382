@@ -66,16 +66,24 @@ const RollercoasterCarAndHUD = ({ worldPosition }) => {
   // Load the logo image
   const texture = useLoader(THREE.TextureLoader, '/assets/images/contango_quant_logo_new.png');
 
+  const scroll = useScroll();
+
   useFrame((state) => {
+    const curP = (window._isTransitActive && window._warpProgress !== undefined)
+      ? window._warpProgress 
+      : (window._currentProgress !== undefined ? window._currentProgress : (scroll ? scroll.offset : 0.463));
+    if (curP < 0.445 || curP > 0.485) {
+      if (rigRef.current) rigRef.current.visible = false;
+      return;
+    }
     if (rigRef.current) {
+      rigRef.current.visible = true;
       // Pin the rig to the camera's world position, transformed into local coordinates
       const camPos = state.camera.position.clone();
       const localPos = camPos.sub(new THREE.Vector3(...worldPosition));
       
       rigRef.current.position.copy(localPos);
       rigRef.current.rotation.copy(state.camera.rotation);
-
-
     }
   });
 
@@ -103,20 +111,20 @@ const RollercoasterCarAndHUD = ({ worldPosition }) => {
         </mesh>
       </group>
 
-      {/* Hovering Hologram HUD - Elevated Near Top Frame */}
-      <group position={[0, 18, -50]}>
+      {/* Hovering Hologram HUD - Compact & Elegantly Scaled */}
+      <group position={[0, 16, -50]}>
 
-        {/* The Logo */}
-        <mesh position={[0, 15, 0]}>
-          <planeGeometry args={[40, 20]} />
+        {/* The Logo (Scaled Down) */}
+        <mesh position={[0, 9, 0]}>
+          <planeGeometry args={[22, 11]} />
           <meshBasicMaterial map={texture} transparent opacity={0.9} depthWrite={false} />
         </mesh>
 
-        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -2, 0]} fontSize={6} color="#ffffff" anchorX="center" outlineWidth={0.05} outlineColor="#000000">
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -1, 0]} fontSize={3.8} color="#ffffff" anchorX="center" outlineWidth={0.04} outlineColor="#000000">
           CONTANGO QUANT
         </Text>
         
-        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -9, 0]} fontSize={3} color="#ffffff" anchorX="center" opacity={0.9} transparent>
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -5.5, 0]} fontSize={1.9} color="#ffffff" anchorX="center" opacity={0.9} transparent>
           Quant Trading Systems
         </Text>
       </group>
@@ -129,7 +137,7 @@ const CandlestickTunnel = ({ worldPosition }) => {
   const tunnelRef = useRef();
   
   const candlesticks = useMemo(() => {
-    return Array.from({ length: 800 }).map(() => {
+    return Array.from({ length: 240 }).map(() => {
       const isGreen = Math.random() > 0.5;
       const height = 20 + Math.random() * 80;
       const wickHeight = height + Math.random() * 40;
@@ -149,8 +157,18 @@ const CandlestickTunnel = ({ worldPosition }) => {
     });
   }, []);
 
+  const scroll = useScroll();
+
   useFrame((state) => {
+    const curP = (window._isTransitActive && window._warpProgress !== undefined)
+      ? window._warpProgress 
+      : (window._currentProgress !== undefined ? window._currentProgress : (scroll ? scroll.offset : 0.463));
+    if (curP < 0.445 || curP > 0.485) {
+      if (tunnelRef.current) tunnelRef.current.visible = false;
+      return;
+    }
     if (tunnelRef.current) {
+      tunnelRef.current.visible = true;
       const camPos = state.camera.position.clone();
       const localPos = camPos.sub(new THREE.Vector3(...worldPosition));
       
@@ -210,8 +228,10 @@ const WorldContango = ({ position, rotation, visible }) => {
     }
   });
 
+  if (!visible) return null;
+
   return (
-    <group visible={visible} position={position} rotation={rotation}>
+    <group position={position} rotation={rotation}>
       
       {/* Dark Ambient Environment */}
       <mesh>

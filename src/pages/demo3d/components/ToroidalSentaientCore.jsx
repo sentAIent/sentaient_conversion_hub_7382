@@ -17,6 +17,7 @@ import * as THREE from 'three';
 // ============================================================================
 
 export default function ToroidalSentaientCore({
+  visible = true,
   dynamicRadius = 300,
   itemScale = 1.0,
   appPositions = [],
@@ -58,8 +59,8 @@ export default function ToroidalSentaientCore({
   // 1. HORN / DIPOLE TORUS PARAMETRIC SCALING
   // Dynamically scaled in lockstep with dynamicRadius for perfect clearance
   // --------------------------------------------------------------------------
-  const maxOuterR = Math.max(70, Math.min(125, dynamicRadius * 0.50));
-  const neckR = 6.0; // tight central hourglass vortex throat
+  const maxOuterR = Math.max(70, Math.min(125, dynamicRadius * 0.50)) * 1.04;
+  const neckR = 6.0 * 1.04; // tight central hourglass vortex throat
   const R0 = (maxOuterR + neckR) / 2; // major circle center
   const r0 = (maxOuterR - neckR) / 2; // minor circle radius
   const H0 = maxOuterR * 0.38;        // oblate height
@@ -309,18 +310,19 @@ export default function ToroidalSentaientCore({
   const synapseGeometry = useMemo(() => {
     const positions = [];
     const sourceDist = maxOuterR;
+    const maxEndDist = Math.max(sourceDist, dynamicRadius - (52 * itemScale));
     appPositions.forEach(app => {
-      const targetX = app.x;
-      const targetY = app.y + 18;
-      const angle = Math.atan2(targetY, targetX);
+      const angle = Math.atan2(app.y, app.x);
       const sx = Math.cos(angle) * sourceDist;
       const sy = Math.sin(angle) * sourceDist;
-      positions.push(sx, sy, 0, targetX, targetY, 0);
+      const ex = Math.cos(angle) * maxEndDist;
+      const ey = Math.sin(angle) * maxEndDist;
+      positions.push(sx, sy, 0, ex, ey, 0);
     });
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     return geo;
-  }, [appPositions, maxOuterR]);
+  }, [appPositions, maxOuterR, dynamicRadius, itemScale]);
 
   // --------------------------------------------------------------------------
   // 7A. SEGMENTED EQUATORIAL ACCELERATOR RING (Active High-Visibility Rotation)
@@ -431,6 +433,7 @@ export default function ToroidalSentaientCore({
   // 8. 60-120FPS ZERO-ALLOCATION KINETIC ANIMATION LOOP
   // --------------------------------------------------------------------------
   useFrame((state, delta) => {
+    if (!visible) return;
     const t = state.clock.getElapsedTime();
 
     // Side profile: vertical cyclone in the center, horizontal toroidal equator
@@ -502,7 +505,7 @@ export default function ToroidalSentaientCore({
   });
 
   // Native aspect ratio of /sentaient_logo_final.png (840 x 156 = 5.385 : 1)
-  const emblemW = 140 * itemScale;
+  const emblemW = 140 * itemScale * 1.3;
   const emblemH = emblemW / (840 / 156);
 
   return (
@@ -618,7 +621,7 @@ export default function ToroidalSentaientCore({
 
           {/* Central Singularity Tokamak Ring (Image 2 - Glowing Hot Waist Ring) */}
           <mesh position={[0, 0, 0]}>
-            <torusGeometry args={[neckR + 3.5, 1.8, 16, 48]} />
+            <torusGeometry args={[neckR + 3.5 * 1.04, 1.8 * 1.04, 16, 48]} />
             <meshBasicMaterial
               color="#ff2277"
               transparent
@@ -627,7 +630,7 @@ export default function ToroidalSentaientCore({
             />
           </mesh>
           <mesh position={[0, 0, 0]}>
-            <torusGeometry args={[neckR + 6.0, 1.0, 14, 48]} />
+            <torusGeometry args={[neckR + 6.0 * 1.04, 1.0 * 1.04, 14, 48]} />
             <meshBasicMaterial
               color="#00ffff"
               transparent
@@ -651,7 +654,7 @@ export default function ToroidalSentaientCore({
 
           {/* Central Singularity Spindle Core Beam */}
           <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[2.5, 7.5, H0 * 1.9, 20, 1, true]} />
+            <cylinderGeometry args={[2.5 * 1.04, 7.5 * 1.04, H0 * 1.9, 20, 1, true]} />
             <meshBasicMaterial
               color="#00e5ff"
               transparent
@@ -702,7 +705,7 @@ export default function ToroidalSentaientCore({
               />
             </bufferGeometry>
             <pointsMaterial
-              size={9.0}
+              size={9.36}
               vertexColors
               transparent
               opacity={0.96}
@@ -753,7 +756,7 @@ export default function ToroidalSentaientCore({
             />
           </bufferGeometry>
           <pointsMaterial
-            size={7.0}
+            size={7.28}
             vertexColors
             transparent
             opacity={0.92}
@@ -769,7 +772,7 @@ export default function ToroidalSentaientCore({
       {/* ------------------------------------------------------------------ */}
       <group position={[0, 0, 15]}>
         {/* Core Singularity White Spark */}
-        <mesh scale={0.16}>
+        <mesh scale={0.166}>
           <sphereGeometry args={[25, 12, 12]} />
           <meshBasicMaterial color="#ffffff" />
         </mesh>
@@ -778,14 +781,17 @@ export default function ToroidalSentaientCore({
       {/* ------------------------------------------------------------------ */}
       {/* E. MEMOIZED SYNAPSE BEAMS (Linking Core to Perimeter Apps)         */}
       {/* ------------------------------------------------------------------ */}
-      <lineSegments geometry={synapseGeometry}>
-        <lineBasicMaterial
-          color="#0088ff"
-          transparent
-          opacity={0.35}
-          blending={THREE.AdditiveBlending}
-        />
-      </lineSegments>
+      <group position={[0, 18, -40]} renderOrder={5}>
+        <lineSegments geometry={synapseGeometry}>
+          <lineBasicMaterial
+            color="#0088ff"
+            transparent
+            opacity={0.25}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </lineSegments>
+      </group>
     </group>
   );
 }

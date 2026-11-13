@@ -1,10 +1,10 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { Sparkles, Float, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ===========================================================================
-// WORLD PYRAMID: Autonomous Business Ops Brain & Strategic Execution Engine
+// WORLD PYRAMID: Autonomous Profit Engine & Strategic Execution
 // Translucent Crystalline Cyber-Pyramid with Quantum Brain Core, Pulsed
 // Synaptic Circuitry, Apex Transmission Orb, and Strategic Market Execution HUD.
 // ===========================================================================
@@ -17,7 +17,70 @@ export default function WorldPyramid({ position, visible }) {
   const circuitsRef = useRef();
   const beaconRef = useRef();
 
-  // Load official high-res PyRAmid emblem
+  // Dynamic Autonomous Telemetry State & Apex Interactivity
+  const [telemetry, setTelemetry] = useState({
+    total_treasury_balance_dollars: 1090.09,
+    gross_revenue_dollars: 1104.0,
+    net_profit_dollars: 1090.09,
+    aggregate_margin_pct: 98.7,
+    solvency_health_score: 99,
+    synaptic_pulse_intensity: 0.2,
+    active_ventures: [
+      "Bug Bounty Hunter (#5)",
+      "Media Localization Studio (#3)",
+      "Academic Synthesis Studio (#2)",
+      "Autonomous Marketing Agency (#1)"
+    ],
+    recent_events: []
+  });
+  const [apexHovered, setApexHovered] = useState(false);
+  const [showExecutiveBoard, setShowExecutiveBoard] = useState(false);
+  const [hoveredObelisk, setHoveredObelisk] = useState(null);
+  const [selectedObelisk, setSelectedObelisk] = useState(null);
+
+  // Web Audio native harmonic chime feedback
+  const playChime = (freq = 440, duration = 0.35, type = 'sine') => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch (e) {
+      // Audio autoplay gracefully suppressed if not yet interacted
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchTelemetry = async () => {
+      try {
+        const res = await fetch('/pyramid_telemetry.json');
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setTelemetry(data);
+        }
+      } catch (e) {
+        // Fallback defaults retained
+      }
+    };
+    fetchTelemetry();
+    const interval = setInterval(fetchTelemetry, 3500);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Load official high-res Pyramid emblem
   const logoTex = useLoader(THREE.TextureLoader, '/pyramid_logo_final.png');
   logoTex.colorSpace = THREE.SRGBColorSpace;
 
@@ -58,28 +121,40 @@ export default function WorldPyramid({ position, visible }) {
       brainCoreRef.current.rotation.x = Math.sin(t * 0.5) * 0.1;
     }
 
-    // 2. Apex Consciousness Orb Pulsing
+    // 2. Apex Consciousness Orb Pulsing & Dynamic Synaptic Surge
     if (apexOrbRef.current) {
+      const pulseRate = 3.0 + (telemetry.synaptic_pulse_intensity || 0.2) * 8.0;
+      const basePulse = 1.0 + Math.sin(t * pulseRate) * 0.08;
+      const hoverScale = apexHovered ? 1.3 : 1.0;
+      apexOrbRef.current.scale.set(basePulse * hoverScale, basePulse * hoverScale, basePulse * hoverScale);
       apexOrbRef.current.rotation.y = t * 0.6;
     }
 
-    // 3. Expanding Wireless Thought Transmission Wave Arcs
-    if (waveArcsRef.current) {
-      waveArcsRef.current.children.forEach((child, idx) => {
-        const speed = 1.2;
-        const progress = ((t * speed + idx * 0.33) % 1.0);
-        const s = 1.0 + progress * 1.8;
-        child.scale.set(s, s, s);
+    // Dynamic Circuit Synaptic Pulse Surge
+    if (circuitsRef.current) {
+      circuitsRef.current.children.forEach((child, i) => {
         if (child.material) {
-          child.material.opacity = (1.0 - progress) * 0.85;
+          const pulseWave = Math.sin(t * 3.5 + i * 0.25);
+          child.material.opacity = Math.max(0.3, Math.min(1.0, 0.55 + pulseWave * 0.45));
         }
       });
     }
 
-    // 4. Vertical Market Opportunity Photon Beacon
-    if (beaconRef.current) {
-      beaconRef.current.material.opacity = 0.4 + Math.sin(t * 3.5) * 0.18;
-      beaconRef.current.rotation.y = t * 0.2;
+    // 3. Expanding Wireless Thought Transmission Wave Pulses (All Directions)
+    if (waveArcsRef.current) {
+      const count = waveArcsRef.current.children.length;
+      waveArcsRef.current.children.forEach((group, idx) => {
+        const speed = 1.1;
+        const progress = ((t * speed + idx * (1.0 / count)) % 1.0);
+        const s = 1.0 + progress * 1.0;
+        group.scale.set(s, s, s);
+        const opacity = Math.pow(1.0 - progress, 1.2) * 0.85;
+        group.traverse((node) => {
+          if (node.isMesh && node.material) {
+            node.material.opacity = opacity * (node.userData.baseAlpha || 1.0);
+          }
+        });
+      });
     }
   });
 
@@ -151,34 +226,31 @@ export default function WorldPyramid({ position, visible }) {
           </group>
         </group>
 
-        {/* Crystalline Translucent 4-Sided Pyramid Shell */}
+        {/* Crystalline High-Tech 4-Sided Cyber-Pyramid Shell */}
         <mesh position={[0, 20, 0]} rotation={[0, Math.PI / 4, 0]}>
           <cylinderGeometry args={[0, 240, 320, 4, 1]} />
-          <meshPhysicalMaterial 
-            color="#e0f7fa" 
+          <meshStandardMaterial 
+            color="#080e1e" 
             emissive="#00e5ff" 
-            emissiveIntensity={0.35} 
+            emissiveIntensity={0.65} 
+            roughness={0.15} 
+            metalness={0.92} 
             transparent 
-            opacity={0.38} 
-            roughness={0.08} 
-            metalness={0.1} 
-            transmission={0.88} 
-            ior={1.52} 
+            opacity={0.88} 
             side={THREE.DoubleSide} 
-            depthWrite={false} 
           />
         </mesh>
 
         {/* Luminous Cyan Edge Ribs Framing the Pyramid */}
         <mesh position={[0, 20, 0]} rotation={[0, Math.PI / 4, 0]}>
           <cylinderGeometry args={[0, 241, 321, 4, 1]} />
-          <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.65} />
+          <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.85} />
         </mesh>
 
         {/* ------------------------------------------------------------- */}
         {/* 2. THE QUANTUM AI BRAIN CORE (INSIDE PYRAMID CENTER)         */}
         {/* ------------------------------------------------------------- */}
-        <group ref={brainCoreRef} position={[0, 20, 0]}>
+        <group ref={brainCoreRef} position={[0, 20, 0]} scale={0.5}>
           {/* Pulsing Crystalline AI Brain Housing */}
           <mesh>
             <dodecahedronGeometry args={[44, 1]} />
@@ -218,57 +290,138 @@ export default function WorldPyramid({ position, visible }) {
         {/* 3. APEX CONSCIOUSNESS ORB & THOUGHT TRANSMISSION WAVES        */}
         {/* ------------------------------------------------------------- */}
         <group position={[0, 185, 0]}>
-          {/* Levitating Apex Purple/Indigo Spherical Transmitter */}
-          <mesh ref={apexOrbRef}>
+          {/* Levitating Apex Purple/Indigo Spherical Transmitter with Interactivity */}
+          <mesh 
+            ref={apexOrbRef}
+            onPointerOver={(e) => { e.stopPropagation(); setApexHovered(true); playChime(523.25, 0.25, 'sine'); }}
+            onPointerOut={(e) => { e.stopPropagation(); setApexHovered(false); }}
+            onClick={(e) => { e.stopPropagation(); setShowExecutiveBoard((prev) => !prev); playChime(329.63, 0.45, 'triangle'); }}
+          >
             <sphereGeometry args={[22, 32, 32]} />
             <meshStandardMaterial 
-              color="#3b0764" 
-              emissive="#a855f7" 
-              emissiveIntensity={3.2} 
+              color={apexHovered ? "#6b21a8" : "#3b0764"} 
+              emissive={apexHovered ? "#e879f9" : "#a855f7"} 
+              emissiveIntensity={apexHovered ? 4.5 : 3.2} 
               metalness={0.9} 
               roughness={0.1} 
             />
           </mesh>
-          <pointLight color="#c084fc" intensity={14} distance={400} />
+          <pointLight color={apexHovered ? "#f472b6" : "#c084fc"} intensity={apexHovered ? 24 : 14} distance={450} />
 
-          {/* Radial Wireless Thought Transmission Wave Arcs */}
+          {/* Upward Apex Yield Transmission Light Pillar */}
+          <mesh position={[0, 150, 0]}>
+            <cylinderGeometry args={[2.5, 6, 300, 16]} />
+            <meshBasicMaterial color="#c084fc" transparent opacity={apexHovered ? 0.7 : 0.35} blending={THREE.AdditiveBlending} depthWrite={false} />
+          </mesh>
+
+          {/* Radial Wireless Thought Transmission Waves (All Directions) */}
           <group ref={waveArcsRef}>
-            {[1, 2, 3].map((w) => (
-              <mesh key={w} rotation={[Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[28 + w * 12, 32 + w * 12, 32, 1, -Math.PI / 3, (2 * Math.PI) / 3]} />
-                <meshBasicMaterial color="#00e5ff" transparent opacity={0.6} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
-              </mesh>
+            {[0, 1, 2, 3].map((w) => (
+              <group key={w}>
+                {/* Horizontal Wave Ring (XZ Plane) */}
+                <mesh rotation={[Math.PI / 2, 0, 0]} userData={{ baseAlpha: 0.85 }}>
+                  <ringGeometry args={[26, 29, 64]} />
+                  <meshBasicMaterial color="#00e5ff" transparent opacity={0.8} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+                </mesh>
+                {/* Frontal Wave Ring (XY Plane - Camera Facing) */}
+                <mesh rotation={[0, 0, 0]} userData={{ baseAlpha: 0.75 }}>
+                  <ringGeometry args={[26, 29, 64]} />
+                  <meshBasicMaterial color="#c084fc" transparent opacity={0.7} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+                </mesh>
+                {/* Lateral Wave Ring (YZ Plane) */}
+                <mesh rotation={[0, Math.PI / 2, 0]} userData={{ baseAlpha: 0.65 }}>
+                  <ringGeometry args={[26, 29, 64]} />
+                  <meshBasicMaterial color="#00e5ff" transparent opacity={0.6} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+                </mesh>
+                {/* Diagonal Spherical Wave Ring */}
+                <mesh rotation={[Math.PI / 4, Math.PI / 4, 0]} userData={{ baseAlpha: 0.55 }}>
+                  <ringGeometry args={[26, 29, 64]} />
+                  <meshBasicMaterial color="#f472b6" transparent opacity={0.5} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} depthWrite={false} />
+                </mesh>
+              </group>
             ))}
           </group>
-
-          {/* Vertical Photon Execution Beam shooting into deep space */}
-          <mesh ref={beaconRef} position={[0, 600, 0]}>
-            <cylinderGeometry args={[2.5, 9, 1200, 16]} />
-            <meshBasicMaterial color="#00e5ff" transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
-          </mesh>
         </group>
 
-        {/* 4 Monumental Obelisks Guarding the 4 Perimeter Coordinates */}
+        {/* 4 Interactive Monumental Obelisks: Autonomous Fleet Stations */}
         {[
-          [-280, -280],
-          [280, -280],
-          [-280, 280],
-          [280, 280]
-        ].map(([ox, oz], idx) => (
-          <group key={idx} position={[ox, -80, oz]}>
-            {/* Tapered Obelisk Shaft */}
-            <mesh position={[0, 75, 0]}>
-              <cylinderGeometry args={[5, 12, 150, 4]} rotation={[0, Math.PI / 4, 0]} />
-              <meshStandardMaterial color="#090a14" roughness={0.2} metalness={0.9} />
-            </mesh>
-            {/* Pyramidion Gold Cap */}
-            <mesh position={[0, 160, 0]}>
-              <coneGeometry args={[6.5, 18, 4]} rotation={[0, Math.PI / 4, 0]} />
-              <meshStandardMaterial color="#ffd700" emissive="#f59e0b" emissiveIntensity={3.0} metalness={0.95} />
-            </mesh>
-            <pointLight position={[0, 165, 0]} color="#ffd700" intensity={4} distance={200} />
-          </group>
-        ))}
+          { key: 'north', name: 'Marketing Agency (#1)', pos: [-280, -280], color: '#f59e0b', note: 440.0 },
+          { key: 'east', name: 'Academic Studio (#2)', pos: [280, -280], color: '#38bdf8', note: 493.88 },
+          { key: 'south', name: 'Localization (#3)', pos: [-280, 280], color: '#c084fc', note: 587.33 },
+          { key: 'west', name: 'Bug Bounty (#5)', pos: [280, 280], color: '#34d399', note: 659.25 }
+        ].map((ob, idx) => {
+          const isHovered = hoveredObelisk === ob.key;
+          const isSelected = selectedObelisk === ob.key;
+          const obData = telemetry?.obelisks?.[ob.key] || { jobs: 2, profit_dollars: 209.32 };
+
+          return (
+            <group 
+              key={idx} 
+              position={[ob.pos[0], -80, ob.pos[1]]}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                setHoveredObelisk(ob.key);
+                playChime(ob.note, 0.25, 'sine');
+              }}
+              onPointerOut={(e) => {
+                e.stopPropagation();
+                setHoveredObelisk(null);
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedObelisk(prev => prev === ob.key ? null : ob.key);
+                playChime(ob.note * 0.75, 0.4, 'triangle');
+              }}
+            >
+              {/* Tapered Obelisk Shaft */}
+              <mesh position={[0, 75, 0]}>
+                <cylinderGeometry args={[5, 12, 150, 4]} rotation={[0, Math.PI / 4, 0]} />
+                <meshStandardMaterial 
+                  color={isHovered || isSelected ? "#18182f" : "#090a14"} 
+                  roughness={0.2} 
+                  metalness={0.9} 
+                />
+              </mesh>
+              {/* Pyramidion Gold / Electrum Cap */}
+              <mesh position={[0, 160, 0]}>
+                <coneGeometry args={[6.5, 18, 4]} rotation={[0, Math.PI / 4, 0]} />
+                <meshStandardMaterial 
+                  color={ob.color} 
+                  emissive={ob.color} 
+                  emissiveIntensity={isHovered || isSelected ? 4.5 : 2.5} 
+                  metalness={0.95} 
+                />
+              </mesh>
+              <pointLight position={[0, 165, 0]} color={ob.color} intensity={isHovered || isSelected ? 8 : 4} distance={220} />
+
+              {/* Station Label & Live Profit Halo */}
+              <Text
+                font="/fonts/Roboto.woff"
+                fallbackFonts={[]}
+                position={[0, 185, 0]}
+                fontSize={9}
+                color={ob.color}
+                outlineWidth={0.6}
+                outlineColor="#090a14"
+                anchorX="center"
+                anchorY="middle"
+              >
+                {ob.name}
+              </Text>
+              <Text
+                font="/fonts/Roboto.woff"
+                fallbackFonts={[]}
+                position={[0, 175, 0]}
+                fontSize={7.5}
+                color="#ffffff"
+                anchorX="center"
+                anchorY="middle"
+              >
+                {`PROFIT: +$${(obData.profit_dollars ?? 120.0).toFixed(2)}`}
+              </Text>
+            </group>
+          );
+        })}
       </group>
 
       {/* ------------------------------------------------------------- */}
@@ -278,42 +431,169 @@ export default function WorldPyramid({ position, visible }) {
         {/* Floating High-Res PyRAmid Logo Icon (Sleek & Scaled) */}
         <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
           <mesh position={[0, 50, 0]}>
-            <planeGeometry args={[75, 75]} />
-            <meshBasicMaterial map={logoTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+            <planeGeometry args={[82, 82]} />
+            <meshBasicMaterial map={logoTex} transparent depthWrite={false} side={THREE.DoubleSide} toneMapped={false} />
           </mesh>
         </Float>
 
-        {/* PyRAmid Title Text */}
+        {/* Pyramid Title Text */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
           position={[0, -10, 0]}
-          fontSize={44}
+          fontSize={56}
           color="#ffffff"
-          outlineWidth={1.5}
+          outlineWidth={2.0}
           outlineColor="#3b0764"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.12}
+          letterSpacing={0.14}
         >
-          PyRAmid
+          Pyramid
         </Text>
 
-        {/* Subtitle Badge */}
+        {/* Subtitle Badge - Significantly Enlarged for Legibility */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -42, 0]}
-          fontSize={15}
+          position={[0, -48, 0]}
+          fontSize={26}
           color="#00e5ff"
-          outlineWidth={0.8}
+          outlineWidth={1.2}
           outlineColor="#090a14"
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.16}
         >
-          AUTONOMOUS BUSINESS OPS BRAIN
+          AUTONOMOUS PROFIT ENGINE
         </Text>
+
+        {/* Live Treasury & Solvency HUD */}
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[0, -84, 0]}
+          fontSize={18}
+          color="#ffd700"
+          outlineWidth={1.0}
+          outlineColor="#1e1b4b"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.1}
+        >
+          {`TREASURY: $${(telemetry.total_treasury_balance_dollars ?? 1090.09).toFixed(2)}  •  NET MARGIN: ${telemetry.aggregate_margin_pct ?? 98.7}%`}
+        </Text>
+
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[0, -110, 0]}
+          fontSize={16}
+          color="#c084fc"
+          outlineWidth={0.8}
+          outlineColor="#090a14"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.08}
+        >
+          {`SOLVENCY INDEX: ${telemetry.solvency_health_score ?? 99}/100  •  ACTIVE FLEET: ${telemetry.active_ventures?.length ?? 4} VENTURES`}
+        </Text>
+
+        {/* Interactive Apex Telemetry Toggle Hint */}
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[0, -134, 0]}
+          fontSize={13}
+          color={apexHovered ? "#38bdf8" : "#94a3b8"}
+          outlineWidth={0.6}
+          outlineColor="#020617"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.14}
+        >
+          {showExecutiveBoard ? "▲ APEX EXECUTIVE TELEMETRY ACTIVE (CLICK ORB TO MINIMIZE) ▲" : "▼ CLICK APEX ORB FOR REVENUE LOGS & FLEET STATUS ▼"}
+        </Text>
+
+        {/* Executive Telemetry Floating Holographic Console */}
+        {(showExecutiveBoard || apexHovered) && (
+          <group position={[0, -165, 20]}>
+            <mesh position={[0, 0, -2]}>
+              <planeGeometry args={[340, 110]} />
+              <meshBasicMaterial color="#0b091a" transparent opacity={0.85} side={THREE.DoubleSide} />
+            </mesh>
+            <mesh position={[0, 0, -1]}>
+              <planeGeometry args={[342, 112]} />
+              <meshBasicMaterial color="#a855f7" wireframe transparent opacity={0.45} />
+            </mesh>
+            <Text
+              font="/fonts/Roboto.woff"
+              fallbackFonts={[]}
+              position={[0, 40, 0]}
+              fontSize={10.5}
+              color="#00e5ff"
+              anchorX="center"
+              anchorY="middle"
+            >
+              AUTONOMOUS VENTURE FLEET & $0 CAC SYNERGIES
+            </Text>
+            <Text
+              font="/fonts/Roboto.woff"
+              fallbackFonts={[]}
+              position={[0, 24, 0]}
+              fontSize={8}
+              color="#e2e8f0"
+              anchorX="center"
+              anchorY="middle"
+            >
+              {`PORTFOLIO INGESTION: Autopilot • Legal Eagle • Matrix • Contango Quant ($0 CAC)`}
+            </Text>
+            <Text
+              font="/fonts/Roboto.woff"
+              fallbackFonts={[]}
+              position={[0, 8, 0]}
+              fontSize={10}
+              color="#ffd700"
+              anchorX="center"
+              anchorY="middle"
+            >
+              MILESTONE VAULT (25% TAX • 50% DIVIDEND • 25% GROWTH)
+            </Text>
+            <Text
+              font="/fonts/Roboto.woff"
+              fallbackFonts={[]}
+              position={[0, -8, 0]}
+              fontSize={8}
+              color="#a7f3d0"
+              anchorX="center"
+              anchorY="middle"
+            >
+              {`TAX ESCROW: $${(telemetry.vault?.tax_escrow_dollars ?? 199.35).toFixed(2)}  |  DIVIDENDS PAID: $${(telemetry.vault?.cumulative_dividends_paid_dollars ?? 398.72).toFixed(2)}`}
+            </Text>
+            <Text
+              font="/fonts/Roboto.woff"
+              fallbackFonts={[]}
+              position={[0, -24, 0]}
+              fontSize={8}
+              color="#cbd5e1"
+              anchorX="center"
+              anchorY="middle"
+            >
+              {telemetry.recent_events?.[2]?.message || "Delivered SEO topic cluster for Autopilot Conversion Funnel (+$119.66)"}
+            </Text>
+            <Text
+              font="/fonts/Roboto.woff"
+              fallbackFonts={[]}
+              position={[0, -40, 0]}
+              fontSize={7.5}
+              color="#34d399"
+              anchorX="center"
+              anchorY="middle"
+            >
+              {`COMPUTE ARBITRAGE: <0.3% SPEND  |  NET MARGIN: ${telemetry.aggregate_margin_pct ?? 99.7}%  |  FIREWALL: ARMED`}
+            </Text>
+          </group>
+        )}
       </group>
     </group>
   );

@@ -198,14 +198,14 @@ const WorldCloveH2O = ({ position, rotation, visible }) => {
         </Text>
 
         <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-          position={[0, -46, 0]}
-          fontSize={16}
+          position={[0, -52, 0]}
+          fontSize={26}
           color="#00ffff"
-          outlineWidth={0.8}
+          outlineWidth={1.2}
           outlineColor="#001833"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.12}
+          letterSpacing={0.14}
         >
           BOTANICAL WELLNESS & FUNCTIONAL HYDRATION
         </Text>

@@ -49,7 +49,10 @@
   to = "/lightspeed/index.html"
   status = 200
 
-
+[[redirects]]
+  from = "/contango/*"
+  to = "/contango/index.html"
+  status = 200
 
 [[redirects]]
   from = "/legaleagle/*"
@@ -84,6 +87,26 @@
 [[redirects]]
   from = "/sphinx/*"
   to = "/sphinx/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/maya"
+  to = "/maya/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/maya/"
+  to = "/maya/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/maya/*"
+  to = "/maya/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/avatars/*"
+  to = "/maya/avatars/:splat"
   status = 200
 
 [[redirects]]

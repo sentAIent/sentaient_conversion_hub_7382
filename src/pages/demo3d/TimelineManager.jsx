@@ -40,17 +40,22 @@ const WORLD_NAMES_MAP = {
   sphinx: 'Sphinx',
   liquid: 'Liquid',
   maya: 'Maya',
-  pyramid: 'PyRAmid',
+  pyramid: 'Pyramid',
   matrix: 'Matrix',
   lightspeed: 'LightSpeed'
 };
 
-// Import Wormholes
+// Import Wormholes (All 100% Unique - Zero Generic Duplicates)
 import WormholeMatrix from './wormholes/WormholeMatrix';
+import WormholeMindWave from './wormholes/WormholeMindWave';
 import WormholeIce from './wormholes/WormholeIce';
-import WormholeGeneric from './wormholes/WormholeGeneric';
-import WormholeContango from './wormholes/WormholeContango';
+import WormholeSoundwaves from './wormholes/WormholeSoundwaves';
+import WormholeLegal from './wormholes/WormholeLegal';
+import WormholeAutopilot from './wormholes/WormholeAutopilot';
+import WormholeClove from './wormholes/WormholeClove';
 import WormholeWaterslide from './wormholes/WormholeWaterslide';
+import WormholeContango from './wormholes/WormholeContango';
+import WormholeSentaient from './wormholes/WormholeSentaient';
 import WormholeElevate from './wormholes/WormholeElevate';
 import WormholeSphinx from './wormholes/WormholeSphinx';
 import WormholeLiquid from './wormholes/WormholeLiquid';
@@ -73,9 +78,10 @@ export const SCROLL_TIMELINE = [
   
   // Pull out of the dive into Icebreaker (Center at Z=-2275)
   { p: 0.105, x: 0, y: -3980, z: -1550, rx: 0, ry: 0 }, // Level out into Icebreaker cavern
-  { p: 0.120, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 }, // Arrive Icebreaker (Zoomed out 600 units)
-  { p: 0.142, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 }, // PAUSE Icebreaker (Thaw triggers at p=0.135)
-  { p: 0.155, x: 0, y: -3980, z: -3250, rx: 0, ry: 0 }, // Exit Icebreaker into wormhole
+  { p: 0.120, x: 0, y: -3980, z: -1680, rx: 0, ry: 0 }, // Arrive Icebreaker cave entrance
+  { p: 0.131, x: 0, y: -3840, z: -2010, rx: -0.58, ry: 0 }, // Thawed / looking down at fire & people at 33deg
+  { p: 0.145, x: 0, y: -3840, z: -2010, rx: -0.58, ry: 0 }, // Hold looking down at fire & people
+  { p: 0.155, x: 0, y: -3980, z: -3250, rx: 0, ry: 0 }, // Seamless forward flight past fire into sound wormhole
   
   // Soundwaves Wormhole 
   { p: 0.160, x: 0, y: -3980, z: -4000, rx: 0, ry: 0 },
@@ -108,10 +114,12 @@ export const SCROLL_TIMELINE = [
   { p: 0.360, x: 0, y: -3980, z: -15850, rx: 0, ry: 0 }, // PAUSE CloveH2O
   
   // FantasyQuant Waterslide (Drop straight down from CloveH2O Z=-16550)
-  { p: 0.370, x: 0, y: -4500, z: -16550, rx: -1.5, ry: 0 }, // Pitch down and drop
-  { p: 0.395, x: 0, y: -12200, z: -16550, rx: -1.5, ry: 0 }, // Reach bottom
-  { p: 0.405, x: 0, y: -11450, z: -16650, rx: -0.2, ry: 0 }, // Shoot out into stadium press-box (Zoomed out)
-  { p: 0.420, x: 0, y: -11450, z: -16650, rx: -0.2, ry: 0 }, // PAUSE FantasyQuant
+  { p: 0.368, x: 0, y: -4150, z: -16200, rx: -0.22, ry: 0 }, // Smooth curved dive entry
+  { p: 0.380, x: 0, y: -6200, z: -16600, rx: -0.60, ry: 0 }, // Fluid glide down waterslide
+  { p: 0.395, x: 0, y: -9200, z: -16600, rx: -0.55, ry: 0 }, // Descending smoothly towards stadium
+  { p: 0.405, x: 0, y: -11100, z: -16620, rx: -0.20, ry: 0 }, // Flared exit curving into stadium
+  { p: 0.412, x: 0, y: -11450, z: -16650, rx: 0, ry: 0 }, // Arrive FantasyQuant (Level out facing field)
+  { p: 0.422, x: 0, y: -11450, z: -16650, rx: 0, ry: 0 }, // PAUSE FantasyQuant
   { p: 0.430, x: 0, y: -11750, z: -17800, rx: 0, ry: 0 }, // Exit FantasyQuant
 
   // Candlesticks Wormhole (Long) -> now leads to Contango
@@ -125,31 +133,30 @@ export const SCROLL_TIMELINE = [
 
   // Sentaient Finale
   { p: 0.485, x: 0, y: -11750, z: -28050, rx: 0, ry: 0 }, 
-  { p: 0.490, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // Arrive Sentaient
-  { p: 0.500, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // PAUSE Sentaient
-
-  // Elevate (Center at Z=-33000)
-  { p: 0.520, x: 0, y: -11750, z: -31000, rx: 0, ry: 0 },
-  { p: 0.540, x: 0, y: -11750, z: -33000, rx: 0, ry: 0 }, // Arrive Elevate
-  { p: 0.555, x: 0, y: -11750, z: -33000, rx: 0, ry: 0 }, // PAUSE Elevate
-  { p: 0.570, x: 0, y: -11750, z: -34000, rx: 0, ry: 0 }, // Fly through
+  { p: 0.492, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // Arrive Sentaient
+  { p: 0.518, x: 0, y: -11750, z: -29050, rx: 0, ry: 0 }, // PAUSE Sentaient (Hold steady to view animation)
+  { p: 0.528, x: 0, y: -11750, z: -30900, rx: 0, ry: 0 }, // Exit Sentaient into Elevate
+  { p: 0.536, x: 0, y: -10839, z: -31580, rx: 0.22, ry: 0 }, // Ascending through glacial wormhole
+  { p: 0.542, x: 0, y: -9928, z: -32260, rx: -0.15, ry: 0 }, // Arrive Elevate summit (Aligns 1:1 with peak cam)
+  { p: 0.556, x: 0, y: -9928, z: -32260, rx: -0.15, ry: 0 }, // PAUSE Elevate (Panoramic summit view)
+  { p: 0.570, x: 0, y: -11750, z: -34000, rx: 0, ry: 0 }, // Fly through into Sphinx
   
-  // Sphinx (Center at Z=-37000, Camera holds at Z=-36250, 750 units clearance)
-  { p: 0.580, x: 0, y: -11750, z: -35000, rx: 0, ry: 0 },
-  { p: 0.600, x: 0, y: -11750, z: -36250, rx: 0, ry: 0 }, // Arrive Sphinx
-  { p: 0.620, x: 0, y: -11750, z: -36250, rx: 0, ry: 0 }, // PAUSE Sphinx
+  // Sphinx (Center at Z=-37000, Camera holds at Z=-36680, zoomed in)
+  { p: 0.580, x: 0, y: -11750, z: -35200, rx: 0, ry: 0 },
+  { p: 0.600, x: 0, y: -11750, z: -36680, rx: 0, ry: 0 }, // Arrive Sphinx (Zoomed in)
+  { p: 0.620, x: 0, y: -11750, z: -36680, rx: 0, ry: 0 }, // PAUSE Sphinx (Zoomed in)
   { p: 0.630, x: 0, y: -11750, z: -38000, rx: 0, ry: 0 },
   
-  // Liquid (Center at Z=-41750, Camera holds at Z=-41000, 750 units clearance)
+  // Liquid (Center at Z=-41750, Camera holds at Z=-40600, zoomed out 400 units to clear Return to Hub button)
   { p: 0.640, x: 0, y: -11750, z: -39000, rx: 0, ry: 0 },
-  { p: 0.660, x: 0, y: -11750, z: -41000, rx: 0, ry: 0 },
-  { p: 0.675, x: 0, y: -11750, z: -41000, rx: 0, ry: 0 }, // PAUSE Liquid at 750 units clearance
+  { p: 0.660, x: 0, y: -11750, z: -40600, rx: 0, ry: 0 },
+  { p: 0.675, x: 0, y: -11750, z: -40600, rx: 0, ry: 0 }, // PAUSE Liquid (Zoomed out 400 units)
   { p: 0.690, x: 0, y: -11750, z: -42500, rx: 0, ry: 0 },
   
-  // Maya (Center at Z=-45750, Camera holds at Z=-45000, 750 units clearance)
-  { p: 0.705, x: 0, y: -11750, z: -43500, rx: 0, ry: 0 },
-  { p: 0.720, x: 0, y: -11750, z: -45000, rx: 0, ry: 0 },
-  { p: 0.735, x: 0, y: -11750, z: -45000, rx: 0, ry: 0 }, // PAUSE Maya
+  // Maya (Center at Z=-45750, Camera holds at Z=-44400, zoomed out ~600 units)
+  { p: 0.705, x: 0, y: -11750, z: -43400, rx: 0, ry: 0 },
+  { p: 0.720, x: 0, y: -11750, z: -44400, rx: 0, ry: 0 },
+  { p: 0.735, x: 0, y: -11750, z: -44400, rx: 0, ry: 0 }, // PAUSE Maya (Zoomed out)
   { p: 0.755, x: 0, y: -11750, z: -46500, rx: 0, ry: 0 },
   
   // PyRAmid (Center at Z=-49000, Camera holds at Z=-48520, zoomed in ~370 units closer)
@@ -206,8 +213,8 @@ export const CameraController = () => {
       : scroll.offset;
     if (window._worldPauseLockProgress !== undefined && window._worldPauseLockProgress !== null) {
       progress = window._worldPauseLockProgress;
-    } else if (window._icebreakerLockCamera || window.icebreakerThawLocked) {
-      progress = 0.131;
+    } else if (!window._isTransitActive && (window._icebreakerLockCamera || window.icebreakerThawLocked) && progress >= 0.118 && progress <= 0.148) {
+      progress = 0.135;
     }
     window._currentProgress = progress;
     const targetPos = getPosFromProgress(progress);
@@ -221,7 +228,7 @@ export const CameraController = () => {
     let chaseBlend = 0;
 
     // Smooth Icebreaker Island Zoom-Cam Integration
-    if (window._icebreakerCam && window._icebreakerCam.active) {
+    if (!window._isTransitActive && window._icebreakerCam && window._icebreakerCam.active) {
       finalPosX = window._icebreakerCam.x;
       finalPosY = window._icebreakerCam.y;
       finalPosZ = window._icebreakerCam.z;
@@ -234,6 +241,14 @@ export const CameraController = () => {
       finalPosX = THREE.MathUtils.lerp(targetPos.x, window._elevateChaseCam.pos.x, chaseBlend);
       finalPosY = THREE.MathUtils.lerp(targetPos.y, window._elevateChaseCam.pos.y, chaseBlend);
       finalPosZ = THREE.MathUtils.lerp(targetPos.z, window._elevateChaseCam.pos.z, chaseBlend);
+    }
+    
+    // Keep camera upright and level during direct teleport to/from load screen (Hub)
+    if (window._isDirectTeleportActive && window._teleportWarp) {
+      if (window._teleportWarp.targetStationId === 'hub' || window._teleportWarp.startStationId === 'hub') {
+        targetRotX = 0;
+        targetRotY = 0;
+      }
     }
     
     if (window._snapCamera) {
@@ -257,16 +272,12 @@ export const CameraController = () => {
         tempQuat.slerp(window._elevateChaseCam.quat, chaseBlend);
       }
       state.camera.quaternion.slerp(tempQuat, 0.18);
-      
-      // Slight banking based on scroll speed (attenuated during chase cam)
-      const velocity = scroll.delta * 10 * (1 - chaseBlend);
-      // We add the banking on top of the slerped rotation
-      state.camera.rotateZ(THREE.MathUtils.lerp(0, velocity * 2.0, 0.2));
 
-      // Dynamic action FOV expansion for panoramic alpine clearance
-      const targetFov = THREE.MathUtils.lerp(75, 82, chaseBlend);
+      // Dynamic action FOV expansion for panoramic alpine clearance & warp speed dilation
+      const fovBoost = window._teleportFovBoost || 0;
+      const targetFov = THREE.MathUtils.lerp(75, 82, chaseBlend) + fovBoost;
       if (Math.abs(state.camera.fov - targetFov) > 0.05) {
-        state.camera.fov = THREE.MathUtils.lerp(state.camera.fov, targetFov, 0.1);
+        state.camera.fov = THREE.MathUtils.lerp(state.camera.fov, targetFov, 0.15);
         state.camera.updateProjectionMatrix();
       }
     }
@@ -289,6 +300,7 @@ export const TimelineManager = () => {
   const scroll = useScroll();
   const [activeZones, setActiveZones] = useState({
     intro: true,
+    w_matrix_intro: true,
     mindwave: false,
     wormhole_ice: false,
     icebreaker: false,
@@ -340,40 +352,106 @@ export const TimelineManager = () => {
       ? window._warpProgress 
       : scroll.offset;
     
-    const newZones = {
-      intro: p < 0.025,
-      mindwave: p >= 0.020 && p < 0.058,
-      wormhole_ice: p >= 0.055 && p < 0.098,
-      icebreaker: p >= 0.095 && p < 0.155, 
-      wormhole_sound: p >= 0.148 && p < 0.188,
-      interstellar: p >= 0.188 && p < 0.222, 
-      w_legal: p >= 0.220 && p < 0.245,
-      legal: p >= 0.245 && p < 0.272,
-      w_autopilot: p >= 0.272 && p < 0.290,
-      autopilot: p >= 0.290 && p < 0.318,
-      w_clove: p >= 0.318 && p < 0.338,
-      clove: p >= 0.338 && p < 0.370,
-      w_fantasy: p >= 0.370 && p < 0.408,
-      fantasy: p >= 0.408 && p < 0.440,
-      w_contango: p >= 0.440 && p < 0.460,
-      contango: p >= 0.460 && p < 0.485,
-      w_sentaient: p >= 0.485 && p < 0.495,
-      sentaient: p >= 0.495 && p < 0.520,
-      w_elevate: p >= 0.520 && p < 0.540,
-      elevate: p >= 0.535 && p < 0.575,
-      w_sphinx: p >= 0.570 && p < 0.590,
-      sphinx: p >= 0.590 && p < 0.628,
-      w_liquid: p >= 0.628 && p < 0.650,
-      liquid: p >= 0.650 && p < 0.688,
-      w_maya: p >= 0.688 && p < 0.710,
-      maya: p >= 0.710 && p < 0.755,
-      w_pyramid: p >= 0.755 && p < 0.780,
-      pyramid: p >= 0.780 && p < 0.830,
-      w_matrix: p >= 0.830 && p < 0.850,
-      matrix: p >= 0.850 && p < 0.895,
-      w_lightspeed: p >= 0.895 && p < 0.920,
-      lightspeed: p >= 0.920,
-    };
+    let newZones;
+    if (window._isDirectTeleportActive && window._teleportActiveWorldId) {
+      const activeId = window._teleportActiveWorldId;
+      newZones = {
+        intro: activeId === 'hub' || activeId === 'intro',
+        w_matrix_intro: activeId === 'hub' || activeId === 'mindwave',
+        w_mindwave: false,
+        mindwave: activeId === 'mindwave',
+        wormhole_ice: false,
+        icebreaker: activeId === 'icebreaker', 
+        wormhole_sound: false,
+        interstellar: activeId === 'interstellar', 
+        w_legal: false,
+        legal: activeId === 'legal',
+        w_autopilot: false,
+        autopilot: activeId === 'autopilot',
+        w_clove: false,
+        clove: activeId === 'clove',
+        w_fantasy: false,
+        fantasy: activeId === 'fantasy',
+        w_contango: false,
+        contango: activeId === 'contango',
+        w_sentaient: false,
+        sentaient: activeId === 'sentaient',
+        w_elevate: false,
+        elevate: activeId === 'elevate',
+        w_sphinx: false,
+        sphinx: activeId === 'sphinx',
+        w_liquid: false,
+        liquid: activeId === 'liquid',
+        w_maya: false,
+        maya: activeId === 'maya',
+        w_pyramid: false,
+        pyramid: activeId === 'pyramid',
+        w_matrix: false,
+        matrix: activeId === 'matrix',
+        w_lightspeed: false,
+        lightspeed: activeId === 'lightspeed'
+      };
+    } else {
+      // Precision world & wormhole zone activation (strictly mutually exclusive, zero bleed/spillover)
+      newZones = {
+        intro: p < 0.025,
+        w_matrix_intro: p >= 0.000 && p < 0.038,
+        w_mindwave: p >= 0.015 && p < 0.030,
+        mindwave: p >= 0.022 && p < 0.065,
+        wormhole_ice: p >= 0.048 && p < 0.120,
+        icebreaker: p >= 0.095 && p < 0.165,
+        wormhole_sound: p >= 0.145 && p < 0.195,
+        interstellar: p >= 0.180 && p < 0.228,
+        w_legal: p >= 0.215 && p < 0.245,
+        legal: p >= 0.235 && p < 0.272,
+        w_autopilot: p >= 0.260 && p < 0.290,
+        autopilot: p >= 0.278 && p < 0.315,
+        w_clove: p >= 0.305 && p < 0.335,
+        clove: p >= 0.325 && p < 0.370,
+        w_fantasy: p >= 0.362 && p < 0.412,
+        fantasy: p >= 0.395 && p < 0.438,
+        w_contango: p >= 0.428 && p < 0.458,
+        contango: p >= 0.448 && p < 0.480,
+        w_sentaient: p >= 0.472 && p < 0.498,
+        sentaient: p >= 0.488 && p < 0.522,
+        w_elevate: p >= 0.524 && p < 0.543,
+        elevate: p >= 0.534 && p < 0.575,
+        w_sphinx: p >= 0.565 && p < 0.605,
+        sphinx: p >= 0.592 && p < 0.635,
+        w_liquid: p >= 0.622 && p < 0.662,
+        liquid: p >= 0.650 && p < 0.695,
+        w_maya: p >= 0.680 && p < 0.722,
+        maya: p >= 0.710 && p < 0.755,
+        w_pyramid: p >= 0.740 && p < 0.795,
+        pyramid: p >= 0.785 && p < 0.835,
+        w_matrix: p >= 0.820 && p < 0.868,
+        matrix: p >= 0.852 && p < 0.905,
+        w_lightspeed: p >= 0.890 && p < 0.940,
+        lightspeed: p >= 0.925 && p <= 1.000
+      };
+    }
+
+    // Unconditionally ensure wormholes are completely hidden at any world's focal point
+    const isAtAnyFocalPoint = window._isWorldActionActive || 
+      WORLD_PAUSE_STATIONS.some(st => Math.abs(st.p - p) < 0.005);
+    if (isAtAnyFocalPoint) {
+      newZones.w_mindwave = false;
+      newZones.wormhole_ice = false;
+      newZones.wormhole_sound = false;
+      newZones.w_legal = false;
+      newZones.w_autopilot = false;
+      newZones.w_clove = false;
+      newZones.w_fantasy = false;
+      newZones.w_contango = false;
+      newZones.w_sentaient = false;
+      newZones.w_elevate = false;
+      newZones.w_sphinx = false;
+      newZones.w_liquid = false;
+      newZones.w_maya = false;
+      newZones.w_pyramid = false;
+      newZones.w_matrix = false;
+      newZones.w_lightspeed = false;
+    }
     
     let changed = false;
     for (const key in newZones) {
@@ -410,9 +488,8 @@ export const TimelineManager = () => {
         }
       });
 
-      // If user has left the Icebreaker world, ensure the ice cave comes back frozen solid
-      // and state is idle so it replays cleanly upon re-entry
-      if (scrollP < 0.098 || scrollP > 0.148) {
+      // Reset Icebreaker state only if user scrolls all the way back before plunge tunnel (scrollP < 0.070)
+      if (scrollP < 0.070) {
         if (window._icebreakerMeltState && window._icebreakerMeltState !== 'idle') {
           window._icebreakerMeltState = 'idle';
           window.icebreakerThaw = 0.0;
@@ -443,64 +520,65 @@ export const TimelineManager = () => {
   return (
     <group>
       <MiniWorldsHub visible={activeZones.intro} />
-      <WormholeMatrix startZ={10} endZ={-1250} visible={activeZones.intro} />
+      <WormholeMatrix startZ={20} endZ={-1100} visible={activeZones.w_matrix_intro} />
+      <WormholeMindWave position={[0, 0, -425]} rotation={[Math.PI / 2, 0, 0]} length={1100} visible={activeZones.w_mindwave} />
       
       <WorldMindWave position={[0, 0, -1350]} visible={activeZones.mindwave} />
       
-      {/* Plunge tunnel down Y axis */}
-      <WormholeIce position={[0, -2000, -1250]} rotation={[0, 0, 0]} length={4200} visible={activeZones.wormhole_ice} />
+      {/* Plunge tunnel down Y axis (flush with lake surface Y=+300 down to Y=-4500) */}
+      <WormholeIce position={[0, -2100, -1250]} rotation={[0, 0, 0]} length={4800} visible={activeZones.wormhole_ice} />
       
       {/* Icebreaker Cavern */}
       <WorldIcebreaker position={[0, -4000, -2550]} visible={activeZones.icebreaker} />
       
-      <WormholeGeneric position={[0, -4000, -5400]} rotation={[Math.PI/2, 0, 0]} length={4500} color="#ff00ff" speed={20.0} visible={activeZones.wormhole_sound} />
+      <WormholeSoundwaves position={[0, -4000, -5050]} rotation={[Math.PI/2, 0, 0]} length={6400} visible={activeZones.wormhole_sound} />
 
       {/* Interstellar */}
       <Interstellar position={[0, -4000, -7550]} rotation={[0, 0, 0]} visible={activeZones.interstellar} />
 
-      <WormholeGeneric position={[0, -4000, -9050]} rotation={[Math.PI/2, 0, 0]} length={3200} color="#d4af37" visible={activeZones.w_legal} />
+      <WormholeLegal position={[0, -4000, -9050]} rotation={[Math.PI/2, 0, 0]} length={3800} visible={activeZones.w_legal} />
       
       <LegalEagle position={[0, -4000, -10550]} rotation={[0, 0, 0]} visible={activeZones.legal} />
 
-      <WormholeGeneric position={[0, -4000, -12050]} rotation={[Math.PI/2, 0, 0]} length={3200} color="#00ffff" speed={40.0} visible={activeZones.w_autopilot} />
+      <WormholeAutopilot position={[0, -4000, -12050]} rotation={[Math.PI/2, 0, 0]} length={3600} visible={activeZones.w_autopilot} />
 
       <WorldAutopilot position={[0, -4000, -13550]} rotation={[0, 0, 0]} visible={activeZones.autopilot} />
 
-      <WormholeGeneric position={[0, -4000, -15050]} rotation={[Math.PI/2, 0, 0]} length={3200} color="#ff00ff" speed={40.0} visible={activeZones.w_clove} />
+      <WormholeClove position={[0, -4000, -15050]} rotation={[Math.PI/2, 0, 0]} length={3600} visible={activeZones.w_clove} />
 
       <WorldCloveH2O position={[0, -4000, -16550]} rotation={[0, 0, 0]} visible={activeZones.clove} />
 
-      <WormholeWaterslide position={[0, -7850, -16550]} rotation={[0, 0, 0]} length={8500} visible={activeZones.w_fantasy} />
+      <WormholeWaterslide position={[0, -7715, -16600]} rotation={[0, 0, 0]} length={7800} visible={activeZones.w_fantasy} />
 
       <WorldFantasyQuant position={[0, -11700, -17500]} rotation={[0, 0, 0]} visible={activeZones.fantasy} />
 
-      <WormholeContango position={[0, -11750, -17500]} length={7300} visible={activeZones.w_contango} />
+      <WormholeContango position={[0, -11750, -18200]} length={5500} visible={activeZones.w_contango} />
 
       <ContangoQuant position={[0, -11750, -24800]} rotation={[0, 0, 0]} visible={activeZones.contango} />
 
-      <WormholeGeneric position={[0, -11750, -27075]} rotation={[Math.PI/2, 0, 0]} length={4700} color="#60a9ff" speed={30.0} visible={activeZones.w_sentaient} />
+      <WormholeSentaient position={[0, -11750, -27075]} rotation={[Math.PI/2, 0, 0]} length={3200} visible={activeZones.w_sentaient} />
 
       <WorldSentaient position={[0, -11750, -29350]} rotation={[0, 0, 0]} visible={activeZones.sentaient} />
       
-      <WormholeElevate position={[0, -11750, -31175]} rotation={[Math.PI/2, 0, 0]} length={2400} visible={activeZones.w_elevate} />
+      <WormholeElevate position={[0, -10839, -31580]} rotation={[Math.PI / 2 - 0.93, 0, 0]} length={2400} visible={activeZones.w_elevate} />
       <WorldElevate position={[0, -11750, -33000]} visible={activeZones.elevate} />
       
-      <WormholeSphinx position={[0, -11750, -35000]} rotation={[Math.PI/2, 0, 0]} length={2400} visible={activeZones.w_sphinx} />
+      <WormholeSphinx position={[0, -11750, -35000]} rotation={[Math.PI/2, 0, 0]} length={5200} visible={activeZones.w_sphinx} />
       <WorldSphinx position={[0, -11750, -37000]} visible={activeZones.sphinx} />
       
-      <WormholeLiquid position={[0, -11750, -39000]} rotation={[Math.PI/2, 0, 0]} length={2400} visible={activeZones.w_liquid} />
+      <WormholeLiquid position={[0, -11750, -39000]} rotation={[Math.PI/2, 0, 0]} length={5600} visible={activeZones.w_liquid} />
       <WorldLiquid position={[0, -11750, -41000]} visible={activeZones.liquid} />
       
-      <WormholeMaya position={[0, -11750, -43000]} rotation={[Math.PI/2, 0, 0]} length={2400} visible={activeZones.w_maya} />
+      <WormholeMaya position={[0, -11750, -43000]} rotation={[Math.PI/2, 0, 0]} length={5400} visible={activeZones.w_maya} />
       <WorldMaya position={[0, -11750, -45000]} visible={activeZones.maya} />
       
-      <WormholePyramid position={[0, -11750, -47000]} rotation={[Math.PI/2, 0, 0]} length={2400} visible={activeZones.w_pyramid} />
+      <WormholePyramid position={[0, -11750, -47000]} rotation={[Math.PI/2, 0, 0]} length={5000} visible={activeZones.w_pyramid} />
       <WorldPyramid position={[0, -11750, -49000]} visible={activeZones.pyramid} />
       
-      <WormholeMatrixTeam position={[0, -11750, -51000]} rotation={[Math.PI/2, 0, 0]} length={2400} visible={activeZones.w_matrix} />
+      <WormholeMatrixTeam position={[0, -11750, -51000]} rotation={[Math.PI/2, 0, 0]} length={5600} visible={activeZones.w_matrix} />
       <WorldMatrix position={[0, -11750, -53000]} visible={activeZones.matrix} />
       
-      <WormholeLightSpeed position={[0, -11750, -55000]} rotation={[Math.PI/2, 0, 0]} length={2400} visible={activeZones.w_lightspeed} />
+      <WormholeLightSpeed position={[0, -11750, -55000]} rotation={[Math.PI/2, 0, 0]} length={5200} visible={activeZones.w_lightspeed} />
       <WorldLightSpeed position={[0, -11750, -57000]} visible={activeZones.lightspeed} />
     </group>
   );

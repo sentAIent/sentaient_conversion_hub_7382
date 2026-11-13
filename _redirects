@@ -14,4 +14,6 @@
 /legaleagle/* /legaleagle/index.html 200
 /sphinx /sphinx/ 301
 /sphinx/* /sphinx/index.html 200
+/maya/* /maya/index.html 200
+/avatars/* /maya/avatars/:splat 200
 /* /index.html 200

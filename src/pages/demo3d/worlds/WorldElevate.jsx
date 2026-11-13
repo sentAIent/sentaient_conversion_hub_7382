@@ -576,6 +576,7 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
   const landingSpray1Ref = useRef();
   const landingSpray2Ref = useRef();
   const dropInSprayRef = useRef();
+  const elevateCenterpieceRef = useRef();
 
   // Narrative Cycle Duration (Includes full descent, fight, heli boarding at base, ascent to peak & peak drop-off)
   const LOOP_DURATION = 27.0;
@@ -1740,6 +1741,53 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
       window._elevateChaseCam.quat.copy(tempCamQuat);
       window._elevateChaseCam.active = true;
       window._elevateChaseCam.blend = blend;
+    }
+
+    // Elevate Centerpiece Branding: dynamically positions in background during mountain ride and at helipad
+    if (elevateCenterpieceRef.current) {
+      const cdx = lx - cx;
+      const cdy = ly - cy;
+      const cdz = lz - cz;
+      const clen = Math.sqrt(cdx * cdx + cdy * cdy + cdz * cdz) || 1;
+      const cnx = cdx / clen;
+      const cny = cdy / clen;
+      const cnz = cdz / clen;
+
+      // Position during mountain ride: ahead in open background sky corridor
+      const rideDist = 580;
+      const rideX = cx + cnx * rideDist;
+      const rideY = cy + cny * rideDist + 95;
+      const rideZ = cz + cnz * rideDist;
+
+      // Position at base helipad: behind and above helicopter
+      const heliX = -72;
+      const heliY = -35;
+      const heliZ = -1180;
+
+      let bX = rideX, bY = rideY, bZ = rideZ;
+
+      if (t >= 11.5 && t < 12.8) {
+        const bp = (t - 11.5) / 1.3;
+        const sbp = bp * bp * (3 - 2 * bp);
+        bX = THREE.MathUtils.lerp(rideX, heliX, sbp);
+        bY = THREE.MathUtils.lerp(rideY, heliY, sbp);
+        bZ = THREE.MathUtils.lerp(rideZ, heliZ, sbp);
+      } else if (t >= 12.8 && t < 21.2) {
+        // Base Helipad: rock-solid behind helicopter as rider walks over and climbs in
+        bX = heliX;
+        bY = heliY;
+        bZ = heliZ;
+      } else if (t >= 21.2 && t < 25.4) {
+        // Helicopter ascent: smoothly transitions back up to summit
+        const bp = (t - 21.2) / 4.2;
+        const sbp = bp * bp * (3 - 2 * bp);
+        bX = THREE.MathUtils.lerp(heliX, rideX, sbp);
+        bY = THREE.MathUtils.lerp(heliY, rideY, sbp);
+        bZ = THREE.MathUtils.lerp(heliZ, rideZ, sbp);
+      }
+
+      elevateCenterpieceRef.current.position.set(bX, bY, bZ);
+      elevateCenterpieceRef.current.quaternion.copy(tempCamQuat);
     }
   });
 
@@ -3144,7 +3192,12 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
       {/* ========================================================= */}
       {/* 8. CENTERPIECE: ELEVATE LOGO & TITLE ABOVE ANIMATION        */}
       {/* ========================================================= */}
-      <group position={[0, 260, -1020]}>
+      <group ref={elevateCenterpieceRef} position={[-72, -35, -1180]}>
+        {/* Soft Contrast Aura Backdrop */}
+        <mesh position={[0, 8, -6]}>
+          <planeGeometry args={[340, 160]} />
+          <meshBasicMaterial color="#030712" transparent opacity={0.35} depthWrite={false} />
+        </mesh>
         {/* Floating Elevate Emblem */}
         <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
           <mesh position={[0, 52, 0]}>
@@ -3153,7 +3206,6 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
               map={logoTex} 
               transparent 
               depthWrite={false} 
-              blending={THREE.AdditiveBlending} 
             />
           </mesh>
         </Float>
@@ -3174,20 +3226,34 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
           ELEVATE
         </Text>
 
-        {/* Subtitle */}
+        {/* Subtitle & Description - Enlarged for High Legibility */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -36, 0]}
-          fontSize={15}
+          position={[0, -42, 0]}
+          fontSize={26}
           color="#38bdf8"
-          outlineWidth={0.8}
+          outlineWidth={1.2}
           outlineColor="#040b17"
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.14}
         >
           BIG-MOUNTAIN SNOWBOARD GAME & ALPINE HUB
+        </Text>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[0, -76, 0]}
+          fontSize={18}
+          color="#e0f2fe"
+          outlineWidth={0.8}
+          outlineColor="#040b17"
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.08}
+        >
+          3D Freeride Snowboard Action & Live Mountain Weather Intelligence
         </Text>
       </group>
     </group>

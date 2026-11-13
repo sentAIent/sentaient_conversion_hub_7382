@@ -303,6 +303,9 @@ const BrutalistOverlord = ({ logoTex }) => {
         <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 8, 0]} fontSize={56} color="#00ffff" anchorX="center" anchorY="middle" outlineWidth={1.5} outlineColor="#003366">
           LEGAL EAGLE
         </Text>
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -42, 0]} fontSize={24} color="#f59e0b" anchorX="center" anchorY="middle" outlineWidth={1.2} outlineColor="#001833" letterSpacing={0.14}>
+          AUTONOMOUS CONTRACT AUDIT &amp; LEGAL DEFENSE
+        </Text>
       </Float>
     </group>
   );
@@ -316,8 +319,8 @@ const LegalEagle = ({ position, rotation, visible }) => {
     <group visible={visible} position={position} rotation={rotation}>
       <ambientLight intensity={0.4} color="#0d1527" />
       <directionalLight position={[0, 1000, 800]} intensity={2.0} color="#00ffff" />
-      <pointLight position={[0, 200, -500]} intensity={14} color="#f59e0b" distance={1600} />
-      <pointLight position={[0, 400, -800]} intensity={16} color="#00ffff" distance={1800} />
+      <pointLight position={[0, 200, -500]} intensity={16} color="#f59e0b" distance={1920} />
+      <pointLight position={[0, 400, -800]} intensity={18} color="#00ffff" distance={2160} />
       
       <CourtroomBackground />
       <BrutalistOverlord logoTex={logoTex} />

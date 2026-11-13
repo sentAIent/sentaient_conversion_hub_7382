@@ -52,7 +52,7 @@ const WormholeLightSpeed = ({ position, rotation = [Math.PI / 2, 0, 0], length =
       fiberTexture.offset.y = -t * 5.5; // Blinding lightspeed velocity
     }
     if (firewallRingsRef.current) {
-      firewallRingsRef.current.rotation.z = -t * 0.7;
+      firewallRingsRef.current.rotation.y = -t * 0.7;
     }
   });
 

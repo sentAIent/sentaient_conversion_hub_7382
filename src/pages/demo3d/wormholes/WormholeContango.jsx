@@ -1,40 +1,13 @@
 import React, { useRef, useMemo, useEffect } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-
-// Layout for "CQ" made of candlesticks
-const getCQLayout = () => {
-  const points = [];
-  const addCandle = (x, y, color) => {
-    points.push({ x, y, z: 0, rot: [Math.PI / 2, 0, 0], color, bodyHeight: 40 + Math.random() * 40 });
-  };
-  
-  // "C" shape
-  for (let a = Math.PI * 0.25; a < Math.PI * 1.75; a += 0.2) {
-    addCandle( -100 + Math.cos(a) * 80, Math.sin(a) * 80, "#00ff00" );
-  }
-  
-  // "Q" shape (O part)
-  for (let a = 0; a < Math.PI * 2; a += 0.2) {
-    addCandle( 100 + Math.cos(a) * 80, Math.sin(a) * 80, "#ff0044" );
-  }
-  // "Q" tail
-  addCandle( 140, -40, "#ff0044" );
-  addCandle( 160, -60, "#ff0044" );
-  addCandle( 180, -80, "#ff0044" );
-  
-  return points;
-};
 
 const WormholeContango = ({ position, rotation = [0, 0, 0], length = 6000, radius = 250, visible }) => {
   const groupRef = useRef();
   const wickMeshRef = useRef();
   const bodyMeshRef = useRef();
-  
-  // Load the Contango image logo
-  const logoTexture = useLoader(THREE.TextureLoader, '/assets/images/contango_logo.png');
 
-  // Compute all candlesticks data (tunnel + CQ logo)
+  // Compute all candlesticks data (tunnel only)
   const allCandles = useMemo(() => {
     const items = [];
     const count = Math.floor(length / 5); 
@@ -60,19 +33,6 @@ const WormholeContango = ({ position, rotation = [0, 0, 0], length = 6000, radiu
       items.push({ x: x1, y: y1, z, rot: rot1, color, bodyHeight });
       items.push({ x: x2, y: y2, z, rot: rot2, color, bodyHeight });
     }
-    
-    // 2. The CQ Logo at the end of the tunnel
-    const cqLayout = getCQLayout();
-    cqLayout.forEach(cq => {
-      items.push({
-        x: cq.x,
-        y: cq.y,
-        z: -length - 500,
-        rot: cq.rot,
-        color: cq.color,
-        bodyHeight: cq.bodyHeight
-      });
-    });
 
     return items;
   }, [length, radius]);
@@ -132,12 +92,6 @@ const WormholeContango = ({ position, rotation = [0, 0, 0], length = 6000, radiu
           <meshStandardMaterial roughness={0.4} emissiveIntensity={0.8} />
         </instancedMesh>
       </group>
-      
-      {/* 2D Image texture floating in the middle of CQ */}
-      <mesh position={[0, 0, -length - 500]}>
-        <planeGeometry args={[200, 200]} />
-        <meshBasicMaterial map={logoTexture} transparent={true} />
-      </mesh>
       
       {/* Central glow */}
       <mesh position={[0, 0, -length / 2]} rotation={[Math.PI / 2, 0, 0]}>
