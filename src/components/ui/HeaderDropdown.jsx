@@ -2,11 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../AppIcon';
-import ViralShareModal from '../social/ViralShareModal';
 
 const HeaderDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
   const menuRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -168,22 +166,6 @@ const HeaderDropdown = () => {
             <span>Contact Us</span>
           </button>
 
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              setIsShareOpen(true);
-            }}
-            className="group/item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-medium text-cyan-300 hover:text-cyan-100 hover:bg-cyan-500/15 hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] transition-all duration-150 text-left cursor-pointer"
-          >
-            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 group-hover/item:scale-105 transition-transform">
-              <Icon name="Share2" size={15} />
-            </div>
-            <div className="flex flex-col">
-              <span>Share & Earn</span>
-              <span className="text-[10px] text-cyan-400 font-mono">+500 Credits</span>
-            </div>
-          </button>
-
           <div className="border-t border-white/[0.12] my-1.5 shadow-[0_1px_0_rgba(255,255,255,0.06)]" />
 
           {currentUser ? (
@@ -219,9 +201,6 @@ const HeaderDropdown = () => {
           )}
         </div>
       )}
-
-      {/* Viral Referral & Share Modal */}
-      <ViralShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
     </div>
   );
 };

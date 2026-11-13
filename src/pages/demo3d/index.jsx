@@ -3,22 +3,18 @@ import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header';
 import Scene3D from './components/Scene3D';
 import { goToStation } from './navigation/WaypointNavigator';
-import { useAutoTour } from './navigation/useAutoTour';
 import FeedbackModal from '../../components/analytics/FeedbackModal';
 
 const ReturnToHubButton = () => {
   const [visible, setVisible] = useState(false);
-  const tour = useAutoTour();
 
   useEffect(() => {
     let animId;
     const check = () => {
       const p = (window._isTransitActive && window._warpProgress !== undefined)
         ? window._warpProgress 
-        : (window._worldPauseLockProgress !== undefined && window._worldPauseLockProgress !== null)
-          ? window._worldPauseLockProgress
-          : (window._currentProgress || 0);
-      setVisible(p > 0.015);
+        : (window._currentProgress || 0);
+      setVisible(p >= 0.02);
       animId = requestAnimationFrame(check);
     };
     animId = requestAnimationFrame(check);
@@ -30,24 +26,20 @@ const ReturnToHubButton = () => {
       e.preventDefault();
       e.stopPropagation();
     }
-    tour.stopTour();
-    if (window.clearActiveWorldPause) window.clearActiveWorldPause();
     ['icebreakerCaveLocked', 'icebreakerThawLocked', 'icebreakerTextLocked', 'mindwaveLocked', 'interstellarLocked', 'autopilotLocked', 'contangoLocked', 'swarmLocked', 'orbitalLocked'].forEach(k => { 
       window[k] = false; 
     });
     
-    if (window.directTeleportTo) {
-      window.directTeleportTo(0, 1350);
-    } else if (window._goToStation) {
-      window._goToStation(0, 1350);
+    if (window._goToStation) {
+      window._goToStation(0, 1800);
     } else {
-      goToStation(0, 1350);
+      goToStation(0, 1800);
     }
   };
 
   return (
     <div 
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-[10000000] pointer-events-none transition-all duration-300 flex items-center gap-3"
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-all duration-300"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translate(-50%, 0)' : 'translate(-50%, -10px)',
@@ -63,59 +55,11 @@ const ReturnToHubButton = () => {
         <span className="transition-transform duration-200 group-hover:-translate-x-1 text-sm leading-none">←</span>
         <span>RETURN TO HUB</span>
       </button>
-
-      {tour.isActive && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-black/90 border border-sky-500/60 rounded-full font-mono text-xs tracking-wider backdrop-blur-md shadow-lg shadow-sky-950/70 text-sky-300">
-          <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
-          <span>TOUR: {tour.currentStationIndex}/16</span>
-          <span className="text-white/60">({tour.remainingSeconds}s)</span>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              tour.togglePause();
-            }}
-            className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-bold text-[10px]"
-            title={tour.isPaused ? "Resume Tour" : "Pause Tour"}
-          >
-            {tour.isPaused ? '▶ RESUME' : '⏸ PAUSE'}
-          </button>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              tour.nextWorld();
-            }}
-            className="px-2 py-0.5 rounded bg-sky-500/30 hover:bg-sky-500/50 text-white font-bold text-[10px]"
-            title="Next World"
-          >
-            NEXT →
-          </button>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              tour.stopTour();
-            }}
-            className="px-2.5 py-0.5 rounded bg-rose-500/25 hover:bg-rose-500/50 text-rose-300 hover:text-white border border-rose-500/40 font-bold text-[10px] transition-all cursor-pointer"
-            title="Exit Auto Tour and explore manually"
-          >
-            ✕ EXIT TOUR
-          </button>
-        </div>
-      )}
     </div>
   );
 };
 
 const Demo3DHome = () => {
-  useEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
-    }
-    window.scrollTo(0, 0);
-  }, []);
-
   return (
     <div className="relative w-screen h-screen bg-gradient-to-b from-[#0a0a1a] to-[#020205] font-sans text-white overflow-hidden">
       <Helmet>

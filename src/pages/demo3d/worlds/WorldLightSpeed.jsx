@@ -436,18 +436,18 @@ export default function WorldLightSpeed({ position, visible }) {
           LIGHTSPEED
         </Text>
 
-        {/* Subtitle: AUTONOMOUS AI CTO & RUNTIME DEFENSE - Enlarged */}
+        {/* Subtitle: AUTONOMOUS AI CTO & RUNTIME DEFENSE */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -48, 10]}
-          fontSize={28}
+          position={[0, -36, 10]}
+          fontSize={18}
           color="#38bdf8"
-          outlineWidth={1.2}
+          outlineWidth={1.0}
           outlineColor="#0f172a"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.14}
+          letterSpacing={0.12}
         >
           AUTONOMOUS AI CTO & RUNTIME DEFENSE
         </Text>

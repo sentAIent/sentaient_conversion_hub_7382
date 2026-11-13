@@ -151,14 +151,14 @@ const WorldAutopilot = ({ position, rotation, visible }) => {
         </Text>
         
         <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-          position={[0, -52, 0]}
-          fontSize={26}
+          position={[0, -46, 0]}
+          fontSize={16}
           color="#00ffcc"
-          outlineWidth={1.2}
+          outlineWidth={0.8}
           outlineColor="#002233"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.14}
+          letterSpacing={0.12}
         >
           ENTERPRISE SOCIAL MARKETING AGENT
         </Text>

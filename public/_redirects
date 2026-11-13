@@ -8,14 +8,6 @@
 /legaleagle/* /legaleagle/index.html 200
 /sphinx /sphinx/ 301
 /sphinx/* /sphinx/index.html 200
-/contango /contango/ 301
-/contango/* /contango/index.html 200
-/lightspeed /lightspeed/ 301
-/lightspeed/* /lightspeed/index.html 200
-/maya /maya/index.html 200
-/maya/ /maya/index.html 200
-/maya/* /maya/index.html 200
-/avatars/* /maya/avatars/:splat 200
 /icelogin /index.html 200
 /icewaitlist /index.html 200
 /* /index.html 200

@@ -49,10 +49,7 @@
   to = "/lightspeed/index.html"
   status = 200
 
-[[redirects]]
-  from = "/contango/*"
-  to = "/contango/index.html"
-  status = 200
+
 
 [[redirects]]
   from = "/legaleagle/*"
@@ -71,13 +68,18 @@
 
 [[redirects]]
   from = "/liquid"
-  to = "https://sentaient-liquid.netlify.app/liquid/"
-  status = 301
+  to = "/liquid/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/liquid/"
+  to = "/liquid/index.html"
+  status = 200
 
 [[redirects]]
   from = "/liquid/*"
-  to = "https://sentaient-liquid.netlify.app/liquid/:splat"
-  status = 301
+  to = "/liquid/index.html"
+  status = 200
 
 [[redirects]]
   from = "/sphinx"
@@ -87,26 +89,6 @@
 [[redirects]]
   from = "/sphinx/*"
   to = "/sphinx/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/maya"
-  to = "/maya/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/maya/"
-  to = "/maya/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/maya/*"
-  to = "/maya/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/avatars/*"
-  to = "/maya/avatars/:splat"
   status = 200
 
 [[redirects]]

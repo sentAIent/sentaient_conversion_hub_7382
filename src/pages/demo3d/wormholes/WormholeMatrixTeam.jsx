@@ -51,7 +51,7 @@ const WormholeMatrixTeam = ({ position, rotation = [Math.PI / 2, 0, 0], length =
       codeTexture.offset.y = -t * 3.8;
     }
     if (compilerGridRef.current) {
-      compilerGridRef.current.rotation.y = t * 0.5;
+      compilerGridRef.current.rotation.z = t * 0.5;
     }
   });
 

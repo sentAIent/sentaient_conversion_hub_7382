@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { getOfferings, makePurchase } from '../../services/revenuecat';
 import Button from '../ui/Button';
 import { STRIPE_PUBLISHABLE_KEY, STRIPE_PRODUCTS, CHECKOUT_SUCCESS_URL, CHECKOUT_CANCEL_URL } from '../../config/stripe';
 
@@ -47,23 +46,15 @@ const StripeCheckoutButton = ({
         const cap = window.Capacitor;
         if (cap && cap.isNativePlatform()) {
             setIsLoading(true);
-            try {
-                const packages = await getOfferings();
-                if (packages && packages.length > 0) {
-                    const selected = packages.find(p => p.identifier === productKey) || packages[0];
-                    const result = await makePurchase(selected);
-                    if (result) {
-                        setIsLoading(false);
-                        return;
-                    }
-                }
-                setError("Unable to connect to Store In-App Purchases. Please check your network and try again.");
-            } catch (err) {
-                console.error("Mobile in-app purchase error:", err);
-                setError("In-App Purchase could not be completed.");
-            } finally {
+            console.warn('Native mobile platform detected. Rerouting from Stripe to Native In-App Purchases (RevenueCat).');
+            
+            // In a production app, you would call your RevenueCat SDK here:
+            // await Purchases.purchasePackage(package);
+            
+            setTimeout(() => {
+                setError("Mobile In-App Purchases are currently in sandbox mode. Please complete purchases on our website.");
                 setIsLoading(false);
-            }
+            }, 1000);
             return;
         }
         // ----------------------------------

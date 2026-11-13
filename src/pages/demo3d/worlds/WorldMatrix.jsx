@@ -182,77 +182,95 @@ export default function WorldMatrix({ position, visible }) {
     return tex;
   }, []);
 
-  // Expansive multi-tier code curtains filling the entire screen horizontally
+  // Multi-tier code curtains ensuring dense cascade directly behind center designs
   const codeCurtains = useMemo(() => [
-    // 1. FULL-WIDTH PRIMARY BACKDROP: Spans the full horizontal field of view
+    // 1. PRIMARY CENTRAL BACKDROP: Directly behind the rotating center designs
+    // Center Core is at Z = -750. This curtain sits at Z = -960, perfectly framed behind the core
     { 
-      pos: [0, 180, -960], 
+      pos: [0, 140, -960], 
       rot: [0, 0, 0], 
-      scale: [4600, 1800, 1],
-      cols: 140,
-      rows: 56,
-      speedMult: 1.05
+      scale: [1250, 1150, 1],
+      cols: 42,
+      rows: 48,
+      speedMult: 1.0
     },
-    // 2. ULTRA-WIDE DEEP HORIZON CYCLORAMA: Infinite panoramic matrix depth
+    // 2. INNER CENTER FLANKS: Angled subtly behind the core to create a curved digital cyclorama
     { 
-      pos: [0, 260, -1350], 
+      pos: [-480, 140, -920], 
+      rot: [0, Math.PI / 12, 0], 
+      scale: [650, 1100, 1],
+      cols: 24,
+      rows: 46,
+      speedMult: 1.15
+    },
+    { 
+      pos: [480, 140, -920], 
+      rot: [0, -Math.PI / 12, 0], 
+      scale: [650, 1100, 1],
+      cols: 24,
+      rows: 46,
+      speedMult: 1.15
+    },
+    // 3. DEEP MONUMENTAL BACKDROP: Expansive wide horizon behind the primary backdrop
+    { 
+      pos: [0, 240, -1250], 
       rot: [0, 0, 0], 
-      scale: [5800, 2400, 1],
-      cols: 180,
-      rows: 64,
+      scale: [2400, 1350, 1],
+      cols: 64,
+      rows: 52,
       speedMult: 0.85
     },
-    // 3. WRAPAROUND FLANK WINGS: Envelops left and right peripheral vision
+    // 4. MID FLANKS: Outer perimeter framing
     { 
-      pos: [-1450, 180, -800], 
-      rot: [0, Math.PI / 4.5, 0], 
-      scale: [1800, 1800, 1],
-      cols: 56,
-      rows: 54,
-      speedMult: 1.15
+      pos: [-780, 220, -780], 
+      rot: [0, Math.PI / 6, 0], 
+      scale: [600, 1050, 1],
+      cols: 22,
+      rows: 42,
+      speedMult: 1.05
     },
     { 
-      pos: [1450, 180, -800], 
-      rot: [0, -Math.PI / 4.5, 0], 
-      scale: [1800, 1800, 1],
-      cols: 56,
-      rows: 54,
-      speedMult: 1.15
+      pos: [780, 220, -780], 
+      rot: [0, -Math.PI / 6, 0], 
+      scale: [600, 1050, 1],
+      cols: 22,
+      rows: 42,
+      speedMult: 1.05
     },
-    // 4. FOREGROUND PERIMETER CASCADES: Left & right foreground cascades
+    // 5. FOREGROUND FLANKS: Framing outer perimeter without blocking line of sight
     { 
-      pos: [-980, 120, -550], 
-      rot: [0, Math.PI / 7, 0], 
-      scale: [950, 1400, 1],
-      cols: 32,
-      rows: 44,
-      speedMult: 1.25
+      pos: [-720, 140, -520], 
+      rot: [0, Math.PI / 8, 0], 
+      scale: [360, 850, 1],
+      cols: 16,
+      rows: 36,
+      speedMult: 1.2
     },
     { 
-      pos: [980, 120, -550], 
-      rot: [0, -Math.PI / 7, 0], 
-      scale: [950, 1400, 1],
-      cols: 32,
-      rows: 44,
-      speedMult: 1.25
+      pos: [720, 140, -520], 
+      rot: [0, -Math.PI / 8, 0], 
+      scale: [360, 850, 1],
+      cols: 16,
+      rows: 36,
+      speedMult: 1.2
     },
-    // 5. OVERHEAD DIGITAL CANOPY: High ceiling code rain
+    // 6. OVERHEAD DIGITAL CANOPY: High ceiling code rain
     { 
-      pos: [0, 850, -850], 
+      pos: [0, 720, -850], 
       rot: [-Math.PI / 2.6, 0, 0], 
-      scale: [3800, 1500, 1],
-      cols: 110,
-      rows: 44,
+      scale: [1500, 850, 1],
+      cols: 48,
+      rows: 36,
       speedMult: 0.95
     },
   ], []);
 
   // Flanking Server Monoliths pushed to the far architectural perimeter
   const serverTowers = useMemo(() => [
-    { pos: [-1500, 220, -700], size: [140, 900, 140] },
-    { pos: [1500, 220, -700], size: [140, 900, 140] },
-    { pos: [-1650, 300, -980], size: [180, 1100, 180] },
-    { pos: [1650, 300, -980], size: [180, 1100, 180] },
+    { pos: [-760, 220, -560], size: [120, 780, 120] },
+    { pos: [760, 220, -560], size: [120, 780, 120] },
+    { pos: [-820, 300, -840], size: [160, 1000, 160] },
+    { pos: [820, 300, -840], size: [160, 1000, 160] },
   ], []);
 
   useFrame((state) => {
@@ -451,6 +469,16 @@ export default function WorldMatrix({ position, visible }) {
               <meshStandardMaterial color="#030f06" emissive="#00ff66" emissiveIntensity={1.8} metalness={0.95} roughness={0.1} />
             </mesh>
           </group>
+
+          {/* Focused Optical Laser Column Ascending to Digital Sky */}
+          <mesh position={[0, 350, 0]}>
+            <cylinderGeometry args={[3.5, 3.5, 900, 16]} />
+            <meshBasicMaterial color="#00ff66" transparent opacity={0.65} blending={THREE.AdditiveBlending} />
+          </mesh>
+          <mesh position={[0, 350, 0]}>
+            <cylinderGeometry args={[12, 12, 900, 16]} />
+            <meshBasicMaterial color="#00e5ff" transparent opacity={0.2} blending={THREE.AdditiveBlending} />
+          </mesh>
         </group>
       </group>
 

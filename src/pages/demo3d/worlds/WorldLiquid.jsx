@@ -12,7 +12,7 @@ export default function WorldLiquid({ position, visible }) {
   const coreRef = useRef();
 
   // Load official Liquid logo
-  const logoTex = useLoader(THREE.TextureLoader, '/liquid_logo_gold.png');
+  const logoTex = useLoader(THREE.TextureLoader, '/liquid_logo_bold_v7.png');
   logoTex.colorSpace = THREE.SRGBColorSpace;
 
   const coinCount = 1800;
@@ -22,21 +22,21 @@ export default function WorldLiquid({ position, visible }) {
     if (!visible) return;
     const t = state.clock.getElapsedTime();
 
-    // Cascading cryptocurrency liquid waterfall (strictly in background Z: -880 to -450)
+    // Cascading cryptocurrency liquid waterfall (strictly in mid-background Z: -850 to -320)
     if (coinsRef.current) {
       for (let i = 0; i < coinCount; i++) {
         const col = i % 36;
         const row = Math.floor(i / 36);
         const x = (col - 18) * 18;
-        const flowOffset = (row * 12 + t * 200) % 430;
-        const z = -880 + flowOffset; // Stays between -880 and -450, strictly in background behind centerpiece
+        const flowOffset = (row * 14 + t * 220) % 550;
+        const z = -850 + flowOffset; // Stays between -850 and -300, safely away from camera at Z=0
 
-        let y = 260;
-        if (z > -660) {
-          y = 260 - Math.pow((z + 660) * 0.12, 2);
+        let y = 280;
+        if (z > -600) {
+          y = 280 - Math.pow((z + 600) * 0.12, 2);
         }
         if (y < -215) {
-          y = -215 + Math.abs(Math.sin(t * 8 + i) * 16);
+          y = -215 + Math.abs(Math.sin(t * 8 + i) * 18);
         }
 
         dummy.position.set(x, y, z);
@@ -68,8 +68,8 @@ export default function WorldLiquid({ position, visible }) {
       <ambientLight intensity={0.4} color="#1c1301" />
       <directionalLight position={[0, 900, -300]} intensity={3.5} color="#ffe58f" />
       <directionalLight position={[-800, 400, 300]} intensity={1.8} color="#ffd700" />
-      <pointLight position={[0, 100, -750]} intensity={22.5} distance={1600} color="#ffaa00" />
-      <pointLight position={[0, -180, -750]} intensity={13.5} distance={1000} color="#ffd700" />
+      <pointLight position={[0, 100, -750]} intensity={25} distance={1600} color="#ffaa00" />
+      <pointLight position={[0, -180, -750]} intensity={15} distance={1000} color="#ffd700" />
 
       {/* Floating Gold & Amber Sparkles */}
       <Sparkles count={800} scale={[1800, 800, 1800]} size={8} speed={0.5} opacity={0.55} color="#ffd700" position={[0, 50, -750]} />
@@ -102,15 +102,15 @@ export default function WorldLiquid({ position, visible }) {
       <group position={[0, 160, -1005]}>
         <mesh>
           <ringGeometry args={[180, 210, 64]} />
-          <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={1.08} />
+          <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={1.2} />
         </mesh>
         <mesh>
           <ringGeometry args={[300, 320, 64]} />
-          <meshStandardMaterial color="#ffaa00" emissive="#ffaa00" emissiveIntensity={0.72} />
+          <meshStandardMaterial color="#ffaa00" emissive="#ffaa00" emissiveIntensity={0.8} />
         </mesh>
         <mesh>
           <ringGeometry args={[440, 455, 64]} />
-          <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={0.54} />
+          <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={0.6} />
         </mesh>
       </group>
 
@@ -178,20 +178,27 @@ export default function WorldLiquid({ position, visible }) {
         </mesh>
 
         <pointLight color="#ffd700" intensity={18} distance={800} />
+
+        {/* Vertical Data Column */}
+        <mesh position={[0, 320, 0]}>
+          <cylinderGeometry args={[3, 3, 750, 16]} />
+          <meshBasicMaterial color="#ffd700" transparent opacity={0.6} blending={THREE.AdditiveBlending} />
+        </mesh>
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 5. CENTERPIECE: LIQUID LOGO & TITLE PROMINENTLY IN FOREGROUND */}
+      {/* 5. CENTERPIECE: LIQUID LOGO & TITLE ABOVE ANIMATION           */}
       {/* ------------------------------------------------------------- */}
-      <group position={[0, 240, -300]}>
-        {/* Floating High-Res Liquid Emblem - Clear Foreground */}
-        <Float speed={2} rotationIntensity={0.05} floatIntensity={0.3}>
-          <mesh position={[0, 85, 0]}>
-            <planeGeometry args={[140, 140]} />
+      <group position={[0, 420, -550]}>
+        {/* Floating Liquid Emblem */}
+        <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
+          <mesh position={[0, 70, 0]}>
+            <planeGeometry args={[110, 110]} />
             <meshBasicMaterial 
               map={logoTex} 
               transparent 
               depthWrite={false} 
+              blending={THREE.AdditiveBlending} 
             />
           </mesh>
         </Float>
@@ -201,29 +208,29 @@ export default function WorldLiquid({ position, visible }) {
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
           position={[0, 0, 0]}
-          fontSize={58}
+          fontSize={52}
           color="#ffffff"
-          outlineWidth={2.0}
+          outlineWidth={1.8}
           outlineColor="#b45309"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.14}
+          letterSpacing={0.12}
         >
           LIQUID
         </Text>
 
-        {/* Subtitle - Significantly Enlarged & High Contrast */}
+        {/* Subtitle */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -48, 0]}
-          fontSize={26}
+          position={[0, -42, 0]}
+          fontSize={16}
           color="#ffd700"
-          outlineWidth={1.2}
+          outlineWidth={0.8}
           outlineColor="#0b0802"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.14}
+          letterSpacing={0.12}
         >
           FINANCIAL INTELLIGENCE & TAX FORGE
         </Text>

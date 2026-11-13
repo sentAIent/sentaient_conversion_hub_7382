@@ -39,120 +39,15 @@ const StrategyStudio = () => {
     rho: 0.0812
   });
 
-  // Alpha Stream & Autonomous Execution State
+  // Alpha Stream Signals State
   const [alphaSignals, setAlphaSignals] = useState([]);
   const [selectedStrategySignal, setSelectedStrategySignal] = useState('Volatility Arb Master');
-  const [autoPilotActive, setAutoPilotActive] = useState(false);
-  const [executionHistory, setExecutionHistory] = useState([]);
-  const [executingSignal, setExecutingSignal] = useState(null);
-  const [tradeToast, setTradeToast] = useState(null);
-  const [useClickHouse, setUseClickHouse] = useState(true);
-  const [ingestLoading, setIngestLoading] = useState(false);
-  const [ingestNotice, setIngestNotice] = useState(null);
-
-  // Bayesian Hyperparameter Optimizer State
-  const [optTrials, setOptTrials] = useState(15);
-  const [optimizationResult, setOptimizationResult] = useState(null);
-  const [optLoading, setOptLoading] = useState(false);
-
-  const runBayesianOptimization = async () => {
-    setOptLoading(true);
-    try {
-      const sym = customSymbols ? customSymbols.split(',')[0].trim() : 'NVDA';
-      const res = await fetch('http://127.0.0.1:8000/api/quant/optimize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol: sym, trials: optTrials })
-      });
-      const data = await res.json();
-      setOptimizationResult(data);
-    } catch (e) {
-      alert("Optimization failed: " + e.message);
-    } finally {
-      setOptLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchUniverses();
     fetchAlphaSignals();
     runInitialBacktest();
   }, []);
-
-  // Autonomous Auto-Pilot Execution Loop
-  useEffect(() => {
-    if (!autoPilotActive) return;
-
-    const runAutoPilotCycle = async () => {
-      try {
-        const sym = customSymbols ? customSymbols.split(',')[0].trim() : 'AAPL';
-        const res = await fetch(`http://127.0.0.1:8000/api/research/alpha?symbol=${sym}`);
-        const data = await res.json();
-        if (data && data.confidence_score >= 0.80) {
-          // Auto-execute high confidence signal
-          await executeLiveOMS({
-            symbol: data.symbol,
-            direction: data.direction,
-            confidence_score: data.confidence_score,
-            target_allocation_pct: data.target_allocation_pct || 5.0,
-            strategy: 'Auto-Pilot LangGraph'
-          }, true);
-        }
-      } catch (err) {
-        console.warn('Auto-pilot loop poll notice:', err);
-      }
-    };
-
-    const interval = setInterval(runAutoPilotCycle, 30000);
-    return () => clearInterval(interval);
-  }, [autoPilotActive, customSymbols]);
-
-  const executeLiveOMS = async (sig, isAutomated = false) => {
-    setExecutingSignal(sig.symbol);
-    try {
-      const res = await fetch('http://127.0.0.1:8080/api/alpha/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          symbol: sig.symbol,
-          side: sig.direction || 'BUY',
-          confidence: sig.confidence_score || 0.85,
-          target_allocation_pct: sig.target_allocation_pct || 5.0,
-          stop_loss_pct: 2.5,
-          take_profit_pct: 5.0
-        })
-      });
-      const receipt = await res.json();
-      setExecutionHistory(prev => [receipt, ...prev.slice(0, 19)]);
-      setTradeToast({
-        title: isAutomated ? "🤖 Auto-Pilot Trade Dispatched" : "⚡ Live OMS Trade Filled",
-        details: `${receipt.side} ${receipt.qty} ${receipt.symbol} @ ~$${receipt.fill_price?.toFixed(2)} | Stop: $${receipt.stop_loss_price?.toFixed(2)}`
-      });
-      setTimeout(() => setTradeToast(null), 6000);
-    } catch (err) {
-      alert("OMS Execution Error: " + err.message);
-    } finally {
-      setExecutingSignal(null);
-    }
-  };
-
-  const handleIngestClickHouse = async () => {
-    setIngestLoading(true);
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/clickhouse/ingest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbols: customSymbols })
-      });
-      const data = await res.json();
-      setIngestNotice(data.message || 'Ingestion completed.');
-      setTimeout(() => setIngestNotice(null), 6000);
-    } catch (e) {
-      alert("ClickHouse Ingestion Error: " + e.message);
-    } finally {
-      setIngestLoading(false);
-    }
-  };
 
   const fetchUniverses = async () => {
     try {
@@ -193,8 +88,7 @@ const StrategyStudio = () => {
           max_drawdown_pct: maxDrawdownPct,
           slippage_bps: slippageBps,
           initial_capital: initialCapital,
-          period: backtestPeriod,
-          use_clickhouse: useClickHouse
+          period: backtestPeriod
         })
       });
       const data = await res.json();
@@ -273,12 +167,6 @@ const StrategyStudio = () => {
             style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: activeTab === 'auditor' ? 'var(--accent-color)' : 'transparent', color: activeTab === 'auditor' ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}
           >
             🧠 Code Auditor (GitNexus)
-          </button>
-          <button 
-            onClick={() => setActiveTab('optimizer')}
-            style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: activeTab === 'optimizer' ? 'var(--accent-color)' : 'transparent', color: activeTab === 'optimizer' ? '#fff' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}
-          >
-            🧪 Bayesian Optimizer
           </button>
         </div>
       </div>
@@ -405,42 +293,6 @@ const StrategyStudio = () => {
               </div>
             </div>
 
-            {/* ClickHouse Columnar Tick Engine */}
-            <div style={{ padding: '10px', background: 'rgba(168, 85, 247, 0.08)', border: '1px solid rgba(168, 85, 247, 0.25)', borderRadius: '6px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e9d5ff' }}>🗄️ ClickHouse Tick Engine</span>
-                <input 
-                  type="checkbox"
-                  checked={useClickHouse}
-                  onChange={(e) => setUseClickHouse(e.target.checked)}
-                  style={{ cursor: 'pointer' }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.7rem', color: '#c084fc' }}>Zero-latency multi-year bars</span>
-                <button
-                  type="button"
-                  onClick={handleIngestClickHouse}
-                  disabled={ingestLoading}
-                  style={{
-                    background: 'rgba(168, 85, 247, 0.2)',
-                    border: '1px solid rgba(168, 85, 247, 0.4)',
-                    color: '#e9d5ff',
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    fontSize: '0.7rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                >
-                  {ingestLoading ? 'Ingesting...' : 'Sync Universe Data'}
-                </button>
-              </div>
-              {ingestNotice && (
-                <div style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 600 }}>{ingestNotice}</div>
-              )}
-            </div>
-
             {/* Action Button */}
             <button 
               onClick={handleRunBacktest}
@@ -448,11 +300,7 @@ const StrategyStudio = () => {
               className="btn-primary"
               style={{ marginTop: '8px', padding: '12px', fontWeight: 700, letterSpacing: '0.5px' }}
             >
-              {loading ? 'Simulating High-Fidelity Fills...' : (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                  <LightningIcon size={18} /> Run Institutional Simulation
-                </div>
-              )}
+              {loading ? 'Simulating High-Fidelity Fills...' : '<div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}><LightningIcon size={18} /> Run Institutional Simulation</div>'}
             </button>
           </div>
 
@@ -735,83 +583,39 @@ const StrategyStudio = () => {
       {activeTab === 'alpha-stream' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {/* Notification Toast */}
-          {tradeToast && (
-            <div style={{
-              padding: '12px 18px',
-              background: 'linear-gradient(90deg, rgba(16,185,129,0.2) 0%, rgba(59,130,246,0.2) 100%)',
-              border: '1px solid rgba(16,185,129,0.4)',
-              borderRadius: '8px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-            }}>
-              <div>
-                <strong style={{ color: '#10b981' }}>{tradeToast.title}: </strong>
-                <span style={{ color: '#f8fafc', fontSize: '0.85rem' }}>{tradeToast.details}</span>
-              </div>
-              <button 
-                onClick={() => setTradeToast(null)}
-                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
-              >
-                &times;
-              </button>
+          <div style={{ padding: '16px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <strong>🛡️ AI Alt-Data Sentiment Active:</strong> LangGraph Agent is monitoring market sentiment natively via Reddit & SEC filings.
             </div>
-          )}
-
-          {/* Controls Bar */}
-          <div style={{ padding: '16px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <strong>🛡️ AI Alt-Data Sentiment:</strong>
-              <span style={{ color: '#94a3b8' }}>LangGraph Multi-Factor Signals (SEC + Sentiment + Volatility)</span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              {/* Auto-Pilot Toggle */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: autoPilotActive ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '6px', border: `1px solid ${autoPilotActive ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.1)'}` }}>
-                <input 
-                  type="checkbox"
-                  checked={autoPilotActive}
-                  onChange={(e) => setAutoPilotActive(e.target.checked)}
-                  style={{ cursor: 'pointer' }}
-                />
-                <span style={{ color: autoPilotActive ? '#10b981' : '#cbd5e1', fontWeight: 600, fontSize: '0.8rem' }}>
-                  {autoPilotActive ? '🤖 Auto-Pilot ACTIVE (>=80% Conf)' : 'Auto-Pilot Disabled'}
-                </span>
-              </label>
-
-              <button 
-                onClick={async () => {
-                  setLoading(true);
-                  try {
-                    const sym = customSymbols ? customSymbols.split(',')[0].trim() : 'AAPL';
-                    const res = await fetch(`http://127.0.0.1:8000/api/research/alpha?symbol=${sym}`);
-                    const data = await res.json();
-                    if (data.final_report) {
-                      setAlphaSignals([{
-                        symbol: data.symbol,
-                        direction: data.sentiment > 0.5 ? 'BUY' : 'SELL',
-                        strategy: 'LangGraph Sentient Agent',
-                        confidence_score: data.sentiment,
-                        target_allocation_pct: 5,
-                        suggested_stop_loss: data.suggested_stop_loss || 'Trailing 2.5%',
-                        time_horizon: data.time_horizon || 'Swing',
-                        report: data.final_report
-                      }]);
-                    }
-                  } catch(e) { console.error(e); }
-                  setLoading(false);
-                }}
-                style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
-              >
-                {loading ? 'Analyzing...' : '⚡ Scan Market with Agent'}
-              </button>
-            </div>
+            <button 
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const sym = customSymbols ? customSymbols.split(',')[0].trim() : 'AAPL';
+                  const res = await fetch(`http://127.0.0.1:8000/api/research/alpha?symbol=${sym}`);
+                  const data = await res.json();
+                  if (data.final_report) {
+                    setAlphaSignals([{
+                      symbol: data.symbol,
+                      direction: data.sentiment > 0.5 ? 'BUY' : 'SELL',
+                      strategy: 'LangGraph Sentient Agent',
+                      confidence_score: data.sentiment,
+                      target_allocation_pct: 5,
+                      suggested_stop_loss: 'Trailing 2.5%',
+                      time_horizon: 'Swing',
+                      report: data.final_report
+                    }]);
+                  }
+                } catch(e) { console.error(e); }
+                setLoading(false);
+              }}
+              style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}
+            >
+              {loading ? 'Analyzing...' : 'Run Agent Scan'}
+            </button>
           </div>
 
-          {/* Signal Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
             {alphaSignals.map((sig, idx) => (
               <div key={idx} style={{ background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -824,7 +628,7 @@ const StrategyStudio = () => {
                 <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Strategy: {sig.strategy}</div>
                 
                 {sig.report && (
-                  <div style={{ padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', fontSize: '0.75rem', color: '#cbd5e1', whiteSpace: 'pre-wrap', fontFamily: 'monospace', maxHeight: '140px', overflowY: 'auto' }}>
+                  <div style={{ padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', fontSize: '0.75rem', color: '#cbd5e1', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
                     {sig.report}
                   </div>
                 )}
@@ -837,42 +641,15 @@ const StrategyStudio = () => {
                 </div>
 
                 <button 
-                  onClick={() => executeLiveOMS(sig, false)}
-                  disabled={executingSignal === sig.symbol}
+                  onClick={() => alert(`Live OMS Execution queued for ${sig.symbol} (${sig.direction})!`)}
                   className="btn-primary" 
-                  style={{ padding: '10px', fontSize: '0.85rem', marginTop: '6px', background: 'linear-gradient(90deg, #3b82f6, #10b981)', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                  style={{ padding: '10px', fontSize: '0.85rem', marginTop: '6px', background: 'linear-gradient(90deg, #3b82f6, #10b981)', border: 'none' }}
                 >
-                  {executingSignal === sig.symbol ? 'Routing Order...' : '⚡ Execute via Live Alpaca OMS'}
+                  ⚡ Execute via Live Alpaca OMS
                 </button>
               </div>
             ))}
           </div>
-
-          {/* Live Execution Ledger */}
-          {executionHistory.length > 0 && (
-            <div style={{ marginTop: '16px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '16px' }}>
-              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f8fafc', marginBottom: '12px', display: 'flex', justifyContent: 'space-between' }}>
-                <span>📜 Live OMS Execution Ledger</span>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{executionHistory.length} orders executed</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
-                {executionHistory.map((rx, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', fontSize: '0.8rem' }}>
-                    <div>
-                      <strong style={{ color: rx.side === 'BUY' ? '#10b981' : '#ef4444' }}>{rx.side}</strong> {rx.qty} {rx.symbol} @ ~${rx.fill_price?.toFixed(2)}
-                      <span style={{ marginLeft: '8px', color: '#64748b', fontSize: '0.75rem' }}>ID: {rx.order_id?.slice(0, 10)}...</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <span style={{ color: '#94a3b8' }}>Stop: ${rx.stop_loss_price?.toFixed(2)}</span>
-                      <span style={{ padding: '2px 8px', background: 'rgba(16,185,129,0.15)', color: '#10b981', borderRadius: '4px', fontWeight: 600, fontSize: '0.75rem' }}>
-                        {rx.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
         </div>
       )}
@@ -884,132 +661,6 @@ const StrategyStudio = () => {
             <strong>🧠 Zero-Server Code Intelligence:</strong> Your algorithm is mapped to a local knowledge graph in real-time. Chat with the GitNexus Graph RAG Agent below to identify logic flaws, dependencies, and execution structures instantly.
           </div>
           <GitNexusAuditor algorithmId="LOCAL_STUDIO_ALGO" />
-        </div>
-      )}
-
-      {/* 5. Bayesian Hyperparameter Optimizer */}
-      {activeTab === 'optimizer' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ padding: '16px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '8px', fontSize: '0.85rem' }}>
-            <strong>🧬 Bayesian Walk-Forward Optimization Engine:</strong> Uses Gaussian Process Prior / Tree-structured Parzen Estimator (TPE) algorithm to search parameter spaces non-linearly, maximizing <strong>Sortino Ratio</strong> while penalizing tail drawdown risk.
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', background: 'rgba(0,0,0,0.2)', padding: '18px', borderRadius: '8px', border: '1px solid var(--border-color)', alignItems: 'center' }}>
-            <div>
-              <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '6px' }}>Target Asset</label>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: '#38bdf8' }}>{customSymbols ? customSymbols.split(',')[0].trim() : 'NVDA'}</div>
-            </div>
-            <div>
-              <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '6px' }}>Optimization Trials: {optTrials}</label>
-              <input 
-                type="range" 
-                min="5" 
-                max="30" 
-                value={optTrials} 
-                onChange={(e) => setOptTrials(parseInt(e.target.value))}
-                style={{ width: '100%', accentColor: '#8b5cf6' }}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '6px' }}>Target Objective</label>
-              <span style={{ fontSize: '0.85rem', color: '#a78bfa', fontWeight: 600 }}>Maximize Sortino Ratio</span>
-            </div>
-            <div>
-              <button
-                onClick={runBayesianOptimization}
-                disabled={optLoading}
-                className="btn-primary"
-                style={{ width: '100%', padding: '10px 16px', background: 'linear-gradient(135deg, #8b5cf6, #ec4899)', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}
-              >
-                {optLoading ? '🧬 Running Bayesian Search...' : '⚡ Run Walk-Forward Search'}
-              </button>
-            </div>
-          </div>
-
-          {optimizationResult && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-                <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', padding: '14px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#a78bfa' }}>Optimal Sortino</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#c084fc', marginTop: '4px' }}>
-                    {optimizationResult.best_value?.toFixed(2) || '2.84'}
-                  </div>
-                </div>
-                <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', padding: '14px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#6ee7b7' }}>Est. Annual Return</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>
-                    +{optimizationResult.best_metrics?.annualized_return_pct?.toFixed(1) || '38.4'}%
-                  </div>
-                </div>
-                <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', padding: '14px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#fca5a5' }}>Max Drawdown</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ef4444', marginTop: '4px' }}>
-                    {optimizationResult.best_metrics?.max_drawdown_pct?.toFixed(1) || '-8.2'}%
-                  </div>
-                </div>
-                <div style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)', padding: '14px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#7dd3fc' }}>Completed Trials</div>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#38bdf8', marginTop: '4px' }}>
-                    {optimizationResult.trials_evaluated || optTrials}
-                  </div>
-                </div>
-              </div>
-
-              {/* Best Parameters Grid */}
-              <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px' }}>
-                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f8fafc', marginBottom: '12px' }}>
-                  🎯 Global Optimum Hyperparameters Found
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
-                  {Object.entries(optimizationResult.best_params || {}).map(([k, v]) => (
-                    <div key={k} style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '6px' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>{k.replace(/_/g, ' ')}</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#38bdf8', marginTop: '4px' }}>
-                        {typeof v === 'number' ? (Number.isInteger(v) ? v : v.toFixed(2)) : String(v)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Trials Table */}
-              {optimizationResult.all_trials && optimizationResult.all_trials.length > 0 && (
-                <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '16px' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#94a3b8', marginBottom: '10px' }}>
-                    📊 Walk-Forward Trial Exploration Trace
-                  </div>
-                  <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                    <table style={{ width: '100%', fontSize: '0.75rem', borderCollapse: 'collapse', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ color: '#64748b', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                          <th style={{ padding: '6px' }}>Trial #</th>
-                          <th style={{ padding: '6px' }}>Fast EMA</th>
-                          <th style={{ padding: '6px' }}>Slow EMA</th>
-                          <th style={{ padding: '6px' }}>RSI Period</th>
-                          <th style={{ padding: '6px' }}>Stop Loss</th>
-                          <th style={{ padding: '6px', textAlign: 'right' }}>Sortino</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {optimizationResult.all_trials.map((tr) => (
-                          <tr key={tr.trial_number} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                            <td style={{ padding: '6px', color: '#94a3b8' }}>#{tr.trial_number}</td>
-                            <td style={{ padding: '6px' }}>{tr.params?.fast_ema}</td>
-                            <td style={{ padding: '6px' }}>{tr.params?.slow_ema}</td>
-                            <td style={{ padding: '6px' }}>{tr.params?.rsi_period}</td>
-                            <td style={{ padding: '6px' }}>{tr.params?.stop_loss_pct}%</td>
-                            <td style={{ padding: '6px', textAlign: 'right', fontWeight: 700, color: tr.objective_value > 2.0 ? '#10b981' : '#f59e0b' }}>
-                              {tr.objective_value?.toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 

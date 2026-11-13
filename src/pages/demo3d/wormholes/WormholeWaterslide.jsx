@@ -2,18 +2,18 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const WormholeWaterslide = ({ position, rotation, length = 7800, visible = true }) => {
+const WormholeWaterslide = ({ position, rotation, length = 8000, visible = true }) => {
   const materialRef = useRef();
   const ringsRef = useRef();
 
   useFrame((state) => {
     if (!visible || !materialRef.current) return;
     const time = state.clock.getElapsedTime();
-    // Simulate rushing water by animating the texture offset smoothly at half speed
-    materialRef.current.map.offset.y = -time * 1.5;
+    // Simulate rushing water by animating the texture offset rapidly
+    materialRef.current.map.offset.y = -time * 3.0;
     
     if (ringsRef.current) {
-      ringsRef.current.rotation.y = time * 1.0; // Spin the rings
+      ringsRef.current.rotation.y = time * 2.0; // Spin the rings
     }
   });
 
@@ -49,58 +49,29 @@ const WormholeWaterslide = ({ position, rotation, length = 7800, visible = true 
 
   return (
     <group position={position} rotation={rotation} visible={visible}>
-      {/* Curved Intake Chute Reaching Forward towards CloveH2O */}
-      <mesh position={[0, length / 2 - 200, 340]} rotation={[-0.72, 0, 0]}>
-        <cylinderGeometry args={[220, 190, 800, 32, 16, true]} />
-        <meshStandardMaterial
-          map={texture}
-          color="#00ffff"
-          emissive="#0088ff"
-          emissiveIntensity={1.8}
-          side={THREE.DoubleSide}
-          transparent
-          opacity={0.92}
-        />
-      </mesh>
-
-      {/* Main Vertical Waterslide Plunge Tube */}
+      {/* Outer Tube */}
       <mesh>
-        <cylinderGeometry args={[190, 190, length, 32, 1, true]} />
+        <cylinderGeometry args={[150, 150, length, 32, 1, true]} />
         <meshStandardMaterial
           ref={materialRef}
           map={texture}
           color="#00ffff"
           emissive="#0088ff"
           emissiveIntensity={1.5}
-          side={THREE.DoubleSide}
+          side={THREE.BackSide}
           transparent
-          opacity={0.92}
+          opacity={0.9}
         />
       </mesh>
-
       {/* Inner glowing rings for speed effect */}
       <mesh ref={ringsRef}>
-        <cylinderGeometry args={[175, 175, length, 16, 40, true]} />
+        <cylinderGeometry args={[140, 140, length, 16, 40, true]} />
         <meshBasicMaterial
           color="#ffffff"
           wireframe
           transparent
-          opacity={0.2}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-
-      {/* Flared Exit into FantasyQuant Stadium */}
-      <mesh position={[0, -length / 2 + 100, -80]} rotation={[0.3, 0, 0]}>
-        <cylinderGeometry args={[190, 260, 450, 32, 16, true]} />
-        <meshStandardMaterial
-          map={texture}
-          color="#00ffff"
-          emissive="#00e676"
-          emissiveIntensity={1.8}
-          side={THREE.DoubleSide}
-          transparent
-          opacity={0.9}
+          opacity={0.15}
+          side={THREE.BackSide}
         />
       </mesh>
     </group>

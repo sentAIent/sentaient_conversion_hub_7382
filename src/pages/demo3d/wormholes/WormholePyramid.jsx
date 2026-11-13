@@ -54,7 +54,7 @@ const WormholePyramid = ({ position, rotation = [Math.PI / 2, 0, 0], length = 32
       strategyTexture.offset.y = -t * 3.0;
     }
     if (latticeRef.current) {
-      latticeRef.current.rotation.y = t * 0.45;
+      latticeRef.current.rotation.z = t * 0.45;
     }
   });
 

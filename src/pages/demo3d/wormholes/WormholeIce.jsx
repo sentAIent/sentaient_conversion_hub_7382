@@ -78,15 +78,14 @@ const iceFragmentShader = `
     vec3 finalColor = mix(coldLow, coldHigh, smoothstep(0.0, 20.0, vElevation));
     float trueLength = uLength + 200.0;
     float zDist = abs(vPosition.y); 
-    float fadeEdge = 1.0 - smoothstep(trueLength/2.0 - 30.0, trueLength/2.0, zDist);
+    float fadeEdge = 1.0 - smoothstep(trueLength/2.0 - 100.0, trueLength/2.0, zDist);
     float alpha = uOpacity * fadeEdge;
     gl_FragColor = vec4(finalColor, alpha);
   }
 `;
 
-const WormholeIce = ({ position, rotation = [0, 0, 0], length = 4800, visible = true }) => {
+const WormholeIce = ({ position, rotation = [0, 0, 0], length = 4000, visible = true }) => {
   const materialRef = useRef();
-  const exitMaterialRef = useRef();
 
   const uniforms = useMemo(() => ({
     uTime: { value: 0 },
@@ -99,38 +98,19 @@ const WormholeIce = ({ position, rotation = [0, 0, 0], length = 4800, visible = 
       materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
       materialRef.current.uniforms.uOpacity.value = visible ? 1.0 : 0.0;
     }
-    if (exitMaterialRef.current) {
-      exitMaterialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-      exitMaterialRef.current.uniforms.uOpacity.value = visible ? 1.0 : 0.0;
-    }
   });
 
   return (
     <group position={position} rotation={rotation} visible={visible}>
-      {/* Main Vertical Plunge Tube */}
       <mesh>
-        <cylinderGeometry args={[140, 140, length + 200, 32, 64, true]} />
+        <cylinderGeometry args={[120, 120, length + 200, 32, 64, true]} />
         <shaderMaterial
           ref={materialRef}
           vertexShader={iceVertexShader}
           fragmentShader={iceFragmentShader}
           uniforms={uniforms}
           transparent={true}
-          side={THREE.DoubleSide}
-          wireframe={false}
-        />
-      </mesh>
-
-      {/* Flared Bottom Elbow Transition into Icebreaker Cavern */}
-      <mesh position={[0, -length / 2 + 50, -220]} rotation={[0.55, 0, 0]}>
-        <cylinderGeometry args={[140, 240, 650, 32, 16, true]} />
-        <shaderMaterial
-          ref={exitMaterialRef}
-          vertexShader={iceVertexShader}
-          fragmentShader={iceFragmentShader}
-          uniforms={uniforms}
-          transparent={true}
-          side={THREE.DoubleSide}
+          side={THREE.BackSide}
           wireframe={false}
         />
       </mesh>

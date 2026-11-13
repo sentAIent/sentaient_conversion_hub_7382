@@ -51,7 +51,7 @@ const WormholeSphinx = ({ position, rotation = [Math.PI / 2, 0, 0], length = 320
       radarTexture.offset.y = -t * 2.8;
     }
     if (perimeterRef.current) {
-      perimeterRef.current.rotation.y = t * 0.6;
+      perimeterRef.current.rotation.z = t * 0.6;
     }
   });
 

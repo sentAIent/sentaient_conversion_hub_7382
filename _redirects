@@ -6,8 +6,9 @@
 /iceadmin/* https://sentaient-iceadmin-hub.netlify.app/:splat 200!
 /autopilot https://sentaient-autopilot-hub.netlify.app/autopilot/ 301
 /autopilot/* https://sentaient-autopilot-hub.netlify.app/autopilot/:splat 301
-/liquid https://sentaient-liquid.netlify.app/liquid/ 301
-/liquid/* https://sentaient-liquid.netlify.app/liquid/:splat 301
+/liquid /liquid/index.html 200
+/liquid/ /liquid/index.html 200
+/liquid/* /liquid/index.html 200
 /lightspeed /lightspeed/ 301
 /lightspeed/* /lightspeed/index.html 200
 /legaleagle /legaleagle/ 301
