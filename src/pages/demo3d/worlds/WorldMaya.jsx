@@ -1,153 +1,326 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, Suspense } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
-import { Text, Sparkles, Float } from '@react-three/drei';
+import { Text, Sparkles, Float, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+
+// Preload the high-res realistic female human avatar model
+useGLTF.preload('/avatars/maya-holo.glb', true, true);
+
+// ===========================================================================
+// WORLD MAYA: Star Wars Holographic Female Human Avatar
+// Pure self-luminous Star Wars holoprojector aesthetic: glowing electric
+// cyan-blue light, incandescent Fresnel rim silhouette, crisp animated
+// horizontal scanlines, subtle transmission flicker, natural relaxed pose,
+// and zero enclosing tube.
+// ===========================================================================
+
+function findBone(root, name) {
+  let match = null;
+  const target = name.toLowerCase();
+  root.traverse((node) => {
+    if (match || !node.name) return;
+    const n = node.name.toLowerCase();
+    if (n === target || n.endsWith(':' + target)) {
+      match = node;
+    }
+  });
+  return match;
+}
 
 /**
- * WORLD MAYA: Empathetic AI Avatar & 24/7 Enterprise Representative
- * Redesigned as a Beautiful Holographic AI Avatar featuring:
- * - Lifelike Sculpted Holographic Female AI Avatar with Graceful Visage, Ethereal Luminescent Eyes, Flowing Cybernetic Hair Tendrils, and Empathy Heart Core
- * - Volumetric Holographic Light Projection Cone & Concentric High-Tech Emitter Dais
- * - Audio-Reactive Conversational Voice Equalizer & Emotional Resonance Rings
- * - Interactive Conversational Greeting & Dynamic Harmonic Feedback
- * - High-Contrast Enterprise Intelligence Consoles & Official Maya Emblem
+ * Star Wars Holographic Female Human
+ * Uses MeshBasicMaterial + onBeforeCompile so the avatar is 100% self-luminous
+ * (no muddy dark directional shadows), preserving facial/hair/coat detail
+ * inside a crisp, glowing Star Wars cyan-blue scanline hologram.
+ */
+function StarWarsHoloAvatar({ hovered, speechActive }) {
+  const avatarGroupRef = useRef();
+  const { scene } = useGLTF('/avatars/maya-holo.glb', true, true);
+
+  const holoUniforms = useMemo(() => ({
+    uTime: { value: 0 },
+    uHoloShadow: { value: new THREE.Color('#031b38') },
+    uHoloColor: { value: new THREE.Color('#00d8ff') },
+    uRimColor: { value: new THREE.Color('#e8ffff') }
+  }), []);
+
+  const { avatar, poseBones } = useMemo(() => {
+    const cloned = SkeletonUtils.clone(scene);
+
+    cloned.traverse((child) => {
+      if (child.isMesh) {
+        const meshName = (child.name || '').toLowerCase();
+        // Hide internal teeth and glasses so eyes & face stay crystal clear
+        if (meshName.includes('teeth') || meshName.includes('glasses')) {
+          child.visible = false;
+          return;
+        }
+
+        child.castShadow = false;
+        child.receiveShadow = false;
+        child.frustumCulled = false;
+
+        const isEye = meshName.includes('eye');
+        const origMap = child.material?.map || null;
+        const holoMat = new THREE.MeshBasicMaterial({
+          map: origMap,
+          color: '#ffffff',
+          transparent: true,
+          opacity: 0.94,
+          depthWrite: true,
+          side: THREE.FrontSide
+        });
+        holoMat.customProgramCacheKey = () => (isEye ? 'star-wars-holo-eye-v5' : 'star-wars-holo-body-v5');
+
+        holoMat.onBeforeCompile = (shader) => {
+          shader.uniforms.uTime = holoUniforms.uTime;
+          shader.uniforms.uHoloShadow = holoUniforms.uHoloShadow;
+          shader.uniforms.uHoloColor = holoUniforms.uHoloColor;
+          shader.uniforms.uRimColor = holoUniforms.uRimColor;
+
+          shader.vertexShader = `
+            varying vec3 vHoloWorldPos;
+            varying vec3 vHoloNormal;
+            varying vec3 vHoloViewDir;
+            ` + shader.vertexShader.replace(
+              '#include <project_vertex>',
+              `
+              #include <project_vertex>
+              vHoloWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+              vHoloNormal = normalize(transformedNormal + vec3(0.0, 0.0, 0.0001));
+              vHoloViewDir = normalize(-mvPosition.xyz + vec3(0.0, 0.0, 0.0001));
+              `
+            );
+
+          shader.fragmentShader = `
+            uniform float uTime;
+            uniform vec3 uHoloShadow;
+            uniform vec3 uHoloColor;
+            uniform vec3 uRimColor;
+            varying vec3 vHoloWorldPos;
+            varying vec3 vHoloNormal;
+            varying vec3 vHoloViewDir;
+            ` + shader.fragmentShader.replace(
+              '#include <dithering_fragment>',
+              `
+              #include <dithering_fragment>
+
+              // 1. Strong Fresnel Silhouette Rim Glow (drives Bloom halo around her exact silhouette)
+              vec3 viewDir = normalize(vHoloViewDir + vec3(0.0, 0.0, 0.0001));
+              vec3 norm = normalize(vHoloNormal + vec3(0.0, 0.0, 0.0001));
+              float ndotv = clamp(abs(dot(viewDir, norm)), 0.0, 1.0);
+              float fresnel = pow(1.0 - ndotv, 1.85);
+
+              // 2. Sculpted 3D Rim/Key Shading so face, eyes, hair, and limbs keep crisp form
+              float keyLight = clamp(dot(norm, normalize(vec3(0.35, 0.65, 0.70))), 0.0, 1.0);
+              float sculpt = 0.42 + 0.58 * keyLight;
+
+              // 3. Unmistakable Star Wars Horizontal Scanlines + Fine Interlacing
+              float scanWave = sin(vHoloWorldPos.y * 1.25 - uTime * 4.5) * 0.5 + 0.5;
+              float scanMod = 0.45 + 0.68 * pow(scanWave, 2.0);
+              float fineScan = sin(vHoloWorldPos.y * 4.8 + uTime * 2.2) * 0.5 + 0.5;
+
+              // 4. Sweeping Holoprojector Beam + Subtle Transmission Flicker
+              float sweep = exp(-pow(fract(vHoloWorldPos.y * 0.004 - uTime * 0.24) - 0.5, 2.0) * 85.0);
+              float glitch = step(0.988, sin(vHoloWorldPos.y * 0.14 + uTime * 15.0)) * 0.35;
+              float flicker = 0.91 + 0.09 * sin(uTime * 29.0) * cos(uTime * 13.0);
+
+              // 5. Translucent Star Wars Cyan Core + Incandescent Rim Halo
+              float lum = clamp(dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114)), 0.0, 1.0);
+              float detail = clamp(pow(lum, 0.92) * sculpt, 0.0, 1.0);
+              vec3 holoCore = mix(uHoloShadow * 0.8, uHoloColor * 0.85, detail * 0.85 + 0.08);
+
+              vec3 finalColor = holoCore * scanMod;
+              finalColor += uHoloColor * (fineScan * 0.12 + sweep * 0.42 + glitch);
+              finalColor = mix(finalColor, uRimColor * 2.1, fresnel * 0.95);
+              finalColor *= flicker;
+
+              // Translucent interior (0.58..0.96) that lets space glow subtly through while rim stays bright
+              float alpha = clamp((0.58 + fresnel * 0.40) * (0.76 + scanWave * 0.24) * flicker, 0.42, 0.98);
+              gl_FragColor = vec4(finalColor, alpha);
+              `
+            );
+        };
+
+        child.material = holoMat;
+      }
+    });
+
+    // Gently relax Ready Player Me A-pose arms into a natural poised stance
+    const lArm = findBone(cloned, 'LeftArm');
+    const rArm = findBone(cloned, 'RightArm');
+    const lForearm = findBone(cloned, 'LeftForeArm');
+    const rForearm = findBone(cloned, 'RightForeArm');
+    const head = findBone(cloned, 'Head');
+    const spine2 = findBone(cloned, 'Spine2');
+
+    if (lArm) lArm.rotateX(0.32);
+    if (rArm) rArm.rotateX(0.32);
+    if (lForearm) lForearm.rotateZ(0.08);
+    if (rForearm) rForearm.rotateZ(-0.08);
+
+    return {
+      avatar: cloned,
+      poseBones: {
+        head,
+        headBaseQ: head ? head.quaternion.clone() : null,
+        spine2,
+        spine2BaseQ: spine2 ? spine2.quaternion.clone() : null,
+        lArm,
+        lArmBaseQ: lArm ? lArm.quaternion.clone() : null,
+        rArm,
+        rArmBaseQ: rArm ? rArm.quaternion.clone() : null
+      }
+    };
+  }, [scene, holoUniforms]);
+
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+    holoUniforms.uTime.value = t;
+
+    // Subtle poised breathing & head/arm micro-motion
+    if (poseBones.head && poseBones.headBaseQ) {
+      const q = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(Math.sin(t * 0.9) * 0.025, Math.sin(t * 0.55) * 0.06, 0)
+      );
+      poseBones.head.quaternion.copy(poseBones.headBaseQ).multiply(q);
+    }
+    if (poseBones.spine2 && poseBones.spine2BaseQ) {
+      const q = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(Math.sin(t * 1.4) * 0.018, 0, 0)
+      );
+      poseBones.spine2.quaternion.copy(poseBones.spine2BaseQ).multiply(q);
+    }
+    if (poseBones.lArm && poseBones.lArmBaseQ) {
+      const q = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(Math.sin(t * 1.4) * 0.02, 0, 0)
+      );
+      poseBones.lArm.quaternion.copy(poseBones.lArmBaseQ).multiply(q);
+    }
+    if (poseBones.rArm && poseBones.rArmBaseQ) {
+      const q = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(Math.sin(t * 1.4) * 0.02, 0, 0)
+      );
+      poseBones.rArm.quaternion.copy(poseBones.rArmBaseQ).multiply(q);
+    }
+
+    if (avatarGroupRef.current) {
+      avatarGroupRef.current.position.y = -179;
+      avatarGroupRef.current.rotation.y = Math.sin(t * 0.35) * 0.08;
+    }
+  });
+
+  const auraMaterial = useMemo(() => new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    uniforms: {
+      uColor: { value: new THREE.Color('#00e5ff') },
+      uIntensity: { value: 0.42 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uIntensity;
+      varying vec2 vUv;
+      void main() {
+        vec2 centered = (vUv - 0.5) * vec2(2.2, 1.5);
+        float distSq = dot(centered, centered);
+        float glow = exp(-distSq * 4.2) * uIntensity;
+        gl_FragColor = vec4(uColor * glow, glow);
+      }
+    `
+  }), []);
+
+  return (
+    <group ref={avatarGroupRef} position={[0, -179, 60]}>
+      {/* Soft Gaussian cyan aura radiating around her silhouette (no hard edges) */}
+      <mesh position={[0, 155, -18]} material={auraMaterial}>
+        <planeGeometry args={[280, 380]} />
+      </mesh>
+
+      <primitive object={avatar} scale={[175, 175, 175]} />
+
+      {/* Subtle rising holographic photon sparks */}
+      <Sparkles
+        count={120}
+        scale={[120, 280, 120]}
+        position={[0, 150, 0]}
+        size={hovered ? 7 : 4.5}
+        speed={1.2}
+        opacity={hovered ? 0.8 : 0.5}
+        color="#00e5ff"
+      />
+    </group>
+  );
+}
+
+/**
+ * Minimal Sparkle Fallback while GLB loads (NO tube)
+ */
+function StarWarsHoloFallback() {
+  return (
+    <group position={[0, -80, 60]}>
+      <Sparkles count={100} scale={[70, 190, 70]} size={6} speed={1.4} color="#00e5ff" />
+    </group>
+  );
+}
+
+/**
+ * WORLD MAYA: Star Wars Hologram Stage
  */
 export default function WorldMaya({ position, visible }) {
-  const avatarGroupRef = useRef();
-  const headRef = useRef();
-  const eyesRef = useRef();
-  const lipsRef = useRef();
-  const hairLeftRef = useRef();
-  const hairRightRef = useRef();
-  const empathyHeartRef = useRef();
-  const projectorBeamRef = useRef();
-  const resonanceOrbitsRef = useRef();
-  const eqBarsRef = useRef();
-  const leftHudRef = useRef();
-  const rightHudRef = useRef();
-
   const [avatarHovered, setAvatarHovered] = useState(false);
   const [speechActive, setSpeechActive] = useState(true);
 
-  // Load official Maya emblem
   const logoTex = useLoader(THREE.TextureLoader, '/maya_logo_final.png');
   logoTex.colorSpace = THREE.SRGBColorSpace;
 
-  // Web Audio chime feedback on avatar interaction
+  const voiceOrbitsRef = useRef();
+
   const playChime = (freq = 523.25, duration = 0.35, type = 'sine') => {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      if (!window._mayaAudioCtx) {
+        window._mayaAudioCtx = new AudioCtx();
+      }
+      const ctx = window._mayaAudioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + duration);
-    } catch (e) {
-      // Gracefully handled if browser policy restricts autoplay
+    } catch {
+      // Audio autoplay handled safely
     }
   };
-
-  // 28 Equalizer Audio Frequency Columns forming a wide stage arc
-  const eqData = useMemo(() => {
-    return Array.from({ length: 28 }).map((_, i) => {
-      const angle = (i / 27) * Math.PI * 0.95 - Math.PI * 0.475;
-      const radius = 320;
-      return {
-        x: Math.sin(angle) * radius,
-        z: -Math.cos(angle) * radius + 120,
-        height: 30 + (i % 5) * 14,
-        speed: 2.2 + (i % 4) * 0.8,
-        phase: (i * 0.4),
-        color: i % 3 === 0 ? '#818cf8' : i % 3 === 1 ? '#38bdf8' : '#fb7185'
-      };
-    });
-  }, []);
 
   useFrame((state) => {
     if (!visible) return;
     const t = state.clock.getElapsedTime();
 
-    // 1. Organic Breathing & Lifelike Idle Motion of Maya Avatar
-    if (avatarGroupRef.current) {
-      avatarGroupRef.current.position.y = Math.sin(t * 1.5) * 6;
-      avatarGroupRef.current.rotation.y = Math.sin(t * 0.5) * 0.08;
-    }
-
-    // 2. Subtle Empathic Head Tilt & Expressive Eye Tracking
-    if (headRef.current) {
-      headRef.current.rotation.z = Math.sin(t * 0.8) * 0.04;
-      headRef.current.rotation.x = Math.sin(t * 1.1) * 0.03;
-    }
-
-    // 3. Ethereal Ocular Sensor Pulse (Blinking & Emotional Focus)
-    if (eyesRef.current) {
-      const blink = Math.pow(Math.sin(t * 0.65), 18);
-      const eyeScaleY = THREE.MathUtils.lerp(1.0, 0.1, blink);
-      eyesRef.current.scale.y = eyeScaleY;
-    }
-
-    // 4. Conversational Lips Audio Oscillation
-    if (lipsRef.current) {
-      const talkMod = speechActive ? (0.85 + Math.sin(t * 7.5) * 0.35 + Math.sin(t * 14.0) * 0.2) : 1.0;
-      lipsRef.current.scale.x = talkMod;
-      lipsRef.current.scale.y = 0.9 + Math.sin(t * 6.0) * 0.2;
-    }
-
-    // 5. Flowing Holographic Hair Tendrils (Gentle Cybernetic Breeze)
-    if (hairLeftRef.current) {
-      hairLeftRef.current.rotation.z = 0.15 + Math.sin(t * 1.4) * 0.06;
-      hairLeftRef.current.rotation.x = Math.sin(t * 1.2) * 0.08;
-    }
-    if (hairRightRef.current) {
-      hairRightRef.current.rotation.z = -0.15 - Math.sin(t * 1.4 + 0.5) * 0.06;
-      hairRightRef.current.rotation.x = Math.sin(t * 1.2 + 0.5) * 0.08;
-    }
-
-    // 6. Empathy Heart Matrix Emotional Core Pulse
-    if (empathyHeartRef.current) {
-      const heartPulse = 1.0 + Math.sin(t * 2.8) * 0.12 + (avatarHovered ? 0.2 : 0);
-      empathyHeartRef.current.scale.set(heartPulse, heartPulse, heartPulse);
-      empathyHeartRef.current.rotation.y = t * 0.8;
-    }
-
-    // 7. Projector Beam Light Shimmer
-    if (projectorBeamRef.current) {
-      projectorBeamRef.current.material.opacity = 0.32 + Math.sin(t * 3.2) * 0.08;
-    }
-
-    // 8. Harmonic Voice Resonance Orbits
-    if (resonanceOrbitsRef.current) {
-      resonanceOrbitsRef.current.children.forEach((orbit, idx) => {
-        const speed = (idx + 1) * 0.35;
+    if (voiceOrbitsRef.current) {
+      voiceOrbitsRef.current.children.forEach((orbit, idx) => {
+        const speed = (idx + 1) * 0.22;
         orbit.rotation.z = t * (idx % 2 === 0 ? speed : -speed);
-        orbit.rotation.x = Math.sin(t * 0.5 + idx) * 0.3;
+        orbit.rotation.x = Math.sin(t * 0.4 + idx) * 0.16;
       });
-    }
-
-    // 9. Audio Frequency Equalizer Dancing
-    if (eqBarsRef.current) {
-      eqBarsRef.current.children.forEach((bar, i) => {
-        const item = eqData[i];
-        if (item) {
-          const osc = 0.35 + 0.65 * Math.abs(Math.sin(t * item.speed + item.phase));
-          bar.scale.y = osc;
-        }
-      });
-    }
-
-    // 10. Subtle Hover of Intelligence HUDs
-    if (leftHudRef.current) {
-      leftHudRef.current.position.y = 80 + Math.sin(t * 1.4) * 6;
-    }
-    if (rightHudRef.current) {
-      rightHudRef.current.position.y = 80 + Math.sin(t * 1.4 + 1.2) * 6;
     }
   });
 
@@ -155,555 +328,154 @@ export default function WorldMaya({ position, visible }) {
 
   return (
     <group position={position}>
-      {/* ------------------------------------------------------------- */}
-      {/* 1. LIGHTING & LUXURIOUS CYBERNETIC ATMOSPHERE                */}
-      {/* ------------------------------------------------------------- */}
-      <ambientLight intensity={0.5} color="#0c071e" />
-      <directionalLight position={[600, 800, 400]} intensity={3.5} color="#818cf8" />
-      <directionalLight position={[-600, 600, -300]} intensity={2.8} color="#fb7185" />
-      <pointLight position={[0, 160, -500]} intensity={24} distance={1500} color="#38bdf8" />
-      <pointLight position={[0, 40, -450]} intensity={20} distance={1000} color="#e0f2fe" />
-      <pointLight position={[0, 75, -550]} intensity={avatarHovered ? 26 : 16} distance={600} color="#f472b6" />
+      {/* Atmospheric Lighting */}
+      <ambientLight intensity={0.8} color="#082038" />
+      <pointLight position={[0, -60, 220]} intensity={32} distance={1000} color="#00e5ff" />
+      <pointLight position={[0, -160, 80]} intensity={avatarHovered ? 40 : 28} distance={500} color="#00e5ff" />
 
-      {/* Atmospheric Consciousness Particles & Emotion Sparkles */}
-      <Sparkles count={900} scale={[2400, 1000, 2400]} size={11} speed={0.4} opacity={0.65} color="#818cf8" position={[0, 120, -550]} />
-      <Sparkles count={600} scale={[1800, 800, 1800]} size={9} speed={0.5} opacity={0.55} color="#fb7185" position={[0, 100, -550]} />
-      <Sparkles count={500} scale={[1400, 600, 1400]} size={13} speed={0.3} opacity={0.7} color="#38bdf8" position={[0, 140, -550]} />
+      {/* Atmospheric Starfield Sparkles */}
+      <Sparkles count={600} scale={[1800, 900, 1800]} size={9} speed={0.35} opacity={0.6} color="#00e5ff" position={[0, 40, 80]} />
+      <Sparkles count={350} scale={[1400, 700, 1400]} size={7} speed={0.45} opacity={0.45} color="#38bdf8" position={[0, 30, 80]} />
 
-      {/* Reflective Deep Space Obsidian Ground Plane */}
-      <mesh position={[0, -215, -550]} rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Deep Obsidian Mirror Floor */}
+      <mesh position={[0, -200, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[4800, 4800]} />
-        <meshStandardMaterial color="#030108" roughness={0.1} metalness={0.96} />
+        <meshStandardMaterial color="#020713" roughness={0.06} metalness={0.96} />
       </mesh>
 
-      {/* High-Gloss Obsidian Sanctuary Dais */}
-      <mesh position={[0, -210, -550]} rotation={[-Math.PI / 2, 0, Math.PI / 6]}>
-        <cylinderGeometry args={[460, 500, 24, 8]} />
-        <meshStandardMaterial color="#05030e" roughness={0.12} metalness={0.94} />
+      {/* Floor Holoprojector Base (flat on floor, NO tube) */}
+      <mesh position={[0, -195, 60]}>
+        <cylinderGeometry args={[280, 320, 16, 48]} />
+        <meshStandardMaterial color="#040e1c" roughness={0.08} metalness={0.96} />
       </mesh>
 
-      {/* Concentric Energy Inlay Rings on Dais Floor */}
-      {[240, 360, 470].map((radius, idx) => (
-        <mesh key={idx} position={[0, -196, -550]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[radius, radius + 4, 64]} />
-          <meshBasicMaterial 
-            color={idx % 2 === 0 ? "#818cf8" : "#38bdf8"} 
-            transparent 
-            opacity={0.5 - idx * 0.12} 
+      {[140, 210, 275].map((radius, idx) => (
+        <mesh key={idx} position={[0, -186, 60]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[radius, radius + 3, 64]} />
+          <meshBasicMaterial
+            color={idx % 2 === 0 ? "#00e5ff" : "#38bdf8"}
+            transparent
+            opacity={0.65 - idx * 0.15}
             side={THREE.DoubleSide}
           />
         </mesh>
       ))}
 
-      {/* ------------------------------------------------------------- */}
-      {/* 2. HOLOGRAPHIC EMITTER BASE & VOLUMETRIC PROJECTION CONE       */}
-      {/* ------------------------------------------------------------- */}
-      <group position={[0, -195, -550]}>
-        {/* Hologram Projector Ring Platform */}
-        <mesh position={[0, 4, 0]}>
-          <cylinderGeometry args={[130, 150, 12, 32]} />
-          <meshStandardMaterial color="#0e0a24" roughness={0.15} metalness={0.95} />
-        </mesh>
-        {/* Glowing Lapis Emitter Rim */}
-        <mesh position={[0, 10, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[115, 128, 48]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={3.5} />
-        </mesh>
-        <pointLight position={[0, 25, 0]} color="#38bdf8" intensity={18} distance={400} />
+      {/* Center Emitter Lens Disc */}
+      <mesh position={[0, -183, 60]}>
+        <cylinderGeometry args={[85, 98, 6, 32]} />
+        <meshStandardMaterial color="#061830" roughness={0.12} metalness={0.95} />
+      </mesh>
+      <mesh position={[0, -179, 60]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[72, 83, 48]} />
+        <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={3.2} />
+      </mesh>
 
-        {/* Volumetric Upward Projection Light Cone */}
-        <mesh ref={projectorBeamRef} position={[0, 160, 0]}>
-          <cylinderGeometry args={[95, 125, 310, 32, 1, true]} />
-          <meshBasicMaterial 
-            color="#38bdf8" 
-            transparent 
-            opacity={0.28} 
-            side={THREE.DoubleSide} 
-            blending={THREE.AdditiveBlending} 
-            depthWrite={false} 
-          />
-        </mesh>
-      </group>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 3. BEAUTIFUL HOLOGRAPHIC AI AVATAR (MAYA)                      */}
-      {/* ------------------------------------------------------------- */}
-      <group 
-        ref={avatarGroupRef} 
-        position={[0, 20, -550]}
+      {/* THE FEMALE HUMAN STAR WARS HOLOGRAM */}
+      <group
         onPointerOver={(e) => { e.stopPropagation(); setAvatarHovered(true); playChime(659.25, 0.35, 'triangle'); }}
         onPointerOut={(e) => { e.stopPropagation(); setAvatarHovered(false); }}
         onClick={(e) => { e.stopPropagation(); setSpeechActive(prev => !prev); playChime(523.25, 0.45, 'sine'); }}
       >
-        {/* Holographic Torso, Neck, and Shoulders */}
-        <group position={[0, -40, 0]}>
-          {/* Elegant Tapered Cybernetic Shoulders / Bust */}
-          <mesh position={[0, 0, 0]}>
-            <cylinderGeometry args={[26, 42, 70, 24]} />
-            <meshStandardMaterial
-              color="#091b34"
-              emissive="#38bdf8"
-              emissiveIntensity={avatarHovered ? 2.4 : 1.6}
-              roughness={0.15}
-              metalness={0.88}
-              transparent
-              opacity={0.85}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-
-          {/* Holographic Wireframe Chest & Shoulder Armor Lattice */}
-          <mesh position={[0, 0, 0]}>
-            <cylinderGeometry args={[26.5, 42.5, 71, 24, 6, true]} />
-            <meshBasicMaterial
-              color="#c084fc"
-              wireframe
-              transparent
-              opacity={0.55}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-            />
-          </mesh>
-
-          {/* Graceful Cybernetic Neck */}
-          <mesh position={[0, 48, 0]}>
-            <cylinderGeometry args={[14, 18, 32, 20]} />
-            <meshStandardMaterial
-              color="#0f172a"
-              emissive="#818cf8"
-              emissiveIntensity={1.8}
-              roughness={0.12}
-              metalness={0.9}
-              transparent
-              opacity={0.88}
-            />
-          </mesh>
-          <mesh position={[0, 48, 0]}>
-            <cylinderGeometry args={[14.5, 18.5, 32, 16, 4, true]} />
-            <meshBasicMaterial color="#38bdf8" wireframe transparent opacity={0.45} blending={THREE.AdditiveBlending} depthWrite={false} />
-          </mesh>
-
-          {/* Glowing Empathy Heart Matrix Core in Center of Chest */}
-          <group ref={empathyHeartRef} position={[0, 5, 18]}>
-            <mesh>
-              <octahedronGeometry args={[14, 0]} />
-              <meshStandardMaterial
-                color="#ffffff"
-                emissive="#fb7185"
-                emissiveIntensity={avatarHovered ? 4.5 : 3.0}
-                metalness={0.9}
-                roughness={0.1}
-              />
-            </mesh>
-            <pointLight color="#f43f5e" intensity={12} distance={180} />
-          </group>
-        </group>
-
-        {/* Sculpted Holographic Head & Visage */}
-        <group ref={headRef} position={[0, 45, 0]}>
-          {/* Graceful Cranial Form */}
-          <mesh position={[0, 16, -2]}>
-            <sphereGeometry args={[26, 32, 28]} />
-            <meshStandardMaterial
-              color="#0d1b30"
-              emissive="#38bdf8"
-              emissiveIntensity={avatarHovered ? 2.2 : 1.4}
-              roughness={0.15}
-              metalness={0.85}
-              transparent
-              opacity={0.88}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-
-          {/* Stylized Facial Plane & Cheeks */}
-          <mesh position={[0, 12, 12]}>
-            <sphereGeometry args={[20, 24, 20, 0, Math.PI * 2, 0, Math.PI * 0.55]} scale={[0.88, 1.05, 0.85]} />
-            <meshStandardMaterial
-              color="#13233c"
-              emissive="#818cf8"
-              emissiveIntensity={1.6}
-              roughness={0.12}
-              metalness={0.9}
-              transparent
-              opacity={0.85}
-            />
-          </mesh>
-
-          {/* Ethereal Outer Holographic Face Scanline Lattice */}
-          <mesh position={[0, 14, 1]}>
-            <sphereGeometry args={[27.2, 28, 24]} />
-            <meshBasicMaterial
-              color="#a78bfa"
-              wireframe
-              transparent
-              opacity={0.45}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-            />
-          </mesh>
-
-          {/* Luminous Cybernetic Ocular Sensors (Expressive Almond Eyes) */}
-          <group ref={eyesRef} position={[0, 17, 24]}>
-            {/* Left Eye */}
-            <mesh position={[-9, 0, 0]}>
-              <sphereGeometry args={[4.2, 16, 16]} scale={[1.4, 0.85, 0.4]} />
-              <meshStandardMaterial color="#ffffff" emissive="#38bdf8" emissiveIntensity={5.0} />
-            </mesh>
-            {/* Right Eye */}
-            <mesh position={[9, 0, 0]}>
-              <sphereGeometry args={[4.2, 16, 16]} scale={[1.4, 0.85, 0.4]} />
-              <meshStandardMaterial color="#ffffff" emissive="#38bdf8" emissiveIntensity={5.0} />
-            </mesh>
-            {/* Soft Eye Aura Glow */}
-            <pointLight position={[0, 0, 4]} color="#38bdf8" intensity={8} distance={120} />
-          </group>
-
-          {/* Graceful Audio-Reactive Conversational Lips */}
-          <mesh ref={lipsRef} position={[0, 4.5, 23]}>
-            <torusGeometry args={[5.2, 1.2, 12, 24, Math.PI]} rotation={[Math.PI, 0, 0]} />
-            <meshStandardMaterial color="#fb7185" emissive="#f43f5e" emissiveIntensity={3.2} />
-          </mesh>
-
-          {/* Forehead Holographic Neural Node */}
-          <mesh position={[0, 27, 21]}>
-            <circleGeometry args={[2.8, 16]} />
-            <meshStandardMaterial color="#ffffff" emissive="#38bdf8" emissiveIntensity={4.0} />
-          </mesh>
-
-          {/* Flowing Luminescent Holographic Hair Tendrils (Left Side) */}
-          <group ref={hairLeftRef} position={[-20, 24, -2]}>
-            <mesh position={[-6, -28, 4]} rotation={[0.1, 0, 0.12]}>
-              <cylinderGeometry args={[2.5, 6.0, 75, 12]} />
-              <meshStandardMaterial
-                color="#818cf8"
-                emissive="#c084fc"
-                emissiveIntensity={2.5}
-                transparent
-                opacity={0.82}
-                roughness={0.1}
-                metalness={0.9}
-              />
-            </mesh>
-            <mesh position={[-8, -20, -10]} rotation={[-0.2, 0, 0.15]}>
-              <cylinderGeometry args={[2.0, 5.0, 65, 12]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={2.2} transparent opacity={0.78} />
-            </mesh>
-          </group>
-
-          {/* Flowing Luminescent Holographic Hair Tendrils (Right Side) */}
-          <group ref={hairRightRef} position={[20, 24, -2]}>
-            <mesh position={[6, -28, 4]} rotation={[0.1, 0, -0.12]}>
-              <cylinderGeometry args={[2.5, 6.0, 75, 12]} />
-              <meshStandardMaterial
-                color="#818cf8"
-                emissive="#c084fc"
-                emissiveIntensity={2.5}
-                transparent
-                opacity={0.82}
-                roughness={0.1}
-                metalness={0.9}
-              />
-            </mesh>
-            <mesh position={[8, -20, -10]} rotation={[-0.2, 0, -0.15]}>
-              <cylinderGeometry args={[2.0, 5.0, 65, 12]} />
-              <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={2.2} transparent opacity={0.78} />
-            </mesh>
-          </group>
-
-          {/* Crown Holographic Halo Diadem */}
-          <mesh position={[0, 36, -2]} rotation={[Math.PI / 2.3, 0, 0]}>
-            <torusGeometry args={[24, 1.4, 16, 48]} />
-            <meshStandardMaterial color="#ffd700" emissive="#f59e0b" emissiveIntensity={3.2} />
-          </mesh>
-        </group>
-
-        {/* Concentric Harmonic Voice Orbits Floating around Avatar */}
-        <group ref={resonanceOrbitsRef} position={[0, 20, 0]}>
-          {/* Inner Vocal Frequency Ring (Cyan) */}
-          <mesh rotation={[Math.PI / 2.2, 0.1, 0]}>
-            <torusGeometry args={[95, 2.2, 16, 80]} />
-            <meshStandardMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={3.2} metalness={0.9} roughness={0.1} />
-          </mesh>
-          {/* Mid Empathy Resonance Ring (Lavender) */}
-          <mesh rotation={[Math.PI / 1.8, -0.15, 0.2]}>
-            <torusGeometry args={[135, 1.8, 16, 80]} />
-            <meshStandardMaterial color="#818cf8" emissive="#6366f1" emissiveIntensity={2.8} metalness={0.9} roughness={0.1} />
-          </mesh>
-          {/* Outer Compassion Wave Ring (Rose) */}
-          <mesh rotation={[Math.PI / 2.0, 0.25, -0.1]}>
-            <torusGeometry args={[175, 1.5, 16, 80]} />
-            <meshStandardMaterial color="#fb7185" emissive="#e11d48" emissiveIntensity={2.5} metalness={0.9} roughness={0.1} />
-          </mesh>
-        </group>
-
-        {/* Floating Interactive Greeting Badge */}
-        <Float speed={1.8} rotationIntensity={0.02} floatIntensity={0.25}>
-          <group position={[0, 115, 30]}>
-            <mesh position={[0, 0, -2]}>
-              <planeGeometry args={[280, 42]} />
-              <meshBasicMaterial color="#090d16" transparent opacity={0.88} side={THREE.DoubleSide} />
-            </mesh>
-            <mesh position={[0, 0, -1]}>
-              <planeGeometry args={[282, 44]} />
-              <meshBasicMaterial color="#38bdf8" wireframe transparent opacity={0.5} />
-            </mesh>
-            <Text
-              font="/fonts/Roboto.woff"
-              fallbackFonts={[]}
-              position={[0, 8, 2]}
-              fontSize={11.5}
-              color="#38bdf8"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.12}
-            >
-              ● MAYA LIVE CONVERSATIONAL AI ●
-            </Text>
-            <Text
-              font="/fonts/Roboto.woff"
-              fallbackFonts={[]}
-              position={[0, -8, 2]}
-              fontSize={9}
-              color="#ffffff"
-              anchorX="center"
-              anchorY="middle"
-            >
-              “Welcome! How can I assist your enterprise growth today?”
-            </Text>
-          </group>
-        </Float>
+        <Suspense fallback={<StarWarsHoloFallback />}>
+          <StarWarsHoloAvatar hovered={avatarHovered} speechActive={speechActive} />
+        </Suspense>
       </group>
 
-      {/* ------------------------------------------------------------- */}
-      {/* 4. CONVERSATIONAL VOICE EQUALIZER BARS (STAGE ARC IN FRONT)   */}
-      {/* ------------------------------------------------------------- */}
-      <group ref={eqBarsRef} position={[0, -180, -550]}>
-        {eqData.map((bar, i) => (
-          <group key={i} position={[bar.x, 0, bar.z]}>
-            <mesh position={[0, bar.height / 2, 0]}>
-              <boxGeometry args={[5.5, bar.height, 5.5]} />
-              <meshStandardMaterial 
-                color="#ffffff" 
-                emissive={bar.color} 
-                emissiveIntensity={3.2} 
-                roughness={0.1} 
-                metalness={0.9} 
-              />
-            </mesh>
-            <mesh position={[0, 1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <circleGeometry args={[6, 16]} />
-              <meshBasicMaterial color={bar.color} />
-            </mesh>
-          </group>
+      {/* Subtle Orbital Telemetry Rings */}
+      <group ref={voiceOrbitsRef} position={[0, -65, 60]}>
+        {[125, 165].map((radius, idx) => (
+          <mesh key={idx} rotation={[Math.PI / 3 + idx * 0.4, idx * 0.5, 0]}>
+            <torusGeometry args={[radius, 0.9, 16, 80]} />
+            <meshBasicMaterial
+              color={idx === 0 ? "#00e5ff" : "#38bdf8"}
+              transparent
+              opacity={0.28 - idx * 0.08}
+              blending={THREE.AdditiveBlending}
+            />
+          </mesh>
         ))}
       </group>
 
-      {/* ------------------------------------------------------------- */}
-      {/* 5. HIGH-TECH HOLOGRAPHIC INTELLIGENCE CONSOLES (READABLE)     */}
-      {/* ------------------------------------------------------------- */}
-      {/* Left Console: Neural Empathy */}
-      <group ref={leftHudRef} position={[-360, 80, -480]} rotation={[0, 0.36, 0]}>
-        <mesh position={[0, 0, 0]}>
-          <planeGeometry args={[260, 160]} />
-          <meshPhysicalMaterial 
-            color="#090d16" 
-            roughness={0.1} 
-            metalness={0.3} 
-            transmission={0.82} 
-            transparent 
-            opacity={0.9} 
-            side={THREE.DoubleSide} 
-          />
-        </mesh>
-        <mesh position={[0, 0, 1]}>
-          <planeGeometry args={[262, 162]} />
-          <meshBasicMaterial color="#38bdf8" wireframe transparent opacity={0.45} />
-        </mesh>
-
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, 54, 3]}
-          fontSize={17}
-          color="#38bdf8"
-          anchorX="left"
-          anchorY="middle"
-          letterSpacing={0.1}
-        >
-          NEURAL EMPATHY ARCHITECTURE
-        </Text>
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, 26, 3]}
-          fontSize={22}
-          color="#ffffff"
-          anchorX="left"
-          anchorY="middle"
-          outlineWidth={1.0}
-          outlineColor="#0369a1"
-        >
-          COMPASSIONATE AI CORE
-        </Text>
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, -6, 3]}
-          fontSize={14}
-          color="#e2e8f0"
-          anchorX="left"
-          anchorY="middle"
-        >
-          • Emotion Alignment: 99.8% Synchronized
-        </Text>
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, -28, 3]}
-          fontSize={14}
-          color="#e2e8f0"
-          anchorX="left"
-          anchorY="middle"
-        >
-          • Voice Latency: &lt; 140ms Client WebGPU
-        </Text>
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, -50, 3]}
-          fontSize={14}
-          color="#e2e8f0"
-          anchorX="left"
-          anchorY="middle"
-        >
-          • Dynamic Tone Modulation &amp; Active Listening
-        </Text>
-      </group>
-
-      {/* Right Console: Enterprise Capabilities */}
-      <group ref={rightHudRef} position={[360, 80, -480]} rotation={[0, -0.36, 0]}>
-        <mesh position={[0, 0, 0]}>
-          <planeGeometry args={[260, 160]} />
-          <meshPhysicalMaterial 
-            color="#090d16" 
-            roughness={0.1} 
-            metalness={0.3} 
-            transmission={0.82} 
-            transparent 
-            opacity={0.9} 
-            side={THREE.DoubleSide} 
-          />
-        </mesh>
-        <mesh position={[0, 0, 1]}>
-          <planeGeometry args={[262, 162]} />
-          <meshBasicMaterial color="#fb7185" wireframe transparent opacity={0.45} />
-        </mesh>
-
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, 54, 3]}
-          fontSize={17}
-          color="#fb7185"
-          anchorX="left"
-          anchorY="middle"
-          letterSpacing={0.1}
-        >
-          ENTERPRISE REPRESENTATIVE
-        </Text>
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, 26, 3]}
-          fontSize={22}
-          color="#ffffff"
-          anchorX="left"
-          anchorY="middle"
-          outlineWidth={1.0}
-          outlineColor="#be123c"
-        >
-          AUTONOMOUS SALES DESK
-        </Text>
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, -6, 3]}
-          fontSize={14}
-          color="#e2e8f0"
-          anchorX="left"
-          anchorY="middle"
-        >
-          • 24/7 Inbound Lead Qualification &amp; Demo Booking
-        </Text>
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, -28, 3]}
-          fontSize={14}
-          color="#e2e8f0"
-          anchorX="left"
-          anchorY="middle"
-        >
-          • Multi-Lingual Speech Synthesis (20+ Languages)
-        </Text>
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[-115, -50, 3]}
-          fontSize={14}
-          color="#e2e8f0"
-          anchorX="left"
-          anchorY="middle"
-        >
-          • 1-Line Web Concierge Script Embed
-        </Text>
-      </group>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 6. PROMINENT MAYA EMBLEM & CLEAR TITLE BRANDING               */}
-      {/* ------------------------------------------------------------- */}
-      <group position={[0, 230, -380]}>
-        {/* Floating High-Res Maya Logo Emblem - Crisp Normal Blending */}
-        <Float speed={2} rotationIntensity={0.04} floatIntensity={0.3}>
-          <mesh position={[0, 85, 0]}>
-            <planeGeometry args={[150, 122]} />
-            <meshBasicMaterial map={logoTex} transparent depthWrite={false} />
+      {/* Floating Maya Emblem, Identity & ENTER APP CTA */}
+      <Float speed={1.5} rotationIntensity={0.04} floatIntensity={0.25}>
+        <group position={[0, 224, 60]}>
+          <mesh position={[0, 26, 0]}>
+            <planeGeometry args={[60, 28]} />
+            <meshBasicMaterial map={logoTex} transparent opacity={0.95} depthWrite={false} />
           </mesh>
-        </Float>
 
-        {/* Maya Title */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[0, 0, 0]}
-          fontSize={64}
-          color="#ffffff"
-          outlineWidth={2.2}
-          outlineColor="#4338ca"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.14}
-        >
-          MAYA
-        </Text>
+          <Text
+            font="/fonts/Roboto.woff"
+            fallbackFonts={[]}
+            position={[0, -10, 0]}
+            fontSize={22}
+            color="#00e5ff"
+            anchorX="center"
+            anchorY="middle"
+            fontWeight="bold"
+            outlineWidth={0.4}
+            outlineColor="#000000"
+          >
+            MAYA
+          </Text>
 
-        {/* Subtitle */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[0, -50, 0]}
-          fontSize={26}
-          color="#818cf8"
-          outlineWidth={1.2}
-          outlineColor="#090d16"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.14}
-        >
-          EMPATHETIC AI AVATAR &amp; 24/7 ENTERPRISE CONCIERGE
-        </Text>
-      </group>
+          <Text
+            font="/fonts/Roboto.woff"
+            fallbackFonts={[]}
+            position={[0, -44, 0]}
+            fontSize={18}
+            lineHeight={1.25}
+            maxWidth={340}
+            textAlign="center"
+            color="#ffffff"
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={0.3}
+            outlineColor="#000000"
+            letterSpacing={0.04}
+          >
+            {"Empathetic Conversational Intelligence\n& 24/7 Enterprise Representative"}
+          </Text>
+
+          <group
+            position={[0, -82, 6]}
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open('/maya/index.html', '_blank', 'noopener,noreferrer');
+            }}
+            onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+            onPointerOut={(e) => { e.stopPropagation(); document.body.style.cursor = 'auto'; }}
+          >
+            <mesh position={[0, 0, 0]}>
+              <planeGeometry args={[84, 18]} />
+              <meshStandardMaterial
+                color="#0284c7"
+                emissive="#00e5ff"
+                emissiveIntensity={2.4}
+                roughness={0.2}
+                metalness={0.8}
+              />
+            </mesh>
+            <mesh position={[0, 0, 1]}>
+              <planeGeometry args={[86, 20]} />
+              <meshBasicMaterial color="#ffffff" wireframe transparent opacity={0.4} />
+            </mesh>
+            <Text
+              font="/fonts/Roboto.woff"
+              fallbackFonts={[]}
+              position={[0, -0.5, 2]}
+              fontSize={7.2}
+              color="#ffffff"
+              anchorX="center"
+              fontWeight="bold"
+              letterSpacing={0.08}
+            >
+              ENTER APP  ➔
+            </Text>
+          </group>
+        </group>
+      </Float>
     </group>
   );
 }

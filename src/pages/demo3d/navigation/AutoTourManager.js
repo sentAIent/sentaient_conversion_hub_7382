@@ -87,8 +87,12 @@ class AutoTourEngine {
     this.saveSeconds(clamped);
     if (this.isActive && !this.isTransit) {
       this.remainingSeconds = Math.max(1, Math.min(clamped, this.remainingSeconds + diff));
+      if (typeof this.remainingMs === 'number') {
+        this.remainingMs = Math.max(1000, Math.min(clamped * 1000, this.remainingMs + diff * 1000));
+      }
     } else {
       this.remainingSeconds = clamped;
+      this.remainingMs = clamped * 1000;
     }
     this.notify();
   }
@@ -138,6 +142,9 @@ class AutoTourEngine {
   togglePause() {
     if (!this.isActive) return;
     this.isPaused = !this.isPaused;
+    if (!this.isPaused) {
+      this.lastTickTs = Date.now();
+    }
     this.notify();
   }
 
@@ -183,28 +190,32 @@ class AutoTourEngine {
   startCountdown() {
     this.clearTimer();
     this.remainingSeconds = this.seconds;
+    this.remainingMs = this.seconds * 1000;
+    this.lastTickTs = Date.now();
     this.notify();
 
-    const startTs = Date.now();
-    const durationMs = this.seconds * 1000;
-
     this.timerId = setInterval(() => {
+      const now = Date.now();
       if (!this.isActive) {
         this.clearTimer();
         return;
       }
-      if (this.isPaused) return; // Frozen while paused
+      if (this.isPaused) {
+        this.lastTickTs = now;
+        return;
+      }
 
-      const elapsed = Date.now() - startTs;
-      const leftMs = Math.max(0, durationMs - elapsed);
-      const leftSec = Math.ceil(leftMs / 1000);
+      const dt = now - (this.lastTickTs || now);
+      this.lastTickTs = now;
+      this.remainingMs = Math.max(0, this.remainingMs - dt);
+      const leftSec = Math.ceil(this.remainingMs / 1000);
 
       if (leftSec !== this.remainingSeconds) {
         this.remainingSeconds = leftSec;
         this.notify();
       }
 
-      if (leftMs <= 0) {
+      if (this.remainingMs <= 0) {
         this.clearTimer();
         this.nextWorld();
       }
@@ -240,10 +251,32 @@ class AutoTourEngine {
   }
 
   prevWorld() {
+    this.clearTimer();
+    clearActiveWorldPause();
+
+    if (!this.isActive) {
+      const currentIdx = window._currentStationIndex || 0;
+      if (currentIdx > 1) {
+        this.startTour(currentIdx - 1);
+      } else {
+        goToStation(0, 1400, () => {
+          window._currentStationIndex = 0;
+          window._snapCamera = true;
+        });
+      }
+      return;
+    }
+
     if (this.currentStationIndex > 1) {
-      this.clearTimer();
-      clearActiveWorldPause();
       this.flyToStation(this.currentStationIndex - 1);
+    } else {
+      this.isTransit = true;
+      this.notify();
+      goToStation(0, 1400, () => {
+        this.stopTour();
+        window._currentStationIndex = 0;
+        window._snapCamera = true;
+      });
     }
   }
 }

@@ -455,11 +455,11 @@ export default function WorldMatrix({ position, visible }) {
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 5. CENTERPIECE: FLOATING MATRIX LOGO ABOVE ANIMATION          */}
+      {/* 5. CENTERPIECE: FLOATING MATRIX LOGO & SUBTITLE ABOVE ANIMATION */}
       {/* ------------------------------------------------------------- */}
       <group position={[0, 480, -750]}>
         <Float speed={1.8} rotationIntensity={0.04} floatIntensity={0.3}>
-          <mesh position={[0, 0, 0]}>
+          <mesh position={[0, 36, 0]}>
             <planeGeometry args={[260, 62]} />
             <meshBasicMaterial 
               map={logoTex} 
@@ -469,6 +469,22 @@ export default function WorldMatrix({ position, visible }) {
             />
           </mesh>
         </Float>
+        <Text
+          font="/fonts/Roboto.woff"
+          fallbackFonts={[]}
+          position={[0, -82, 0]}
+          fontSize={48}
+          lineHeight={1.2}
+          textAlign="center"
+          color="#ffffff"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={2.4}
+          outlineColor="#022c22"
+          letterSpacing={0.08}
+        >
+          {'AUTONOMOUS AI SOFTWARE\nENGINEERING LAB'}
+        </Text>
       </group>
     </group>
   );

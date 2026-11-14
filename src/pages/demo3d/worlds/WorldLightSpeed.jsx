@@ -409,7 +409,7 @@ export default function WorldLightSpeed({ position, visible }) {
       <group position={[0, 500, -380]}>
         {/* Floating Gold LightSpeed Emblem */}
         <Float speed={1.8} rotationIntensity={0.05} floatIntensity={0.3}>
-          <mesh position={[0, 110, 0]}>
+          <mesh position={[0, 145, 0]}>
             <planeGeometry args={[140, 169]} />
             <meshBasicMaterial 
               map={logoTex} 
@@ -424,7 +424,7 @@ export default function WorldLightSpeed({ position, visible }) {
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, 0, 10]}
+          position={[0, 8, 10]}
           fontSize={56}
           color="#ffffff"
           outlineWidth={1.8}
@@ -436,20 +436,23 @@ export default function WorldLightSpeed({ position, visible }) {
           LIGHTSPEED
         </Text>
 
-        {/* Subtitle: AUTONOMOUS AI CTO & RUNTIME DEFENSE - Enlarged */}
+        {/* Subtitle: AUTONOMOUS AI CTO & CYBERSECURITY - Enlarged */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -48, 10]}
-          fontSize={28}
+          position={[0, -92, 10]}
+          fontSize={46}
+          lineHeight={1.2}
+          maxWidth={1100}
+          textAlign="center"
           color="#38bdf8"
-          outlineWidth={1.2}
+          outlineWidth={1.8}
           outlineColor="#0f172a"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.14}
+          letterSpacing={0.08}
         >
-          AUTONOMOUS AI CTO & RUNTIME DEFENSE
+          {'AUTONOMOUS AI CTO &\nCYBERSECURITY'}
         </Text>
       </group>
 

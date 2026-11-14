@@ -296,15 +296,15 @@ const BrutalistOverlord = ({ logoTex }) => {
     <group position={[0, 160, -650]}>
       {/* AI Autonomous Judge Hologram (Floating Above Courtroom Bench) */}
       <Float speed={2} rotationIntensity={0.12} floatIntensity={0.35}>
-        <mesh position={[0, 180, 0]}>
+        <mesh position={[0, 225, 0]}>
           <planeGeometry args={[260, 260]} />
           <meshBasicMaterial map={logoTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
         </mesh>
-        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 8, 0]} fontSize={56} color="#00ffff" anchorX="center" anchorY="middle" outlineWidth={1.5} outlineColor="#003366">
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 8, 0]} fontSize={56} color="#a855f7" anchorX="center" anchorY="middle" outlineWidth={2.2} outlineColor="#1e1b4b">
           LEGAL EAGLE
         </Text>
-        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -42, 0]} fontSize={24} color="#f59e0b" anchorX="center" anchorY="middle" outlineWidth={1.2} outlineColor="#001833" letterSpacing={0.14}>
-          AUTONOMOUS CONTRACT AUDIT &amp; LEGAL DEFENSE
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -115, 0]} fontSize={52} lineHeight={1.2} textAlign="center" color="#ffffff" anchorX="center" anchorY="middle" outlineWidth={2.8} outlineColor="#020617" letterSpacing={0.08}>
+          {'AUTONOMOUS CONTRACT\nAUDIT & LEGAL DEFENSE'}
         </Text>
       </Float>
     </group>

@@ -22,7 +22,7 @@ const WORLD_ROUTES = {
   'Sentaient': '/agent-studio',
   'Elevate': null,
   'Sphinx': '/sphinx/',
-  'Liquid': null,
+  'Liquid': '/liquid',
   'Maya': null,
   'Pyramid': '/pyramid',
   'PyRAmid': '/pyramid',
@@ -63,73 +63,73 @@ const WORLD_CONFIG = {
   },
   'CloveH2O': {
     category: 'BOTANICAL WELLNESS & FUNCTIONAL HYDRATION',
-    index: '06 / 16',
+    index: '15 / 16',
     posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
     tags: ['Organic Clove Extract', 'Bioactive Eugenol', 'Antioxidant Powerhouse', 'Digestive Vitality']
   },
   'FantasyQuant': {
     category: 'QUANTITATIVE SPORTS INTELLIGENCE',
-    index: '07 / 16',
+    index: '06 / 16',
     posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Algorithmic Edge', 'Odds Arbitrage', 'Simulation Engine']
   },
   'Contango': {
     category: 'HIGH-FREQUENCY MARKET INTELLIGENCE',
-    index: '08 / 16',
+    index: '07 / 16',
     posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Order Book Micro', 'Volatility Trading', 'Macro Liquidity']
   },
   'Sentaient': {
     category: 'AUTONOMOUS AI VENTURE STUDIO & MULTI-INDUSTRY LAB',
-    index: '09 / 16',
-    posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
+    index: '16 / 16',
+    posStyle: { bottom: '20px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
     tags: ['Multi-Industry AI', 'FinTech & Quant', 'LegalTech Defense', 'BioTech & Wellness', 'Autonomous CTO']
   },
   'Elevate': {
     category: 'BIG-MOUNTAIN SNOWBOARD GAME & ALPINE HUB',
-    index: '10 / 16',
+    index: '08 / 16',
     posStyle: { top: '80px', right: '44px', bottom: 'auto', left: 'auto', transform: 'none' },
     tags: ['3D Snowboard Game', 'Live Mountain Weather', 'Avalanche Safety Radar', 'Gear Optimization']
   },
   'Sphinx': {
     category: 'GLOBAL THREAT & DISASTER DEFENSE',
-    index: '11 / 16',
+    index: '09 / 16',
     posStyle: { top: '48%', left: '44px', bottom: 'auto', right: 'auto', transform: 'translateY(-50%)' },
     tags: ['Disaster Radar', 'Geopolitical Intel', 'Perimeter Home Sec']
   },
   'Liquid': {
-    category: 'FINANCIAL INTELLIGENCE & TAX FORGE',
-    index: '12 / 16',
+    category: 'FINANCIAL INTELLIGENCE & ACCOUNTING',
+    index: '10 / 16',
     posStyle: { top: '48%', right: '44px', bottom: 'auto', left: 'auto', transform: 'translateY(-50%)' },
     tags: ['Automated Tax Audit', 'Live P&L Ledger', 'Smart Token Mint']
   },
   'Maya': {
     category: 'EMPATHETIC AI AVATAR & 24/7 CONCIERGE',
-    index: '13 / 16',
+    index: '11 / 16',
     posStyle: { top: '80px', left: '44px', bottom: 'auto', right: 'auto', transform: 'none' },
     tags: ['Conversational Sales', 'Active Habit Coach', 'Deep Learning Companion']
   },
   'Pyramid': {
     category: 'AUTONOMOUS PROFIT ENGINE',
-    index: '14 / 16',
+    index: '12 / 16',
     posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Market Arbitrage', 'Strategic Execution', 'Self-Operating Venture']
   },
   'PyRAmid': {
     category: 'AUTONOMOUS PROFIT ENGINE',
-    index: '14 / 16',
+    index: '12 / 16',
     posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Market Arbitrage', 'Strategic Execution', 'Self-Operating Venture']
   },
   'Matrix': {
     category: 'AUTONOMOUS AI SOFTWARE ENGINEERING LAB',
-    index: '15 / 16',
+    index: '13 / 16',
     posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
     tags: ['Production Code Gen', 'Full-Stack Architecture', 'Autonomous Debugging', 'Deep Tech Research']
   },
   'LightSpeed': {
-    category: 'AUTONOMOUS AI CTO & RUNTIME DEFENSE',
-    index: '16 / 16',
+    category: 'AUTONOMOUS AI CTO & CYBERSECURITY',
+    index: '14 / 16',
     posStyle: { top: '80px', right: '44px', bottom: 'auto', left: 'auto', transform: 'none' },
     tags: ['99.999% SLA Uptime', 'Self-Healing Cloud', 'Sub-10ms Global Edge']
   },
@@ -151,8 +151,8 @@ const HTMLStations = () => {
   const summaryRef = useRef();
   const descRef = useRef();
   const tagsRef = useRef();
-  const btnRef = useRef();
   const enterAppBtnRef = useRef();
+  const comingSoonRef = useRef();
   
   // Keep track of the currently active world to avoid redundant DOM updates
   const activeWorldRef = useRef(null);
@@ -215,24 +215,35 @@ const HTMLStations = () => {
                   tags: ['AI Autonomous', 'Real-Time Telemetry', 'Cloud Sync']
                 };
 
-                // Apply unique off-to-the-side position cleanly with property removal
-                if (conf.posStyle.top && conf.posStyle.top !== 'auto') {
-                  overlayRef.current.style.top = conf.posStyle.top;
-                  overlayRef.current.style.removeProperty('bottom');
-                } else {
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+                // On mobile phones, dock the dossier card cleanly at the bottom so the 3D world stays unobstructed
+                if (isMobile) {
                   overlayRef.current.style.removeProperty('top');
-                  overlayRef.current.style.bottom = conf.posStyle.bottom || '40px';
-                }
-
-                if (conf.posStyle.left && conf.posStyle.left !== 'auto') {
-                  overlayRef.current.style.left = conf.posStyle.left;
                   overlayRef.current.style.removeProperty('right');
+                  overlayRef.current.style.bottom = '12px';
+                  overlayRef.current.style.left = '50%';
+                  overlayRef.current.style.transform = 'translateX(-50%)';
                 } else {
-                  overlayRef.current.style.removeProperty('left');
-                  overlayRef.current.style.right = conf.posStyle.right || '44px';
-                }
+                  // Apply unique off-to-the-side position cleanly with property removal
+                  if (conf.posStyle.top && conf.posStyle.top !== 'auto') {
+                    overlayRef.current.style.top = conf.posStyle.top;
+                    overlayRef.current.style.removeProperty('bottom');
+                  } else {
+                    overlayRef.current.style.removeProperty('top');
+                    overlayRef.current.style.bottom = conf.posStyle.bottom || '40px';
+                  }
 
-                overlayRef.current.style.transform = conf.posStyle.transform || 'none';
+                  if (conf.posStyle.left && conf.posStyle.left !== 'auto') {
+                    overlayRef.current.style.left = conf.posStyle.left;
+                    overlayRef.current.style.removeProperty('right');
+                  } else {
+                    overlayRef.current.style.removeProperty('left');
+                    overlayRef.current.style.right = conf.posStyle.right || '44px';
+                  }
+
+                  overlayRef.current.style.transform = conf.posStyle.transform || 'none';
+                }
 
                 // Update Logo
                 if (logoImgRef.current) {
@@ -295,18 +306,16 @@ const HTMLStations = () => {
                   )).join('');
                 }
 
-                // Update Card Accent
+                // Update Card Accent & Per-World Dimensions
                 if (cardRef.current) {
                   cardRef.current.style.borderTop = `2px solid ${world.color || '#38bdf8'}`;
                   cardRef.current.style.boxShadow = `0 24px 60px rgba(0, 0, 0, 0.9), 0 0 35px ${world.color || '#38bdf8'}22`;
+                  cardRef.current.style.maxWidth = conf.cardStyle?.maxWidth || '360px';
+                  cardRef.current.style.width = conf.cardStyle?.width || 'calc(100vw - 64px)';
+                  cardRef.current.style.padding = conf.cardStyle?.padding || '18px 20px';
                 }
 
-                // Update Button
-                if (btnRef.current) {
-                  btnRef.current.style.backgroundColor = world.color || '#38bdf8';
-                }
-
-                // Update Enter App Button
+                // Update Enter App Button or Coming Soon Badge
                 if (enterAppBtnRef.current) {
                   const targetUrl = world.appUrl || WORLD_ROUTES[world.name];
                   if (targetUrl) {
@@ -315,8 +324,15 @@ const HTMLStations = () => {
                     enterAppBtnRef.current.style.display = 'inline-flex';
                     enterAppBtnRef.current.style.background = `linear-gradient(135deg, ${world.color || '#38bdf8'}ee, ${world.color || '#38bdf8'}99)`;
                     enterAppBtnRef.current.style.boxShadow = `0 4px 16px ${world.color || '#38bdf8'}44`;
+                    if (comingSoonRef.current) comingSoonRef.current.style.display = 'none';
                   } else {
                     enterAppBtnRef.current.style.display = 'none';
+                    if (comingSoonRef.current) {
+                      comingSoonRef.current.style.display = 'inline-flex';
+                      comingSoonRef.current.style.borderColor = `${world.color || '#38bdf8'}77`;
+                      comingSoonRef.current.style.background = `linear-gradient(135deg, ${world.color || '#38bdf8'}26, ${world.color || '#38bdf8'}10)`;
+                      comingSoonRef.current.style.boxShadow = `0 0 18px ${world.color || '#38bdf8'}26`;
+                    }
                   }
                 }
             }
@@ -350,7 +366,7 @@ const HTMLStations = () => {
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="demo3d-portal-root" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: 40 }}>
+    <div className="demo3d-portal-root" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', pointerEvents: 'none', zIndex: 40 }}>
       
       {/* Dynamic Unique Position Side Dossier Card */}
       <div 
@@ -367,9 +383,9 @@ const HTMLStations = () => {
           ref={cardRef}
           className="demo3d-side-dossier-card"
           style={{
-            maxWidth: '430px',
+            maxWidth: '360px',
             width: 'calc(100vw - 64px)',
-            padding: '22px 24px',
+            padding: '18px 20px',
             background: 'linear-gradient(145deg, rgba(8, 14, 28, 0.84) 0%, rgba(4, 7, 18, 0.95) 100%)',
             backdropFilter: 'blur(28px) saturate(190%)',
             WebkitBackdropFilter: 'blur(28px) saturate(190%)',
@@ -386,7 +402,7 @@ const HTMLStations = () => {
         >
           {/* Header Row: Logo, Category Badge, Index */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '10px', marginBottom: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', minWidth: 0 }}>
               <img 
                 ref={logoImgRef} 
                 src="" 
@@ -404,16 +420,16 @@ const HTMLStations = () => {
                 alignItems: 'center',
                 gap: '5px',
                 padding: '3px 9px',
-                borderRadius: '9999px',
+                borderRadius: '12px',
                 background: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 fontSize: '9.5px',
                 fontWeight: 800,
-                letterSpacing: '0.1em',
+                letterSpacing: '0.08em',
+                lineHeight: 1.3,
                 textTransform: 'uppercase',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
+                whiteSpace: 'normal',
+                minWidth: 0
               }}>
                 <span ref={statusDotRef} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', flexShrink: 0 }}></span>
                 <span ref={categoryRef} style={{ color: '#38bdf8' }}>Category</span>
@@ -479,6 +495,10 @@ const HTMLStations = () => {
               href="#"
               onClick={(e) => {
                 e.stopPropagation();
+                if (activeWorldRef.current) {
+                  const target = e.currentTarget.getAttribute('href') || WORLD_ROUTES[activeWorldRef.current] || '/';
+                  analytics.trackFeature(activeWorldRef.current, 'enter_experience_clicked', { target });
+                }
               }}
               style={{
                 width: '100%',
@@ -513,236 +533,281 @@ const HTMLStations = () => {
               <span style={{ fontSize: '12px' }}>➔</span>
             </a>
 
-            {/* Auto Tour Progression Bar: Continue Forward Button + Seconds Adjuster */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  tour.nextWorld();
-                }}
-                style={{
-                  flex: 1,
-                  padding: '7px 12px',
-                  borderRadius: '8px',
-                  border: tour.isActive ? '1px solid rgba(56, 189, 248, 0.7)' : '1px solid rgba(255, 255, 255, 0.2)',
-                  background: tour.isActive 
-                    ? 'linear-gradient(135deg, rgba(14, 165, 233, 0.35) 0%, rgba(16, 185, 129, 0.25) 100%)' 
-                    : 'rgba(255, 255, 255, 0.08)',
-                  color: '#ffffff',
-                  fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  boxShadow: tour.isActive ? '0 0 16px rgba(56, 189, 248, 0.3)' : 'none',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1.0)'}
-                title="Continue forward to the next world"
-              >
-                <span style={{ color: '#38bdf8', fontSize: '10px' }}>▶</span>
-                <span>
-                  {tour.isActive 
-                    ? (tour.isPaused ? 'RESUME TOUR →' : `CONTINUE FORWARD (${tour.remainingSeconds}s) →`)
-                    : 'CONTINUE FORWARD →'}
-                </span>
-              </button>
+            {/* Coming Soon Badge when world app is not yet live */}
+            <div
+              ref={comingSoonRef}
+              style={{
+                display: 'none',
+                width: '100%',
+                padding: '9px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(56, 189, 248, 0.45)',
+                background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.06))',
+                color: '#e0f2fe',
+                fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+                fontSize: '11px',
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxSizing: 'border-box',
+                pointerEvents: 'none'
+              }}
+            >
+              <span>COMING SOON</span>
+            </div>
 
-              {/* Seconds Adjuster Stepper: [-] Xs [+] */}
-              <div 
-                style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: '3px', 
-                  padding: '3px 6px',
-                  borderRadius: '8px',
-                  background: 'rgba(0, 0, 0, 0.55)',
-                  border: '1px solid rgba(255, 255, 255, 0.16)',
-                  fontFamily: "'Space Grotesk', monospace",
-                  fontSize: '10px',
-                  flexShrink: 0
-                }}
-                title="Adjust seconds spent in each world before moving forward"
-              >
+            {/* Auto Tour Progression Bar: Back Button + Continue Button + Seconds Adjuster */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', flex: '1 1 auto', gap: '6px', minWidth: 'fit-content' }}>
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    tour.adjustSeconds(-1);
-                  }}
-                  aria-label="Decrease seconds"
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '4px',
-                    border: 'none',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                    fontWeight: 900,
-                    fontSize: '12px',
-                    lineHeight: 1,
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.22)'; e.currentTarget.style.color = '#fff'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; e.currentTarget.style.color = '#94a3b8'; }}
-                >
-                  −
-                </button>
-
-                <span style={{ minWidth: '32px', textAlign: 'center', fontWeight: 800, color: '#38bdf8', padding: '0 2px' }}>
-                  {tour.seconds}s
-                </span>
-
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    tour.adjustSeconds(1);
-                  }}
-                  aria-label="Increase seconds"
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '4px',
-                    border: 'none',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                    fontWeight: 900,
-                    fontSize: '12px',
-                    lineHeight: 1,
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.22)'; e.currentTarget.style.color = '#fff'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; e.currentTarget.style.color = '#94a3b8'; }}
-                >
-                  +
-                </button>
-              </div>
-
-              {tour.isActive && (
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    tour.stopTour();
+                    tour.prevWorld();
                   }}
                   style={{
-                    padding: '7px 11px',
+                    flexShrink: 0,
+                    padding: '7px 10px',
                     borderRadius: '8px',
-                    border: '1px solid rgba(244, 63, 94, 0.45)',
-                    background: 'rgba(244, 63, 94, 0.12)',
-                    color: '#fda4af',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    color: '#ffffff',
                     fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-                    fontSize: '9.5px',
-                    fontWeight: 800,
-                    letterSpacing: '0.04em',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     gap: '4px',
-                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1.0)'}
+                  title="Go back to the previous world"
+                >
+                  <span>← BACK</span>
+                </button>
+
+                {tour.isActive && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      tour.togglePause();
+                    }}
+                    style={{
+                      flexShrink: 0,
+                      padding: '7px 12px',
+                      borderRadius: '8px',
+                      border: tour.isPaused
+                        ? '1px solid rgba(16, 185, 129, 0.9)'
+                        : '1px solid rgba(251, 191, 36, 0.9)',
+                      background: tour.isPaused
+                        ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(5, 150, 105, 0.25))'
+                        : 'linear-gradient(135deg, rgba(245, 158, 11, 0.38), rgba(217, 119, 6, 0.25))',
+                      color: tour.isPaused ? '#6ee7b7' : '#fde68a',
+                      boxShadow: tour.isPaused
+                        ? '0 0 16px rgba(16, 185, 129, 0.4)'
+                        : '0 0 16px rgba(245, 158, 11, 0.42)',
+                      fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+                      fontSize: '10px',
+                      fontWeight: 900,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.04)';
+                      e.currentTarget.style.filter = 'brightness(1.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.0)';
+                      e.currentTarget.style.filter = 'none';
+                    }}
+                    title={tour.isPaused ? 'Resume Auto Tour' : 'Pause Auto Tour'}
+                  >
+                    <span>{tour.isPaused ? '▶' : '⏸'}</span>
+                    <span>{tour.isPaused ? 'RESUME' : 'PAUSE'}</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    tour.nextWorld();
+                  }}
+                  style={{
+                    flex: '1 0 auto',
+                    padding: '7px 10px',
+                    borderRadius: '8px',
+                    border: tour.isActive ? '1px solid rgba(56, 189, 248, 0.7)' : '1px solid rgba(255, 255, 255, 0.2)',
+                    background: tour.isActive 
+                      ? 'linear-gradient(135deg, rgba(14, 165, 233, 0.35) 0%, rgba(16, 185, 129, 0.25) 100%)' 
+                      : 'rgba(255, 255, 255, 0.08)',
+                    color: '#ffffff',
+                    fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px',
+                    whiteSpace: 'nowrap',
+                    boxShadow: tour.isActive ? '0 0 16px rgba(56, 189, 248, 0.3)' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1.0)'}
+                  title="Advance to the next world"
+                >
+                  <span style={{ color: '#38bdf8', fontSize: '10px' }}>▶</span>
+                  <span>
+                    {tour.isActive && !tour.isPaused
+                      ? `NEXT (${tour.remainingSeconds}s) →`
+                      : 'NEXT →'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Seconds Adjuster Stepper + Scroll to Fly + Exit Tour aligned left */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
+                <div 
+                  style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '3px', 
+                    padding: '3px 6px',
+                    borderRadius: '8px',
+                    background: 'rgba(0, 0, 0, 0.55)',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    fontFamily: "'Space Grotesk', monospace",
+                    fontSize: '10px',
                     flexShrink: 0
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(244, 63, 94, 0.28)';
-                    e.currentTarget.style.color = '#fff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(244, 63, 94, 0.12)';
-                    e.currentTarget.style.color = '#fda4af';
-                  }}
-                  title="Exit Auto Tour and remain in this world"
+                  title="Adjust seconds spent in each world before moving forward"
                 >
-                  <span style={{ fontSize: '11px', lineHeight: 1 }}>✕</span>
-                  <span>EXIT TOUR</span>
-                </button>
-              )}
-            </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      tour.adjustSeconds(-1);
+                    }}
+                    aria-label="Decrease seconds"
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '4px',
+                      border: 'none',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      fontWeight: 900,
+                      fontSize: '12px',
+                      lineHeight: 1,
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.22)'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; e.currentTarget.style.color = '#94a3b8'; }}
+                  >
+                    −
+                  </button>
 
-            {/* Experience Link & Hub Exit */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
-              <button 
-                ref={btnRef}
-                onClick={() => {
-                  if (activeWorldRef.current) {
-                    const route = WORLD_ROUTES[activeWorldRef.current] || '/';
-                    analytics.trackFeature(activeWorldRef.current, 'enter_experience_clicked', { target: route });
-                    if (route.startsWith('http')) {
-                      window.open(route, '_blank');
-                    } else {
-                      window.location.href = route;
-                    }
-                  }
-                }}
-                style={{
-                  padding: '7px 18px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  color: '#020617',
-                  fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-                  fontSize: '10.5px',
-                  fontWeight: 800,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1.0)'}
-              >
-                <span>ENTER EXPERIENCE</span>
-                <span style={{ fontSize: '12px' }}>→</span>
-              </button>
-              <button
-                onClick={handleBack}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  color: '#e2e8f0',
-                  fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                }}
-              >
-                <span>← HUB</span>
-              </button>
-              <span style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.35)', fontWeight: 600, letterSpacing: '0.06em' }}>SCROLL TO FLY ↓</span>
+                  <span style={{ minWidth: '32px', textAlign: 'center', fontWeight: 800, color: '#38bdf8', padding: '0 2px' }}>
+                    {tour.seconds}s
+                  </span>
+
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      tour.adjustSeconds(1);
+                    }}
+                    aria-label="Increase seconds"
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '4px',
+                      border: 'none',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      fontWeight: 900,
+                      fontSize: '12px',
+                      lineHeight: 1,
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.22)'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; e.currentTarget.style.color = '#94a3b8'; }}
+                  >
+                    +
+                  </button>
+                </div>
+
+                <span style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>SCROLL TO FLY ↓</span>
+
+                {tour.isActive && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      tour.stopTour();
+                    }}
+                    style={{
+                      padding: '7px 11px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(244, 63, 94, 0.45)',
+                      background: 'rgba(244, 63, 94, 0.12)',
+                      color: '#fda4af',
+                      fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+                      fontSize: '9.5px',
+                      fontWeight: 800,
+                      letterSpacing: '0.04em',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s ease',
+                      flexShrink: 0
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(244, 63, 94, 0.28)';
+                      e.currentTarget.style.color = '#fff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(244, 63, 94, 0.12)';
+                      e.currentTarget.style.color = '#fda4af';
+                    }}
+                    title="Exit Auto Tour and remain in this world"
+                  >
+                    <span style={{ fontSize: '11px', lineHeight: 1 }}>✕</span>
+                    <span>EXIT TOUR</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -751,6 +816,7 @@ const HTMLStations = () => {
       {/* Home Hub Auto Tour Floating Launcher Bar */}
       <div 
         ref={hubTourRef}
+        className="demo3d-hub-tour-bar"
         style={{
           position: 'fixed',
           bottom: '16px',

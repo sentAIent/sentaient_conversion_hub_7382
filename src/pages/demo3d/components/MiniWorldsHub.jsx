@@ -34,7 +34,7 @@ const getHolographicGlowTexture = () => {
   return _sharedGlowTex;
 };
 
-const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, appUrl, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0, hoverGlowMultiplier, coreGlowColor, glowColor }) => {
+const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, scrollEl, logoUrl, logoScale = 1.578, summary, description, appUrl, hoveredWorld, onHoverStart, onHoverEnd, itemScale = 1.0, safeMaxCardX = 260, safeMaxCardY = 145, safeMinCardY = -185, glowMultiplier = 1.0, hoverGlowMultiplier, coreGlowColor, glowColor }) => {
   const meshRef = useRef();
   const glowGroupRef = useRef();
   const containerRef = useRef();
@@ -42,10 +42,12 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
   const isDimmed = hoveredWorld !== null && !isHovered;
   const hoverGlow = isHovered ? (hoverGlowMultiplier !== undefined ? hoverGlowMultiplier : ((name === 'Matrix' || name === 'Contango') ? 0.87 : 1.0)) : 1.0;
   
-  // Position card popup off to the side (outside the ring, never on top of the logos)
+  // Position card popup off to the side, clamped strictly inside the visible viewport so left/right edge logos never clip off-screen
   const isRightSide = position[0] >= 0;
   const sideSign = isRightSide ? 1 : -1;
-  const cardOffsetX = sideSign * (130 + 55 * itemScale + 25);
+  const rawCardX = position[0] + sideSign * (130 + 55 * itemScale + 25);
+  const targetCardX = Math.max(-safeMaxCardX, Math.min(safeMaxCardX, rawCardX));
+  const cardOffsetX = targetCardX - position[0];
   // Strictly clamp Y so cards at the top and bottom never render off-screen or behind the header
   const targetCardY = Math.max(safeMinCardY, Math.min(safeMaxCardY, position[1]));
   const cardOffsetY = targetCardY - position[1];
@@ -182,10 +184,10 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
         >
           {renderIcon()}
           
-          {/* Hit box for reliable clicking and hovering over complex groups */}
-          <mesh position={[0, -10, 0]} onClick={handleClick}>
-            <sphereGeometry args={[70, 16, 16]} />
-            <meshBasicMaterial colorWrite={false} depthWrite={false} />
+          {/* Tight non-overlapping flat hit disc so adjacent logos on the ring never steal hover/click */}
+          <mesh position={[0, 0, 1]} onClick={handleClick}>
+            <circleGeometry args={[36 * itemScale, 24]} />
+            <meshBasicMaterial colorWrite={false} depthWrite={false} side={THREE.DoubleSide} />
           </mesh>
         </group>
       </group>
@@ -280,7 +282,7 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
               }}>
                 {description}
               </div>
-              {appUrl && (
+              {appUrl ? (
                 <div style={{ marginTop: '8px', width: '100%', pointerEvents: 'auto' }}>
                   <a
                     href={appUrl}
@@ -318,6 +320,30 @@ const MiniWorld = ({ position, name, color, ringColor, startP, targetP, endP, sc
                     Enter App
                     <span style={{ fontSize: '12px', lineHeight: 1 }}>➔</span>
                   </a>
+                </div>
+              ) : (
+                <div style={{ marginTop: '8px', width: '100%', pointerEvents: 'none' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      background: `linear-gradient(135deg, ${color}33, ${color}18)`,
+                      color: '#e0f2fe',
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      border: `1px solid ${color}77`,
+                      boxShadow: `0 0 14px ${color}33`
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}` }} />
+                    Coming Soon
+                  </span>
                 </div>
               )}
           </div>
@@ -382,21 +408,21 @@ export const getPrimitiveLogo = (name, color, hovered) => {
 };
 
 export const WORLDS_DATA = [
-  { name: 'Sentaient', startP: 0.485, p: 0.505, endP: 0.525, color: '#60A9FF', ringColor: '#FF8800', logoUrl: '/sentaient_logo_final.png', logoScale: [1.692, 0.315], summary: 'Autonomous AI Venture Studio & Multi-Industry Revenue Engines', description: 'The foundational intelligence nexus engineering proprietary autonomous platforms across FinTech, LegalTech, Health & BioTech, Defense, and Enterprise Cloud.', appUrl: '/agent-studio' },
-  { name: 'CloveH2O', startP: 0.32, p: 0.36, endP: 0.37, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.584, 1.584], glowMultiplier: 1.265, summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.', appUrl: 'https://cloveh2o.com' },
+  { name: 'Sentaient', startP: 0.960, p: 0.979, endP: 0.992, color: '#60A9FF', ringColor: '#FF8800', logoUrl: '/sentaient_logo_final.png', logoScale: [1.692, 0.315], summary: 'Autonomous AI Venture Studio & Multi-Industry Revenue Engines', description: 'The foundational intelligence nexus engineering proprietary autonomous platforms across FinTech, LegalTech, Health & BioTech, Defense, and Enterprise Cloud.', appUrl: '/agent-studio' },
+  { name: 'CloveH2O', startP: 0.925, p: 0.939, endP: 0.955, color: '#00D2FF', ringColor: '#FF4081', logoUrl: '/cloveh2o_logo.png', logoScale: [1.584, 1.584], glowMultiplier: 1.265, summary: 'Antioxidant-Rich Clove-Infused Functional Beverage', description: 'Experience the restorative power of pure botanical hydration. Naturally infused with whole organic cloves and bioactive eugenol to supercharge digestive vitality, reduce inflammation, and enhance cellular recovery.', appUrl: 'https://cloveh2o.com' },
   { name: 'MindWave', startP: 0.02, p: 0.038, endP: 0.06, color: '#38BDF8', ringColor: '#FF2A6D', logoUrl: '/mindwave-ring-logo.png', logoScale: [1.555, 1.555], coreGlowColor: '#38BDF8', glowMultiplier: 1.265, summary: 'Brainwave Entrainment & Sound Healing Studio', description: 'Harmonize mental states with scientifically engineered binaural frequencies, theta soundscapes, and immersive sensory visualizations.', appUrl: '/mindwave.html' },
   { name: 'Icebreaker', startP: 0.10, p: 0.135, endP: 0.16, color: '#00F0FF', glowColor: '#FF6600', coreGlowColor: '#FFAA33', glowMultiplier: 1.265, ringColor: '#FF6600', logoUrl: '/icebreaker_logo.png', logoScale: [1.0, 1.0], summary: 'Real Content. Real Human Connections.', description: 'Thaw the social ice. Transform superficial online interactions into vibrant, authentic real-world connections and spontaneous events.', appUrl: '/icebreaker' },
   { name: 'Interstellar', startP: 0.16, p: 0.21, endP: 0.22, color: '#FF3F00', glowColor: '#00D2FF', coreGlowColor: '#38BDF8', glowMultiplier: 1.10, ringColor: '#00FFFF', logoUrl: '/interstellar_logo_final.png', logoScale: [1.287, 1.287], summary: 'Galactic Strategy & Space Conquest', description: 'Command deep-space starfleets, conquer uncharted solar systems, extract stellar resources, and build an invincible galactic empire.', appUrl: '/interstellar-game/' },
-  { name: 'Elevate', startP: 0.520, p: 0.550, endP: 0.570, color: '#38BDF8', ringColor: '#FF8000', logoUrl: '/elevate_logo_final.png', logoScale: [1.365, 0.81], glowMultiplier: 1.265, summary: '3D Freeride Snowboard Action with Live Mountain Weather, Snow Conditions & Gear Intelligence', description: 'Drop into high-stakes mountain freeriding with thrilling 3D snowboarding action, paired with a complete mountain companion that delivers real-time weather, live snowpack conditions, avalanche safety radar, and personalized gear optimization.' },
+  { name: 'Elevate', startP: 0.500, p: 0.518, endP: 0.538, color: '#38BDF8', ringColor: '#FF8000', logoUrl: '/elevate_logo_final.png', logoScale: [1.365, 0.81], glowMultiplier: 1.265, summary: '3D Freeride Snowboard Action with Live Mountain Weather, Snow Conditions & Gear Intelligence', description: 'Drop into high-stakes mountain freeriding with thrilling 3D snowboarding action, paired with a complete mountain companion that delivers real-time weather, live snowpack conditions, avalanche safety radar, and personalized gear optimization.' },
   { name: 'FantasyQuant', startP: 0.37, p: 0.42, endP: 0.43, color: '#00E676', ringColor: '#FFD700', logoUrl: '/fantasyquant_wizard_bright.png', logoScale: [0.825, 1.10], summary: 'Sports Betting Intelligence & Quantitative Edge', description: 'Gain a mathematical advantage with algorithmic sports modeling, real-time odds discrepancies, and predictive simulation engines.', appUrl: '/fantasyquant' },
-  { name: 'Sphinx', startP: 0.580, p: 0.60, endP: 0.62, color: '#F59E0B', ringColor: '#00D2FF', logoUrl: '/sphinx_logo_final.png', logoScale: [1.142, 0.9], glowMultiplier: 1.265, summary: 'Global Threat Intelligence & Unified Security', description: 'Protect assets worldwide with real-time natural disaster tracking, geopolitical threat monitoring, and centralized perimeter security.', appUrl: '/sphinx/' },
-  { name: 'Maya', startP: 0.705, p: 0.725, endP: 0.745, color: '#818CF8', ringColor: '#FB7185', logoUrl: '/maya_logo_final.png', logoScale: [1.222, 1.0], glowMultiplier: 1.265, summary: 'Empathetic AI Avatar & 24/7 Enterprise Representative', description: 'Engage customers around the clock with life-like conversational AI avatars for autonomous sales, compassionate support, and personal growth.', appUrl: '/maya/index.html' },
+  { name: 'Sphinx', startP: 0.565, p: 0.582, endP: 0.600, color: '#F59E0B', ringColor: '#00D2FF', logoUrl: '/sphinx_logo_final.png', logoScale: [1.142, 0.9], glowMultiplier: 1.265, summary: 'Global Threat Intelligence & Unified Security', description: 'Protect assets worldwide with real-time natural disaster tracking, geopolitical threat monitoring, and centralized perimeter security.', appUrl: '/sphinx/' },
+  { name: 'Maya', startP: 0.695, p: 0.712, endP: 0.730, color: '#818CF8', ringColor: '#FB7185', logoUrl: '/maya_logo_final.png', logoScale: [1.222, 1.0], glowMultiplier: 1.265, summary: 'Empathetic AI Avatar & 24/7 Enterprise Representative', description: 'Engage customers around the clock with life-like conversational AI avatars for autonomous sales, compassionate support, and personal growth.', appUrl: '/maya/index.html' },
   { name: 'Legal Eagle', startP: 0.23, p: 0.255, endP: 0.265, color: '#A855F7', ringColor: '#FBBF24', logoUrl: '/legal_eagle_logo.png', logoScale: [1.032, 1.0], glowMultiplier: 1.668, summary: 'Autonomous AI Legal Intelligence & Contract Defense', description: 'Audit contracts in seconds with eagle-eyed AI precision. Detect hidden liabilities, mitigate legal risks, and auto-draft favorable clauses.', appUrl: '/legaleagle/' },
-  { name: 'LightSpeed', startP: 0.910, p: 0.93, endP: 0.99, color: '#00A3FF', ringColor: '#FFC800', logoUrl: '/lightspeed_logo_gold.png', logoScale: [0.829, 1.0], glowMultiplier: 1.39, summary: 'Autonomous AI CTO & Enterprise Cyber-Defense', description: 'Deploy a self-healing cloud infrastructure protected by zero-trust cyber defense, sub-10ms global edge routing, and 99.999% SLA uptime.', appUrl: '/lightspeed/' },
-  { name: 'Liquid', startP: 0.645, p: 0.665, endP: 0.685, color: '#00FF88', glowColor: '#00FF88', coreGlowColor: '#55FFAA', ringColor: '#A855F7', logoUrl: '/liquid_logo_gold.png', logoScale: [1.25, 1.25], glowMultiplier: 0.765, summary: 'Autonomous Accounting, Tax Intelligence & Token Forge', description: 'Distill enterprise financial complexity into instant clarity with automated tax liability calculation, live P&L auditing, and smart token minting.' },
+  { name: 'LightSpeed', startP: 0.875, p: 0.893, endP: 0.910, color: '#00A3FF', ringColor: '#FFC800', logoUrl: '/lightspeed_logo_gold.png', logoScale: [0.829, 1.0], glowMultiplier: 1.39, summary: 'Autonomous AI CTO & Enterprise Cyber-Defense', description: 'Deploy a self-healing cloud infrastructure protected by zero-trust cyber defense, sub-10ms global edge routing, and 99.999% SLA uptime.', appUrl: '/lightspeed/' },
+  { name: 'Liquid', startP: 0.630, p: 0.648, endP: 0.665, color: '#00FF88', glowColor: '#00FF88', coreGlowColor: '#55FFAA', ringColor: '#A855F7', logoUrl: '/liquid_logo_gold.png', logoScale: [1.25, 1.25], glowMultiplier: 0.765, summary: 'Autonomous Accounting, Tax Intelligence & Token Forge', description: 'Distill enterprise financial complexity into instant clarity with automated tax liability calculation, live P&L auditing, and smart token minting.', appUrl: '/liquid' },
   { name: 'Contango', startP: 0.44, p: 0.47, endP: 0.475, color: '#22C55E', glowColor: '#FFD700', coreGlowColor: '#FFE066', ringColor: '#FF7A00', logoUrl: '/assets/images/contango_quant_logo_new.png', logoScale: [1.0, 0.526], hoverGlowMultiplier: 0.87, summary: 'Algorithmic Trading & High-Frequency Market Intelligence', description: 'Master market volatility with automated quant strategies, order book microstructure analytics, and macro liquidity tracking.', appUrl: '/contango/' },
-  { name: 'Pyramid', startP: 0.770, p: 0.79, endP: 0.82, color: '#00E5FF', ringColor: '#C084FC', logoUrl: '/pyramid_logo_final.png', logoScale: [1.1, 1.1], summary: 'Autonomous Profit Engine & Strategic Execution', description: 'Harness an AI executive that scans markets for high-margin opportunities, designs end-to-end strategic playbooks, and executes autonomously.', appUrl: '/pyramid' },
-  { name: 'Matrix', startP: 0.840, p: 0.865, endP: 0.900, color: '#00FF44', ringColor: '#D946EF', logoUrl: '/matrix_logo_bright.png', logoScale: [1.522, 0.363], glowMultiplier: 0.90, hoverGlowMultiplier: 0.87, summary: 'Autonomous Production Code Generation, Full-Stack Architecture & Deep Technical Research', description: 'Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors complex codebases, and conducts deep end-to-end debugging—leveraging technical research capabilities to parse complex documentation and frontier frameworks.', appUrl: '/matrix' },
+  { name: 'Pyramid', startP: 0.760, p: 0.778, endP: 0.795, color: '#00E5FF', ringColor: '#C084FC', logoUrl: '/pyramid_logo_final.png', logoScale: [1.1, 1.1], summary: 'Autonomous Profit Engine & Strategic Execution', description: 'Harness an AI executive that scans markets for high-margin opportunities, designs end-to-end strategic playbooks, and executes autonomously.', appUrl: '/pyramid' },
+  { name: 'Matrix', startP: 0.825, p: 0.842, endP: 0.860, color: '#00FF44', ringColor: '#D946EF', logoUrl: '/matrix_logo_bright.png', logoScale: [1.522, 0.363], glowMultiplier: 0.90, hoverGlowMultiplier: 0.87, summary: 'Autonomous Production Code Generation, Full-Stack Architecture & Deep Technical Research', description: 'Accelerate technical velocity with an autonomous AI developer collective that writes verified production code, refactors complex codebases, and conducts deep end-to-end debugging—leveraging technical research capabilities to parse complex documentation and frontier frameworks.', appUrl: '/matrix' },
   { name: 'Autopilot', startP: 0.275, p: 0.30, endP: 0.31, color: '#10B981', ringColor: '#FF3366', logoUrl: '/autopilot_logo.png', logoScale: [1.4, 0.766], glowMultiplier: 1.265, summary: 'Enterprise Social Media Marketing Automation', description: 'Automate multi-channel brand growth with AI-driven content generation, scheduled omnichannel publishing, and predictive audience engagement.', appUrl: '/autopilot' }
 ];
 
@@ -442,8 +468,11 @@ export default function MiniWorldsHub({ visible = true }) {
   // Center ring vertically in safe zone between header and bottom launcher
   const hubCenterY = (safePadBottom - safePadTop) / 2;
 
-  // Safe vertical bounds in 3D units so popup card is dynamically clamped and never cut off by header or bottom edge
+  // Safe horizontal & vertical bounds in 3D units so popup cards never clip off left/right/top/bottom edges
+  const screenW = size.width || 1280;
   const screenH = size.height || 900;
+  const safeSidePx = Math.min(screenW * 0.36, 165);
+  const safeMaxCardX = Math.max(40, visibleW * (0.5 - safeSidePx / screenW));
   const safeTopPx = 80 + 15 + 140; // header (80px) + gap (15px) + card half-height (140px)
   const safeBottomPx = 65 + 15 + 140; // bottom launcher (65px) + gap (15px) + card half-height (140px)
   const safeMaxCardY = visibleH * (0.5 - safeTopPx / screenH);
@@ -490,10 +519,15 @@ export default function MiniWorldsHub({ visible = true }) {
         appPositions={appPositions}
         hoveredWorld={hoveredWorld}
         onClick={() => {
+          let targetIdx = window.STATIONS ? window.STATIONS.findIndex(s => s.id === 'sentaient' || s.name.toLowerCase() === 'sentaient') : -1;
+          if (targetIdx === -1 && window.STATIONS) {
+            targetIdx = window.STATIONS.findIndex(s => Math.abs(s.p - 0.979) < 0.03);
+          }
+          if (targetIdx === -1) targetIdx = 16;
           if (window.directTeleportTo) {
-            window.directTeleportTo(1);
+            window.directTeleportTo(targetIdx);
           } else if (window._goToStation) {
-            window._goToStation(1, 1350);
+            window._goToStation(targetIdx, 1350);
           }
         }}
       />
@@ -601,6 +635,7 @@ export default function MiniWorldsHub({ visible = true }) {
             scrollEl={scroll.el}
             hoveredWorld={hoveredWorld}
             itemScale={itemScale}
+            safeMaxCardX={safeMaxCardX}
             safeMaxCardY={safeMaxCardY}
             safeMinCardY={safeMinCardY}
             glowMultiplier={w.glowMultiplier !== undefined ? w.glowMultiplier : 1.0}

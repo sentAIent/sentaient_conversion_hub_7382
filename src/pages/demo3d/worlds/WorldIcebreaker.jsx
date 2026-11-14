@@ -237,9 +237,8 @@ const meltFragmentShader = `
     float dripShimmer = sin(uv.y * 60.0 - uTime * 6.0) * 0.5 + 0.5;
     finalColor += vec3(0.3, 0.7, 1.0) * (dripShimmer * uThaw * 0.6);
     
-    // Dissolve & evaporate:
-    // As uThaw progresses, the cavern walls dissolve completely to reveal the tropical beach
-    float dissolve = 1.0 - smoothstep(0.15, 0.92, uThaw);
+    // Dissolve & evaporate after visible melting & dripping:
+    float dissolve = 1.0 - smoothstep(0.45, 0.98, uThaw);
     
     if (dissolve < 0.01) {
       discard;
@@ -479,7 +478,7 @@ export const lockIcebreakerInput = () => {
     blocker.style.top = '0';
     blocker.style.left = '0';
     blocker.style.width = '100vw';
-    blocker.style.height = '100vh';
+    blocker.style.height = '100dvh';
     blocker.style.zIndex = '999999';
     blocker.style.pointerEvents = 'all';
     blocker.style.cursor = 'wait';
@@ -552,7 +551,7 @@ export const runIcebreakerMelt = (onComplete) => {
   // Phase 2b: Brief delay (< 0.4s) from melt completion before moving above island
   // Phase 3: Automatic smooth camera zoom-in toward the dancing people on the island (2.2s)
   const PAUSE_MS = 1400;
-  const MELT_MS = 2000;
+  const MELT_MS = 2800;
   const DELAY_AFTER_MELT_MS = 400;
   const ZOOM_MS = 2200;
   const start = performance.now();
@@ -684,6 +683,11 @@ const IcebreakerController = () => {
       ? window._warpProgress 
       : scroll.offset;
 
+    // Guarantee input lock never lingers if user jumps or scrolls away from Icebreaker
+    if (isInputLocked && (window._isTransitActive || p < 0.110 || p > 0.155)) {
+      unlockIcebreakerInput();
+    }
+
     // Reset only if user scrolls all the way back before plunge tunnel entry (p < 0.070)
     if (!window.icebreakerThawLocked && !window._icebreakerLockCamera && window._icebreakerMeltState !== 'running') {
       if (p < 0.070) {
@@ -738,15 +742,15 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <IcebreakerOcean position={[0, -20, centerZ]} />
       <IslandFloor position={[0, -20, centerZ]} />
       
-      {/* Text Details - Elevated High Above Island Campfire */}
+      {/* Text Details - Elevated Above Island Campfire, clear of top HUD bar */}
       <Text 
         font="/fonts/Roboto.woff" 
         fallbackFonts={[]} 
-        position={[0, 118, centerZ - 40]} 
+        position={[0, 132, centerZ - 40]} 
         rotation={[-0.45, 0, 0]}
-        fontSize={52} 
+        fontSize={56} 
         color="#ffffff" 
-        outlineWidth={1.5} 
+        outlineWidth={1.8} 
         outlineColor="#0077cc" 
         anchorX="center"
         anchorY="middle"
@@ -756,11 +760,11 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <Text 
         font="/fonts/Roboto.woff" 
         fallbackFonts={[]} 
-        position={[0, 84, centerZ - 40]} 
+        position={[0, 80, centerZ - 40]} 
         rotation={[-0.45, 0, 0]}
-        fontSize={28} 
+        fontSize={44} 
         color="#00ffff" 
-        outlineWidth={1.2} 
+        outlineWidth={1.8} 
         outlineColor="#003366" 
         anchorX="center"
         anchorY="middle"

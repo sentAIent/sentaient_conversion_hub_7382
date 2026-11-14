@@ -24,14 +24,14 @@ export default function WorldSentaient({ position, rotation, visible }) {
 
   // The 8 Major Global Industry Sectors engineered by sentAIent
   const industrySectors = useMemo(() => [
-    { title: 'FINTECH & QUANT MARKETS', category: 'High-Frequency Order Books & Liquidity', x: -380, z: -430, color: '#22c55e' },
-    { title: 'AUTONOMOUS LEGAL COUNSEL', category: 'Contract Auditing & Liability Defense', x: 380, z: -430, color: '#a855f7' },
-    { title: 'BIOTECH & WELLNESS', category: 'Functional Bioactives & Neural Entrainment', x: -460, z: -620, color: '#00d2ff' },
-    { title: 'DEFENSE & THREAT INTEL', category: 'Global Disaster Radar & Perimeter AI', x: 460, z: -620, color: '#f59e0b' },
-    { title: 'ENTERPRISE OPS & STRATEGY', category: 'Autonomous Business Ops & Playbooks', x: -280, z: -760, color: '#00e5ff' },
-    { title: 'AI SOFTWARE ENGINEERING', category: 'Autonomous Code Generation & Architecture', x: 280, z: -760, color: '#38bdf8' },
-    { title: 'OMNICHANNEL MARKETING', category: 'Predictive Audience Growth & Virality', x: -140, z: -860, color: '#10b981' },
-    { title: 'CLOUD & RUNTIME DEFENSE', category: 'Autonomous CTO & Self-Healing Edge', x: 140, z: -860, color: '#60a9ff' },
+    { title: 'FINTECH & QUANT MARKETS', category: 'High-Frequency Order Books & Liquidity', color: '#22c55e' },
+    { title: 'AUTONOMOUS LEGAL COUNSEL', category: 'Contract Auditing & Liability Defense', color: '#a855f7' },
+    { title: 'BIOTECH & WELLNESS', category: 'Functional Bioactives & Neural Entrainment', color: '#00d2ff' },
+    { title: 'DEFENSE & THREAT INTEL', category: 'Global Disaster Radar & Perimeter AI', color: '#f59e0b' },
+    { title: 'ENTERPRISE OPS & STRATEGY', category: 'Autonomous Business Ops & Playbooks', color: '#00e5ff' },
+    { title: 'AI SOFTWARE ENGINEERING', category: 'Autonomous Code Generation & Architecture', color: '#38bdf8' },
+    { title: 'OMNICHANNEL MARKETING', category: 'Predictive Audience Growth & Virality', color: '#10b981' },
+    { title: 'CLOUD & RUNTIME DEFENSE', category: 'Autonomous CTO & Self-Healing Edge', color: '#60a9ff' },
   ], []);
 
   // 12 Poloidal Tokamak Magnetic Flux Rings
@@ -83,10 +83,19 @@ export default function WorldSentaient({ position, rotation, visible }) {
       sweepBeamRef.current.rotation.z = -t * 0.75;
     }
 
-    // 6. Industry Sector Beacons subtle levitation
+    // 6. Dynamic Celestial Orbital Motion of Market Satellites around Central Donut (0, 10, -550)
+    const orbitRadiusX = 420;
+    const orbitRadiusZ = 300;
     if (industryGroupRef.current) {
       industryGroupRef.current.children.forEach((pod, idx) => {
-        pod.position.y = -130 + Math.sin(t * 2.0 + idx * 0.9) * 6;
+        const baseAngle = (idx / industrySectors.length) * Math.PI * 2;
+        const currentAngle = baseAngle + t * 0.16; // Stately celestial orbital velocity
+
+        const ox = Math.cos(currentAngle) * orbitRadiusX;
+        const oz = -550 + Math.sin(currentAngle) * orbitRadiusZ;
+        const oy = 10 + Math.sin(currentAngle) * 50 + Math.sin(t * 2.2 + idx) * 4;
+
+        pod.position.set(ox, oy, oz);
       });
     }
   });
@@ -94,9 +103,9 @@ export default function WorldSentaient({ position, rotation, visible }) {
   const scroll = useScroll();
   const curP = (window._isTransitActive && window._warpProgress !== undefined)
     ? window._warpProgress 
-    : (window._currentProgress !== undefined ? window._currentProgress : (scroll ? scroll.offset : 0.505));
+    : (window._currentProgress !== undefined ? window._currentProgress : (scroll ? scroll.offset : 0.966));
 
-  if (!visible || curP < 0.480 || curP > 0.528) return null;
+  if (!visible || curP < 0.935 || curP > 0.998) return null;
 
   return (
     <group position={position} rotation={rotation}>
@@ -257,71 +266,91 @@ export default function WorldSentaient({ position, rotation, visible }) {
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 3. MULTI-INDUSTRY SECTOR BEACONS & ENERGY ARCS                */}
+      {/* 3. MULTI-INDUSTRY SECTOR MARKET ORBS & CELESTIAL ORBITS       */}
       {/* ------------------------------------------------------------- */}
+      {/* Luminous Celestial Orbital Plane Path circling the central donut */}
+      <group position={[0, 10, -550]} rotation={[0.16, 0, 0]}>
+        <mesh>
+          <torusGeometry args={[365, 1.4, 16, 128]} />
+          <meshBasicMaterial color="#60a9ff" transparent opacity={0.32} blending={THREE.AdditiveBlending} />
+        </mesh>
+        <mesh>
+          <torusGeometry args={[369, 0.6, 16, 128]} />
+          <meshBasicMaterial color="#fbbf24" transparent opacity={0.25} blending={THREE.AdditiveBlending} />
+        </mesh>
+      </group>
+
       <group ref={industryGroupRef}>
         {industrySectors.map((sector, idx) => (
-          <group key={idx} position={[sector.x, -130, sector.z]}>
-            {/* Luminous Industry Beacon Core */}
-            <mesh position={[0, 30, 0]}>
-              <sphereGeometry args={[15, 24, 24]} />
+          <group key={idx} position={[0, 10, -550]}>
+            {/* Luminous Market Satellite / Planet Core */}
+            <mesh position={[0, 0, 0]}>
+              <sphereGeometry args={[20, 32, 32]} />
               <meshStandardMaterial color="#ffffff" emissive={sector.color} emissiveIntensity={3.8} />
             </mesh>
-            <pointLight position={[0, 30, 0]} color={sector.color} intensity={12} distance={260} />
+            <pointLight position={[0, 0, 0]} color={sector.color} intensity={18} distance={380} />
 
-            {/* Pulsing Beacon Halo Rings */}
-            <mesh position={[0, 30, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[20, 24, 32]} />
-              <meshBasicMaterial color={sector.color} transparent opacity={0.7} side={THREE.DoubleSide} />
+            {/* Pulsing Planetary / Satellite Gyroscopic Halo Rings */}
+            <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[26, 32, 48]} />
+              <meshBasicMaterial color={sector.color} transparent opacity={0.75} side={THREE.DoubleSide} />
             </mesh>
-            <mesh position={[0, 30, 0]} rotation={[Math.PI / 3, 0.3, 0]}>
-              <torusGeometry args={[28, 1.4, 12, 32]} />
-              <meshStandardMaterial color="#ffffff" emissive={sector.color} emissiveIntensity={2.6} />
-            </mesh>
-
-            {/* Vertical Light Column connecting to Floor */}
-            <mesh position={[0, -20, 0]}>
-              <cylinderGeometry args={[2.5, 4.5, 100, 16]} />
-              <meshBasicMaterial color={sector.color} transparent opacity={0.45} blending={THREE.AdditiveBlending} />
+            <mesh position={[0, 0, 0]} rotation={[Math.PI / 3, 0.4, 0]}>
+              <torusGeometry args={[36, 1.8, 16, 48]} />
+              <meshStandardMaterial color="#ffffff" emissive={sector.color} emissiveIntensity={2.8} />
             </mesh>
 
-            {/* Connecting Energy Arc bridging back to Central Toroidal Core */}
-            <line>
-              <bufferGeometry attach="geometry">
-                <bufferAttribute
-                  attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([0, 30, 0, -sector.x, 180, -550 - sector.z])}
-                  itemSize={3}
+            {/* High-Contrast Frosted HUD Card & Large Legible Text */}
+            <group position={[0, 52, 0]}>
+              {/* Dark High-Contrast Backing Glass */}
+              <mesh position={[0, 0, -2]}>
+                <planeGeometry args={[290, 72]} />
+                <meshStandardMaterial
+                  color="#020713"
+                  transparent
+                  opacity={0.88}
+                  roughness={0.2}
+                  metalness={0.85}
                 />
-              </bufferGeometry>
-              <lineBasicMaterial attach="material" color={sector.color} linewidth={2} transparent opacity={0.42} />
-            </line>
+              </mesh>
+              {/* Neon Accent Border */}
+              <mesh position={[0, 0, -1]}>
+                <planeGeometry args={[294, 76]} />
+                <meshBasicMaterial
+                  color={sector.color}
+                  wireframe
+                  transparent
+                  opacity={0.55}
+                />
+              </mesh>
 
-            {/* Sector Card Callout */}
-            <group position={[0, 75, 0]}>
+              {/* Bold Large Market Title */}
               <Text
                 font="/fonts/Roboto.woff"
                 fallbackFonts={[]}
-                position={[0, 14, 0]}
-                fontSize={13}
+                position={[0, 13, 1]}
+                fontSize={21}
                 color="#ffffff"
                 anchorX="center"
                 anchorY="middle"
-                outlineWidth={1.5}
+                fontWeight="bold"
+                outlineWidth={2.0}
                 outlineColor="#020617"
               >
                 {sector.title}
               </Text>
+
+              {/* Large Market Category Description */}
               <Text
                 font="/fonts/Roboto.woff"
                 fallbackFonts={[]}
-                position={[0, -3, 0]}
-                fontSize={10}
+                position={[0, -14, 1]}
+                fontSize={15}
                 color={sector.color}
                 anchorX="center"
                 anchorY="middle"
-                outlineWidth={1.2}
+                fontWeight="bold"
+                outlineWidth={1.4}
                 outlineColor="#020617"
               >
                 {sector.category}
@@ -337,7 +366,7 @@ export default function WorldSentaient({ position, rotation, visible }) {
       <group position={[0, 280, -420]}>
         {/* Floating High-Res sentAIent Logo */}
         <Float speed={2} rotationIntensity={0.05} floatIntensity={0.35}>
-          <mesh position={[0, 24, 0]}>
+          <mesh position={[0, 52, 0]}>
             <planeGeometry args={[260, 65]} />
             <meshBasicMaterial map={logoTex} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
           </mesh>
@@ -345,18 +374,21 @@ export default function WorldSentaient({ position, rotation, visible }) {
 
         {/* Multi-Industry Subtitle */}
         <Text 
-          position={[0, -28, 0]} 
-          fontSize={24} 
-          color="#60a9ff" 
-          outlineWidth={1.2}
+          position={[0, -64, 0]} 
+          fontSize={44} 
+          lineHeight={1.2}
+          maxWidth={1100}
+          textAlign="center"
+          color="#ff8800" 
+          outlineWidth={1.8}
           outlineColor="#030816"
           anchorX="center" 
           anchorY="middle"
-          letterSpacing={0.14}
+          letterSpacing={0.08}
           font="/fonts/Roboto.woff" 
           fallbackFonts={[]}
         >
-          AUTONOMOUS AI PLATFORMS ACROSS DIVERSE GLOBAL INDUSTRIES
+          {'AUTONOMOUS AI PLATFORMS\nACROSS GLOBAL INDUSTRIES'}
         </Text>
       </group>
     </group>

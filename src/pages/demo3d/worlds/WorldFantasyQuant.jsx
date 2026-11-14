@@ -1231,28 +1231,28 @@ const Scoreboard = () => {
       <gridHelper args={[800, 80, isCelebration ? '#ffaa00' : '#00ff00', '#004400']} position={[0, 0, 11]} rotation={[Math.PI / 2, 0, 0]} />
 
       {/* Text on Main Screen */}
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 80, 15]} fontSize={isCelebration ? 64 : 70} color={isCelebration ? '#ffd700' : '#ffffff'} outlineWidth={0.02} outlineColor={isCelebration ? '#ff8800' : '#00ff00'} anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 88, 15]} fontSize={isCelebration ? 46 : 58} maxWidth={730} textAlign="center" color={isCelebration ? '#ffd700' : '#ffffff'} outlineWidth={0.02} outlineColor={isCelebration ? '#ff8800' : '#00ff00'} anchorX="center" anchorY="middle">
         {isCelebration ? '*** TOUCHDOWN 49ERS! ***' : 'FANTASY QUANT'}
       </Text>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 0, 15]} fontSize={35} color={isCelebration ? '#38bdf8' : '#00ffff'} outlineWidth={0.01} outlineColor="#0088ff" anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 22, 15]} fontSize={26} maxWidth={730} textAlign="center" color={isCelebration ? '#38bdf8' : '#00ffff'} outlineWidth={0.01} outlineColor="#0088ff" anchorX="center" anchorY="middle">
         {isCelebration ? 'MONTANA TO RICE: 42-YD TD PASS!' : 'PREDICTING: PLAY ACTION DEEP POST -> TOUCHDOWN'}
       </Text>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -60, 15]} fontSize={26} color="#ffffff" maxWidth={850} textAlign="center" lineHeight={1.5} anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -58, 15]} fontSize={21} color="#ffffff" maxWidth={710} textAlign="center" lineHeight={1.35} anchorX="center" anchorY="middle">
         {isCelebration ? '"TOUCHDOWN SAN FRANCISCO!! Rice splits the Cover 2 safeties in the endzone! Unbelievable execution!"' : '"Play action fake to Craig sucks in the linebackers, Montana bombs the deep post to Rice splitting the Cover 2 safeties... TOUCHDOWN!!"'}
       </Text>
 
       {/* Stats on Side Screens */}
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[-580, 40, 165]} rotation={[0, Math.PI / 6, 0]} fontSize={32} color={isCelebration ? '#ffd700' : '#00ff00'} anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[-580, 40, 165]} rotation={[0, Math.PI / 6, 0]} fontSize={28} maxWidth={340} textAlign="center" color={isCelebration ? '#ffd700' : '#00ff00'} anchorX="center" anchorY="middle">
         {isCelebration ? 'WIN PROB: 99.8%' : 'WIN PROB: 94%'}
       </Text>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[-580, -40, 165]} rotation={[0, Math.PI / 6, 0]} fontSize={32} color="#00ff00" anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[-580, -40, 165]} rotation={[0, Math.PI / 6, 0]} fontSize={28} maxWidth={340} textAlign="center" color="#00ff00" anchorX="center" anchorY="middle">
         {isCelebration ? 'POINTS: +6.0 PTS' : 'EXPECTED PTS: +6.0'}
       </Text>
       
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[580, 40, 165]} rotation={[0, -Math.PI / 6, 0]} fontSize={28} color={isCelebration ? '#38bdf8' : '#00ff00'} anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[580, 40, 165]} rotation={[0, -Math.PI / 6, 0]} fontSize={26} maxWidth={340} textAlign="center" color={isCelebration ? '#38bdf8' : '#00ff00'} anchorX="center" anchorY="middle">
         {isCelebration ? 'RESULT: TD SCORED' : 'DEF COVERAGE: COVER 2'}
       </Text>
-      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[580, -40, 165]} rotation={[0, -Math.PI / 6, 0]} fontSize={28} color="#00ff00" anchorX="center" anchorY="middle">
+      <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[580, -40, 165]} rotation={[0, -Math.PI / 6, 0]} fontSize={26} maxWidth={340} textAlign="center" color="#00ff00" anchorX="center" anchorY="middle">
         {isCelebration ? 'COVER 2 BEATEN' : 'MISMATCH DETECTED'}
       </Text>
     </group>

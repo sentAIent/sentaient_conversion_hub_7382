@@ -92,8 +92,8 @@ const WormholeAutopilot = ({
 
       {/* Aerodynamic Hexagonal Guidance Rings */}
       <group ref={vectorRingsRef}>
-        {[-700, -350, 0, 350, 700].map((zPos, idx) => (
-          <group key={idx} position={[0, zPos, 0]}>
+        {[-0.36, -0.18, 0, 0.18, 0.36].map((frac, idx) => (
+          <group key={idx} position={[0, frac * length, 0]}>
             <mesh rotation={[Math.PI / 2, 0, 0]}>
               <ringGeometry args={[radius * 0.95, radius * 0.98, 6]} />
               <meshBasicMaterial

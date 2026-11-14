@@ -31,9 +31,9 @@ export default function WorldLiquid({ position, visible }) {
         const flowOffset = (row * 12 + t * 200) % 430;
         const z = -880 + flowOffset; // Stays between -880 and -450, strictly in background behind centerpiece
 
-        let y = 260;
+        let y = 120;
         if (z > -660) {
-          y = 260 - Math.pow((z + 660) * 0.12, 2);
+          y = 120 - Math.pow((z + 660) * 0.12, 2);
         }
         if (y < -215) {
           y = -215 + Math.abs(Math.sin(t * 8 + i) * 16);
@@ -99,17 +99,17 @@ export default function WorldLiquid({ position, visible }) {
       </mesh>
 
       {/* Security Blast Door Concentric Rings on Back Wall */}
-      <group position={[0, 160, -1005]}>
+      <group position={[0, 0, -1005]}>
         <mesh>
-          <ringGeometry args={[180, 210, 64]} />
+          <ringGeometry args={[140, 162, 64]} />
           <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={1.08} />
         </mesh>
         <mesh>
-          <ringGeometry args={[300, 320, 64]} />
+          <ringGeometry args={[220, 236, 64]} />
           <meshStandardMaterial color="#ffaa00" emissive="#ffaa00" emissiveIntensity={0.72} />
         </mesh>
         <mesh>
-          <ringGeometry args={[440, 455, 64]} />
+          <ringGeometry args={[300, 312, 64]} />
           <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={0.54} />
         </mesh>
       </group>
@@ -135,14 +135,14 @@ export default function WorldLiquid({ position, visible }) {
       {/* ------------------------------------------------------------- */}
       {/* 4. CRYPTOCURRENCY CREATION FORGE / TOKEN MINTING CORE (Z: -750) */}
       {/* ------------------------------------------------------------- */}
-      <group ref={tokenForgeRef} position={[0, 70, -750]}>
+      <group ref={tokenForgeRef} position={[0, -20, -750]}>
         
         {/* Stepped Vault Plinth Platform */}
-        <mesh position={[0, -280, 0]}>
+        <mesh position={[0, -195, 0]}>
           <cylinderGeometry args={[180, 220, 40, 16]} />
           <meshStandardMaterial color="#0c0903" metalness={0.92} roughness={0.2} />
         </mesh>
-        <mesh position={[0, -250, 0]}>
+        <mesh position={[0, -165, 0]}>
           <cylinderGeometry args={[140, 160, 25, 16]} />
           <meshStandardMaterial color="#181205" metalness={0.9} roughness={0.18} />
         </mesh>
@@ -150,7 +150,7 @@ export default function WorldLiquid({ position, visible }) {
         {/* Ring 1 - Outer Gyroscopic Amber Ring */}
         <group ref={ring1Ref}>
           <mesh>
-            <torusGeometry args={[160, 3.8, 16, 80]} />
+            <torusGeometry args={[125, 3.8, 16, 80]} />
             <meshStandardMaterial color="#ffaa00" emissive="#ff8800" emissiveIntensity={2.5} metalness={0.95} roughness={0.1} />
           </mesh>
         </group>
@@ -158,7 +158,7 @@ export default function WorldLiquid({ position, visible }) {
         {/* Ring 2 - Meridian Gold Precision Ring */}
         <group ref={ring2Ref} rotation={[Math.PI / 4, 0, 0]}>
           <mesh>
-            <torusGeometry args={[125, 2.8, 16, 80]} />
+            <torusGeometry args={[98, 2.8, 16, 80]} />
             <meshStandardMaterial color="#ffd700" emissive="#ffbb00" emissiveIntensity={2.2} metalness={0.95} roughness={0.1} />
           </mesh>
         </group>
@@ -166,14 +166,14 @@ export default function WorldLiquid({ position, visible }) {
         {/* Ring 3 - Equatorial Horizon Scanner */}
         <group ref={ring3Ref}>
           <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <torusGeometry args={[95, 2.0, 16, 80]} />
+            <torusGeometry args={[74, 2.0, 16, 80]} />
             <meshStandardMaterial color="#fff0aa" emissive="#ffd700" emissiveIntensity={2.0} metalness={0.95} roughness={0.1} />
           </mesh>
         </group>
 
         {/* Central Smart Token Core (Luminous Octahedron) */}
         <mesh ref={coreRef}>
-          <octahedronGeometry args={[38, 0]} />
+          <octahedronGeometry args={[30, 0]} />
           <meshStandardMaterial color="#ffffff" emissive="#ffd700" emissiveIntensity={3.6} roughness={0.08} metalness={0.9} />
         </mesh>
 
@@ -181,13 +181,13 @@ export default function WorldLiquid({ position, visible }) {
       </group>
 
       {/* ------------------------------------------------------------- */}
-      {/* 5. CENTERPIECE: LIQUID LOGO & TITLE PROMINENTLY IN FOREGROUND */}
+      {/* 5. CENTERPIECE: LIQUID LOGO & TITLE CLEARLY ABOVE ANIMATION   */}
       {/* ------------------------------------------------------------- */}
-      <group position={[0, 240, -300]}>
-        {/* Floating High-Res Liquid Emblem - Clear Foreground */}
+      <group position={[0, 290, -300]}>
+        {/* Floating High-Res Liquid Emblem - Clear Above Forge & Waterfall */}
         <Float speed={2} rotationIntensity={0.05} floatIntensity={0.3}>
-          <mesh position={[0, 85, 0]}>
-            <planeGeometry args={[140, 140]} />
+          <mesh position={[0, 68, 0]}>
+            <planeGeometry args={[105, 105]} />
             <meshBasicMaterial 
               map={logoTex} 
               transparent 
@@ -200,9 +200,9 @@ export default function WorldLiquid({ position, visible }) {
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, 0, 0]}
-          fontSize={58}
-          color="#ffffff"
+          position={[0, -22, 0]}
+          fontSize={48}
+          color="#00ff88"
           outlineWidth={2.0}
           outlineColor="#b45309"
           anchorX="center"
@@ -216,16 +216,16 @@ export default function WorldLiquid({ position, visible }) {
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -48, 0]}
-          fontSize={26}
+          position={[0, -72, 0]}
+          fontSize={32}
           color="#ffd700"
-          outlineWidth={1.2}
+          outlineWidth={1.6}
           outlineColor="#0b0802"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.14}
+          letterSpacing={0.08}
         >
-          FINANCIAL INTELLIGENCE & TAX FORGE
+          FINANCIAL INTELLIGENCE & ACCOUNTING
         </Text>
       </group>
     </group>

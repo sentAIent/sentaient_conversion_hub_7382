@@ -1001,7 +1001,7 @@ export default function WorldSphinx({ position, visible }) {
       <group position={[0, 380, -680]}>
         {/* Floating Sphinx Emblem */}
         <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
-          <mesh position={[0, 68, 0]}>
+          <mesh position={[0, 118, 0]}>
             <planeGeometry args={[120, 94]} />
             <meshBasicMaterial 
               map={logoTex} 
@@ -1016,8 +1016,8 @@ export default function WorldSphinx({ position, visible }) {
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, 0, 0]}
-          fontSize={52}
+          position={[0, 8, 0]}
+          fontSize={56}
           color="#ffffff"
           outlineWidth={1.8}
           outlineColor="#78350f"
@@ -1032,16 +1032,19 @@ export default function WorldSphinx({ position, visible }) {
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -48, 0]}
-          fontSize={26}
+          position={[0, -92, 0]}
+          fontSize={46}
+          lineHeight={1.2}
+          maxWidth={1100}
+          textAlign="center"
           color="#f59e0b"
-          outlineWidth={1.2}
+          outlineWidth={1.8}
           outlineColor="#0b0804"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.14}
+          letterSpacing={0.08}
         >
-          GLOBAL THREAT & DISASTER DEFENSE
+          {'GLOBAL THREAT &\nDISASTER DEFENSE'}
         </Text>
       </group>
     </group>

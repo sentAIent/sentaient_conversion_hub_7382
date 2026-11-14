@@ -96,10 +96,10 @@ const HologramText = ({ position, visible }) => {
       <Text 
         font="/fonts/Roboto.woff" 
         fallbackFonts={[]}
-        position={[0, 72, 0]}
+        position={[0, 96, 0]}
         fontSize={56}
         color="#ffffff"
-        outlineWidth={1.5}
+        outlineWidth={1.8}
         outlineColor="#0284c7"
         anchorX="center"
         anchorY="middle"
@@ -111,10 +111,10 @@ const HologramText = ({ position, visible }) => {
       <Text 
         font="/fonts/Roboto.woff" 
         fallbackFonts={[]}
-        position={[0, 42, 0]}
-        fontSize={22}
+        position={[0, 26, 0]}
+        fontSize={44}
         color="#202733"
-        outlineWidth={0.6}
+        outlineWidth={1.2}
         outlineColor="#ffffff"
         anchorX="center"
         anchorY="middle"

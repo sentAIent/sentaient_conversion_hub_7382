@@ -43,6 +43,7 @@ const bankQuat = new THREE.Quaternion();
 
 // Mathematical terrain elevation profile along the mountain fall line
 function getMountainTerrainY(z) {
+  if (z >= 760) return 1780 - (z - 760) * 2.4; // Steep backside ridge drop-off so incoming wormhole & camera never clip through the mountain
   if (z >= 650) return 1780; // Flat summit drop-off plateau so camera behind peak is 100% unobstructed!
   if (z >= 450) return THREE.MathUtils.lerp(1780, 1520, (650 - z) / 200);
   if (z >= 90)  return THREE.MathUtils.lerp(1520, 1130, (450 - z) / 360);
@@ -86,30 +87,28 @@ function createAlpineMountainGeometry() {
     const z = pos.getZ(i);
 
     let baseY = getMountainTerrainY(z);
-    if (z > 650) {
-      baseY = 1780 + (z - 650) * 0.12;
-    }
 
     const dist = Math.abs(x);
     const arenaTaper = z < -650 ? Math.max(0, (z - (-720)) / 70) : 1.0;
+    const backTaper = z > 760 ? Math.max(0, 1.0 - (z - 760) / 140) : 1.0;
     const corridorSmooth = Math.max(0, Math.min(1, (dist - 34) / 32));
 
     // Subtle natural powder undulations in central ride track
     const microPowder = (Math.sin(x * 0.14 + z * 0.045) * Math.cos(x * 0.08 - z * 0.035)) * 1.4 * (1.0 - corridorSmooth);
 
     // Primary cirque wall lift on flanks
-    const wallRise = Math.pow(Math.max(0, dist - 34) / 38, 1.25) * 44.0 * arenaTaper;
-    const outerFlankRise = Math.pow(Math.max(0, dist - 240) / 50, 1.35) * 58.0 * arenaTaper;
+    const wallRise = Math.pow(Math.max(0, dist - 34) / 38, 1.25) * 44.0 * arenaTaper * backTaper;
+    const outerFlankRise = Math.pow(Math.max(0, dist - 240) / 50, 1.35) * 58.0 * arenaTaper * backTaper;
 
     // Alaskan Spines (Multi-octave sharp arêtes & steep sluff gullies)
     const spineDrift = Math.sin(z * 0.013 + (x > 0 ? 0.35 : -0.35)) * 1.8;
     const spineW1 = (1.0 - Math.pow(Math.abs(Math.sin(x * 0.046 + spineDrift)), 0.65)) * 52.0;
     const spineW2 = (1.0 - Math.pow(Math.abs(Math.sin(x * 0.092 - z * 0.015)), 0.75)) * 22.0;
-    const spineFlutes = (spineW1 + spineW2) * corridorSmooth * arenaTaper;
+    const spineFlutes = (spineW1 + spineW2) * corridorSmooth * arenaTaper * backTaper;
 
     // Rock strata & wind sastrugi
-    const rockStrata = Math.cos(z * 0.034 + x * 0.012) * 14.0 * corridorSmooth * arenaTaper;
-    const windCrags = Math.sin(x * 0.16 + z * 0.032) * Math.cos(x * 0.07 - z * 0.055) * 8.5 * corridorSmooth * arenaTaper;
+    const rockStrata = Math.cos(z * 0.034 + x * 0.012) * 14.0 * corridorSmooth * arenaTaper * backTaper;
+    const windCrags = Math.sin(x * 0.16 + z * 0.032) * Math.cos(x * 0.07 - z * 0.055) * 8.5 * corridorSmooth * arenaTaper * backTaper;
 
     // Natural rock cliff fractures at Cliff 1 & Cliff 2
     let cliffFracture = 0;
@@ -1719,11 +1718,11 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
       tempCamQuat.multiply(bankQuat);
     }
 
-    const curP = window._currentProgress !== undefined ? window._currentProgress : 0.550;
+    const curP = window._currentProgress !== undefined ? window._currentProgress : 0.518;
     let blend = 0;
-    if (curP >= 0.535 && curP <= 0.575) {
-      if (curP < 0.543) blend = (curP - 0.535) / 0.008;
-      else if (curP > 0.565) blend = (0.575 - curP) / 0.010;
+    if (curP >= 0.505 && curP <= 0.540) {
+      if (curP < 0.512) blend = (curP - 0.505) / 0.007;
+      else if (curP > 0.530) blend = (0.540 - curP) / 0.010;
       else blend = 1.0;
     }
     blend = THREE.MathUtils.clamp(blend, 0, 1);
@@ -1741,54 +1740,11 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
       window._elevateChaseCam.quat.copy(tempCamQuat);
       window._elevateChaseCam.active = true;
       window._elevateChaseCam.blend = blend;
+      window._elevateChaseCam.getMinSafeWorldY = (worldZ) => position[1] + getMinSafeCameraY(worldZ - position[2]);
     }
 
-    // Elevate Centerpiece Branding: dynamically positions in background during mountain ride and at helipad
-    if (elevateCenterpieceRef.current) {
-      const cdx = lx - cx;
-      const cdy = ly - cy;
-      const cdz = lz - cz;
-      const clen = Math.sqrt(cdx * cdx + cdy * cdy + cdz * cdz) || 1;
-      const cnx = cdx / clen;
-      const cny = cdy / clen;
-      const cnz = cdz / clen;
-
-      // Position during mountain ride: ahead in open background sky corridor
-      const rideDist = 580;
-      const rideX = cx + cnx * rideDist;
-      const rideY = cy + cny * rideDist + 95;
-      const rideZ = cz + cnz * rideDist;
-
-      // Position at base helipad: behind and above helicopter
-      const heliX = -72;
-      const heliY = -35;
-      const heliZ = -1180;
-
-      let bX = rideX, bY = rideY, bZ = rideZ;
-
-      if (t >= 11.5 && t < 12.8) {
-        const bp = (t - 11.5) / 1.3;
-        const sbp = bp * bp * (3 - 2 * bp);
-        bX = THREE.MathUtils.lerp(rideX, heliX, sbp);
-        bY = THREE.MathUtils.lerp(rideY, heliY, sbp);
-        bZ = THREE.MathUtils.lerp(rideZ, heliZ, sbp);
-      } else if (t >= 12.8 && t < 21.2) {
-        // Base Helipad: rock-solid behind helicopter as rider walks over and climbs in
-        bX = heliX;
-        bY = heliY;
-        bZ = heliZ;
-      } else if (t >= 21.2 && t < 25.4) {
-        // Helicopter ascent: smoothly transitions back up to summit
-        const bp = (t - 21.2) / 4.2;
-        const sbp = bp * bp * (3 - 2 * bp);
-        bX = THREE.MathUtils.lerp(heliX, rideX, sbp);
-        bY = THREE.MathUtils.lerp(heliY, rideY, sbp);
-        bZ = THREE.MathUtils.lerp(heliZ, rideZ, sbp);
-      }
-
-      elevateCenterpieceRef.current.position.set(bX, bY, bZ);
-      elevateCenterpieceRef.current.quaternion.copy(tempCamQuat);
-    }
+    // Elevate Centerpiece Branding stays stationary in the open sky down-valley (-Z)
+    // so it remains visible throughout the descent and base arena without chasing the rider or heli.
   });
 
   if (!visible) return null;
@@ -3190,17 +3146,12 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
       </group>
 
       {/* ========================================================= */}
-      {/* 8. CENTERPIECE: ELEVATE LOGO & TITLE ABOVE ANIMATION        */}
+      {/* 8. CENTERPIECE: ELEVATE LOGO ONLY                         */}
       {/* ========================================================= */}
-      <group ref={elevateCenterpieceRef} position={[-72, -35, -1180]}>
-        {/* Soft Contrast Aura Backdrop */}
-        <mesh position={[0, 8, -6]}>
-          <planeGeometry args={[340, 160]} />
-          <meshBasicMaterial color="#030712" transparent opacity={0.35} depthWrite={false} />
-        </mesh>
+      <group ref={elevateCenterpieceRef} position={[-30, 110, -1520]} scale={[1.4, 1.4, 1.4]}>
         {/* Floating Elevate Emblem */}
         <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
-          <mesh position={[0, 52, 0]}>
+          <mesh position={[0, 0, 0]}>
             <planeGeometry args={[115, 68]} />
             <meshBasicMaterial 
               map={logoTex} 
@@ -3209,52 +3160,6 @@ export default function WorldElevate({ position = [0, -11750, -33000], visible }
             />
           </mesh>
         </Float>
-
-        {/* Elevate Title */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[0, 0, 0]}
-          fontSize={48}
-          color="#ffffff"
-          outlineWidth={1.8}
-          outlineColor="#0369a1"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.12}
-        >
-          ELEVATE
-        </Text>
-
-        {/* Subtitle & Description - Enlarged for High Legibility */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[0, -42, 0]}
-          fontSize={26}
-          color="#38bdf8"
-          outlineWidth={1.2}
-          outlineColor="#040b17"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.14}
-        >
-          BIG-MOUNTAIN SNOWBOARD GAME & ALPINE HUB
-        </Text>
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[0, -76, 0]}
-          fontSize={18}
-          color="#e0f2fe"
-          outlineWidth={0.8}
-          outlineColor="#040b17"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.08}
-        >
-          3D Freeride Snowboard Action & Live Mountain Weather Intelligence
-        </Text>
       </group>
     </group>
   );

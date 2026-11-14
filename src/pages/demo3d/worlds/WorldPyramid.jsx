@@ -345,10 +345,10 @@ export default function WorldPyramid({ position, visible }) {
 
         {/* 4 Interactive Monumental Obelisks: Autonomous Fleet Stations */}
         {[
-          { key: 'north', name: 'Marketing Agency (#1)', pos: [-280, -280], color: '#f59e0b', note: 440.0 },
-          { key: 'east', name: 'Academic Studio (#2)', pos: [280, -280], color: '#38bdf8', note: 493.88 },
-          { key: 'south', name: 'Localization (#3)', pos: [-280, 280], color: '#c084fc', note: 587.33 },
-          { key: 'west', name: 'Bug Bounty (#5)', pos: [280, 280], color: '#34d399', note: 659.25 }
+          { key: 'north', name: 'Marketing Agency (#1)', pos: [-270, -140], color: '#f59e0b', note: 440.0 },
+          { key: 'east', name: 'Academic Studio (#2)', pos: [270, -140], color: '#38bdf8', note: 493.88 },
+          { key: 'south', name: 'Localization (#3)', pos: [-200, 120], color: '#c084fc', note: 587.33 },
+          { key: 'west', name: 'Bug Bounty (#5)', pos: [200, 120], color: '#34d399', note: 659.25 }
         ].map((ob, idx) => {
           const isHovered = hoveredObelisk === ob.key;
           const isSelected = selectedObelisk === ob.key;
@@ -398,10 +398,10 @@ export default function WorldPyramid({ position, visible }) {
               <Text
                 font="/fonts/Roboto.woff"
                 fallbackFonts={[]}
-                position={[0, 185, 0]}
-                fontSize={9}
+                position={[0, 190, 0]}
+                fontSize={13}
                 color={ob.color}
-                outlineWidth={0.6}
+                outlineWidth={0.8}
                 outlineColor="#090a14"
                 anchorX="center"
                 anchorY="middle"
@@ -412,8 +412,10 @@ export default function WorldPyramid({ position, visible }) {
                 font="/fonts/Roboto.woff"
                 fallbackFonts={[]}
                 position={[0, 175, 0]}
-                fontSize={7.5}
+                fontSize={10.5}
                 color="#ffffff"
+                outlineWidth={0.5}
+                outlineColor="#090a14"
                 anchorX="center"
                 anchorY="middle"
               >
@@ -430,7 +432,7 @@ export default function WorldPyramid({ position, visible }) {
       <group position={[0, 310, -450]}>
         {/* Floating High-Res PyRAmid Logo Icon (Sleek & Scaled) */}
         <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
-          <mesh position={[0, 50, 0]}>
+          <mesh position={[0, 96, 0]}>
             <planeGeometry args={[82, 82]} />
             <meshBasicMaterial map={logoTex} transparent depthWrite={false} side={THREE.DoubleSide} toneMapped={false} />
           </mesh>
@@ -440,9 +442,9 @@ export default function WorldPyramid({ position, visible }) {
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -10, 0]}
+          position={[0, 8, 0]}
           fontSize={56}
-          color="#ffffff"
+          color="#00e5ff"
           outlineWidth={2.0}
           outlineColor="#3b0764"
           anchorX="center"
@@ -451,149 +453,6 @@ export default function WorldPyramid({ position, visible }) {
         >
           Pyramid
         </Text>
-
-        {/* Subtitle Badge - Significantly Enlarged for Legibility */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[0, -48, 0]}
-          fontSize={26}
-          color="#00e5ff"
-          outlineWidth={1.2}
-          outlineColor="#090a14"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.16}
-        >
-          AUTONOMOUS PROFIT ENGINE
-        </Text>
-
-        {/* Live Treasury & Solvency HUD */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[0, -84, 0]}
-          fontSize={18}
-          color="#ffd700"
-          outlineWidth={1.0}
-          outlineColor="#1e1b4b"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.1}
-        >
-          {`TREASURY: $${(telemetry.total_treasury_balance_dollars ?? 1090.09).toFixed(2)}  •  NET MARGIN: ${telemetry.aggregate_margin_pct ?? 98.7}%`}
-        </Text>
-
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[0, -110, 0]}
-          fontSize={16}
-          color="#c084fc"
-          outlineWidth={0.8}
-          outlineColor="#090a14"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.08}
-        >
-          {`SOLVENCY INDEX: ${telemetry.solvency_health_score ?? 99}/100  •  ACTIVE FLEET: ${telemetry.active_ventures?.length ?? 4} VENTURES`}
-        </Text>
-
-        {/* Interactive Apex Telemetry Toggle Hint */}
-        <Text
-          font="/fonts/Roboto.woff"
-          fallbackFonts={[]}
-          position={[0, -134, 0]}
-          fontSize={13}
-          color={apexHovered ? "#38bdf8" : "#94a3b8"}
-          outlineWidth={0.6}
-          outlineColor="#020617"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.14}
-        >
-          {showExecutiveBoard ? "▲ APEX EXECUTIVE TELEMETRY ACTIVE (CLICK ORB TO MINIMIZE) ▲" : "▼ CLICK APEX ORB FOR REVENUE LOGS & FLEET STATUS ▼"}
-        </Text>
-
-        {/* Executive Telemetry Floating Holographic Console */}
-        {(showExecutiveBoard || apexHovered) && (
-          <group position={[0, -165, 20]}>
-            <mesh position={[0, 0, -2]}>
-              <planeGeometry args={[340, 110]} />
-              <meshBasicMaterial color="#0b091a" transparent opacity={0.85} side={THREE.DoubleSide} />
-            </mesh>
-            <mesh position={[0, 0, -1]}>
-              <planeGeometry args={[342, 112]} />
-              <meshBasicMaterial color="#a855f7" wireframe transparent opacity={0.45} />
-            </mesh>
-            <Text
-              font="/fonts/Roboto.woff"
-              fallbackFonts={[]}
-              position={[0, 40, 0]}
-              fontSize={10.5}
-              color="#00e5ff"
-              anchorX="center"
-              anchorY="middle"
-            >
-              AUTONOMOUS VENTURE FLEET & $0 CAC SYNERGIES
-            </Text>
-            <Text
-              font="/fonts/Roboto.woff"
-              fallbackFonts={[]}
-              position={[0, 24, 0]}
-              fontSize={8}
-              color="#e2e8f0"
-              anchorX="center"
-              anchorY="middle"
-            >
-              {`PORTFOLIO INGESTION: Autopilot • Legal Eagle • Matrix • Contango Quant ($0 CAC)`}
-            </Text>
-            <Text
-              font="/fonts/Roboto.woff"
-              fallbackFonts={[]}
-              position={[0, 8, 0]}
-              fontSize={10}
-              color="#ffd700"
-              anchorX="center"
-              anchorY="middle"
-            >
-              MILESTONE VAULT (25% TAX • 50% DIVIDEND • 25% GROWTH)
-            </Text>
-            <Text
-              font="/fonts/Roboto.woff"
-              fallbackFonts={[]}
-              position={[0, -8, 0]}
-              fontSize={8}
-              color="#a7f3d0"
-              anchorX="center"
-              anchorY="middle"
-            >
-              {`TAX ESCROW: $${(telemetry.vault?.tax_escrow_dollars ?? 199.35).toFixed(2)}  |  DIVIDENDS PAID: $${(telemetry.vault?.cumulative_dividends_paid_dollars ?? 398.72).toFixed(2)}`}
-            </Text>
-            <Text
-              font="/fonts/Roboto.woff"
-              fallbackFonts={[]}
-              position={[0, -24, 0]}
-              fontSize={8}
-              color="#cbd5e1"
-              anchorX="center"
-              anchorY="middle"
-            >
-              {telemetry.recent_events?.[2]?.message || "Delivered SEO topic cluster for Autopilot Conversion Funnel (+$119.66)"}
-            </Text>
-            <Text
-              font="/fonts/Roboto.woff"
-              fallbackFonts={[]}
-              position={[0, -40, 0]}
-              fontSize={7.5}
-              color="#34d399"
-              anchorX="center"
-              anchorY="middle"
-            >
-              {`COMPUTE ARBITRAGE: <0.3% SPEND  |  NET MARGIN: ${telemetry.aggregate_margin_pct ?? 99.7}%  |  FIREWALL: ARMED`}
-            </Text>
-          </group>
-        )}
       </group>
     </group>
   );

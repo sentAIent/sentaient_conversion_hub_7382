@@ -10,17 +10,17 @@ export const STATIONS = [
   { id: 'interstellar', name: 'Interstellar', p: 0.200, duration: 3600, color: '#00D2FF' },
   { id: 'legal', name: 'Legal Eagle', p: 0.248, duration: 3600, color: '#D4AF37' },
   { id: 'autopilot', name: 'Autopilot', p: 0.293, duration: 3600, color: '#10B981' },
-  { id: 'clove', name: 'CloveH2O', p: 0.345, duration: 3600, color: '#FF00FF' },
   { id: 'fantasy', name: 'FantasyQuant', p: 0.413, duration: 4400, color: '#00FF88' },
   { id: 'contango', name: 'Contango', p: 0.463, duration: 3600, color: '#FFD700' },
-  { id: 'sentaient', name: 'Sentaient', p: 0.505, duration: 3600, color: '#60A9FF' },
-  { id: 'elevate', name: 'Elevate', p: 0.548, duration: 3600, color: '#00FFFF' },
-  { id: 'sphinx', name: 'Sphinx', p: 0.610, duration: 3600, color: '#F59E0B' },
-  { id: 'liquid', name: 'Liquid', p: 0.668, duration: 3600, color: '#00FF88' },
-  { id: 'maya', name: 'Maya', p: 0.728, duration: 3600, color: '#EAB308' },
-  { id: 'pyramid', name: 'Pyramid', p: 0.803, duration: 3600, color: '#00E5FF' },
-  { id: 'matrix', name: 'Matrix', p: 0.873, duration: 3600, color: '#00FF44' },
-  { id: 'lightspeed', name: 'LightSpeed', p: 0.945, duration: 3600, color: '#00FFFF' }
+  { id: 'elevate', name: 'Elevate', p: 0.518, duration: 3600, color: '#00FFFF' },
+  { id: 'sphinx', name: 'Sphinx', p: 0.582, duration: 3600, color: '#F59E0B' },
+  { id: 'liquid', name: 'Liquid', p: 0.648, duration: 3600, color: '#00FF88' },
+  { id: 'maya', name: 'Maya', p: 0.712, duration: 3600, color: '#EAB308' },
+  { id: 'pyramid', name: 'Pyramid', p: 0.778, duration: 3600, color: '#00E5FF' },
+  { id: 'matrix', name: 'Matrix', p: 0.842, duration: 3600, color: '#00FF44' },
+  { id: 'lightspeed', name: 'LightSpeed', p: 0.893, duration: 3600, color: '#00FFFF' },
+  { id: 'clove', name: 'CloveH2O', p: 0.939, duration: 3600, color: '#FF00FF' },
+  { id: 'sentaient', name: 'Sentaient', p: 0.979, duration: 4000, color: '#60A9FF' }
 ];
 
 let activeAnimId = null;
@@ -36,15 +36,11 @@ export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete 
   clearActiveWorldPause();
   
   if (clampedIndex === 2) {
-    if (window._icebreakerMeltState !== 'completed') {
-      window.icebreakerThaw = 0.0;
-      window._icebreakerMeltState = 'idle';
-      window._icebreakerCam = null;
-      window._icebreakerLockCamera = false;
-      window.icebreakerThawLocked = false;
-    } else {
-      window.icebreakerThaw = 1.0;
-    }
+    window.icebreakerThaw = 0.0;
+    window._icebreakerMeltState = 'idle';
+    window._icebreakerCam = null;
+    window._icebreakerLockCamera = false;
+    window.icebreakerThawLocked = false;
   } else if (clampedIndex > 2) {
     window.icebreakerThaw = 1.0;
     window._icebreakerMeltState = 'completed';
@@ -210,15 +206,11 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
   
   // When warping away from or to Icebreaker, reset ice cave so it is frozen solid before entering
   if (clampedIndex === 2) {
-    if (window._icebreakerMeltState !== 'completed') {
-      window.icebreakerThaw = 0.0;
-      window._icebreakerMeltState = 'idle';
-      window._icebreakerCam = null;
-      window._icebreakerLockCamera = false;
-      window.icebreakerThawLocked = false;
-    } else {
-      window.icebreakerThaw = 1.0;
-    }
+    window.icebreakerThaw = 0.0;
+    window._icebreakerMeltState = 'idle';
+    window._icebreakerCam = null;
+    window._icebreakerLockCamera = false;
+    window.icebreakerThawLocked = false;
   } else if (clampedIndex > 2) {
     window.icebreakerThaw = 1.0;
     window._icebreakerMeltState = 'completed';

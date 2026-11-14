@@ -49,21 +49,21 @@ const WormholeWaterslide = ({ position, rotation, length = 7800, visible = true 
 
   return (
     <group position={position} rotation={rotation} visible={visible}>
-      {/* Curved Intake Chute Reaching Forward towards CloveH2O */}
-      <mesh position={[0, length / 2 - 200, 340]} rotation={[-0.72, 0, 0]}>
-        <cylinderGeometry args={[220, 190, 800, 32, 16, true]} />
+      {/* Flared Entry Mouth aligned with tunnel axis */}
+      <mesh position={[0, length / 2 - 150, 0]}>
+        <cylinderGeometry args={[280, 190, 360, 32, 8, true]} />
         <meshStandardMaterial
           map={texture}
           color="#00ffff"
           emissive="#0088ff"
-          emissiveIntensity={1.8}
+          emissiveIntensity={1.6}
           side={THREE.DoubleSide}
           transparent
           opacity={0.92}
         />
       </mesh>
 
-      {/* Main Vertical Waterslide Plunge Tube */}
+      {/* Main Waterslide Plunge Tube */}
       <mesh>
         <cylinderGeometry args={[190, 190, length, 32, 1, true]} />
         <meshStandardMaterial
@@ -91,13 +91,13 @@ const WormholeWaterslide = ({ position, rotation, length = 7800, visible = true 
       </mesh>
 
       {/* Flared Exit into FantasyQuant Stadium */}
-      <mesh position={[0, -length / 2 + 100, -80]} rotation={[0.3, 0, 0]}>
-        <cylinderGeometry args={[190, 260, 450, 32, 16, true]} />
+      <mesh position={[0, -length / 2 + 150, 0]}>
+        <cylinderGeometry args={[190, 270, 380, 32, 8, true]} />
         <meshStandardMaterial
           map={texture}
           color="#00ffff"
           emissive="#00e676"
-          emissiveIntensity={1.8}
+          emissiveIntensity={1.6}
           side={THREE.DoubleSide}
           transparent
           opacity={0.9}

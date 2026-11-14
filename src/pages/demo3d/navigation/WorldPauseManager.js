@@ -9,17 +9,17 @@ export const WORLD_PAUSE_STATIONS = [
   { id: 'interstellar', name: 'Interstellar', p: 0.200, triggerMin: 0.188, triggerMax: 0.212, duration: 2500 },
   { id: 'legal', name: 'Legal Eagle', p: 0.248, triggerMin: 0.238, triggerMax: 0.258, duration: 2500 },
   { id: 'autopilot', name: 'Autopilot', p: 0.293, triggerMin: 0.283, triggerMax: 0.302, duration: 2500 },
-  { id: 'clove', name: 'CloveH2O', p: 0.345, triggerMin: 0.328, triggerMax: 0.360, duration: 2500 },
   { id: 'fantasy', name: 'FantasyQuant', p: 0.413, triggerMin: 0.403, triggerMax: 0.422, duration: 2500 },
   { id: 'contango', name: 'Contango', p: 0.463, triggerMin: 0.453, triggerMax: 0.470, duration: 2500 },
-  { id: 'sentaient', name: 'sentAIent', p: 0.505, triggerMin: 0.490, triggerMax: 0.520, duration: 4000 },
-  { id: 'elevate', name: 'Elevate', p: 0.548, triggerMin: 0.538, triggerMax: 0.558, duration: 2500 },
-  { id: 'sphinx', name: 'Sphinx', p: 0.610, triggerMin: 0.598, triggerMax: 0.622, duration: 2500 },
-  { id: 'liquid', name: 'Liquid', p: 0.668, triggerMin: 0.658, triggerMax: 0.678, duration: 2500 },
-  { id: 'maya', name: 'Maya', p: 0.728, triggerMin: 0.718, triggerMax: 0.738, duration: 2500 },
-  { id: 'pyramid', name: 'Pyramid', p: 0.803, triggerMin: 0.788, triggerMax: 0.816, duration: 2500 },
-  { id: 'matrix', name: 'Matrix', p: 0.873, triggerMin: 0.858, triggerMax: 0.888, duration: 2500 },
-  { id: 'lightspeed', name: 'LightSpeed', p: 0.945, triggerMin: 0.928, triggerMax: 0.962, duration: 2500 }
+  { id: 'elevate', name: 'Elevate', p: 0.518, triggerMin: 0.508, triggerMax: 0.528, duration: 2500 },
+  { id: 'sphinx', name: 'Sphinx', p: 0.582, triggerMin: 0.572, triggerMax: 0.592, duration: 2500 },
+  { id: 'liquid', name: 'Liquid', p: 0.648, triggerMin: 0.638, triggerMax: 0.658, duration: 2500 },
+  { id: 'maya', name: 'Maya', p: 0.712, triggerMin: 0.702, triggerMax: 0.722, duration: 2500 },
+  { id: 'pyramid', name: 'Pyramid', p: 0.778, triggerMin: 0.768, triggerMax: 0.788, duration: 2500 },
+  { id: 'matrix', name: 'Matrix', p: 0.842, triggerMin: 0.832, triggerMax: 0.852, duration: 2500 },
+  { id: 'lightspeed', name: 'LightSpeed', p: 0.893, triggerMin: 0.884, triggerMax: 0.902, duration: 2500 },
+  { id: 'clove', name: 'CloveH2O', p: 0.939, triggerMin: 0.930, triggerMax: 0.948, duration: 2500 },
+  { id: 'sentaient', name: 'sentAIent', p: 0.979, triggerMin: 0.970, triggerMax: 0.988, duration: 4000 }
 ];
 
 let isGlobalInputLocked = false;

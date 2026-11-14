@@ -178,15 +178,15 @@ const WorldCloveH2O = ({ position, rotation, visible }) => {
       {/* UI Elements - Elevated Above Ocean & Waterfall */}
       <group position={[0, 260, -400]}>
         {logoTexture && (
-          <mesh position={[0, 60, 0]}>
+          <mesh position={[0, 120, 0]}>
             <planeGeometry args={[120, 120]} />
             <meshBasicMaterial map={logoTexture} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
           </mesh>
         )}
         
         <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-          position={[0, -10, 0]}
-          fontSize={52}
+          position={[0, 4, 0]}
+          fontSize={56}
           color="#ffffff"
           outlineWidth={1.8}
           outlineColor="#0044aa"
@@ -198,16 +198,19 @@ const WorldCloveH2O = ({ position, rotation, visible }) => {
         </Text>
 
         <Text font="/fonts/Roboto.woff" fallbackFonts={[]}
-          position={[0, -52, 0]}
-          fontSize={26}
+          position={[0, -92, 0]}
+          fontSize={46}
+          lineHeight={1.2}
+          maxWidth={1100}
+          textAlign="center"
           color="#00ffff"
-          outlineWidth={1.2}
+          outlineWidth={1.8}
           outlineColor="#001833"
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.14}
+          letterSpacing={0.08}
         >
-          BOTANICAL WELLNESS & FUNCTIONAL HYDRATION
+          {'BOTANICAL WELLNESS &\nFUNCTIONAL HYDRATION'}
         </Text>
       </group>
     </group>

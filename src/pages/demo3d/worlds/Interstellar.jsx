@@ -398,14 +398,14 @@ const Interstellar = ({ position, rotation, visible }) => {
       
       {/* Title & Logo Hologram - elevated high above starfleet */}
       <group position={[0, 260, 200]}>
-        <mesh position={[0, 50, 0]}>
+        <mesh position={[0, 110, 0]}>
           <planeGeometry args={[180, 180]} />
           <meshBasicMaterial map={logoTex} transparent depthWrite={false} />
         </mesh>
-        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -60, 0]} fontSize={50} color="#ff8800" anchorX="center" anchorY="middle" outlineWidth={2} outlineColor="#550000">
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -35, 0]} fontSize={56} color="#ff8800" anchorX="center" anchorY="middle" outlineWidth={2.2} outlineColor="#550000">
             INTERSTELLAR
         </Text>
-        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -110, 0]} fontSize={20} color="#ffffff" anchorX="center" anchorY="middle">
+        <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, -105, 0]} fontSize={44} color="#00d2ff" anchorX="center" anchorY="middle" outlineWidth={1.8} outlineColor="#020617">
             Build your space empire
         </Text>
       </group>
