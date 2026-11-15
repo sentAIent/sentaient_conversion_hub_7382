@@ -1,9 +1,9 @@
 {
   "timestamp": 1794362374.846443,
-  "total_treasury_balance_dollars": 897.49,
-  "gross_revenue_dollars": 800.0,
-  "total_spend_dollars": 2.51,
-  "net_profit_dollars": 797.49,
+  "total_treasury_balance_dollars": 40058.19,
+  "gross_revenue_dollars": 40120.0,
+  "total_spend_dollars": 61.81,
+  "net_profit_dollars": 40058.19,
   "aggregate_margin_pct": 99.7,
   "solvency_health_score": 99,
   "synaptic_pulse_intensity": 0.2,
@@ -54,26 +54,26 @@
     "north": {
       "name": "Marketing Agency (#1)",
       "jobs": 2,
-      "revenue_dollars": 210.0,
-      "profit_dollars": 209.35
+      "revenue_dollars": 8770.00,
+      "profit_dollars": 8758.24
     },
     "east": {
       "name": "Academic Synthesis Studio (#2)",
       "jobs": 2,
-      "revenue_dollars": 190.0,
-      "profit_dollars": 189.49
+      "revenue_dollars": 14085.00,
+      "profit_dollars": 14064.62
     },
     "south": {
       "name": "Media Localization Studio (#3)",
       "jobs": 2,
-      "revenue_dollars": 190.0,
-      "profit_dollars": 188.95
+      "revenue_dollars": 5935.00,
+      "profit_dollars": 5923.37
     },
     "west": {
       "name": "Bug Bounty Hunter (#5)",
       "jobs": 2,
-      "revenue_dollars": 210.0,
-      "profit_dollars": 209.7
+      "revenue_dollars": 11330.00,
+      "profit_dollars": 11311.96
     }
   },
   "recent_events": [
