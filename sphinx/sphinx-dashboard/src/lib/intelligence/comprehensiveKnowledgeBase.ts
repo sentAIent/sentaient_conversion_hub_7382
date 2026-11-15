@@ -17,6 +17,7 @@ import { STRATEGIC_AIRPORTS } from '../routing/airportsData';
 import { STRATEGIC_SNOWBOARD_RESORTS } from '../routing/snowboardResorts';
 import { BINAURAL_PRESETS } from '../audio/SphinxBinauralEngine';
 import { LandOwnershipEngine } from './landOwnershipEngine';
+import { isBouvierQuery, generateBouvierAIReport } from './bouviersLawDictionary';
 
 export interface ComprehensiveAIResponse {
   text: string;
@@ -967,6 +968,14 @@ export function dispatchComprehensiveKnowledge(
   if (isLandOwnershipQuery(lower)) return generateLandOwnershipAIReport(query, mapContext, isDeep);
   if (isBinauralBrainwaveQuery(lower)) return generateBinauralBrainwaveAIReport(query, mapContext, isDeep);
   if (isSubseaFiberDataCenterQuery(lower)) return generateSubseaFiberDataCenterAIReport(query, mapContext, isDeep);
+  if (isBouvierQuery(lower)) {
+    return {
+      text: generateBouvierAIReport(query),
+      isDeepResearch: isDeep,
+      sources: ["Bouvier's Law Dictionary (1856 6th Ed.)", "Article III Common Law Baseline", "Supreme Court Precedents"],
+      timestamp: new Date().toISOString()
+    };
+  }
 
   return null;
 }

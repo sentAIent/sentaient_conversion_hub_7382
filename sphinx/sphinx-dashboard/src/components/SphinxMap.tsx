@@ -90,10 +90,17 @@ const TacticalRepeaterModal = dynamic(() => import('./TacticalRepeaterModal').th
 const SpaceWeatherModal = dynamic(() => import('./SpaceWeatherModal').then(m => m.SpaceWeatherModal), { ssr: false });
 const CBRNDefenseModal = dynamic(() => import('./CBRNDefenseModal').then(m => m.CBRNDefenseModal), { ssr: false });
 const BlacksLawDictionaryModal = dynamic(() => import('./BlacksLawDictionaryModal').then(m => m.BlacksLawDictionaryModal), { ssr: false });
+const TacticalCyberChefModal = dynamic(() => import('./TacticalCyberChefModal').then(m => m.TacticalCyberChefModal), { ssr: false });
+const TacticalFieldNotesModal = dynamic(() => import('./TacticalFieldNotesModal').then(m => m.TacticalFieldNotesModal), { ssr: false });
+const NomadSentinelModal = dynamic(() => import('./NomadSentinelModal').then(m => m.NomadSentinelModal), { ssr: false });
+const SparrowReconModal = dynamic(() => import('./defense/SparrowReconModal').then(m => m.SparrowReconModal), { ssr: false });
+import { registerPmtilesProtocol } from '../lib/maps/pmtilesProtocol';
+import { IS_STORE_SUBMISSION_BUILD } from '../lib/defense/sparrowReconEngine';
 import { ALL_CURATED_LOCATIONS } from '../lib/geo/curatedLocations';
 
 if (typeof window !== 'undefined') {
   registerElevationHeatmapProtocol(maplibregl);
+  registerPmtilesProtocol(maplibregl);
 }
 
 function getNearestCuratedArea(lat: number, lon: number): string | null {
@@ -622,6 +629,10 @@ export default function SphinxMap() {
   const [isRepeaterModalOpen, setIsRepeaterModalOpen] = useState(false);
   const [isSpaceWeatherOpen, setIsSpaceWeatherOpen] = useState(false);
   const [isCbrnModalOpen, setIsCbrnModalOpen] = useState(false);
+  const [isCyberChefOpen, setIsCyberChefOpen] = useState(false);
+  const [isFieldNotesOpen, setIsFieldNotesOpen] = useState(false);
+  const [isNomadSentinelOpen, setIsNomadSentinelOpen] = useState(false);
+  const [isSparrowReconOpen, setIsSparrowReconOpen] = useState(false);
   const [activeCameraFeed, setActiveCameraFeed] = useState<LiveCameraFeed | null>(null);
   const [countScopeMode, setCountScopeMode] = useState<'world' | 'country'>('world');
   const [selectedCountryCode, setSelectedCountryCode] = useState<string>('US');
@@ -7309,6 +7320,48 @@ export default function SphinxMap() {
                 </button>
                 <button 
                   type="button" 
+                  data-testid="hud-btn-tools-cyberchef"
+                  title="Tactical CyberChef & Crypto: Base64/Hex encoding, WebCrypto AES-GCM 256, ATAK CoT XML packaging, NMEA GPS parsing, and SHA-256 hash verifier"
+                  onClick={() => { setIsCyberChefOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isCyberChefOpen ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-700/60' : 'hover:bg-cyan-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>🔐</span> Tactical CyberChef &amp; Crypto</span>
+                  <span className="text-[10px] text-cyan-400 font-bold">CRYPTO</span>
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-field-notes"
+                  title="Tactical Field Notes & Mission Log: Local-first geotagged mission logs, FlatNotes sync, map-pin fly-to, and Markdown export"
+                  onClick={() => { setIsFieldNotesOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isFieldNotesOpen ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/60' : 'hover:bg-emerald-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>📝</span> Field Notes &amp; Mission Log</span>
+                  <span className="text-[10px] text-emerald-400 font-bold">NOTES</span>
+                </button>
+                <button 
+                  type="button" 
+                  data-testid="hud-btn-tools-nomad-sentinel"
+                  title="Project NOMAD Sentinel: Local hardware appliance probe, Ollama AI, Kiwix ZIM server status, and 1-click Docker Compose field kit generator"
+                  onClick={() => { setIsNomadSentinelOpen(true); setShowToolsMenu(false); }}
+                  className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isNomadSentinelOpen ? 'bg-blue-950/80 text-blue-300 border border-blue-700/60' : 'hover:bg-blue-950/40 text-gray-200'}`}
+                >
+                  <span className="flex items-center gap-2"><span>🧭</span> Project NOMAD Sentinel Link</span>
+                  <span className="text-[10px] text-blue-400 font-bold">APPLIANCE</span>
+                </button>
+                {!IS_STORE_SUBMISSION_BUILD && (
+                  <button 
+                    type="button" 
+                    data-testid="hud-btn-tools-sparrow-recon"
+                    title="Sparrow Recon Sentry (ADMIN ONLY): Counter-surveillance beacon sniffing, ALPR choke-point detection, and government surveillance aircraft tracker"
+                    onClick={() => { setIsSparrowReconOpen(true); setShowToolsMenu(false); }}
+                    className={`px-2.5 py-2 rounded-lg text-left flex items-center justify-between transition-colors ${isSparrowReconOpen ? 'bg-red-950/80 text-red-300 border border-red-700/60' : 'hover:bg-red-950/40 text-gray-200'}`}
+                  >
+                    <span className="flex items-center gap-2"><span>🦅</span> Sparrow Recon Sentry</span>
+                    <span className="text-[10px] text-red-400 font-bold">ADMIN</span>
+                  </button>
+                )}
+                <button 
+                  type="button" 
                   data-testid="hud-btn-settings"
                   title="System Configuration: Customize UI theme, map projection, coordinate formats, and cursor styles"
                   onClick={() => { setIsSettingsOpen(true); setShowToolsMenu(false); }}
@@ -7744,6 +7797,39 @@ export default function SphinxMap() {
           setShowAIAssistant(true);
         }}
       />
+
+      <TacticalCyberChefModal
+        isOpen={isCyberChefOpen}
+        onClose={() => setIsCyberChefOpen(false)}
+        initialCoords={{ lat: viewState?.latitude || 37.7749, lon: viewState?.longitude || -122.4194 }}
+      />
+
+      <TacticalFieldNotesModal
+        isOpen={isFieldNotesOpen}
+        onClose={() => setIsFieldNotesOpen(false)}
+        operatorCoords={{ lat: viewState?.latitude || 37.7749, lon: viewState?.longitude || -122.4194 }}
+        onFlyTo={(lat, lon, zoom) => {
+          setViewState((prev: any) => ({ ...prev, latitude: lat, longitude: lon, zoom: zoom || 14 }));
+          setIsFieldNotesOpen(false);
+        }}
+      />
+
+      <NomadSentinelModal
+        isOpen={isNomadSentinelOpen}
+        onClose={() => setIsNomadSentinelOpen(false)}
+      />
+
+      {!IS_STORE_SUBMISSION_BUILD && (
+        <SparrowReconModal
+          isOpen={isSparrowReconOpen}
+          onClose={() => setIsSparrowReconOpen(false)}
+          operatorCoords={{ lat: viewState?.latitude || 37.7749, lon: viewState?.longitude || -122.4194 }}
+          onFlyTo={(lat, lon, zoom) => {
+            setViewState((prev: any) => ({ ...prev, latitude: lat, longitude: lon, zoom: zoom || 14 }));
+            setIsSparrowReconOpen(false);
+          }}
+        />
+      )}
 
       <div className="fixed bottom-2 sm:bottom-2.5 left-0 right-0 z-50 flex justify-center pointer-events-none px-1 sm:px-2 max-w-full">
         <div 
