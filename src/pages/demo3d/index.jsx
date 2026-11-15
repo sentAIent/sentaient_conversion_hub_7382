@@ -12,13 +12,18 @@ const ReturnToHubButton = () => {
 
   useEffect(() => {
     let animId;
+    let lastVisible = false;
     const check = () => {
       const p = (window._isTransitActive && window._warpProgress !== undefined)
         ? window._warpProgress 
         : (window._worldPauseLockProgress !== undefined && window._worldPauseLockProgress !== null)
           ? window._worldPauseLockProgress
           : (window._currentProgress || 0);
-      setVisible(p > 0.015);
+      const nextVisible = p > 0.015;
+      if (nextVisible !== lastVisible) {
+        lastVisible = nextVisible;
+        setVisible(nextVisible);
+      }
       animId = requestAnimationFrame(check);
     };
     animId = requestAnimationFrame(check);
@@ -70,6 +75,19 @@ const ReturnToHubButton = () => {
           <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse hidden sm:inline-block"></span>
           <span>{tour.currentStationIndex}/16</span>
           <span className="text-white/60">{tour.isPaused ? '(PAUSED)' : `(${tour.remainingSeconds}s)`}</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              tour.stopTour();
+            }}
+            aria-label="Exit Auto Tour"
+            title="Exit Auto Tour and remain in this world"
+            className="ml-1 px-2 py-0.5 rounded-full bg-rose-500/20 hover:bg-rose-500/40 border border-rose-400/50 text-rose-200 hover:text-white text-[9px] sm:text-[10px] font-bold tracking-wider transition-colors cursor-pointer whitespace-nowrap"
+          >
+            ✕ EXIT TOUR
+          </button>
         </div>
       )}
     </div>

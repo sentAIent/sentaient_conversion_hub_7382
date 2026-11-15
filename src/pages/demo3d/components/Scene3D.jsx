@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Sparkles, ScrollControls, Scroll, useScroll, Preload } from '@react-three/drei';
+import { Sparkles, ScrollControls, Scroll, useScroll } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { CameraController, TimelineManager } from '../TimelineManager';
@@ -34,7 +34,7 @@ const WORLD_CONFIG = {
   'MindWave': {
     category: 'NEURAL FREQUENCIES & AUDIO LAB',
     index: '01 / 16',
-    posStyle: { top: '80px', left: '44px', bottom: 'auto', right: 'auto', transform: 'none' },
+    posStyle: { bottom: '18px', left: '18px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Binaural Engine', 'Theta States', 'Sound Healing']
   },
   'Icebreaker': {
@@ -46,91 +46,91 @@ const WORLD_CONFIG = {
   'Interstellar': {
     category: 'GALACTIC STRATEGY & DEEP-SPACE RTS',
     index: '03 / 16',
-    posStyle: { top: '80px', right: '44px', bottom: 'auto', left: 'auto', transform: 'none' },
+    posStyle: { bottom: '76px', right: '18px', top: 'auto', left: 'auto', transform: 'none' },
     tags: ['Starfleet Fleet', 'Planetary Conquest', 'Warp Telemetry']
   },
   'Legal Eagle': {
     category: 'AUTONOMOUS AI LEGAL COUNSEL',
     index: '04 / 16',
-    posStyle: { top: '50%', left: '44px', bottom: 'auto', right: 'auto', transform: 'translateY(-50%)' },
+    posStyle: { bottom: '18px', left: '18px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Liability Audit', 'Automated Defense', 'Risk Mitigation']
   },
   'Autopilot': {
     category: 'ENTERPRISE SOCIAL MARKETING AGENT',
     index: '05 / 16',
-    posStyle: { top: '50%', right: '44px', bottom: 'auto', left: 'auto', transform: 'translateY(-50%)' },
+    posStyle: { bottom: '76px', right: '18px', top: 'auto', left: 'auto', transform: 'none' },
     tags: ['Omnichannel Sync', 'Predictive Virality', 'Audience Scaling']
   },
   'CloveH2O': {
     category: 'BOTANICAL WELLNESS & FUNCTIONAL HYDRATION',
     index: '15 / 16',
-    posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
+    posStyle: { bottom: '76px', right: '18px', top: 'auto', left: 'auto', transform: 'none' },
     tags: ['Organic Clove Extract', 'Bioactive Eugenol', 'Antioxidant Powerhouse', 'Digestive Vitality']
   },
   'FantasyQuant': {
     category: 'QUANTITATIVE SPORTS INTELLIGENCE',
     index: '06 / 16',
-    posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
+    posStyle: { bottom: '18px', left: '18px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Algorithmic Edge', 'Odds Arbitrage', 'Simulation Engine']
   },
   'Contango': {
     category: 'HIGH-FREQUENCY MARKET INTELLIGENCE',
     index: '07 / 16',
-    posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
+    posStyle: { bottom: '18px', left: '18px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Order Book Micro', 'Volatility Trading', 'Macro Liquidity']
   },
   'Sentaient': {
     category: 'AUTONOMOUS AI VENTURE STUDIO & MULTI-INDUSTRY LAB',
     index: '16 / 16',
-    posStyle: { bottom: '20px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
+    posStyle: { bottom: '76px', right: '18px', top: 'auto', left: 'auto', transform: 'none' },
     tags: ['Multi-Industry AI', 'FinTech & Quant', 'LegalTech Defense', 'BioTech & Wellness', 'Autonomous CTO']
   },
   'Elevate': {
     category: 'BIG-MOUNTAIN SNOWBOARD GAME & ALPINE HUB',
     index: '08 / 16',
-    posStyle: { top: '80px', right: '44px', bottom: 'auto', left: 'auto', transform: 'none' },
+    posStyle: { top: '76px', right: '18px', bottom: 'auto', left: 'auto', transform: 'none' },
     tags: ['3D Snowboard Game', 'Live Mountain Weather', 'Avalanche Safety Radar', 'Gear Optimization']
   },
   'Sphinx': {
     category: 'GLOBAL THREAT & DISASTER DEFENSE',
     index: '09 / 16',
-    posStyle: { top: '48%', left: '44px', bottom: 'auto', right: 'auto', transform: 'translateY(-50%)' },
+    posStyle: { bottom: '18px', left: '18px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Disaster Radar', 'Geopolitical Intel', 'Perimeter Home Sec']
   },
   'Liquid': {
-    category: 'FINANCIAL INTELLIGENCE & ACCOUNTING',
+    category: 'FINANCIAL INTELLIGENCE, AUTONOMOUS ACCOUNTING & TAX REPORTING, AND CRYPTO TOKEN MINTING',
     index: '10 / 16',
-    posStyle: { top: '48%', right: '44px', bottom: 'auto', left: 'auto', transform: 'translateY(-50%)' },
+    posStyle: { bottom: '76px', right: '18px', top: 'auto', left: 'auto', transform: 'none' },
     tags: ['Automated Tax Audit', 'Live P&L Ledger', 'Smart Token Mint']
   },
   'Maya': {
     category: 'EMPATHETIC AI AVATAR & 24/7 CONCIERGE',
     index: '11 / 16',
-    posStyle: { top: '80px', left: '44px', bottom: 'auto', right: 'auto', transform: 'none' },
+    posStyle: { bottom: '18px', left: '18px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Conversational Sales', 'Active Habit Coach', 'Deep Learning Companion']
   },
   'Pyramid': {
     category: 'AUTONOMOUS PROFIT ENGINE',
     index: '12 / 16',
-    posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
+    posStyle: { bottom: '18px', left: '18px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Market Arbitrage', 'Strategic Execution', 'Self-Operating Venture']
   },
   'PyRAmid': {
     category: 'AUTONOMOUS PROFIT ENGINE',
     index: '12 / 16',
-    posStyle: { bottom: '40px', left: '44px', top: 'auto', right: 'auto', transform: 'none' },
+    posStyle: { bottom: '18px', left: '18px', top: 'auto', right: 'auto', transform: 'none' },
     tags: ['Market Arbitrage', 'Strategic Execution', 'Self-Operating Venture']
   },
   'Matrix': {
     category: 'AUTONOMOUS AI SOFTWARE ENGINEERING LAB',
     index: '13 / 16',
-    posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
+    posStyle: { bottom: '76px', right: '18px', top: 'auto', left: 'auto', transform: 'none' },
     tags: ['Production Code Gen', 'Full-Stack Architecture', 'Autonomous Debugging', 'Deep Tech Research']
   },
   'LightSpeed': {
     category: 'AUTONOMOUS AI CTO & CYBERSECURITY',
     index: '14 / 16',
-    posStyle: { top: '80px', right: '44px', bottom: 'auto', left: 'auto', transform: 'none' },
+    posStyle: { top: '76px', right: '18px', bottom: 'auto', left: 'auto', transform: 'none' },
     tags: ['99.999% SLA Uptime', 'Self-Healing Cloud', 'Sub-10ms Global Edge']
   },
 };
@@ -139,6 +139,7 @@ const WORLD_CONFIG = {
 const HTMLStations = () => {
   const scroll = useScroll();
   const tour = useAutoTour();
+  const [isCardCollapsed, setIsCardCollapsed] = useState(false);
   const backRef = useRef();
   const overlayRef = useRef();
   const cardRef = useRef();
@@ -211,17 +212,17 @@ const HTMLStations = () => {
                 const conf = WORLD_CONFIG[world.name] || {
                   category: 'AUTONOMOUS WORLD EXPERIENCE',
                   index: 'SYSTEM',
-                  posStyle: { bottom: '40px', right: '44px', top: 'auto', left: 'auto', transform: 'none' },
+                  posStyle: { bottom: '76px', right: '18px', top: 'auto', left: 'auto', transform: 'none' },
                   tags: ['AI Autonomous', 'Real-Time Telemetry', 'Cloud Sync']
                 };
 
                 const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-                // On mobile phones, dock the dossier card cleanly at the bottom so the 3D world stays unobstructed
+                // On mobile phones, dock the dossier card cleanly above the bottom-right feedback pill
                 if (isMobile) {
                   overlayRef.current.style.removeProperty('top');
                   overlayRef.current.style.removeProperty('right');
-                  overlayRef.current.style.bottom = '12px';
+                  overlayRef.current.style.bottom = '58px';
                   overlayRef.current.style.left = '50%';
                   overlayRef.current.style.transform = 'translateX(-50%)';
                 } else {
@@ -383,16 +384,18 @@ const HTMLStations = () => {
           ref={cardRef}
           className="demo3d-side-dossier-card"
           style={{
-            maxWidth: '360px',
-            width: 'calc(100vw - 64px)',
-            padding: '18px 20px',
+            maxWidth: '310px',
+            width: 'calc(100vw - 48px)',
+            maxHeight: 'calc(100dvh - 110px)',
+            overflowY: 'auto',
+            padding: '12px 14px',
             background: 'linear-gradient(145deg, rgba(8, 14, 28, 0.84) 0%, rgba(4, 7, 18, 0.95) 100%)',
-            backdropFilter: 'blur(28px) saturate(190%)',
-            WebkitBackdropFilter: 'blur(28px) saturate(190%)',
-            borderRadius: '20px',
+            backdropFilter: 'blur(24px) saturate(185%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(185%)',
+            borderRadius: '16px',
             border: '1px solid rgba(255, 255, 255, 0.12)',
             borderTop: '2px solid #38bdf8',
-            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.22)',
+            boxShadow: '0 18px 44px rgba(0, 0, 0, 0.85), 0 0 28px rgba(56, 189, 248, 0.2)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
@@ -400,94 +403,125 @@ const HTMLStations = () => {
             pointerEvents: 'auto'
           }}
         >
-          {/* Header Row: Logo, Category Badge, Index */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '10px', marginBottom: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', minWidth: 0 }}>
+          {/* Header Row: Logo, Category Badge, Index & Collapse Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px', marginBottom: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', minWidth: 0 }}>
               <img 
                 ref={logoImgRef} 
                 src="" 
                 alt="Logo" 
                 style={{ 
-                  height: '30px', 
-                  maxWidth: '120px', 
+                  height: '24px', 
+                  maxWidth: '96px', 
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7))',
                   flexShrink: 0
                 }} 
               />
               <div style={{
-                display: 'inline-flex',
+                display: isCardCollapsed ? 'none' : 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
-                padding: '3px 9px',
-                borderRadius: '12px',
+                padding: '2px 7px',
+                borderRadius: '10px',
                 background: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                fontSize: '9.5px',
+                fontSize: '8.5px',
                 fontWeight: 800,
-                letterSpacing: '0.08em',
-                lineHeight: 1.3,
+                letterSpacing: '0.07em',
+                lineHeight: 1.25,
                 textTransform: 'uppercase',
                 whiteSpace: 'normal',
                 minWidth: 0
               }}>
-                <span ref={statusDotRef} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', flexShrink: 0 }}></span>
+                <span ref={statusDotRef} style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981', flexShrink: 0 }}></span>
                 <span ref={categoryRef} style={{ color: '#38bdf8' }}>Category</span>
               </div>
             </div>
-            <span ref={indexRef} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', flexShrink: 0 }}>EXP // 01</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+              <span ref={indexRef} style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>EXP // 01</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsCardCollapsed((prev) => !prev);
+                }}
+                title={isCardCollapsed ? 'Expand world info' : 'Minimize card to see more of the world'}
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#e2e8f0',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                {isCardCollapsed ? '+' : '−'}
+              </button>
+            </div>
           </div>
 
           {/* World Title */}
           <h1 ref={titleRef} style={{
             fontFamily: "'Space Grotesk', 'Inter', -apple-system, sans-serif",
-            fontSize: '1.9rem',
+            fontSize: isCardCollapsed ? '1.1rem' : '1.35rem',
             fontWeight: 800,
             letterSpacing: '-0.025em',
-            margin: '2px 0 4px 0',
+            margin: isCardCollapsed ? '0 0 6px 0' : '1px 0 3px 0',
             lineHeight: 1.15,
             color: '#ffffff'
           }}>
             World Name
           </h1>
 
-          {/* Value Proposition Headline */}
-          <h2 ref={summaryRef} style={{
-            fontFamily: "'Inter', -apple-system, sans-serif",
-            fontSize: '13.5px',
-            fontWeight: 700,
-            color: '#f8fafc',
-            margin: '0 0 6px 0',
-            lineHeight: 1.4,
-            letterSpacing: '-0.01em'
-          }}>
-            Summary
-          </h2>
+          {/* Collapsible Details Body */}
+          <div style={{ display: isCardCollapsed ? 'none' : 'block', width: '100%' }}>
+            {/* Value Proposition Headline */}
+            <h2 ref={summaryRef} style={{
+              fontFamily: "'Inter', -apple-system, sans-serif",
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#f8fafc',
+              margin: '0 0 4px 0',
+              lineHeight: 1.35,
+              letterSpacing: '-0.01em'
+            }}>
+              Summary
+            </h2>
 
-          {/* System Capability Narrative */}
-          <p ref={descRef} style={{
-            fontFamily: "'Inter', -apple-system, sans-serif",
-            fontSize: '12px',
-            color: '#94a3b8',
-            margin: '0 0 12px 0',
-            lineHeight: 1.55,
-            fontWeight: 400
-          }}>
-            Description
-          </p>
+            {/* System Capability Narrative */}
+            <p ref={descRef} style={{
+              fontFamily: "'Inter', -apple-system, sans-serif",
+              fontSize: '11px',
+              color: '#94a3b8',
+              margin: '0 0 8px 0',
+              lineHeight: 1.4,
+              fontWeight: 400
+            }}>
+              Description
+            </p>
 
-          {/* Capability Superpower Badges */}
-          <div ref={tagsRef} style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '6px',
-            marginBottom: '14px'
-          }}>
+            {/* Capability Superpower Badges */}
+            <div ref={tagsRef} style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '4px',
+              marginBottom: '8px'
+            }}>
+            </div>
           </div>
 
           {/* Action Bar */}
-          {/* Action Bar */}
-          <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '7px', paddingTop: '7px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
             
             {/* Primary Action: Enter App */}
             <a
@@ -561,7 +595,7 @@ const HTMLStations = () => {
 
             {/* Auto Tour Progression Bar: Back Button + Continue Button + Seconds Adjuster */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%', gap: '6px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', flex: '1 1 auto', gap: '6px', minWidth: 'fit-content' }}>
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', width: '100%', gap: '5px', minWidth: 0 }}>
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -569,8 +603,9 @@ const HTMLStations = () => {
                     tour.prevWorld();
                   }}
                   style={{
-                    flexShrink: 0,
-                    padding: '7px 10px',
+                    flex: '1 1 auto',
+                    minWidth: 0,
+                    padding: '7px 8px',
                     borderRadius: '8px',
                     border: '1px solid rgba(255, 255, 255, 0.2)',
                     background: 'rgba(255, 255, 255, 0.08)',
@@ -603,8 +638,9 @@ const HTMLStations = () => {
                       tour.togglePause();
                     }}
                     style={{
-                      flexShrink: 0,
-                      padding: '7px 12px',
+                      flex: '1 1 auto',
+                      minWidth: 0,
+                      padding: '7px 9px',
                       borderRadius: '8px',
                       border: tour.isPaused
                         ? '1px solid rgba(16, 185, 129, 0.9)'
@@ -651,8 +687,9 @@ const HTMLStations = () => {
                     tour.nextWorld();
                   }}
                   style={{
-                    flex: '1 0 auto',
-                    padding: '7px 10px',
+                    flex: '1.2 1 auto',
+                    minWidth: 0,
+                    padding: '7px 9px',
                     borderRadius: '8px',
                     border: tour.isActive ? '1px solid rgba(56, 189, 248, 0.7)' : '1px solid rgba(255, 255, 255, 0.2)',
                     background: tour.isActive 
@@ -766,7 +803,9 @@ const HTMLStations = () => {
                   </button>
                 </div>
 
-                <span style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>SCROLL TO FLY ↓</span>
+                {!tour.isActive && (
+                  <span style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>SCROLL TO FLY ↓</span>
+                )}
 
                 {tour.isActive && (
                   <button
@@ -956,7 +995,6 @@ const Scene3D = () => {
         <React.Suspense fallback={null}>
           <CameraController />
           <TimelineManager />
-          <Preload all />
         </React.Suspense>
         <Sparkles count={1000} scale={200} size={4} speed={0.8} opacity={0.5} color="#00ff44" />
 

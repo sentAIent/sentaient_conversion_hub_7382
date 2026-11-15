@@ -183,7 +183,7 @@ export default function WorldLiquid({ position, visible }) {
       {/* ------------------------------------------------------------- */}
       {/* 5. CENTERPIECE: LIQUID LOGO & TITLE CLEARLY ABOVE ANIMATION   */}
       {/* ------------------------------------------------------------- */}
-      <group position={[0, 290, -300]}>
+      <group position={[0, 302, -300]}>
         {/* Floating High-Res Liquid Emblem - Clear Above Forge & Waterfall */}
         <Float speed={2} rotationIntensity={0.05} floatIntensity={0.3}>
           <mesh position={[0, 68, 0]}>
@@ -216,16 +216,18 @@ export default function WorldLiquid({ position, visible }) {
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
-          position={[0, -72, 0]}
-          fontSize={32}
+          position={[0, -56, 0]}
+          fontSize={24}
+          lineHeight={1.2}
           color="#ffd700"
           outlineWidth={1.6}
           outlineColor="#0b0802"
           anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.08}
+          anchorY="top"
+          textAlign="center"
+          letterSpacing={0.07}
         >
-          FINANCIAL INTELLIGENCE & ACCOUNTING
+          {`FINANCIAL INTELLIGENCE,\nAUTONOMOUS ACCOUNTING & TAX REPORTING,\nAND CRYPTO TOKEN MINTING`}
         </Text>
       </group>
     </group>

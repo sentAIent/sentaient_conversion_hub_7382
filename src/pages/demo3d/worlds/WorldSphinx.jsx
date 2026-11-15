@@ -314,7 +314,7 @@ const PharaonicHead = () => {
       {/* --- A. Noble Monolithic Sculpted Face of Khafre --- */}
       {/* Unified Seamless Pharaonic Face Relief */}
       <mesh geometry={faceGeometry}>
-        <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.82} metalness={0.02} />
+        <meshStandardMaterial color={LIMESTONE_WARM} roughness={0.58} metalness={0.08} />
       </mesh>
 
       {/* Luminous Golden Pharaonic Eyes (Brighter Royal Gold) */}
@@ -325,10 +325,10 @@ const PharaonicHead = () => {
             <sphereGeometry args={[2.1, 18, 14]} />
             <meshStandardMaterial 
               color="#ffd700" 
-              emissive="#f59e0b" 
-              emissiveIntensity={1.3} 
-              roughness={0.25} 
-              metalness={0.85} 
+              emissive="#ffd700" 
+              emissiveIntensity={3.2} 
+              roughness={0.2} 
+              metalness={0.8} 
             />
           </mesh>
 
@@ -336,15 +336,24 @@ const PharaonicHead = () => {
           <mesh position={[0, 0, 0.7]} scale={[0.55, 0.7, 0.2]}>
             <sphereGeometry args={[1.0, 14, 12]} />
             <meshStandardMaterial 
-              color="#78350f" 
-              emissive="#ffd700" 
-              emissiveIntensity={0.6} 
-              roughness={0.2} 
+              color="#fef08a" 
+              emissive="#fef08a" 
+              emissiveIntensity={2.2} 
+              roughness={0.15} 
             />
           </mesh>
 
-          {/* Subtle Warm Divine Eye Illumination */}
-          <pointLight intensity={3.0} distance={35} color="#ffd700" />
+          {/* Additive Divine Eye Glow Halo */}
+          <mesh position={[0, 0, 0.4]} scale={[1.55, 0.88, 0.55]}>
+            <sphereGeometry args={[2.5, 14, 12]} />
+            <meshBasicMaterial
+              color="#ffd700"
+              transparent
+              opacity={0.32}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
         </group>
       ))}
 
@@ -584,8 +593,6 @@ const GreatPyramidsHorizon = () => {
           <coneGeometry args={[75, 110, 4]} />
           <meshStandardMaterial color={GOLD_24K} emissive={GOLD_24K} emissiveIntensity={1.8} metalness={0.95} roughness={0.12} />
         </mesh>
-        {/* Subtle Skyward Celestial Defense Beam */}
-        <pointLight position={[0, 860, 0]} color={GOLD_24K} intensity={14} distance={900} />
       </group>
 
       {/* Pyramid of Khafre (Center Right) */}
@@ -599,7 +606,6 @@ const GreatPyramidsHorizon = () => {
           <coneGeometry args={[70, 100, 4]} />
           <meshStandardMaterial color={GOLD_24K} emissive={GOLD_24K} emissiveIntensity={1.6} metalness={0.95} roughness={0.12} />
         </mesh>
-        <pointLight position={[0, 805, 0]} color={GOLD_24K} intensity={12} distance={850} />
       </group>
     </group>
   );
@@ -694,7 +700,7 @@ function GrandTempleBrazier({ position = [0, 0, 0], scale = 1.0, phaseOffset = 0
 
     if (lightRef.current) {
       // Atmospheric dynamic firelight flicker
-      lightRef.current.intensity = 22 + Math.sin(t * 9.4) * 4.5 + Math.sin(t * 21.7) * 3.0 + Math.sin(t * 37.1) * 1.6;
+      lightRef.current.intensity = 42 + Math.sin(t * 9.4) * 9.0 + Math.sin(t * 21.7) * 5.5 + Math.sin(t * 37.1) * 3.0;
     }
 
     // Updraft ember particles drifting in desert breeze
@@ -896,19 +902,33 @@ function GrandTempleBrazier({ position = [0, 0, 0], scale = 1.0, phaseOffset = 0
       <pointLight
         ref={lightRef}
         position={[0, 88, 0]}
-        color="#f59e0b"
-        distance={750}
-        decay={2}
-        intensity={22}
-      />
-      {/* Broad Warm Hearth Ambiance Light */}
-      <pointLight
-        position={[0, 110, 0]}
-        color="#ea580c"
+        color="#ff8c1a"
         distance={950}
-        decay={2}
-        intensity={14}
+        decay={0.8}
+        intensity={42}
       />
+    </group>
+  );
+}
+
+function SphinxFireReflectionLights() {
+  const chestLightRef = useRef();
+  const faceLightRef = useRef();
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (chestLightRef.current) {
+      chestLightRef.current.intensity = 42 + Math.sin(t * 8.3) * 10 + Math.sin(t * 19.1) * 5.5;
+    }
+    if (faceLightRef.current) {
+      faceLightRef.current.intensity = 32 + Math.cos(t * 7.5 + 1.1) * 7.5 + Math.sin(t * 17.4) * 4.0;
+    }
+  });
+
+  return (
+    <group>
+      <pointLight ref={chestLightRef} position={[0, 15, -550]} color="#ff7b1c" distance={900} decay={0.8} intensity={42} />
+      <pointLight ref={faceLightRef} position={[0, 145, -550]} color="#f59e0b" distance={750} decay={0.8} intensity={32} />
     </group>
   );
 }
@@ -926,17 +946,19 @@ export default function WorldSphinx({ position, visible }) {
   return (
     <group position={position}>
       {/* --- Cinematic Egyptian Twilight & Golden Torch Lighting --- */}
-      <ambientLight intensity={0.55} color="#181326" />
+      <ambientLight intensity={0.87} color="#64564b" />
+      <hemisphereLight args={['#7dd3fc', '#c2955d', 0.44]} />
       
       {/* Primary Golden Sunset/Moonlight Key on the Sphinx Face */}
-      <directionalLight position={[-450, 650, -200]} intensity={3.2} color="#fff1cc" />
+      <directionalLight position={[-450, 650, -200]} intensity={3.68} color="#fff1cc" />
       
       {/* Soft Blue Night Sky Fill */}
-      <directionalLight position={[450, 450, 300]} intensity={1.4} color="#38bdf8" />
+      <directionalLight position={[450, 450, 300]} intensity={1.72} color="#38bdf8" />
       
-      {/* Warm Golden Torch Spotlight illuminating the monumental chest & paws */}
-      <pointLight position={[0, 80, -520]} intensity={18} distance={1100} color="#f59e0b" />
-      <pointLight position={[0, 160, -460]} intensity={28} distance={900} color="#ffedd5" />
+      {/* Warm Golden Torch & Flickering Brazier Reflections on the Front of the Sphinx */}
+      <SphinxFireReflectionLights />
+      <pointLight position={[0, 80, -520]} intensity={24} distance={1100} decay={0.8} color="#f59e0b" />
+      <pointLight position={[0, 160, -460]} intensity={32} distance={900} decay={0.8} color="#ffedd5" />
 
       {/* Atmospheric Desert Starlight & Golden Sand Particles */}
       <Sparkles count={700} scale={[1900, 700, 1800]} size={6} speed={0.4} opacity={0.5} color="#ffd700" position={[0, 100, -700]} />

@@ -4,26 +4,113 @@ import { useEffect } from 'react';
 import { WORLD_PAUSE_STATIONS, startWorldPause, clearActiveWorldPause } from './WorldPauseManager';
 
 export const STATIONS = [
-  { id: 'hub', name: 'Home Hub', p: 0.000, duration: 3200, color: '#00E5FF' },
-  { id: 'mindwave', name: 'MindWave', p: 0.038, duration: 3600, color: '#38BDF8' },
-  { id: 'icebreaker', name: 'Icebreaker', p: 0.135, duration: 4000, color: '#FF6600' },
-  { id: 'interstellar', name: 'Interstellar', p: 0.200, duration: 3600, color: '#00D2FF' },
-  { id: 'legal', name: 'Legal Eagle', p: 0.248, duration: 3600, color: '#D4AF37' },
-  { id: 'autopilot', name: 'Autopilot', p: 0.293, duration: 3600, color: '#10B981' },
-  { id: 'fantasy', name: 'FantasyQuant', p: 0.413, duration: 4400, color: '#00FF88' },
-  { id: 'contango', name: 'Contango', p: 0.463, duration: 3600, color: '#FFD700' },
-  { id: 'elevate', name: 'Elevate', p: 0.518, duration: 3600, color: '#00FFFF' },
-  { id: 'sphinx', name: 'Sphinx', p: 0.582, duration: 3600, color: '#F59E0B' },
-  { id: 'liquid', name: 'Liquid', p: 0.648, duration: 3600, color: '#00FF88' },
-  { id: 'maya', name: 'Maya', p: 0.712, duration: 3600, color: '#EAB308' },
-  { id: 'pyramid', name: 'Pyramid', p: 0.778, duration: 3600, color: '#00E5FF' },
-  { id: 'matrix', name: 'Matrix', p: 0.842, duration: 3600, color: '#00FF44' },
-  { id: 'lightspeed', name: 'LightSpeed', p: 0.893, duration: 3600, color: '#00FFFF' },
-  { id: 'clove', name: 'CloveH2O', p: 0.939, duration: 3600, color: '#FF00FF' },
-  { id: 'sentaient', name: 'Sentaient', p: 0.979, duration: 4000, color: '#60A9FF' }
+  { id: 'hub', name: 'Home Hub', p: 0.000, entryP: 0.000, duration: 3200, color: '#00E5FF' },
+  { id: 'mindwave', name: 'MindWave', p: 0.038, entryP: 0.015, duration: 3600, color: '#38BDF8' },
+  { id: 'icebreaker', name: 'Icebreaker', p: 0.135, entryP: 0.058, duration: 4000, color: '#FF6600' },
+  { id: 'interstellar', name: 'Interstellar', p: 0.200, entryP: 0.155, duration: 3600, color: '#00D2FF' },
+  { id: 'legal', name: 'Legal Eagle', p: 0.248, entryP: 0.220, duration: 3600, color: '#D4AF37' },
+  { id: 'autopilot', name: 'Autopilot', p: 0.293, entryP: 0.265, duration: 3600, color: '#10B981' },
+  { id: 'fantasy', name: 'FantasyQuant', p: 0.413, entryP: 0.320, duration: 4400, color: '#00FF88' },
+  { id: 'contango', name: 'Contango', p: 0.463, entryP: 0.432, duration: 3600, color: '#FFD700' },
+  { id: 'elevate', name: 'Elevate', p: 0.518, entryP: 0.478, duration: 3600, color: '#00FFFF' },
+  { id: 'sphinx', name: 'Sphinx', p: 0.582, entryP: 0.542, duration: 3600, color: '#F59E0B' },
+  { id: 'liquid', name: 'Liquid', p: 0.648, entryP: 0.605, duration: 3600, color: '#00FF88' },
+  { id: 'maya', name: 'Maya', p: 0.712, entryP: 0.670, duration: 3600, color: '#EAB308' },
+  { id: 'pyramid', name: 'Pyramid', p: 0.778, entryP: 0.735, duration: 3600, color: '#00E5FF' },
+  { id: 'matrix', name: 'Matrix', p: 0.842, entryP: 0.800, duration: 3600, color: '#00FF44' },
+  { id: 'lightspeed', name: 'LightSpeed', p: 0.893, entryP: 0.865, duration: 3600, color: '#00FFFF' },
+  { id: 'clove', name: 'CloveH2O', p: 0.939, entryP: 0.910, duration: 3600, color: '#FF00FF' },
+  { id: 'sentaient', name: 'Sentaient', p: 0.979, entryP: 0.952, duration: 4000, color: '#60A9FF' }
 ];
 
 let activeAnimId = null;
+
+/**
+ * Builds a uniform 3D arc-length parameterization between startP and endP
+ * using window._scrollTimeline. Any flat pause plateaus (0 distance) are
+ * skipped instantaneously so camera motion is continuous and constant-speed.
+ */
+function buildArcLengthMapper(startP, endP) {
+  const tl = typeof window !== 'undefined' ? window._scrollTimeline : null;
+  if (!tl || tl.length < 2 || Math.abs(endP - startP) < 1e-6) {
+    return {
+      totalDist: 0,
+      mapTToP: (t) => startP + (endP - startP) * t,
+    };
+  }
+
+  const forward = endP >= startP;
+  const lo = forward ? startP : endP;
+  const hi = forward ? endP : startP;
+
+  const evalKey = (p) => {
+    if (p <= tl[0].p) return tl[0];
+    if (p >= tl[tl.length - 1].p) return tl[tl.length - 1];
+    for (let i = 0; i < tl.length - 1; i++) {
+      const a = tl[i];
+      const b = tl[i + 1];
+      if (p >= a.p && p <= b.p) {
+        const u = (p - a.p) / Math.max(1e-9, b.p - a.p);
+        return {
+          p,
+          x: a.x + (b.x - a.x) * u,
+          y: a.y + (b.y - a.y) * u,
+          z: a.z + (b.z - a.z) * u,
+          rx: a.rx + (b.rx - a.rx) * u,
+          ry: a.ry + (b.ry - a.ry) * u,
+        };
+      }
+    }
+    return tl[0];
+  };
+
+  // Collect ordered knots from lo to hi
+  const knots = [evalKey(lo)];
+  for (let i = 0; i < tl.length; i++) {
+    if (tl[i].p > lo + 1e-7 && tl[i].p < hi - 1e-7) {
+      knots.push(tl[i]);
+    }
+  }
+  knots.push(evalKey(hi));
+
+  const cumDist = [0];
+  for (let i = 0; i < knots.length - 1; i++) {
+    const a = knots[i];
+    const b = knots[i + 1];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const dz = b.z - a.z;
+    const spatial = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const angular = (Math.abs(b.rx - a.rx) + Math.abs(b.ry - a.ry)) * 450;
+    cumDist.push(cumDist[i] + spatial + angular);
+  }
+
+  const totalDist = cumDist[cumDist.length - 1];
+  if (totalDist < 1e-4) {
+    return {
+      totalDist: 0,
+      mapTToP: (t) => startP + (endP - startP) * t,
+    };
+  }
+
+  const mapForward = (u) => {
+    const target = Math.max(0, Math.min(1, u)) * totalDist;
+    for (let i = 0; i < cumDist.length - 1; i++) {
+      const d0 = cumDist[i];
+      const d1 = cumDist[i + 1];
+      if (d1 > d0 && target <= d1 + 1e-6) {
+        const segU = (target - d0) / (d1 - d0);
+        return knots[i].p + (knots[i + 1].p - knots[i].p) * Math.max(0, Math.min(1, segU));
+      }
+    }
+    return hi;
+  };
+
+  return {
+    totalDist,
+    mapTToP: (t) => (forward ? mapForward(t) : mapForward(1 - t)),
+  };
+}
 
 export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete = null) => {
   const clampedIndex = Math.max(0, Math.min(STATIONS.length - 1, targetIndex));
@@ -79,7 +166,15 @@ export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete 
   
   window._teleportActiveWorldId = startStation.id;
   
-  const duration = customDuration || 1350;
+  const arrivalP = (clampedIndex === 2 && window._icebreakerMeltState !== 'completed')
+    ? 0.120
+    : targetStation.p;
+  const switchT = targetStation.id === 'hub' ? 0.50 : 0.30;
+  const entryStart = targetStation.entryP !== undefined ? targetStation.entryP : Math.max(0, arrivalP - 0.022);
+  const entryMapper = targetStation.id === 'hub' ? null : buildArcLengthMapper(entryStart, arrivalP);
+  const duration = customDuration || (entryMapper && entryMapper.totalDist > 0
+    ? Math.round(Math.max(2600, Math.min(6500, 1800 + entryMapper.totalDist * 0.22)))
+    : 2700);
   const startTime = performance.now();
   let switchedWorld = false;
   
@@ -100,48 +195,51 @@ export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete 
     const t = Math.min(1.0, elapsed / duration);
     
     // Hyper-speed warp tunnel opacity envelope:
-    // 0 to 0.28: surge in
-    // 0.28 to 0.65: solid full hyperspace (completely shielding the world switch)
-    // 0.65 to 0.95: smooth fade-out as camera lands in destination world
+    // Masks the instant world switch at switchT, then fades out cleanly by t=0.48
+    // so the destination's unique wormhole is 100% visible for the rest of the flight.
     let warpOpacity = 0.0;
-    if (t < 0.28) {
-      warpOpacity = t / 0.28;
-    } else if (t < 0.65) {
-      warpOpacity = 1.0;
+    if (targetStation.id === 'hub') {
+      if (t < 0.28) warpOpacity = t / 0.28;
+      else if (t < 0.65) warpOpacity = 1.0;
+      else warpOpacity = Math.max(0, 1.0 - (t - 0.65) / 0.30);
     } else {
-      warpOpacity = Math.max(0, 1.0 - (t - 0.65) / 0.30);
+      if (t < 0.20) warpOpacity = t / 0.20;
+      else if (t < 0.34) warpOpacity = 1.0;
+      else if (t < 0.48) warpOpacity = Math.max(0, 1.0 - (t - 0.34) / 0.14);
+      else warpOpacity = 0.0;
     }
     window._teleportWarp.opacity = warpOpacity;
     window._teleportWarp.progress = t;
     
-    // Dynamic Warp FOV dilation: peaks at t = 0.50 (+16 degrees)
-    window._teleportFovBoost = Math.sin(t * Math.PI) * 16.0;
-    
-    // Quantum world switch at peak warp inside the dense tunnel (t >= 0.50):
-    if (t >= 0.50 && !switchedWorld) {
+    // Dynamic Warp FOV dilation: peaks at t = 0.32 (+14 degrees)
+    window._teleportFovBoost = Math.sin(t * Math.PI) * 14.0;
+
+    // Quantum world switch into destination's unique entry wormhole:
+    if (t >= switchT && !switchedWorld) {
       switchedWorld = true;
       window._teleportActiveWorldId = targetStation.id;
       window._snapCamera = true;
       if (window._scrollObj) {
-        window._scrollObj.offset = targetStation.p;
+        window._scrollObj.offset = arrivalP;
       }
       if (window._scrollEl) {
         const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
         if (maxScroll > 0) {
-          window._scrollEl.scrollTop = targetStation.p * maxScroll;
+          window._scrollEl.scrollTop = arrivalP * maxScroll;
         }
       }
     }
     
-    // Trajectory calculation:
-    if (t < 0.50) {
-      const p1 = t / 0.50;
-      const ease1 = p1 * p1 * p1; // Accelerate forward into wormhole
-      window._warpProgress = startStation.p + 0.022 * ease1;
+    // Continuous, consistent-speed trajectory calculation:
+    if (t < switchT) {
+      const p1 = t / switchT;
+      window._warpProgress = Math.min(0.999, startStation.p + 0.012 * p1);
+    } else if (targetStation.id === 'hub') {
+      const p2 = (t - switchT) / (1.0 - switchT);
+      window._warpProgress = 0.022 * (1.0 - p2);
     } else {
-      const p2 = (t - 0.50) / 0.50;
-      const ease2 = 1.0 - Math.pow(1.0 - p2, 3); // Decelerate smoothly out of wormhole
-      window._warpProgress = (targetStation.p - 0.022) + 0.022 * ease2;
+      const p2 = (t - switchT) / (1.0 - switchT);
+      window._warpProgress = entryMapper.mapTToP(p2);
     }
     
     if (t < 1.0) {
@@ -155,7 +253,7 @@ export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete 
       window._warpProgress = undefined;
       window._isProgrammaticScroll = false;
       window._currentStationIndex = clampedIndex;
-      window._currentProgress = targetStation.p;
+      window._currentProgress = arrivalP;
       const pauseStation = WORLD_PAUSE_STATIONS.find(s => s.id === targetStation.id);
       if (pauseStation) {
         startWorldPause(pauseStation);
@@ -166,12 +264,12 @@ export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete 
       activeAnimId = null;
       
       if (window._scrollObj) {
-        window._scrollObj.offset = targetStation.p;
+        window._scrollObj.offset = arrivalP;
       }
       if (window._scrollEl) {
         const maxScroll = window._scrollEl.scrollHeight - window._scrollEl.clientHeight;
         if (maxScroll > 0) {
-          window._scrollEl.scrollTop = targetStation.p * maxScroll;
+          window._scrollEl.scrollTop = arrivalP * maxScroll;
         }
         window._scrollEl.style.overflow = 'auto';
       }
@@ -242,8 +340,11 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
     ? 0.120 
     : targetStation.p;
   
-  // Sequential transit between worlds: majestic 4000ms flow through connecting wormhole (half speed)
-  const duration = customDuration || targetStation?.duration || 4000;
+  const arcMapper = buildArcLengthMapper(startP, endP);
+  // Sequential transit between worlds: smooth, consistent speed scaled by 3D distance
+  const duration = customDuration || (arcMapper.totalDist > 0
+    ? Math.round(Math.max(3600, Math.min(8500, 2600 + arcMapper.totalDist * 0.28)))
+    : (targetStation?.duration || 4000));
   const startTime = performance.now();
 
   // Engage universal relativistic warp speed conduit & FOV dilation
@@ -270,12 +371,8 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
     const elapsed = now - startTime;
     const t = Math.min(1.0, elapsed / duration);
     
-    // Smooth cubic ease-in-out for fluid acceleration into wormhole and gentle deceleration at destination
-    const ease = t < 0.5 
-      ? 4 * t * t * t 
-      : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      
-    const currentP = startP + (endP - startP) * ease;
+    // Continuous, consistent 3D speed through the connecting wormhole (no plateau stalls)
+    const currentP = arcMapper.mapTToP(t);
     window._warpProgress = currentP;
 
     // Dynamic FOV warp speed dilation (+12 deg at peak speed)
@@ -309,7 +406,7 @@ export const goToStation = (targetIndex, customDuration = null, onComplete = nul
       window._currentStationIndex = clampedIndex;
       window._currentProgress = endP;
       const pauseStation = WORLD_PAUSE_STATIONS.find(s => s.id === targetStation.id);
-      if (pauseStation) {
+      if (pauseStation && (!window._isAutoTourActive || pauseStation.isIcebreaker)) {
         startWorldPause(pauseStation);
       }
       if (targetStation.id === 'hub') {

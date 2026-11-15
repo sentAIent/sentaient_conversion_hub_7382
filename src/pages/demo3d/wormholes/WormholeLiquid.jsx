@@ -79,17 +79,20 @@ const WormholeLiquid = ({ position, rotation = [Math.PI / 2, 0, 0], length = 320
       </mesh>
 
       {/* Financial Ledger Ribbon Rings */}
-      <mesh ref={ledgerRibbonsRef}>
-        <cylinderGeometry args={[radius - 12, radius - 12, length, 16, 32, true]} />
-        <meshBasicMaterial
-          color="#ffe066"
-          wireframe
-          transparent
-          opacity={0.3}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
+      <group ref={ledgerRibbonsRef}>
+        {[-0.38, -0.22, -0.07, 0.07, 0.22, 0.38].map((frac, idx) => (
+          <mesh key={idx} position={[0, length * frac, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[radius * 0.94, 3.5, 16, 64]} />
+            <meshStandardMaterial
+              color={idx % 2 === 0 ? '#ffd700' : '#00ff88'}
+              emissive={idx % 2 === 0 ? '#b45309' : '#059669'}
+              emissiveIntensity={2.6}
+              roughness={0.08}
+              metalness={0.94}
+            />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 };

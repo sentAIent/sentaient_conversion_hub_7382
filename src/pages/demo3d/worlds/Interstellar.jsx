@@ -398,7 +398,7 @@ const Interstellar = ({ position, rotation, visible }) => {
       
       {/* Title & Logo Hologram - elevated high above starfleet */}
       <group position={[0, 260, 200]}>
-        <mesh position={[0, 110, 0]}>
+        <mesh position={[0, 85, 0]}>
           <planeGeometry args={[180, 180]} />
           <meshBasicMaterial map={logoTex} transparent depthWrite={false} />
         </mesh>

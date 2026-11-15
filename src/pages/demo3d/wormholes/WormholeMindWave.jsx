@@ -94,17 +94,20 @@ const WormholeMindWave = ({
       </mesh>
 
       {/* Internal Concentric Neural Frequency Rings */}
-      <mesh ref={ringsRef}>
-        <cylinderGeometry args={[radius - 12, radius - 12, length, 16, 24, true]} />
-        <meshBasicMaterial
-          color="#38bdf8"
-          wireframe
-          transparent
-          opacity={0.3}
-          side={THREE.DoubleSide}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
+      <group ref={ringsRef}>
+        {[-0.35, -0.18, 0, 0.18, 0.35].map((frac, idx) => (
+          <mesh key={idx} position={[0, length * frac, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[radius * 0.94, 3.5, 16, 64]} />
+            <meshStandardMaterial
+              color={idx % 2 === 0 ? '#38bdf8' : '#a855f7'}
+              emissive={idx % 2 === 0 ? '#0284c7' : '#7e22ce'}
+              emissiveIntensity={2.8}
+              roughness={0.08}
+              metalness={0.94}
+            />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 };

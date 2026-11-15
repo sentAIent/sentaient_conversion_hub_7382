@@ -54,7 +54,7 @@ export default function FeedbackModal({ currentApp, currentWorld }) {
   return (
     <>
       {/* Floating Feedback Trigger Pill */}
-      <div className="fixed bottom-5 right-5 z-[80] flex items-center gap-2">
+      <div className="fixed bottom-2.5 right-2.5 sm:bottom-5 sm:right-5 z-[80] flex items-center gap-2">
         {hasAutoPrompted && !isOpen && (
           <div 
             onClick={() => setIsOpen(true)}
@@ -74,10 +74,10 @@ export default function FeedbackModal({ currentApp, currentWorld }) {
         <button
           onClick={() => setIsOpen(true)}
           aria-label="Open Feedback Dialog"
-          className="group flex items-center gap-2 px-3.5 py-2.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-cyan-300 border border-slate-700/80 hover:border-cyan-500/50 rounded-full shadow-xl shadow-black/50 backdrop-blur-md transition-all duration-200 cursor-pointer active:scale-95"
+          className="group flex items-center gap-1.5 sm:gap-2 p-2.5 sm:px-3.5 sm:py-2.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-cyan-300 border border-slate-700/80 hover:border-cyan-500/50 rounded-full shadow-xl shadow-black/50 backdrop-blur-md transition-all duration-200 cursor-pointer active:scale-95"
         >
           <MessageSquarePlus className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
-          <span className="font-mono text-xs font-bold tracking-wider">FEEDBACK</span>
+          <span className="hidden sm:inline font-mono text-xs font-bold tracking-wider">FEEDBACK</span>
         </button>
       </div>
 
@@ -85,7 +85,7 @@ export default function FeedbackModal({ currentApp, currentWorld }) {
       {isOpen && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
           <div 
-            className="relative w-full max-w-md bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-700/80 rounded-2xl p-6 shadow-2xl shadow-cyan-950/40 text-white"
+            className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-cyan-950/40 text-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}

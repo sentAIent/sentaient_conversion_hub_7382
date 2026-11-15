@@ -75,18 +75,21 @@ const WormholePyramid = ({ position, rotation = [Math.PI / 2, 0, 0], length = 32
         />
       </mesh>
 
-      {/* Autonomous Neural Lattice */}
-      <mesh ref={latticeRef}>
-        <cylinderGeometry args={[radius - 14, radius - 14, length, 8, 32, true]} />
-        <meshBasicMaterial
-          color="#e879f9"
-          wireframe
-          transparent
-          opacity={0.35}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
+      {/* Autonomous Neural Vortex Rings */}
+      <group ref={latticeRef}>
+        {[-0.38, -0.22, -0.07, 0.07, 0.22, 0.38].map((frac, idx) => (
+          <mesh key={idx} position={[0, length * frac, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[radius * 0.92, 3.5, 16, 64]} />
+            <meshStandardMaterial
+              color={idx % 2 === 0 ? '#c084fc' : '#00e5ff'}
+              emissive={idx % 2 === 0 ? '#7e22ce' : '#0284c7'}
+              emissiveIntensity={2.6}
+              roughness={0.08}
+              metalness={0.94}
+            />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 };

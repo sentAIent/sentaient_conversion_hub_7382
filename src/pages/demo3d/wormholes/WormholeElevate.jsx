@@ -101,31 +101,37 @@ const WormholeElevate = ({ position, rotation = [Math.PI / 2, 0, 0], length = 24
         />
       </mesh>
 
-      {/* Frosted Ice Cave Ridges */}
-      <mesh ref={contourRingsRef}>
-        <cylinderGeometry args={[radius - 10, radius - 10, length, 16, 32, true]} />
-        <meshBasicMaterial
-          color="#e0f2fe"
-          wireframe
-          transparent
-          opacity={0.28}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
+      {/* Frosted Ice Cave Vortex Rings */}
+      <group ref={contourRingsRef}>
+        {[-0.38, -0.19, 0, 0.19, 0.38].map((frac, idx) => (
+          <mesh key={idx} position={[0, length * frac, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[radius * 0.94, 4.0, 16, 64]} />
+            <meshStandardMaterial
+              color={idx % 2 === 0 ? '#38bdf8' : '#e0f2fe'}
+              emissive={idx % 2 === 0 ? '#0284c7' : '#7dd3fc'}
+              emissiveIntensity={2.4}
+              roughness={0.1}
+              metalness={0.92}
+            />
+          </mesh>
+        ))}
+      </group>
 
-      {/* Inner Snow Drift Ribs */}
-      <mesh ref={snowFlurryRef}>
-        <cylinderGeometry args={[radius - 25, radius - 25, length, 8, 16, true]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          wireframe
-          transparent
-          opacity={0.22}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
+      {/* Inner Snow Drift Vortex Rings */}
+      <group ref={snowFlurryRef}>
+        {[-0.28, -0.09, 0.09, 0.28].map((frac, idx) => (
+          <mesh key={idx} position={[0, length * frac, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[radius * 0.88, 2.5, 16, 64]} />
+            <meshStandardMaterial
+              color="#ffffff"
+              emissive="#bae6fd"
+              emissiveIntensity={2.0}
+              roughness={0.12}
+              metalness={0.9}
+            />
+          </mesh>
+        ))}
+      </group>
 
       {/* Dense Swirling Snowflakes Inside the Ice Cave */}
       <points ref={snowPointsRef}>

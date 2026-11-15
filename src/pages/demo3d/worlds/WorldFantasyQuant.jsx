@@ -1216,19 +1216,16 @@ const Scoreboard = () => {
 
       {/* Floating Wizard Emblem perched above Jumbotron */}
       <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
-        <mesh position={[0, 225, 10]}>
-          <planeGeometry args={[90, 120]} />
+        <mesh position={[0, 232, 12]}>
+          <planeGeometry args={[105, 140]} />
           <meshBasicMaterial 
             map={logoTex} 
-            transparent 
-            depthWrite={false} 
-            blending={THREE.AdditiveBlending} 
+            transparent={false}
+            alphaTest={0.5}
+            side={THREE.DoubleSide}
           />
         </mesh>
       </Float>
-
-      {/* Grid overlay for LED effect */}
-      <gridHelper args={[800, 80, isCelebration ? '#ffaa00' : '#00ff00', '#004400']} position={[0, 0, 11]} rotation={[Math.PI / 2, 0, 0]} />
 
       {/* Text on Main Screen */}
       <Text font="/fonts/Roboto.woff" fallbackFonts={[]} position={[0, 88, 15]} fontSize={isCelebration ? 46 : 58} maxWidth={730} textAlign="center" color={isCelebration ? '#ffd700' : '#ffffff'} outlineWidth={0.02} outlineColor={isCelebration ? '#ff8800' : '#00ff00'} anchorX="center" anchorY="middle">
@@ -1571,17 +1568,7 @@ const StadiumLightBeams = () => {
     <group>
       {corners.map((pos, i) => (
         <group key={i} position={pos}>
-          {/* Light bank structure */}
-          <mesh position={[0, 0, 0]}>
-            <boxGeometry args={[60, 40, 20]} />
-            <meshStandardMaterial color="#111827" metalness={0.9} roughness={0.1} />
-          </mesh>
-          {/* Halogen bulb grid face */}
-          <mesh position={[0, 0, 10.1]}>
-            <planeGeometry args={[56, 36]} />
-            <meshBasicMaterial color="#ffffff" />
-          </mesh>
-          {/* Intense halogen point light */}
+          {/* Stadium overhead floodlight */}
           <pointLight color="#f0f9ff" intensity={4.5} distance={2000} decay={1.5} />
         </group>
       ))}
@@ -1589,20 +1576,84 @@ const StadiumLightBeams = () => {
   );
 };
 
+const stadiumSkyVertexShader = `
+  varying vec3 vWorldDir;
+  void main() {
+    vWorldDir = normalize(position);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const stadiumSkyFragmentShader = `
+  varying vec3 vWorldDir;
+
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+  }
+
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+      mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+      u.y
+    );
+  }
+
+  float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    for (int i = 0; i < 4; i++) {
+      v += a * noise(p);
+      p *= 2.05;
+      a *= 0.5;
+    }
+    return v;
+  }
+
+  void main() {
+    vec3 dir = normalize(vWorldDir);
+    float h = clamp(dir.y, 0.0, 1.0);
+
+    // Clear daytime stadium blue sky gradient
+    vec3 horizonBlue = vec3(0.62, 0.84, 0.99);
+    vec3 midBlue = vec3(0.22, 0.58, 0.92);
+    vec3 zenithBlue = vec3(0.08, 0.34, 0.74);
+    vec3 skyColor = mix(horizonBlue, midBlue, smoothstep(0.0, 0.32, h));
+    skyColor = mix(skyColor, zenithBlue, smoothstep(0.28, 0.85, h));
+
+    // A few soft, sparse sunlit white clouds above the stadium rim
+    if (dir.y > 0.04) {
+      vec2 cloudUv = dir.xz / (dir.y + 0.28) * 1.45;
+      float n = fbm(cloudUv + vec2(1.7, -0.9));
+      float detail = fbm(cloudUv * 2.3 + vec2(-2.1, 3.4));
+      float cloudDensity = smoothstep(0.56, 0.78, n * 0.78 + detail * 0.22);
+      float horizonFade = smoothstep(0.04, 0.22, dir.y) * smoothstep(0.95, 0.45, dir.y);
+      float alpha = cloudDensity * horizonFade * 0.88;
+      vec3 cloudColor = mix(vec3(0.86, 0.93, 0.99), vec3(1.0, 1.0, 1.0), smoothstep(0.45, 0.78, n));
+      skyColor = mix(skyColor, cloudColor, alpha);
+    }
+
+    gl_FragColor = vec4(skyColor, 1.0);
+  }
+`;
+
 const WorldFantasyQuant = ({ position, rotation, visible }) => {
-  const stadiumTex = useLoader(THREE.TextureLoader, '/fantasy_quant_stadium.jpg');
-  stadiumTex.colorSpace = THREE.SRGBColorSpace;
-  stadiumTex.wrapS = THREE.RepeatWrapping;
-  stadiumTex.repeat.set(-1, 1);
-  
   if (!visible) return null;
 
   return (
     <group visible={visible} position={position} rotation={rotation}>
-      {/* Dark stadium background */}
+      {/* Daytime Blue Sky & Sparse Clouds Dome */}
       <mesh>
         <sphereGeometry args={[3000, 32, 32]} />
-        <meshBasicMaterial map={stadiumTex} side={THREE.BackSide} />
+        <shaderMaterial
+          vertexShader={stadiumSkyVertexShader}
+          fragmentShader={stadiumSkyFragmentShader}
+          side={THREE.BackSide}
+          depthWrite={false}
+        />
       </mesh>
 
       <StadiumGeometry />

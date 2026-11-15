@@ -69,6 +69,16 @@ export default defineConfig({
     })
   ],
   server: {
+    watch: {
+      ignored: [
+        '**/public/**',
+        '**/lim_clone/**',
+        '**/fantasy-quant/**',
+        '**/fantasy-quant-mobile/**',
+        '**/icebreaker/**',
+        '**/dist/**',
+      ],
+    },
     hmr: {
       clientPort: 5173
     },

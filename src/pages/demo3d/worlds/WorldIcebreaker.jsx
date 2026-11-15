@@ -1,5 +1,5 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useScroll, Text, Sky } from '@react-three/drei';
 import * as THREE from 'three';
 import DigitalFire from './icebreaker/DigitalFire';
@@ -616,13 +616,13 @@ export const runIcebreakerMelt = (onComplete) => {
       const prog = Math.min(1.0, zoomElapsed / ZOOM_MS);
       const easedZoom = easeInOutCubic(prog);
 
-      // Glide from entrance up and forward to look down at people around fire at 33-35 degree angle
+      // Glide from entrance up and forward to frame title, subtext, logo, and campfire cleanly
       window._icebreakerCam = {
         active: true,
         x: 0,
         y: -3980 + (-3840 - -3980) * easedZoom,
         z: -1680 + (-2010 - -1680) * easedZoom,
-        rx: 0 + (-0.58 - 0) * easedZoom,
+        rx: 0 + (-0.41 - 0) * easedZoom,
         ry: 0
       };
       requestAnimationFrame(step);
@@ -725,9 +725,21 @@ const IcebreakerController = () => {
 };
 
 const WorldIcebreaker = ({ position, rotation, visible = true }) => {
+  const { size } = useThree();
+  const aspect = size.width / Math.max(1, size.height);
+  const isPhone = aspect < 0.75;
+  const isNarrow = aspect < 1.15;
+  const textGroupRef = useRef();
   const startZ = 1550;
   const endZ = -1000;
   const centerZ = (startZ + endZ) / 2;
+
+  useFrame(() => {
+    if (textGroupRef.current) {
+      const thawed = window._icebreakerMeltState === 'completed' || (window.icebreakerThaw || 0) >= 0.85;
+      textGroupRef.current.visible = thawed;
+    }
+  });
 
   return (
     <group position={position} rotation={rotation} visible={visible}>
@@ -742,41 +754,48 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
       <IcebreakerOcean position={[0, -20, centerZ]} />
       <IslandFloor position={[0, -20, centerZ]} />
       
-      {/* Text Details - Elevated Above Island Campfire, clear of top HUD bar */}
-      <Text 
-        font="/fonts/Roboto.woff" 
-        fallbackFonts={[]} 
-        position={[0, 132, centerZ - 40]} 
-        rotation={[-0.45, 0, 0]}
-        fontSize={56} 
-        color="#ffffff" 
-        outlineWidth={1.8} 
-        outlineColor="#0077cc" 
-        anchorX="center"
-        anchorY="middle"
-      >
-        ICEBREAKER
-      </Text>
-      <Text 
-        font="/fonts/Roboto.woff" 
-        fallbackFonts={[]} 
-        position={[0, 80, centerZ - 40]} 
-        rotation={[-0.45, 0, 0]}
-        fontSize={44} 
-        color="#00ffff" 
-        outlineWidth={1.8} 
-        outlineColor="#003366" 
-        anchorX="center"
-        anchorY="middle"
-      >
-        REAL CONTENT. REAL CONNECTIONS.
-      </Text>
+      {/* Text Details - Hidden until ice cave melts, responsive for phone/tablet/desktop viewports */}
+      <group ref={textGroupRef} visible={false}>
+        <Text 
+          font="/fonts/Roboto.woff" 
+          fallbackFonts={[]} 
+          position={[0, isPhone ? 168 : isNarrow ? 176 : 186, centerZ - 40]} 
+          rotation={[-0.41, 0, 0]}
+          fontSize={isPhone ? 24 : isNarrow ? 32 : 46} 
+          maxWidth={isPhone ? 200 : isNarrow ? 280 : 520}
+          textAlign="center"
+          color="#ffffff" 
+          outlineWidth={1.8} 
+          outlineColor="#0077cc" 
+          anchorX="center"
+          anchorY="top"
+        >
+          ICEBREAKER
+        </Text>
+        <Text 
+          font="/fonts/Roboto.woff" 
+          fallbackFonts={[]} 
+          position={[0, isPhone ? 126 : isNarrow ? 126 : 124, centerZ - 40]} 
+          rotation={[-0.41, 0, 0]}
+          fontSize={isPhone ? 14 : isNarrow ? 20 : 28} 
+          maxWidth={isPhone ? 190 : isNarrow ? 300 : 620}
+          lineHeight={1.18}
+          textAlign="center"
+          color="#00ffff" 
+          outlineWidth={1.6} 
+          outlineColor="#003366" 
+          anchorX="center"
+          anchorY="top"
+        >
+          {'REAL CONTENT.\nREAL CONNECTIONS.'}
+        </Text>
+      </group>
 
       {/* Central Holographic Fire / Nexus */}
       <DigitalFire position={[0, -20, centerZ]} />
       
-      {/* Holographic Logo Centerpiece - Elevated Above Fire */}
-      <HolographicLogo position={[0, 50, centerZ]} />
+      {/* Holographic Logo Centerpiece - Elevated Above Fire, Below Subtext */}
+      <HolographicLogo position={[0, 44, centerZ]} />
       
       {/* Procedural Tropical Foliage */}
       <ProceduralPalmTrees radius={60} centerZ={centerZ} />

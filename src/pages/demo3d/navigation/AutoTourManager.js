@@ -162,8 +162,8 @@ class AutoTourEngine {
     this.remainingSeconds = this.seconds;
     this.notify();
 
-    // Use forceSequential = true so it flies sequentially through connecting wormhole (half speed)
-    goToStation(stationIndex, 4000, () => {
+    // Use forceSequential = true with distance-scaled duration for seamless, consistent wormhole speed
+    goToStation(stationIndex, null, () => {
       this.isTransit = false;
       this.currentStationIndex = stationIndex;
       this.remainingSeconds = this.seconds;
@@ -178,6 +178,8 @@ class AutoTourEngine {
           }
           if (window._icebreakerMeltState === 'completed') {
             clearInterval(checkMelt);
+            window._currentProgress = STATIONS[2].p;
+            if (window._scrollObj) window._scrollObj.offset = STATIONS[2].p;
             this.startCountdown();
           }
         }, 150);

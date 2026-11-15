@@ -22,16 +22,16 @@ const Header = () => {
       : 'bg-transparent'
       }`}>
       <div className="w-full">
-        <div className="flex items-center justify-between h-16 px-6 lg:px-8">
+        <div className="flex items-center justify-between h-11 sm:h-14 md:h-16 px-2.5 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center space-x-3 transition-transform duration-300"
+            className="flex items-center space-x-2 sm:space-x-3 transition-transform duration-300"
           >
             <div className="relative">
               <div className="flex items-center justify-center">
                 <div className="flex items-center justify-center">
-                  <img src={logo} alt="sentAIent" className="h-24 md:h-32 w-auto object-contain opacity-90" />
+                  <img src={logo} alt="sentAIent" className="h-10 sm:h-16 md:h-24 w-auto object-contain opacity-90" />
                 </div>
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
               </div>

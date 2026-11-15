@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
-import { Sparkles, Float, Text } from '@react-three/drei';
+import { Sparkles, Float, Text, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ===========================================================================
@@ -19,9 +19,9 @@ export default function WorldPyramid({ position, visible }) {
 
   // Dynamic Autonomous Telemetry State & Apex Interactivity
   const [telemetry, setTelemetry] = useState({
-    total_treasury_balance_dollars: 1090.09,
-    gross_revenue_dollars: 1104.0,
-    net_profit_dollars: 1090.09,
+    total_treasury_balance_dollars: 40058.19,
+    gross_revenue_dollars: 40120.0,
+    net_profit_dollars: 40058.19,
     aggregate_margin_pct: 98.7,
     solvency_health_score: 99,
     synaptic_pulse_intensity: 0.2,
@@ -84,20 +84,20 @@ export default function WorldPyramid({ position, visible }) {
   const logoTex = useLoader(THREE.TextureLoader, '/pyramid_logo_final.png');
   logoTex.colorSpace = THREE.SRGBColorSpace;
 
-  // Synaptic neural circuit traces on the motherboard floor
+  // Synaptic neural circuit traces kept neatly on the pedestal surface
   const circuitBranches = useMemo(() => {
     const branches = [];
     const count = 32;
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2;
-      const r1 = 30 + (i % 4) * 15;
-      const r2 = 140 + (i % 5) * 35;
+      const r1 = 20 + (i % 4) * 10;
+      const r2 = 120 + (i % 5) * 18;
       branches.push({
         x1: Math.cos(angle) * r1,
         z1: Math.sin(angle) * r1,
         x2: Math.cos(angle) * r2,
         z2: Math.sin(angle) * r2,
-        color: i % 3 === 0 ? '#00e5ff' : (i % 3 === 1 ? '#c084fc' : '#ffd700'),
+        color: i % 3 === 0 ? '#7dd3fc' : (i % 3 === 1 ? '#d946ef' : '#a855f7'),
         width: (i % 2 === 0 ? 2.5 : 1.5)
       });
     }
@@ -171,16 +171,13 @@ export default function WorldPyramid({ position, visible }) {
       <pointLight position={[0, 310, -650]} intensity={18} distance={900} color="#a855f7" />
 
       {/* Deep Cybernetic Obsidian Reflective Ground Plane */}
-      <mesh position={[0, -220, -650]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[4600, 4600]} />
+      <mesh position={[0, -420, -650]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[5600, 5600]} />
         <meshStandardMaterial color="#030206" roughness={0.12} metalness={0.92} />
       </mesh>
 
-      {/* High-Tech Motherboard Hex Grid Base */}
-      <mesh position={[0, -218, -650]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[1400, 1400]} />
-        <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.12} />
-      </mesh>
+      {/* Subtle Perspective Floor Grid (replaces 1x1 diagonal wireframe) */}
+      <gridHelper args={[2400, 24, '#6d28d9', '#1e1b4b']} position={[0, -418, -650]} />
 
       {/* Atmospheric Quantum Particles */}
       <Sparkles count={800} scale={[1800, 800, 1800]} size={12} speed={0.4} opacity={0.65} color="#00e5ff" position={[0, 80, -650]} />
@@ -191,6 +188,8 @@ export default function WorldPyramid({ position, visible }) {
       {/* 1. THE MONUMENTAL CRYSTALLINE CYBER-PYRAMID                  */}
       {/* ------------------------------------------------------------- */}
       <group ref={pyramidGroupRef} position={[0, -20, -650]}>
+        {/* Bottom Pyramid 2x Scale Wrapper (keeps top floating logo/title unchanged) */}
+        <group position={[0, -80, 0]} scale={2}>
 
         {/* Stepped Cybernetic Pedestal Base (Obsidian & Electrum) */}
         <group position={[0, -160, 0]}>
@@ -226,26 +225,53 @@ export default function WorldPyramid({ position, visible }) {
           </group>
         </group>
 
-        {/* Crystalline High-Tech 4-Sided Cyber-Pyramid Shell */}
+        {/* Crystalline High-Tech 4-Sided Cyber-Pyramid Shell (Matched to Pyramid Logo) */}
         <mesh position={[0, 20, 0]} rotation={[0, Math.PI / 4, 0]}>
           <cylinderGeometry args={[0, 240, 320, 4, 1]} />
           <meshStandardMaterial 
-            color="#080e1e" 
-            emissive="#00e5ff" 
-            emissiveIntensity={0.65} 
-            roughness={0.15} 
-            metalness={0.92} 
+            color="#1e1b4b" 
+            emissive="#6d28d9" 
+            emissiveIntensity={0.48} 
+            roughness={0.14} 
+            metalness={0.88} 
             transparent 
-            opacity={0.88} 
+            opacity={0.72} 
             side={THREE.DoubleSide} 
           />
         </mesh>
 
-        {/* Luminous Cyan Edge Ribs Framing the Pyramid */}
+        {/* Luminous Ice-Blue Edge Ribs Framing the Pyramid */}
         <mesh position={[0, 20, 0]} rotation={[0, Math.PI / 4, 0]}>
           <cylinderGeometry args={[0, 241, 321, 4, 1]} />
-          <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.85} />
+          <meshBasicMaterial color="#93c5fd" wireframe transparent opacity={0.9} />
         </mesh>
+
+        {/* Stacked Translucent Circuit Plates Inside Pyramid (Logo Silhouette) */}
+        {[
+          { y: -96, size: 256 },
+          { y: -42, size: 200 },
+          { y: 12, size: 146 },
+          { y: 66, size: 92 },
+        ].map((tier, idx) => (
+          <group key={idx} position={[0, tier.y, 0]}>
+            <mesh>
+              <boxGeometry args={[tier.size, 4, tier.size]} />
+              <meshStandardMaterial
+                color="#312e81"
+                emissive="#d946ef"
+                emissiveIntensity={0.95}
+                roughness={0.18}
+                metalness={0.85}
+                transparent
+                opacity={0.34}
+              />
+            </mesh>
+            <mesh>
+              <boxGeometry args={[tier.size + 2, 4.5, tier.size + 2]} />
+              <meshBasicMaterial color="#7dd3fc" wireframe transparent opacity={0.65} />
+            </mesh>
+          </group>
+        ))}
 
         {/* ------------------------------------------------------------- */}
         {/* 2. THE QUANTUM AI BRAIN CORE (INSIDE PYRAMID CENTER)         */}
@@ -342,22 +368,26 @@ export default function WorldPyramid({ position, visible }) {
             ))}
           </group>
         </group>
+        </group>
 
         {/* 4 Interactive Monumental Obelisks: Autonomous Fleet Stations */}
         {[
-          { key: 'north', name: 'Marketing Agency (#1)', pos: [-270, -140], color: '#f59e0b', note: 440.0 },
-          { key: 'east', name: 'Academic Studio (#2)', pos: [270, -140], color: '#38bdf8', note: 493.88 },
-          { key: 'south', name: 'Localization (#3)', pos: [-200, 120], color: '#c084fc', note: 587.33 },
-          { key: 'west', name: 'Bug Bounty (#5)', pos: [200, 120], color: '#34d399', note: 659.25 }
+          { key: 'north', name: 'Marketing Agency (#1)', pos: [-580, -180], obeliskY: 340, labelY: 105, defaultProfit: 8758.24, color: '#f59e0b', note: 440.0 },
+          { key: 'east', name: 'Academic Studio (#2)', pos: [580, -180], obeliskY: 340, labelY: 105, defaultProfit: 14064.62, color: '#38bdf8', note: 493.88 },
+          { key: 'south', name: 'Localization (#3)', pos: [-640, 180], obeliskY: -250, labelY: 105, defaultProfit: 5923.37, color: '#c084fc', note: 587.33 },
+          { key: 'west', name: 'Bug Bounty (#5)', pos: [640, 180], obeliskY: -250, labelY: 105, defaultProfit: 11311.96, color: '#34d399', note: 659.25 }
         ].map((ob, idx) => {
           const isHovered = hoveredObelisk === ob.key;
           const isSelected = selectedObelisk === ob.key;
-          const obData = telemetry?.obelisks?.[ob.key] || { jobs: 2, profit_dollars: 209.32 };
+          const obData = telemetry?.obelisks?.[ob.key] || { jobs: 2, profit_dollars: ob.defaultProfit };
+          const isLeftSide = ob.pos[0] < 0;
+          const iconOffsetX = isLeftSide ? -235 : 235;
+          const textOffsetX = 0;
 
           return (
             <group 
               key={idx} 
-              position={[ob.pos[0], -80, ob.pos[1]]}
+              position={[ob.pos[0], ob.obeliskY, ob.pos[1]]}
               onPointerOver={(e) => {
                 e.stopPropagation();
                 setHoveredObelisk(ob.key);
@@ -373,54 +403,64 @@ export default function WorldPyramid({ position, visible }) {
                 playChime(ob.note * 0.75, 0.4, 'triangle');
               }}
             >
-              {/* Tapered Obelisk Shaft */}
-              <mesh position={[0, 75, 0]}>
-                <cylinderGeometry args={[5, 12, 150, 4]} rotation={[0, Math.PI / 4, 0]} />
-                <meshStandardMaterial 
-                  color={isHovered || isSelected ? "#18182f" : "#090a14"} 
-                  roughness={0.2} 
-                  metalness={0.9} 
-                />
-              </mesh>
-              {/* Pyramidion Gold / Electrum Cap */}
-              <mesh position={[0, 160, 0]}>
-                <coneGeometry args={[6.5, 18, 4]} rotation={[0, Math.PI / 4, 0]} />
-                <meshStandardMaterial 
-                  color={ob.color} 
-                  emissive={ob.color} 
-                  emissiveIntensity={isHovered || isSelected ? 4.5 : 2.5} 
-                  metalness={0.95} 
-                />
-              </mesh>
-              <pointLight position={[0, 165, 0]} color={ob.color} intensity={isHovered || isSelected ? 8 : 4} distance={220} />
+              {/* Obelisk Icon Group shifted outside so it is never hidden behind the text */}
+              <group position={[iconOffsetX, 0, 0]}>
+                {/* Tapered Obelisk Shaft (3x larger, subtly lit so top/back obelisks read clearly) */}
+                <mesh position={[0, 105, 0]}>
+                  <cylinderGeometry args={[15, 36, 210, 4]} rotation={[0, Math.PI / 4, 0]} />
+                  <meshStandardMaterial 
+                    color={isHovered || isSelected ? "#26284a" : "#161b33"} 
+                    emissive={ob.color}
+                    emissiveIntensity={isHovered || isSelected ? 0.55 : 0.28}
+                    roughness={0.22} 
+                    metalness={0.85} 
+                  />
+                </mesh>
+                {/* Pyramidion Gold / Electrum Cap (3x larger) */}
+                <mesh position={[0, 237, 0]}>
+                  <coneGeometry args={[19.5, 54, 4]} rotation={[0, Math.PI / 4, 0]} />
+                  <meshStandardMaterial 
+                    color={ob.color} 
+                    emissive={ob.color} 
+                    emissiveIntensity={isHovered || isSelected ? 4.5 : 2.5} 
+                    metalness={0.95} 
+                  />
+                </mesh>
+                <pointLight position={[0, 250, 0]} color={ob.color} intensity={isHovered || isSelected ? 10 : 5} distance={360} />
+              </group>
 
-              {/* Station Label & Live Profit Halo */}
-              <Text
-                font="/fonts/Roboto.woff"
-                fallbackFonts={[]}
-                position={[0, 190, 0]}
-                fontSize={13}
-                color={ob.color}
-                outlineWidth={0.8}
-                outlineColor="#090a14"
-                anchorX="center"
-                anchorY="middle"
-              >
-                {ob.name}
-              </Text>
-              <Text
-                font="/fonts/Roboto.woff"
-                fallbackFonts={[]}
-                position={[0, 175, 0]}
-                fontSize={10.5}
-                color="#ffffff"
-                outlineWidth={0.5}
-                outlineColor="#090a14"
-                anchorX="center"
-                anchorY="middle"
-              >
-                {`PROFIT: +$${(obData.profit_dollars ?? 120.0).toFixed(2)}`}
-              </Text>
+              {/* Station Label & Live Profit Halo (positioned beside the icon) */}
+              <Billboard position={[textOffsetX, ob.labelY, 0]} follow={true}>
+                <Text
+                  font="/fonts/Roboto.woff"
+                  fallbackFonts={[]}
+                  position={[0, 16, 0]}
+                  fontSize={48}
+                  maxWidth={400}
+                  lineHeight={1.1}
+                  textAlign="center"
+                  color={ob.color}
+                  outlineWidth={2.2}
+                  outlineColor="#090a14"
+                  anchorX="center"
+                  anchorY="bottom"
+                >
+                  {ob.name}
+                </Text>
+                <Text
+                  font="/fonts/Roboto.woff"
+                  fallbackFonts={[]}
+                  position={[0, -8, 0]}
+                  fontSize={36}
+                  color="#ffffff"
+                  outlineWidth={1.8}
+                  outlineColor="#090a14"
+                  anchorX="center"
+                  anchorY="top"
+                >
+                  {`PROFIT: +$${(obData.profit_dollars ?? ob.defaultProfit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                </Text>
+              </Billboard>
             </group>
           );
         })}
@@ -432,21 +472,21 @@ export default function WorldPyramid({ position, visible }) {
       <group position={[0, 310, -450]}>
         {/* Floating High-Res PyRAmid Logo Icon (Sleek & Scaled) */}
         <Float speed={2} rotationIntensity={0.06} floatIntensity={0.35}>
-          <mesh position={[0, 96, 0]}>
-            <planeGeometry args={[82, 82]} />
+          <mesh position={[0, 108, 0]}>
+            <planeGeometry args={[96, 96]} />
             <meshBasicMaterial map={logoTex} transparent depthWrite={false} side={THREE.DoubleSide} toneMapped={false} />
           </mesh>
         </Float>
 
-        {/* Pyramid Title Text */}
+        {/* Pyramid Title Text (Matched to Logo Ice-Blue & Orchid-Violet) */}
         <Text
           font="/fonts/Roboto.woff"
           fallbackFonts={[]}
           position={[0, 8, 0]}
-          fontSize={56}
-          color="#00e5ff"
-          outlineWidth={2.0}
-          outlineColor="#3b0764"
+          fontSize={72}
+          color="#a5f3fc"
+          outlineWidth={2.8}
+          outlineColor="#7e22ce"
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.14}

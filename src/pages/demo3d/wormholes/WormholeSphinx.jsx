@@ -73,17 +73,20 @@ const WormholeSphinx = ({ position, rotation = [Math.PI / 2, 0, 0], length = 320
       </mesh>
 
       {/* Global Defense Perimeter Warning Rings */}
-      <mesh ref={perimeterRef}>
-        <cylinderGeometry args={[radius - 12, radius - 12, length, 12, 24, true]} />
-        <meshBasicMaterial
-          color="#ff8800"
-          wireframe
-          transparent
-          opacity={0.3}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
+      <group ref={perimeterRef}>
+        {[-0.38, -0.22, -0.07, 0.07, 0.22, 0.38].map((frac, idx) => (
+          <mesh key={idx} position={[0, length * frac, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[radius * 0.94, 3.5, 16, 64]} />
+            <meshStandardMaterial
+              color={idx % 2 === 0 ? '#ff8800' : '#00d2ff'}
+              emissive={idx % 2 === 0 ? '#c2410c' : '#0284c7'}
+              emissiveIntensity={2.6}
+              roughness={0.08}
+              metalness={0.94}
+            />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 };

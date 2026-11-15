@@ -40,9 +40,9 @@ function StarWarsHoloAvatar({ hovered, speechActive }) {
 
   const holoUniforms = useMemo(() => ({
     uTime: { value: 0 },
-    uHoloShadow: { value: new THREE.Color('#031b38') },
-    uHoloColor: { value: new THREE.Color('#00d8ff') },
-    uRimColor: { value: new THREE.Color('#e8ffff') }
+    uHoloShadow: { value: new THREE.Color('#1e0936') },
+    uHoloColor: { value: new THREE.Color('#a855f7') },
+    uRimColor: { value: new THREE.Color('#f3e8ff') }
   }), []);
 
   const { avatar, poseBones } = useMemo(() => {
@@ -206,7 +206,7 @@ function StarWarsHoloAvatar({ hovered, speechActive }) {
     }
 
     if (avatarGroupRef.current) {
-      avatarGroupRef.current.position.y = -179;
+      avatarGroupRef.current.position.y = -244;
       avatarGroupRef.current.rotation.y = Math.sin(t * 0.35) * 0.08;
     }
   });
@@ -216,7 +216,7 @@ function StarWarsHoloAvatar({ hovered, speechActive }) {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     uniforms: {
-      uColor: { value: new THREE.Color('#00e5ff') },
+      uColor: { value: new THREE.Color('#c084fc') },
       uIntensity: { value: 0.42 }
     },
     vertexShader: `
@@ -240,7 +240,7 @@ function StarWarsHoloAvatar({ hovered, speechActive }) {
   }), []);
 
   return (
-    <group ref={avatarGroupRef} position={[0, -179, 60]}>
+    <group ref={avatarGroupRef} position={[0, -244, 60]}>
       {/* Soft Gaussian cyan aura radiating around her silhouette (no hard edges) */}
       <mesh position={[0, 155, -18]} material={auraMaterial}>
         <planeGeometry args={[280, 380]} />
@@ -256,7 +256,7 @@ function StarWarsHoloAvatar({ hovered, speechActive }) {
         size={hovered ? 7 : 4.5}
         speed={1.2}
         opacity={hovered ? 0.8 : 0.5}
-        color="#00e5ff"
+        color="#c084fc"
       />
     </group>
   );
@@ -267,8 +267,8 @@ function StarWarsHoloAvatar({ hovered, speechActive }) {
  */
 function StarWarsHoloFallback() {
   return (
-    <group position={[0, -80, 60]}>
-      <Sparkles count={100} scale={[70, 190, 70]} size={6} speed={1.4} color="#00e5ff" />
+    <group position={[0, -145, 60]}>
+      <Sparkles count={100} scale={[70, 190, 70]} size={6} speed={1.4} color="#c084fc" />
     </group>
   );
 }
@@ -329,31 +329,31 @@ export default function WorldMaya({ position, visible }) {
   return (
     <group position={position}>
       {/* Atmospheric Lighting */}
-      <ambientLight intensity={0.8} color="#082038" />
-      <pointLight position={[0, -60, 220]} intensity={32} distance={1000} color="#00e5ff" />
-      <pointLight position={[0, -160, 80]} intensity={avatarHovered ? 40 : 28} distance={500} color="#00e5ff" />
+      <ambientLight intensity={0.8} color="#14082b" />
+      <pointLight position={[0, -125, 220]} intensity={32} distance={1000} color="#c084fc" />
+      <pointLight position={[0, -225, 80]} intensity={avatarHovered ? 40 : 28} distance={500} color="#c084fc" />
 
       {/* Atmospheric Starfield Sparkles */}
-      <Sparkles count={600} scale={[1800, 900, 1800]} size={9} speed={0.35} opacity={0.6} color="#00e5ff" position={[0, 40, 80]} />
-      <Sparkles count={350} scale={[1400, 700, 1400]} size={7} speed={0.45} opacity={0.45} color="#38bdf8" position={[0, 30, 80]} />
+      <Sparkles count={600} scale={[1800, 900, 1800]} size={9} speed={0.35} opacity={0.6} color="#c084fc" position={[0, -5, 80]} />
+      <Sparkles count={350} scale={[1400, 700, 1400]} size={7} speed={0.45} opacity={0.45} color="#a855f7" position={[0, -15, 80]} />
 
       {/* Deep Obsidian Mirror Floor */}
-      <mesh position={[0, -200, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -265, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[4800, 4800]} />
-        <meshStandardMaterial color="#020713" roughness={0.06} metalness={0.96} />
+        <meshStandardMaterial color="#060213" roughness={0.06} metalness={0.96} />
       </mesh>
 
       {/* Floor Holoprojector Base (flat on floor, NO tube) */}
-      <mesh position={[0, -195, 60]}>
+      <mesh position={[0, -260, 60]}>
         <cylinderGeometry args={[280, 320, 16, 48]} />
-        <meshStandardMaterial color="#040e1c" roughness={0.08} metalness={0.96} />
+        <meshStandardMaterial color="#0e061c" roughness={0.08} metalness={0.96} />
       </mesh>
 
       {[140, 210, 275].map((radius, idx) => (
-        <mesh key={idx} position={[0, -186, 60]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh key={idx} position={[0, -251, 60]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[radius, radius + 3, 64]} />
           <meshBasicMaterial
-            color={idx % 2 === 0 ? "#00e5ff" : "#38bdf8"}
+            color={idx % 2 === 0 ? "#c084fc" : "#a855f7"}
             transparent
             opacity={0.65 - idx * 0.15}
             side={THREE.DoubleSide}
@@ -362,13 +362,13 @@ export default function WorldMaya({ position, visible }) {
       ))}
 
       {/* Center Emitter Lens Disc */}
-      <mesh position={[0, -183, 60]}>
+      <mesh position={[0, -248, 60]}>
         <cylinderGeometry args={[85, 98, 6, 32]} />
-        <meshStandardMaterial color="#061830" roughness={0.12} metalness={0.95} />
+        <meshStandardMaterial color="#180830" roughness={0.12} metalness={0.95} />
       </mesh>
-      <mesh position={[0, -179, 60]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -244, 60]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[72, 83, 48]} />
-        <meshStandardMaterial color="#00e5ff" emissive="#00e5ff" emissiveIntensity={3.2} />
+        <meshStandardMaterial color="#c084fc" emissive="#c084fc" emissiveIntensity={3.2} />
       </mesh>
 
       {/* THE FEMALE HUMAN STAR WARS HOLOGRAM */}
@@ -383,12 +383,12 @@ export default function WorldMaya({ position, visible }) {
       </group>
 
       {/* Subtle Orbital Telemetry Rings */}
-      <group ref={voiceOrbitsRef} position={[0, -65, 60]}>
+      <group ref={voiceOrbitsRef} position={[0, -130, 60]}>
         {[125, 165].map((radius, idx) => (
           <mesh key={idx} rotation={[Math.PI / 3 + idx * 0.4, idx * 0.5, 0]}>
             <torusGeometry args={[radius, 0.9, 16, 80]} />
             <meshBasicMaterial
-              color={idx === 0 ? "#00e5ff" : "#38bdf8"}
+              color={idx === 0 ? "#c084fc" : "#a855f7"}
               transparent
               opacity={0.28 - idx * 0.08}
               blending={THREE.AdditiveBlending}
@@ -397,25 +397,25 @@ export default function WorldMaya({ position, visible }) {
         ))}
       </group>
 
-      {/* Floating Maya Emblem, Identity & ENTER APP CTA */}
+      {/* Floating Maya Emblem & Identity */}
       <Float speed={1.5} rotationIntensity={0.04} floatIntensity={0.25}>
-        <group position={[0, 224, 60]}>
-          <mesh position={[0, 26, 0]}>
-            <planeGeometry args={[60, 28]} />
+        <group position={[0, 195, 60]}>
+          <mesh position={[0, 108, 0]}>
+            <planeGeometry args={[88, 72]} />
             <meshBasicMaterial map={logoTex} transparent opacity={0.95} depthWrite={false} />
           </mesh>
 
           <Text
             font="/fonts/Roboto.woff"
             fallbackFonts={[]}
-            position={[0, -10, 0]}
-            fontSize={22}
-            color="#00e5ff"
+            position={[0, 22, 0]}
+            fontSize={52}
+            color="#c084fc"
             anchorX="center"
             anchorY="middle"
             fontWeight="bold"
-            outlineWidth={0.4}
-            outlineColor="#000000"
+            outlineWidth={1.6}
+            outlineColor="#2e1065"
           >
             MAYA
           </Text>
@@ -423,57 +423,20 @@ export default function WorldMaya({ position, visible }) {
           <Text
             font="/fonts/Roboto.woff"
             fallbackFonts={[]}
-            position={[0, -44, 0]}
-            fontSize={18}
+            position={[0, -64, 0]}
+            fontSize={28}
             lineHeight={1.25}
-            maxWidth={340}
+            maxWidth={560}
             textAlign="center"
             color="#ffffff"
             anchorX="center"
             anchorY="middle"
-            outlineWidth={0.3}
-            outlineColor="#000000"
+            outlineWidth={1.0}
+            outlineColor="#1e0836"
             letterSpacing={0.04}
           >
             {"Empathetic Conversational Intelligence\n& 24/7 Enterprise Representative"}
           </Text>
-
-          <group
-            position={[0, -82, 6]}
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open('/maya/index.html', '_blank', 'noopener,noreferrer');
-            }}
-            onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
-            onPointerOut={(e) => { e.stopPropagation(); document.body.style.cursor = 'auto'; }}
-          >
-            <mesh position={[0, 0, 0]}>
-              <planeGeometry args={[84, 18]} />
-              <meshStandardMaterial
-                color="#0284c7"
-                emissive="#00e5ff"
-                emissiveIntensity={2.4}
-                roughness={0.2}
-                metalness={0.8}
-              />
-            </mesh>
-            <mesh position={[0, 0, 1]}>
-              <planeGeometry args={[86, 20]} />
-              <meshBasicMaterial color="#ffffff" wireframe transparent opacity={0.4} />
-            </mesh>
-            <Text
-              font="/fonts/Roboto.woff"
-              fallbackFonts={[]}
-              position={[0, -0.5, 2]}
-              fontSize={7.2}
-              color="#ffffff"
-              anchorX="center"
-              fontWeight="bold"
-              letterSpacing={0.08}
-            >
-              ENTER APP  ➔
-            </Text>
-          </group>
         </group>
       </Float>
     </group>

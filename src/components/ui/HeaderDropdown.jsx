@@ -92,7 +92,7 @@ const HeaderDropdown = () => {
       {/* Top Right Menu Trigger Button */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="relative group flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] active:scale-95 border border-white/25 hover:border-white/50 text-white backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),inset_0_-1px_1px_rgba(0,0,0,0.3),0_8px_32px_rgba(0,0,0,0.37)] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_0_25px_rgba(96,169,255,0.35)] select-none overflow-hidden"
+        className="relative group flex items-center gap-1.5 sm:gap-2.5 px-2.5 py-1 sm:px-4 sm:py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] active:scale-95 border border-white/25 hover:border-white/50 text-white backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 cursor-pointer shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),inset_0_-1px_1px_rgba(0,0,0,0.3),0_8px_32px_rgba(0,0,0,0.37)] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_0_25px_rgba(96,169,255,0.35)] select-none overflow-hidden"
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="Toggle navigation menu"
@@ -132,7 +132,7 @@ const HeaderDropdown = () => {
       {/* Dropdown Menu Panel */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-3 w-64 rounded-2xl border border-white/20 backdrop-blur-3xl backdrop-saturate-200 p-2 space-y-1 z-50 animate-in fade-in zoom-in-95 duration-200 select-none"
+          className="absolute right-0 mt-3 w-[min(16rem,calc(100vw-1.5rem))] max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-2xl border border-white/20 backdrop-blur-3xl backdrop-saturate-200 p-2 space-y-1 z-50 animate-in fade-in zoom-in-95 duration-200 select-none"
           style={{
             background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(10, 18, 38, 0.65) 45%, rgba(4, 8, 20, 0.80) 100%)',
             boxShadow: 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.4), inset 0 0 20px 0 rgba(255, 255, 255, 0.04), 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 35px 0 rgba(96, 169, 255, 0.2)'

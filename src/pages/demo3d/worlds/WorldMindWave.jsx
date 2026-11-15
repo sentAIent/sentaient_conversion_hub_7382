@@ -205,14 +205,14 @@ const WorldMindWave = ({ position, visible }) => {
 
     // Float and pulse logo nestled inside sun's inner circle
     if (logoRef.current) {
-      logoRef.current.position.y = 310 + Math.sin(time * 2) * 2;
+      logoRef.current.position.y = 245 + Math.sin(time * 2) * 2;
       logoRef.current.position.x = 0;
       logoRef.current.scale.set(sunScale, sunScale, 1);
       logoRef.current.rotation.y = 0; // Keep facing camera
     }
     
     if (sunRef.current) {
-      sunRef.current.position.y = 310 + Math.sin(time * 2) * 2;
+      sunRef.current.position.y = 245 + Math.sin(time * 2) * 2;
       sunRef.current.rotation.z = time * 0.1;
       sunRef.current.scale.set(sunScale, sunScale, 1);
     }
@@ -249,8 +249,8 @@ const WorldMindWave = ({ position, visible }) => {
       
       {/* Tribal Sun glowing behind logo */}
       {sunTex && (
-        <mesh ref={sunRef} position={[0, 310, -85]}>
-          <planeGeometry args={[315, 315]} />
+        <mesh ref={sunRef} position={[0, 245, -85]}>
+          <planeGeometry args={[260, 260]} />
           <meshBasicMaterial 
             map={sunTex} 
             transparent={true} 
@@ -265,7 +265,7 @@ const WorldMindWave = ({ position, visible }) => {
 
       {/* MindWave Logo (Nestled perfectly inside tribal sun inner circle) */}
       {logoTex && (
-        <mesh ref={logoRef} position={[0, 310, -80]}>
+        <mesh ref={logoRef} position={[0, 245, -80]}>
           <planeGeometry args={[143, 143]} />
           <meshBasicMaterial 
             map={logoTex} 
@@ -277,7 +277,7 @@ const WorldMindWave = ({ position, visible }) => {
       )}
       
       {/* Hologram Description - Elevated Above Water */}
-      <HologramText position={[0, 20, -80]} visible={true} />
+      <HologramText position={[0, -5, -80]} visible={true} />
       
       {/* Hologram Guide */}
       <HologramGuide appId="mindwave" position={[40, 0, -40]} />

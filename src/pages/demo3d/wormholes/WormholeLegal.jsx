@@ -24,18 +24,18 @@ const WormholeLegal = ({
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    // Deep judicial velvet void
+    // Deep amethyst judicial void
     const gradient = ctx.createLinearGradient(0, 0, 0, 512);
-    gradient.addColorStop(0, '#100a02');
-    gradient.addColorStop(0.5, '#221404');
-    gradient.addColorStop(1, '#100a02');
+    gradient.addColorStop(0, '#0b021a');
+    gradient.addColorStop(0.5, '#24094a');
+    gradient.addColorStop(1, '#0b021a');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 512, 512);
 
-    // Glowing golden contract decree streams
-    ctx.fillStyle = '#ffd700';
+    // Glowing Legal Eagle purple & violet decree streams
     for (let i = 0; i < 280; i++) {
-      ctx.globalAlpha = Math.random() * 0.7 + 0.25;
+      ctx.globalAlpha = Math.random() * 0.75 + 0.25;
+      ctx.fillStyle = i % 3 === 0 ? '#e9d5ff' : (i % 3 === 1 ? '#c084fc' : '#a855f7');
       const x = Math.random() * 512;
       const y = Math.random() * 512;
       const w = Math.random() * 3 + 1;
@@ -43,8 +43,8 @@ const WormholeLegal = ({
       ctx.fillRect(x, y, w, h);
     }
 
-    // Amethyst and cyan cryptographic integrity grid lines
-    ctx.strokeStyle = '#c084fc';
+    // Amethyst cryptographic integrity grid lines
+    ctx.strokeStyle = '#d8b4fe';
     ctx.lineWidth = 1.2;
     ctx.globalAlpha = 0.35;
     for (let y = 0; y < 512; y += 40) {
@@ -76,29 +76,30 @@ const WormholeLegal = ({
 
   return (
     <group position={position} rotation={rotation} visible={visible}>
-      {/* Golden Legal Conduit Tunnel */}
+      {/* Legal Eagle Purple Conduit Tunnel */}
       <mesh ref={tunnelRef}>
         <cylinderGeometry args={[radius, radius, length, 36, 1, true]} />
         <meshStandardMaterial
           map={legalTexture}
+          emissiveMap={legalTexture}
           side={THREE.BackSide}
-          roughness={0.2}
-          metalness={0.9}
-          emissive="#d97706"
-          emissiveIntensity={1.8}
+          roughness={0.18}
+          metalness={0.88}
+          emissive="#9333ea"
+          emissiveIntensity={2.0}
         />
       </mesh>
 
-      {/* Rotating Amethyst & Gold Juridical Scale Rings */}
+      {/* Rotating Legal Eagle Purple & Amethyst Boundary Rings */}
       <group ref={latticeRingsRef}>
         {[-800, -400, 0, 400, 800].map((zPos, idx) => (
           <group key={idx} position={[0, zPos, 0]}>
             <mesh rotation={[Math.PI / 2, 0, 0]}>
               <torusGeometry args={[radius * 0.96, 3.2, 16, 48]} />
               <meshStandardMaterial
-                color={idx % 2 === 0 ? '#ffd700' : '#c084fc'}
-                emissive={idx % 2 === 0 ? '#f59e0b' : '#a855f7'}
-                emissiveIntensity={2.5}
+                color={idx % 2 === 0 ? '#a855f7' : '#d8b4fe'}
+                emissive={idx % 2 === 0 ? '#9333ea' : '#a855f7'}
+                emissiveIntensity={2.6}
                 roughness={0.1}
                 metalness={0.95}
               />
