@@ -9,7 +9,7 @@
   "synaptic_pulse_intensity": 0.2,
   "active_ventures": [
     "Bug Bounty Hunter (#5)",
-    "Media Localization Studio (#3)",
+    "AI Dubbing Studio (#3)",
     "Academic Synthesis Studio (#2)",
     "Autonomous Marketing Agency (#1)"
   ],
@@ -64,7 +64,7 @@
       "profit_dollars": 14064.62
     },
     "south": {
-      "name": "Media Localization Studio (#3)",
+      "name": "AI Dubbing Studio (#3)",
       "jobs": 2,
       "revenue_dollars": 5935.00,
       "profit_dollars": 5923.37

@@ -315,6 +315,8 @@ const LegalEagle = ({ position, rotation, visible }) => {
   const logoTex = useLoader(THREE.TextureLoader, '/legal_eagle_logo.png');
   logoTex.colorSpace = THREE.SRGBColorSpace;
 
+  if (!visible) return null;
+
   return (
     <group visible={visible} position={position} rotation={rotation}>
       <ambientLight intensity={0.4} color="#0d1527" />

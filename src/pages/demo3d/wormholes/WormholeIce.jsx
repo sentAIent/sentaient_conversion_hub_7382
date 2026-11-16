@@ -95,6 +95,7 @@ const WormholeIce = ({ position, rotation = [0, 0, 0], length = 4800, visible = 
   }), [length]);
 
   useFrame((state) => {
+    if (!visible) return;
     if (materialRef.current) {
       materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
       materialRef.current.uniforms.uOpacity.value = visible ? 1.0 : 0.0;

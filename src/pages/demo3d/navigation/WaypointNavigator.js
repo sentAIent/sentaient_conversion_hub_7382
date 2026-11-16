@@ -5,22 +5,22 @@ import { WORLD_PAUSE_STATIONS, startWorldPause, clearActiveWorldPause } from './
 
 export const STATIONS = [
   { id: 'hub', name: 'Home Hub', p: 0.000, entryP: 0.000, duration: 3200, color: '#00E5FF' },
-  { id: 'mindwave', name: 'MindWave', p: 0.038, entryP: 0.015, duration: 3600, color: '#38BDF8' },
-  { id: 'icebreaker', name: 'Icebreaker', p: 0.135, entryP: 0.058, duration: 4000, color: '#FF6600' },
-  { id: 'interstellar', name: 'Interstellar', p: 0.200, entryP: 0.155, duration: 3600, color: '#00D2FF' },
-  { id: 'legal', name: 'Legal Eagle', p: 0.248, entryP: 0.220, duration: 3600, color: '#D4AF37' },
-  { id: 'autopilot', name: 'Autopilot', p: 0.293, entryP: 0.265, duration: 3600, color: '#10B981' },
-  { id: 'fantasy', name: 'FantasyQuant', p: 0.413, entryP: 0.320, duration: 4400, color: '#00FF88' },
-  { id: 'contango', name: 'Contango', p: 0.463, entryP: 0.432, duration: 3600, color: '#FFD700' },
-  { id: 'elevate', name: 'Elevate', p: 0.518, entryP: 0.478, duration: 3600, color: '#00FFFF' },
-  { id: 'sphinx', name: 'Sphinx', p: 0.582, entryP: 0.542, duration: 3600, color: '#F59E0B' },
-  { id: 'liquid', name: 'Liquid', p: 0.648, entryP: 0.605, duration: 3600, color: '#00FF88' },
-  { id: 'maya', name: 'Maya', p: 0.712, entryP: 0.670, duration: 3600, color: '#EAB308' },
-  { id: 'pyramid', name: 'Pyramid', p: 0.778, entryP: 0.735, duration: 3600, color: '#00E5FF' },
-  { id: 'matrix', name: 'Matrix', p: 0.842, entryP: 0.800, duration: 3600, color: '#00FF44' },
-  { id: 'lightspeed', name: 'LightSpeed', p: 0.893, entryP: 0.865, duration: 3600, color: '#00FFFF' },
-  { id: 'clove', name: 'CloveH2O', p: 0.939, entryP: 0.910, duration: 3600, color: '#FF00FF' },
-  { id: 'sentaient', name: 'Sentaient', p: 0.979, entryP: 0.952, duration: 4000, color: '#60A9FF' }
+  { id: 'mindwave', name: 'MindWave', p: 0.038, entryP: 0.016, duration: 3600, color: '#38BDF8' },
+  { id: 'icebreaker', name: 'Icebreaker', p: 0.135, entryP: 0.113, duration: 4000, color: '#FF6600' },
+  { id: 'interstellar', name: 'Interstellar', p: 0.200, entryP: 0.178, duration: 3600, color: '#00D2FF' },
+  { id: 'legal', name: 'Legal Eagle', p: 0.248, entryP: 0.226, duration: 3600, color: '#D4AF37' },
+  { id: 'autopilot', name: 'Autopilot', p: 0.293, entryP: 0.271, duration: 3600, color: '#10B981' },
+  { id: 'fantasy', name: 'FantasyQuant', p: 0.413, entryP: 0.391, duration: 4400, color: '#00FF88' },
+  { id: 'contango', name: 'Contango', p: 0.463, entryP: 0.451, duration: 3600, color: '#FFD700' },
+  { id: 'elevate', name: 'Elevate', p: 0.518, entryP: 0.496, duration: 3600, color: '#00FFFF' },
+  { id: 'sphinx', name: 'Sphinx', p: 0.582, entryP: 0.560, duration: 3600, color: '#F59E0B' },
+  { id: 'liquid', name: 'Liquid', p: 0.648, entryP: 0.626, duration: 3600, color: '#00FF88' },
+  { id: 'maya', name: 'Maya', p: 0.712, entryP: 0.690, duration: 3600, color: '#EAB308' },
+  { id: 'pyramid', name: 'Pyramid', p: 0.778, entryP: 0.756, duration: 3600, color: '#00E5FF' },
+  { id: 'matrix', name: 'Matrix', p: 0.842, entryP: 0.820, duration: 3600, color: '#00FF44' },
+  { id: 'lightspeed', name: 'LightSpeed', p: 0.893, entryP: 0.871, duration: 3600, color: '#00FFFF' },
+  { id: 'clove', name: 'CloveH2O', p: 0.939, entryP: 0.917, duration: 3600, color: '#FF00FF' },
+  { id: 'sentaient', name: 'Sentaient', p: 0.979, entryP: 0.957, duration: 4000, color: '#60A9FF' }
 ];
 
 let activeAnimId = null;
@@ -165,6 +165,7 @@ export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete 
   };
   
   window._teleportActiveWorldId = startStation.id;
+  window._teleportTargetWorldId = targetStation.id;
   
   const arrivalP = (clampedIndex === 2 && window._icebreakerMeltState !== 'completed')
     ? 0.120
@@ -184,6 +185,7 @@ export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete 
       window._isDirectTeleportActive = false;
       if (window._teleportWarp) window._teleportWarp.active = false;
       window._teleportActiveWorldId = null;
+      window._teleportTargetWorldId = null;
       window._warpProgress = undefined;
       window._isProgrammaticScroll = false;
       window._teleportFovBoost = 0;
@@ -249,6 +251,7 @@ export const directTeleportTo = (targetIndex, customDuration = 2700, onComplete 
       window._isDirectTeleportActive = false;
       if (window._teleportWarp) window._teleportWarp.active = false;
       window._teleportActiveWorldId = null;
+      window._teleportTargetWorldId = null;
       window._teleportFovBoost = 0;
       window._warpProgress = undefined;
       window._isProgrammaticScroll = false;

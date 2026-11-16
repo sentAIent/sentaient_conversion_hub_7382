@@ -158,6 +158,8 @@ const WorldCloveH2O = ({ position, rotation, visible }) => {
 
   
 
+  if (!visible) return null;
+
   return (
     <group visible={visible} position={position} rotation={rotation}>
       {/* Deep blue sky/background */}

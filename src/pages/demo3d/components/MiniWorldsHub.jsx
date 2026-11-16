@@ -435,6 +435,7 @@ export default function MiniWorldsHub({ visible = true }) {
   const handleHoverStart = (name) => {
     if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null; }
     setHoveredWorld(name);
+    window._preloadWorldByName?.(name);
   };
   const handleHoverEnd = (name) => {
     if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); }

@@ -368,6 +368,7 @@ const Interstellar = ({ position, rotation, visible }) => {
   const lockRef = useRef({ triggered: false });
 
   useFrame(() => {
+    if (!visible) return;
     if (scroll && scroll.offset >= 0.20 && scroll.offset <= 0.22 && !lockRef.current.triggered && !window.interstellarLocked) {
       window.interstellarLocked = true;
       lockRef.current.triggered = true;
@@ -376,6 +377,8 @@ const Interstellar = ({ position, rotation, visible }) => {
       }, 1500);
     }
   });
+
+  if (!visible) return null;
 
   return (
     <group visible={visible} position={position} rotation={rotation}>

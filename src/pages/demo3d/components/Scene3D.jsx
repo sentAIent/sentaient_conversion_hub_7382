@@ -216,16 +216,50 @@ const HTMLStations = () => {
                   tags: ['AI Autonomous', 'Real-Time Telemetry', 'Cloud Sync']
                 };
 
-                const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+                const winW = typeof window !== 'undefined' ? window.innerWidth : 1440;
+                const isPhone = winW < 768;
+                const isTablet = winW >= 768 && winW < 1200;
 
-                // On mobile phones, dock the dossier card cleanly above the bottom-right feedback pill
-                if (isMobile) {
+                if (isPhone) {
+                  // On phones: expand horizontally and down to the bottom edge so controls & info fit without scrolling
                   overlayRef.current.style.removeProperty('top');
                   overlayRef.current.style.removeProperty('right');
-                  overlayRef.current.style.bottom = '58px';
+                  overlayRef.current.style.bottom = '12px';
                   overlayRef.current.style.left = '50%';
                   overlayRef.current.style.transform = 'translateX(-50%)';
+                  if (cardRef.current) {
+                    cardRef.current.style.maxWidth = 'calc(100vw - 16px)';
+                    cardRef.current.style.width = 'calc(100vw - 16px)';
+                    cardRef.current.style.padding = '10px 12px';
+                    cardRef.current.style.maxHeight = 'calc(100dvh - 96px)';
+                  }
+                } else if (isTablet) {
+                  // On tablets: smaller card tucked into bottom corners out of the way of world animations
+                  overlayRef.current.style.removeProperty('top');
+                  const useRight = conf.posStyle.right && conf.posStyle.right !== 'auto';
+                  if (useRight) {
+                    overlayRef.current.style.removeProperty('left');
+                    overlayRef.current.style.right = '14px';
+                    overlayRef.current.style.bottom = '68px';
+                  } else {
+                    overlayRef.current.style.removeProperty('right');
+                    overlayRef.current.style.left = '14px';
+                    overlayRef.current.style.bottom = '14px';
+                  }
+                  overlayRef.current.style.transform = 'none';
+                  if (cardRef.current) {
+                    cardRef.current.style.maxWidth = '240px';
+                    cardRef.current.style.width = '240px';
+                    cardRef.current.style.padding = '9px 11px';
+                    cardRef.current.style.maxHeight = 'calc(100dvh - 100px)';
+                  }
                 } else {
+                  if (cardRef.current) {
+                    cardRef.current.style.maxWidth = '310px';
+                    cardRef.current.style.width = 'calc(100vw - 48px)';
+                    cardRef.current.style.padding = '12px 14px';
+                    cardRef.current.style.maxHeight = 'calc(100dvh - 110px)';
+                  }
                   // Apply unique off-to-the-side position cleanly with property removal
                   if (conf.posStyle.top && conf.posStyle.top !== 'auto') {
                     overlayRef.current.style.top = conf.posStyle.top;

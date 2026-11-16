@@ -1,5 +1,5 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
+import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import { Sparkles, Float, Text, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -10,6 +10,9 @@ import * as THREE from 'three';
 // ===========================================================================
 
 export default function WorldPyramid({ position, visible }) {
+  const { size } = useThree();
+  const aspect = size.width / Math.max(1, size.height);
+  const isTabletOrNarrow = size.width < 1200 || aspect < 1.45;
   const pyramidGroupRef = useRef();
   const brainCoreRef = useRef();
   const apexOrbRef = useRef();
@@ -27,7 +30,7 @@ export default function WorldPyramid({ position, visible }) {
     synaptic_pulse_intensity: 0.2,
     active_ventures: [
       "Bug Bounty Hunter (#5)",
-      "Media Localization Studio (#3)",
+      "AI Dubbing Studio (#3)",
       "Academic Synthesis Studio (#2)",
       "Autonomous Marketing Agency (#1)"
     ],
@@ -372,16 +375,16 @@ export default function WorldPyramid({ position, visible }) {
 
         {/* 4 Interactive Monumental Obelisks: Autonomous Fleet Stations */}
         {[
-          { key: 'north', name: 'Marketing Agency (#1)', pos: [-580, -180], obeliskY: 340, labelY: 105, defaultProfit: 8758.24, color: '#f59e0b', note: 440.0 },
-          { key: 'east', name: 'Academic Studio (#2)', pos: [580, -180], obeliskY: 340, labelY: 105, defaultProfit: 14064.62, color: '#38bdf8', note: 493.88 },
-          { key: 'south', name: 'Localization (#3)', pos: [-640, 180], obeliskY: -250, labelY: 105, defaultProfit: 5923.37, color: '#c084fc', note: 587.33 },
-          { key: 'west', name: 'Bug Bounty (#5)', pos: [640, 180], obeliskY: -250, labelY: 105, defaultProfit: 11311.96, color: '#34d399', note: 659.25 }
+          { key: 'north', name: 'Marketing Agency (#1)', pos: isTabletOrNarrow ? [-450, -180] : [-580, -180], obeliskY: 340, labelY: isTabletOrNarrow ? 130 : 105, defaultProfit: 8758.24, color: '#f59e0b', note: 440.0 },
+          { key: 'east', name: 'Academic Studio (#2)', pos: isTabletOrNarrow ? [450, -180] : [580, -180], obeliskY: 340, labelY: isTabletOrNarrow ? 130 : 105, defaultProfit: 14064.62, color: '#38bdf8', note: 493.88 },
+          { key: 'south', name: 'AI Dubbing Studio (#3)', pos: isTabletOrNarrow ? [-490, 180] : [-640, 180], obeliskY: -250, labelY: isTabletOrNarrow ? 130 : 105, defaultProfit: 5923.37, color: '#c084fc', note: 587.33 },
+          { key: 'west', name: 'Bug Bounty (#5)', pos: isTabletOrNarrow ? [490, 180] : [640, 180], obeliskY: -250, labelY: isTabletOrNarrow ? 130 : 105, defaultProfit: 11311.96, color: '#34d399', note: 659.25 }
         ].map((ob, idx) => {
           const isHovered = hoveredObelisk === ob.key;
           const isSelected = selectedObelisk === ob.key;
           const obData = telemetry?.obelisks?.[ob.key] || { jobs: 2, profit_dollars: ob.defaultProfit };
           const isLeftSide = ob.pos[0] < 0;
-          const iconOffsetX = isLeftSide ? -235 : 235;
+          const iconOffsetX = isLeftSide ? (isTabletOrNarrow ? -190 : -235) : (isTabletOrNarrow ? 190 : 235);
           const textOffsetX = 0;
 
           return (
@@ -404,7 +407,7 @@ export default function WorldPyramid({ position, visible }) {
               }}
             >
               {/* Obelisk Icon Group shifted outside so it is never hidden behind the text */}
-              <group position={[iconOffsetX, 0, 0]}>
+              <group position={[iconOffsetX, 0, 0]} scale={isTabletOrNarrow ? 1.45 : 1}>
                 {/* Tapered Obelisk Shaft (3x larger, subtly lit so top/back obelisks read clearly) */}
                 <mesh position={[0, 105, 0]}>
                   <cylinderGeometry args={[15, 36, 210, 4]} rotation={[0, Math.PI / 4, 0]} />
@@ -435,8 +438,8 @@ export default function WorldPyramid({ position, visible }) {
                   font="/fonts/Roboto.woff"
                   fallbackFonts={[]}
                   position={[0, 16, 0]}
-                  fontSize={48}
-                  maxWidth={400}
+                  fontSize={isTabletOrNarrow ? 64 : 48}
+                  maxWidth={isTabletOrNarrow ? 520 : 400}
                   lineHeight={1.1}
                   textAlign="center"
                   color={ob.color}
@@ -451,7 +454,7 @@ export default function WorldPyramid({ position, visible }) {
                   font="/fonts/Roboto.woff"
                   fallbackFonts={[]}
                   position={[0, -8, 0]}
-                  fontSize={36}
+                  fontSize={isTabletOrNarrow ? 48 : 36}
                   color="#ffffff"
                   outlineWidth={1.8}
                   outlineColor="#090a14"

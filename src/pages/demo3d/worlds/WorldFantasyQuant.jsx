@@ -4,6 +4,10 @@ import { Text, Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
+// Preload FantasyQuant textures so WormholeWaterslide never opens into a Suspense black void
+useLoader.preload(THREE.TextureLoader, '/nfl_football_field.png');
+useLoader.preload(THREE.TextureLoader, '/fantasyquant_wizard_bright.png');
+
 const RealisticFootballPlayer = ({
   color = '#00d4ff',
   accentColor = '#061d33',

@@ -735,11 +735,14 @@ const WorldIcebreaker = ({ position, rotation, visible = true }) => {
   const centerZ = (startZ + endZ) / 2;
 
   useFrame(() => {
+    if (!visible) return;
     if (textGroupRef.current) {
       const thawed = window._icebreakerMeltState === 'completed' || (window.icebreakerThaw || 0) >= 0.85;
       textGroupRef.current.visible = thawed;
     }
   });
+
+  if (!visible) return null;
 
   return (
     <group position={position} rotation={rotation} visible={visible}>
