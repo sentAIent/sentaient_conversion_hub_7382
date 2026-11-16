@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquarePlus, Star, X, Check, ThumbsUp, Sparkles } from 'lucide-react';
 import analytics from '../../services/ComprehensiveAnalytics';
 
-export default function FeedbackModal({ currentApp, currentWorld }) {
+export default function FeedbackModal({ currentApp, currentWorld, triggerClassName }) {
   const [isOpen, setIsOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
@@ -54,7 +54,7 @@ export default function FeedbackModal({ currentApp, currentWorld }) {
   return (
     <>
       {/* Floating Feedback Trigger Pill */}
-      <div className="fixed bottom-2.5 right-2.5 sm:bottom-5 sm:right-5 z-[80] flex items-center gap-2">
+      <div className={triggerClassName || "fixed bottom-2.5 right-2.5 sm:bottom-5 sm:right-5 z-[80] flex items-center gap-2"}>
         {hasAutoPrompted && !isOpen && (
           <div 
             onClick={() => setIsOpen(true)}

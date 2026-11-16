@@ -127,7 +127,10 @@ const Demo3DHome = () => {
       </div>
 
       {/* Interactive User Feedback Widget */}
-      <FeedbackModal currentApp="3D Space Experience" />
+      <FeedbackModal
+        currentApp="3D Space Experience"
+        triggerClassName="fixed top-[92px] right-2.5 sm:top-[104px] sm:right-4 xl:top-auto xl:bottom-5 xl:right-5 z-[80] flex items-center gap-2"
+      />
     </div>
   );
 };

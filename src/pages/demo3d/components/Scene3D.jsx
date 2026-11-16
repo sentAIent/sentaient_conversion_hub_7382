@@ -221,26 +221,43 @@ const HTMLStations = () => {
                 const isTablet = winW >= 768 && winW < 1200;
 
                 if (isPhone) {
-                  // On phones: expand horizontally and down to the bottom edge so controls & info fit without scrolling
+                  // On phones: full-width compact bottom dock so all info & controls fit without scrolling while keeping upper 60%+ clear for the 3D world
                   overlayRef.current.style.removeProperty('top');
                   overlayRef.current.style.removeProperty('right');
-                  overlayRef.current.style.bottom = '12px';
+                  overlayRef.current.style.bottom = '8px';
                   overlayRef.current.style.left = '50%';
                   overlayRef.current.style.transform = 'translateX(-50%)';
                   if (cardRef.current) {
                     cardRef.current.style.maxWidth = 'calc(100vw - 16px)';
                     cardRef.current.style.width = 'calc(100vw - 16px)';
-                    cardRef.current.style.padding = '10px 12px';
-                    cardRef.current.style.maxHeight = 'calc(100dvh - 96px)';
+                    cardRef.current.style.padding = '8px 11px';
+                    cardRef.current.style.maxHeight = 'calc(100dvh - 80px)';
+                  }
+                  if (titleRef.current) {
+                    titleRef.current.style.fontSize = '1.1rem';
+                    titleRef.current.style.margin = '0 0 2px 0';
+                  }
+                  if (summaryRef.current) {
+                    summaryRef.current.style.fontSize = '11px';
+                    summaryRef.current.style.margin = '0 0 2px 0';
+                    summaryRef.current.style.lineHeight = '1.28';
+                  }
+                  if (descRef.current) {
+                    descRef.current.style.fontSize = '10px';
+                    descRef.current.style.margin = '0 0 5px 0';
+                    descRef.current.style.lineHeight = '1.3';
+                  }
+                  if (tagsRef.current) {
+                    tagsRef.current.style.marginBottom = '5px';
                   }
                 } else if (isTablet) {
-                  // On tablets: smaller card tucked into bottom corners out of the way of world animations
+                  // On tablets: compact card tucked into bottom corners out of the way of world animations
                   overlayRef.current.style.removeProperty('top');
                   const useRight = conf.posStyle.right && conf.posStyle.right !== 'auto';
                   if (useRight) {
                     overlayRef.current.style.removeProperty('left');
                     overlayRef.current.style.right = '14px';
-                    overlayRef.current.style.bottom = '68px';
+                    overlayRef.current.style.bottom = '14px';
                   } else {
                     overlayRef.current.style.removeProperty('right');
                     overlayRef.current.style.left = '14px';
@@ -248,17 +265,51 @@ const HTMLStations = () => {
                   }
                   overlayRef.current.style.transform = 'none';
                   if (cardRef.current) {
-                    cardRef.current.style.maxWidth = '240px';
-                    cardRef.current.style.width = '240px';
+                    cardRef.current.style.maxWidth = '270px';
+                    cardRef.current.style.width = '270px';
                     cardRef.current.style.padding = '9px 11px';
-                    cardRef.current.style.maxHeight = 'calc(100dvh - 100px)';
+                    cardRef.current.style.maxHeight = 'calc(100dvh - 90px)';
+                  }
+                  if (titleRef.current) {
+                    titleRef.current.style.fontSize = '1.08rem';
+                    titleRef.current.style.margin = '0 0 2px 0';
+                  }
+                  if (summaryRef.current) {
+                    summaryRef.current.style.fontSize = '11px';
+                    summaryRef.current.style.margin = '0 0 3px 0';
+                    summaryRef.current.style.lineHeight = '1.3';
+                  }
+                  if (descRef.current) {
+                    descRef.current.style.fontSize = '10px';
+                    descRef.current.style.margin = '0 0 6px 0';
+                    descRef.current.style.lineHeight = '1.32';
+                  }
+                  if (tagsRef.current) {
+                    tagsRef.current.style.marginBottom = '6px';
                   }
                 } else {
                   if (cardRef.current) {
-                    cardRef.current.style.maxWidth = '310px';
-                    cardRef.current.style.width = 'calc(100vw - 48px)';
-                    cardRef.current.style.padding = '12px 14px';
+                    cardRef.current.style.maxWidth = conf.cardStyle?.maxWidth || '360px';
+                    cardRef.current.style.width = conf.cardStyle?.width || 'calc(100vw - 64px)';
+                    cardRef.current.style.padding = conf.cardStyle?.padding || '18px 20px';
                     cardRef.current.style.maxHeight = 'calc(100dvh - 110px)';
+                  }
+                  if (titleRef.current) {
+                    titleRef.current.style.fontSize = '1.35rem';
+                    titleRef.current.style.margin = '1px 0 3px 0';
+                  }
+                  if (summaryRef.current) {
+                    summaryRef.current.style.fontSize = '12px';
+                    summaryRef.current.style.margin = '0 0 4px 0';
+                    summaryRef.current.style.lineHeight = '1.35';
+                  }
+                  if (descRef.current) {
+                    descRef.current.style.fontSize = '11px';
+                    descRef.current.style.margin = '0 0 8px 0';
+                    descRef.current.style.lineHeight = '1.4';
+                  }
+                  if (tagsRef.current) {
+                    tagsRef.current.style.marginBottom = '8px';
                   }
                   // Apply unique off-to-the-side position cleanly with property removal
                   if (conf.posStyle.top && conf.posStyle.top !== 'auto') {
@@ -341,13 +392,10 @@ const HTMLStations = () => {
                   )).join('');
                 }
 
-                // Update Card Accent & Per-World Dimensions
+                // Update Card Accent (preserve responsive width/padding set above)
                 if (cardRef.current) {
                   cardRef.current.style.borderTop = `2px solid ${world.color || '#38bdf8'}`;
                   cardRef.current.style.boxShadow = `0 24px 60px rgba(0, 0, 0, 0.9), 0 0 35px ${world.color || '#38bdf8'}22`;
-                  cardRef.current.style.maxWidth = conf.cardStyle?.maxWidth || '360px';
-                  cardRef.current.style.width = conf.cardStyle?.width || 'calc(100vw - 64px)';
-                  cardRef.current.style.padding = conf.cardStyle?.padding || '18px 20px';
                 }
 
                 // Update Enter App Button or Coming Soon Badge

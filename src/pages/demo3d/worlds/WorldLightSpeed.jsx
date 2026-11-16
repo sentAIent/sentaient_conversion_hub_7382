@@ -275,16 +275,6 @@ export default function WorldLightSpeed({ position, visible }) {
         </mesh>
         <pointLight color="#00f0ff" intensity={22} distance={600} />
 
-        {/* Vertical Hyper-Speed Optical Laser Conduit */}
-        <mesh position={[0, 0, 0]}>
-          <cylinderGeometry args={[3, 3, 1600, 16]} />
-          <meshBasicMaterial color="#00ffff" transparent opacity={0.65} blending={THREE.AdditiveBlending} />
-        </mesh>
-        <mesh position={[0, 0, 0]}>
-          <cylinderGeometry args={[10, 10, 1600, 16]} />
-          <meshBasicMaterial color="#0284c7" transparent opacity={0.18} blending={THREE.AdditiveBlending} />
-        </mesh>
-
         {/* ------------------------------------------------------------- */}
         {/* 2. REACTIVE ZERO-TRUST CYBER-DEFENSE SHIELD DOME */}
         {/* ------------------------------------------------------------- */}
