@@ -9,6 +9,8 @@ import { generateHistoricalWeatherAIReport, searchWeatherLocations, HistoricalWe
 import { isConstitutionalQuery, generateConstitutionalAIReport } from './constitutionalDatabase';
 import { isLegalDefenseQuery, generateLegalDefenseResponse } from './legalDefenseEngine';
 import { isBlacksLawQuery, generateBlacksLawAIReport } from './blacksLawDictionary';
+import { isBouvierQuery, generateBouvierAIReport } from './bouviersLawDictionary';
+import { LocalLlmConnector } from './localLlmConnector';
 import { WaterPotabilityEngine } from './waterPotabilityEngine';
 import { TacticalRepeaterEngine, EMERGENCY_SIMPLEX_CHANNELS } from '../comms/tacticalRepeaterEngine';
 import { SpaceWeatherEngine } from '../space/spaceWeatherEngine';
@@ -81,7 +83,20 @@ export async function askSphinxAI(
     }
   }
 
-  // 2. Client-Side OSINT & Intelligence Synthesis Engine
+  // 2. Try Local Ollama / Project NOMAD AI connector
+  try {
+    const localLlmText = await LocalLlmConnector.queryLocalLlm(query, mapContext);
+    if (localLlmText) {
+      return {
+        text: localLlmText,
+        isDeepResearch,
+        sources: ['Local Ollama / Project NOMAD Neural Engine', 'Sphinx Telemetry RAG'],
+        timestamp: new Date().toISOString()
+      };
+    }
+  } catch {}
+
+  // 3. Client-Side OSINT & Intelligence Synthesis Engine
   return synthesizeClientAIResponse(query, mapContext, isDeepResearch);
 }
 
@@ -129,6 +144,16 @@ async function synthesizeClientAIResponse(
   // Check if query is about Black's Law Dictionary, legal maxims, statutory vs common law
   if (isBlacksLawQuery(lower)) {
     return generateBlacksLawAIReport(query, isDeepResearch);
+  }
+
+  // Check if query is about Bouvier's Law Dictionary (1856) & antebellum common law
+  if (isBouvierQuery(lower)) {
+    return {
+      text: generateBouvierAIReport(query),
+      isDeepResearch,
+      sources: ["Bouvier's Law Dictionary (1856 6th Ed.)", "Article III Common Law Baseline", "Supreme Court Precedents"],
+      timestamp: new Date().toISOString()
+    };
   }
 
   // Check if query is about natural water sources, potability, boiling altitude, purification

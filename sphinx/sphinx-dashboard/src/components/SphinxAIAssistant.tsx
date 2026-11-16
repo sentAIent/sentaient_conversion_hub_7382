@@ -129,6 +129,7 @@ Select a quick prompt below or type any question across all intelligence domains
   }, [isOpen, initialQuery]);
 
   const quickPrompts = [
+    { label: "🏛️ Bouvier 1856: Common Law & Allodial", query: "What is John Bouvier's 1856 common-law definition of allodial title, natural person, and right of travel?" },
     { label: "⚖️ Black's Law: Driver vs Traveler", query: "What is the Black's Law Dictionary definition of driver vs traveler and its constitutional implications?" },
     { label: "📜 Legal Maxim: Ignorantia Juris", query: "Explain the legal maxim Ignorantia juris non excusat and its application to statutory notice." },
     { label: "💧 Water potability & boil formulas", query: "What is the altitude-adjusted boiling time and purification protocol for natural subalpine water sources?" },
