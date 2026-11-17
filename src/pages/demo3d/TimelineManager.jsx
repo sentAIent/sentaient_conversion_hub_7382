@@ -536,7 +536,7 @@ export const TimelineManager = () => {
         clove: isActiveOrPreloading('clove'),
         w_fantasy: false,
         fantasy: isActiveOrPreloading('fantasy'),
-        w_contango: false,
+        w_contango: activeId === 'contango' && p < 0.458,
         contango: isActiveOrPreloading('contango'),
         w_sentaient: activeId === 'sentaient' && p < 0.972,
         sentaient: isActiveOrPreloading('sentaient'),

@@ -11,7 +11,7 @@ export const STATIONS = [
   { id: 'legal', name: 'Legal Eagle', p: 0.248, entryP: 0.226, duration: 3600, color: '#D4AF37' },
   { id: 'autopilot', name: 'Autopilot', p: 0.293, entryP: 0.271, duration: 3600, color: '#10B981' },
   { id: 'fantasy', name: 'FantasyQuant', p: 0.413, entryP: 0.391, duration: 4400, color: '#00FF88' },
-  { id: 'contango', name: 'Contango', p: 0.463, entryP: 0.451, duration: 3600, color: '#FFD700' },
+  { id: 'contango', name: 'Contango', p: 0.463, entryP: 0.432, duration: 3600, color: '#FFD700' },
   { id: 'elevate', name: 'Elevate', p: 0.518, entryP: 0.496, duration: 3600, color: '#00FFFF' },
   { id: 'sphinx', name: 'Sphinx', p: 0.582, entryP: 0.560, duration: 3600, color: '#F59E0B' },
   { id: 'liquid', name: 'Liquid', p: 0.648, entryP: 0.626, duration: 3600, color: '#00FF88' },
