@@ -371,16 +371,17 @@ const HTMLStations = () => {
 
                 // Update Superpower Pills
                 if (tagsRef.current) {
+                  const compactPill = isPhone || isTablet;
                   tagsRef.current.innerHTML = conf.tags.map(tag => (
                     `<span style="
                       display: inline-flex;
                       align-items: center;
                       gap: 4px;
-                      padding: 3px 8px;
+                      padding: ${compactPill ? '2px 6px' : '3px 8px'};
                       border-radius: 6px;
                       background: rgba(255, 255, 255, 0.05);
                       border: 1px solid rgba(255, 255, 255, 0.1);
-                      font-size: 10px;
+                      font-size: ${compactPill ? '9px' : '10px'};
                       font-weight: 600;
                       letter-spacing: 0.03em;
                       color: #cbd5e1;
@@ -401,10 +402,12 @@ const HTMLStations = () => {
                 // Update Enter App Button or Coming Soon Badge
                 if (enterAppBtnRef.current) {
                   const targetUrl = world.appUrl || WORLD_ROUTES[world.name];
+                  const btnPad = (isPhone || isTablet) ? '7px 10px' : '9px 14px';
                   if (targetUrl) {
                     enterAppBtnRef.current.href = targetUrl;
                     enterAppBtnRef.current.target = targetUrl.startsWith('http') ? '_blank' : '_self';
                     enterAppBtnRef.current.style.display = 'inline-flex';
+                    enterAppBtnRef.current.style.padding = btnPad;
                     enterAppBtnRef.current.style.background = `linear-gradient(135deg, ${world.color || '#38bdf8'}ee, ${world.color || '#38bdf8'}99)`;
                     enterAppBtnRef.current.style.boxShadow = `0 4px 16px ${world.color || '#38bdf8'}44`;
                     if (comingSoonRef.current) comingSoonRef.current.style.display = 'none';
@@ -412,6 +415,7 @@ const HTMLStations = () => {
                     enterAppBtnRef.current.style.display = 'none';
                     if (comingSoonRef.current) {
                       comingSoonRef.current.style.display = 'inline-flex';
+                      comingSoonRef.current.style.padding = btnPad;
                       comingSoonRef.current.style.borderColor = `${world.color || '#38bdf8'}77`;
                       comingSoonRef.current.style.background = `linear-gradient(135deg, ${world.color || '#38bdf8'}26, ${world.color || '#38bdf8'}10)`;
                       comingSoonRef.current.style.boxShadow = `0 0 18px ${world.color || '#38bdf8'}26`;

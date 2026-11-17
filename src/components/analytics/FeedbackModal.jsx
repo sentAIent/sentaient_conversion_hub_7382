@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquarePlus, Star, X, Check, ThumbsUp, Sparkles } from 'lucide-react';
 import analytics from '../../services/ComprehensiveAnalytics';
 
-export default function FeedbackModal({ currentApp, currentWorld, triggerClassName }) {
+export default function FeedbackModal({ currentApp, currentWorld, triggerClassName, enableAutoPrompt = true }) {
   const [isOpen, setIsOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
@@ -14,6 +14,7 @@ export default function FeedbackModal({ currentApp, currentWorld, triggerClassNa
 
   // Auto-prompt after 40 seconds of continuous engagement if user hasn't opened yet
   useEffect(() => {
+    if (!enableAutoPrompt) return;
     const timer = setTimeout(() => {
       const alreadyPrompted = sessionStorage.getItem('sentaient_feedback_prompted');
       if (!alreadyPrompted && !isOpen && !submitted) {
@@ -23,7 +24,7 @@ export default function FeedbackModal({ currentApp, currentWorld, triggerClassNa
     }, 40000);
 
     return () => clearTimeout(timer);
-  }, [isOpen, submitted]);
+  }, [enableAutoPrompt, isOpen, submitted]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -55,7 +56,7 @@ export default function FeedbackModal({ currentApp, currentWorld, triggerClassNa
     <>
       {/* Floating Feedback Trigger Pill */}
       <div className={triggerClassName || "fixed bottom-2.5 right-2.5 sm:bottom-5 sm:right-5 z-[80] flex items-center gap-2"}>
-        {hasAutoPrompted && !isOpen && (
+        {enableAutoPrompt && hasAutoPrompted && !isOpen && (
           <div 
             onClick={() => setIsOpen(true)}
             className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-600/90 to-cyan-600/90 text-white text-xs font-semibold rounded-full shadow-lg border border-cyan-400/40 backdrop-blur-md cursor-pointer animate-bounce"
