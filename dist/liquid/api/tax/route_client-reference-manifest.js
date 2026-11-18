@@ -1,0 +1,1 @@
+globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST["/api/tax/route"]={"moduleLoading":{"prefix":"/_next/"},"ssrModuleMapping":{},"edgeSSRModuleMapping":{},"clientModules":{},"entryCSSFiles":{"/Users/infinitealpha/Dev/BinauralBeats/sentaient_conversion_hub_7382/finance_app/src/app/api/tax/route":[]},"rscModuleMapping":{},"edgeRscModuleMapping":{}};

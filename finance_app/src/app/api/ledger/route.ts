@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { initActualBudget } from '@/lib/actualBudget';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const tradeData = await request.json();

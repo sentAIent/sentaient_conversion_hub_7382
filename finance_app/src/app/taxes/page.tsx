@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Calculator, DollarSign, TrendingUp, Calendar, AlertCircle, Sparkles, BrainCircuit, ArrowRight } from 'lucide-react';
+import { Calculator, DollarSign, TrendingUp, Calendar, AlertCircle, Sparkles, BrainCircuit, ArrowRight, ShieldCheck } from 'lucide-react';
+import TaxVaultView from '@/components/TaxVaultView';
 
 export default function TaxesPage() {
+  const [viewMode, setViewMode] = useState<'standard' | 'vault'>('vault');
   const [taxRate, setTaxRate] = useState<number>(25);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -62,14 +64,31 @@ export default function TaxesPage() {
 
   return (
     <div className="space-y-6 pb-20">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Tax Center</h1>
-          <p className="text-gray-500 mt-1">Automated quarterly estimates and AI-powered tax strategies (US IRS).</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Institutional Tax Vault & Reporting</h1>
+          <p className="text-gray-500 mt-1">IRS Form 1099-DA/8949, Section 174 Software Amortization, and 50-State Economic Nexus Radar.</p>
+        </div>
+        <div className="flex bg-gray-100 p-1 rounded-xl text-sm font-medium">
+          <button
+            onClick={() => setViewMode('vault')}
+            className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'vault' ? 'bg-white text-gray-900 shadow-sm font-semibold' : 'text-gray-500 hover:text-gray-900'}`}
+          >
+            Sovereign Tax Vault
+          </button>
+          <button
+            onClick={() => setViewMode('standard')}
+            className={`px-4 py-2 rounded-lg transition-all ${viewMode === 'standard' ? 'bg-white text-gray-900 shadow-sm font-semibold' : 'text-gray-500 hover:text-gray-900'}`}
+          >
+            Quarterly Estimator
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {viewMode === 'vault' ? (
+        <TaxVaultView />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Config & Breakdown */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -258,6 +277,7 @@ export default function TaxesPage() {
 
         </div>
       </div>
+      )}
     </div>
   );
 }

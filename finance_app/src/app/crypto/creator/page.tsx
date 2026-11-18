@@ -1,20 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import InstitutionalTokenStudio from '@/components/InstitutionalTokenStudio';
 
 export default function CryptoCreatorPage() {
-  const [network, setNetwork] = useState('Ethereum');
-  const [mode, setMode] = useState('Basic');
-  const [tokenName, setTokenName] = useState('');
-  const [tokenSymbol, setTokenSymbol] = useState('');
-  const [supply, setSupply] = useState('1000000');
-  
-  const handleDeploy = () => {
-    alert(`Deploying ${tokenName} (${tokenSymbol}) to ${network} in ${mode} mode...`);
-    // Will integrate with web3 providers here
-  };
+  return <InstitutionalTokenStudio />;
+}
 
-  return (
+function LegacyCryptoCreator() {
+  return null;
+  /*
     <div className="min-h-screen bg-gray-900 text-white p-10 font-sans">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-4">Cryptocurrency Creator</h1>
@@ -102,4 +97,5 @@ export default function CryptoCreatorPage() {
       </div>
     </div>
   );
+  */
 }

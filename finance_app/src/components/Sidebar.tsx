@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Receipt, Bitcoin, Calculator, ChevronDown, FileText, Target, Layers, FileSpreadsheet, Camera, PieChart, Building2 } from 'lucide-react';
+import { LayoutDashboard, Receipt, Bitcoin, Calculator, ChevronDown, FileText, Target, Layers, FileSpreadsheet, Camera, PieChart, Building2, ShieldCheck, Cpu, RefreshCw } from 'lucide-react';
 import { useEntity } from '@/context/EntityContext';
 import { useState } from 'react';
 
@@ -99,6 +99,18 @@ export default function Sidebar() {
         <Link href="/defi" className={getLinkClass('/defi')}>
           <Layers size={20} />
           <span>DeFi & Staking</span>
+        </Link>
+        <Link href="/continuous-close" className={getLinkClass('/continuous-close')}>
+          <RefreshCw size={20} />
+          <span>Continuous Close</span>
+        </Link>
+        <Link href="/crypto/creator" className={getLinkClass('/crypto/creator')}>
+          <Cpu size={20} />
+          <span>Token Studio</span>
+        </Link>
+        <Link href="/solvency" className={getLinkClass('/solvency')}>
+          <ShieldCheck size={20} />
+          <span>ZK Solvency</span>
         </Link>
       </nav>
       <div className="p-4 border-t border-gray-800 text-sm text-gray-500">
