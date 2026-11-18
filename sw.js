@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindwave-offline-v3';
+const CACHE_NAME = 'mindwave-offline-v4';
 
 // Core assets to pre-cache
 const CORE_ASSETS = [
@@ -13,6 +13,12 @@ const CORE_ASSETS = [
     '/binaural-assets/js/ui/controls_v3.js',
     '/binaural-assets/js/main_vFINAL.js',
     '/binaural-assets/js/services/biofeedback.js',
+    '/binaural-assets/js/ui/biometric-hud.js',
+    '/binaural-assets/js/services/clinical-assessment.js',
+    '/binaural-assets/js/ui/assessment-modal.js',
+    '/binaural-assets/js/services/enterprise-wellness.js',
+    '/binaural-assets/js/ui/enterprise-modal.js',
+    '/binaural-assets/js/services/native-iap.js',
     '/binaural-assets/js/visuals/visualizer_lazy.js',
     '/binaural-assets/js/audio/ambient-synth.js',
     '/binaural-assets/js/services/biometrics.js',

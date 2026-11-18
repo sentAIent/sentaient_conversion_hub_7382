@@ -9,6 +9,8 @@ import { setMasterVolume, setBeatsVolume, setAtmosVolume } from './audio/engine.
 window.setMasterVolume = setMasterVolume;
 window.setBeatsVolume = setBeatsVolume;
 window.setAtmosVolume = setAtmosVolume;
+import { nativeIAP } from './services/native-iap.js';
+window.nativeIAP = nativeIAP;
 
 // Global Error Handlers (must be before anything else)
 window.onerror = (message, source, lineno, colno, error) => {

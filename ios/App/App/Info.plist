@@ -32,11 +32,14 @@
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
+		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
@@ -58,5 +61,11 @@
 	<string>This app requires FaceID to authenticate and unlock your secure local agent vault.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>This app requires local network access to communicate with your local machine learning bridge.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>MindWave reads your resting heart rate and HRV to dynamically calibrate auditory brainwave entrainment frequencies.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>MindWave logs your mindful meditation and focus sessions directly into Apple Health.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>MindWave connects to Bluetooth heart rate monitors to adapt binaural beats to your real-time physiology.</string>
 </dict>
 </plist>

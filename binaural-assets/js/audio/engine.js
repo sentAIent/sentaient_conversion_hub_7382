@@ -17,6 +17,18 @@ export function registerUICallback(cb) {
 // Audio Context & Nodes
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 
+// Multi-tab audio coordination to prevent acoustic phasing
+const audioSyncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mindwave_audio_sync') : null;
+if (audioSyncChannel) {
+    if (typeof audioSyncChannel.unref === 'function') audioSyncChannel.unref();
+    audioSyncChannel.onmessage = (event) => {
+        if (event.data?.type === 'audio-started' && state.isPlaying) {
+            console.log('[AudioSync] Another tab started playback. Pausing to avoid collision.');
+            stopAudio();
+        }
+    };
+}
+
 // Worklet Code
 const recorderWorkletCode = `
 class RecorderProcessor extends AudioWorkletProcessor {
@@ -210,6 +222,7 @@ export async function startAudio() {
 
     if (state.isStarting) return;
     state.isStarting = true;
+    if (audioSyncChannel) audioSyncChannel.postMessage({ type: 'audio-started', timestamp: Date.now() });
     console.log("[Audio] Starting engine...");
 
     try {

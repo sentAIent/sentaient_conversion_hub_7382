@@ -14,6 +14,9 @@ import { captureViralVibe } from '../export/vibe-exporter.js';
 import { initPaywallModal } from '../ui/paywall-modal.js';
 import { processIncomingReferral } from '../services/referral-engine.js';
 import { biometrics } from '../services/biometrics.js';
+import { openBiometricHUD } from '../ui/biometric-hud.js';
+import { openAssessmentHistoryModal, openPreSessionModal, openPostSessionModal } from '../ui/assessment-modal.js';
+import { openEnterpriseModal } from '../ui/enterprise-modal.js';
 import { leantime } from '../services/leantime.js';
 import { calculateFrequencyFromGoal } from '../services/ai-intent-service.js';
 import { applyAIPreset } from '../ui/controls_v3.js';
@@ -100,13 +103,30 @@ export function initCoreUI() {
 
     const bioBtn = document.getElementById('bioBtn');
     if (bioBtn) {
-        bioBtn.addEventListener('click', async () => {
-            const connected = await biometrics.connect();
-            if (connected) {
-                bioBtn.style.color = '#10b981'; // Green when connected
-            }
+        bioBtn.addEventListener('click', () => {
+            openBiometricHUD();
         });
     }
+
+    const assessmentBtn = document.getElementById('assessmentBtn');
+    if (assessmentBtn) {
+        assessmentBtn.addEventListener('click', () => {
+            openAssessmentHistoryModal();
+        });
+    }
+
+    const enterpriseBtn = document.getElementById('enterpriseBtn');
+    if (enterpriseBtn) {
+        enterpriseBtn.addEventListener('click', () => {
+            openEnterpriseModal();
+        });
+    }
+
+    window.openBiometricHUD = openBiometricHUD;
+    window.openAssessmentHistoryModal = openAssessmentHistoryModal;
+    window.openPreSessionModal = openPreSessionModal;
+    window.openPostSessionModal = openPostSessionModal;
+    window.openEnterpriseModal = openEnterpriseModal;
 
     // --- LEANTIME INTEGRATION ---
     const leantimeBtn = document.getElementById('leantimeBtn');

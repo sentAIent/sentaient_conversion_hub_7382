@@ -18,6 +18,11 @@ class BiofeedbackService {
         // Entrainment limits
         this.targetBpm = 60; // Deep rest target
         this.entrainmentFactor = 0.5; // How strongly HR influences beat frequency (0-1)
+        this.rrIntervals = [];
+        this.currentHrv = 48; // RMSSD in ms
+        this.stressScore = 35; // 0-100 scale
+        this.isSimulated = false;
+        this.simInterval = null;
     }
 
     async connect() {
@@ -94,20 +99,128 @@ class BiofeedbackService {
         }
         
         this.currentBpm = heartRate;
-        console.log(`[Biofeedback] Heart Rate: ${heartRate} BPM`);
-
         if (this.baselineBpm === 0) {
             this.baselineBpm = heartRate;
         }
 
-        // Dispatch event for UI updates
+        // Parse RR-Intervals if present
+        let offset = rate16Bits ? 3 : 2;
+        if (flags & 0x08) offset += 2; // Energy Expended
+        if (flags & 0x10) {
+            while (offset + 1 < value.byteLength) {
+                const rawRr = value.getUint16(offset, true);
+                const rrMs = (rawRr / 1024) * 1000;
+                this.recordRrInterval(rrMs);
+                offset += 2;
+            }
+        }
+
+        // Dispatch rich biometric event for UI updates
         window.dispatchEvent(new CustomEvent('biofeedback-update', { 
-            detail: { bpm: heartRate } 
+            detail: { 
+                bpm: heartRate,
+                hrv: this.currentHrv,
+                stressScore: this.stressScore,
+                isSimulated: this.isSimulated
+            } 
         }));
 
         if (this.isEntraining) {
             this.applyEntrainment();
         }
+    }
+
+    recordRrInterval(rrMs) {
+        if (!rrMs || rrMs < 300 || rrMs > 2000) return;
+        this.rrIntervals.push(rrMs);
+        if (this.rrIntervals.length > 30) this.rrIntervals.shift();
+        
+        if (this.rrIntervals.length >= 2) {
+            let sumSqDiff = 0;
+            for (let i = 1; i < this.rrIntervals.length; i++) {
+                const diff = this.rrIntervals[i] - this.rrIntervals[i - 1];
+                sumSqDiff += diff * diff;
+            }
+            this.currentHrv = Math.round(Math.sqrt(sumSqDiff / (this.rrIntervals.length - 1)));
+        }
+        
+        const hrvFactor = Math.max(0, Math.min(100, 100 - (this.currentHrv * 1.4)));
+        const bpmFactor = Math.max(0, Math.min(100, (this.currentBpm - 55) * 1.5));
+        this.stressScore = Math.round((hrvFactor * 0.6) + (bpmFactor * 0.4));
+    }
+
+    startSimulation() {
+        if (this.isConnected) this.disconnect();
+        this.isSimulated = true;
+        this.isConnected = true;
+        let simPhase = 0;
+
+        this.simInterval = setInterval(() => {
+            simPhase += 0.15;
+            // Simulated respiratory sinus arrhythmia (68 - 78 bpm wave)
+            const simulatedBpm = Math.round(72 + Math.sin(simPhase) * 6 + (Math.random() * 2 - 1));
+            const simulatedRr = Math.round((60000 / simulatedBpm) + Math.sin(simPhase * 1.2) * 25);
+            
+            this.currentBpm = simulatedBpm;
+            this.recordRrInterval(simulatedRr);
+            
+            window.dispatchEvent(new CustomEvent('biofeedback-update', {
+                detail: {
+                    bpm: this.currentBpm,
+                    hrv: this.currentHrv,
+                    stressScore: this.stressScore,
+                    isSimulated: true
+                }
+            }));
+
+            if (this.isEntraining) {
+                this.applyEntrainment();
+            }
+        }, 1000);
+
+        window.dispatchEvent(new CustomEvent('biofeedback-connected', { detail: { isSimulated: true } }));
+        return true;
+    }
+
+    stopSimulation() {
+        if (this.simInterval) {
+            clearInterval(this.simInterval);
+            this.simInterval = null;
+        }
+        this.isSimulated = false;
+        this.isConnected = false;
+        this.currentBpm = 0;
+        window.dispatchEvent(new CustomEvent('biofeedback-disconnected'));
+    }
+
+    async logMindfulSession(durationMinutes = 10) {
+        console.log(`[Biofeedback] Logging ${durationMinutes} min Mindful Session to Health Data Store...`);
+        const sessionRecord = {
+            timestamp: Date.now(),
+            durationMinutes,
+            avgBpm: this.currentBpm || 70,
+            avgHrv: this.currentHrv || 50,
+            stressScore: this.stressScore || 30
+        };
+
+        try {
+            // Local persistence
+            const history = JSON.parse(localStorage.getItem('mindwave_health_sessions') || '[]');
+            history.unshift(sessionRecord);
+            if (history.length > 50) history.pop();
+            localStorage.setItem('mindwave_health_sessions', JSON.stringify(history));
+
+            // Optional Capacitor HealthKit Bridge
+            if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.Plugins?.HealthKit) {
+                await window.Capacitor.Plugins.HealthKit.saveMindfulSession({
+                    startDate: new Date(Date.now() - durationMinutes * 60000).toISOString(),
+                    endDate: new Date().toISOString()
+                });
+            }
+        } catch (err) {
+            console.warn('[Biofeedback] HealthKit session log fallback:', err);
+        }
+        return sessionRecord;
     }
 
     toggleEntrainment(active) {
