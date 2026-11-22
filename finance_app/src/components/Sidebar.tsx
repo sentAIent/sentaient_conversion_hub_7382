@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Receipt, Bitcoin, Calculator, ChevronDown, FileText, Target, Layers, FileSpreadsheet, Camera, PieChart, Building2, ShieldCheck, Cpu, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, Receipt, Bitcoin, Calculator, ChevronDown, FileText, Target, Layers, FileSpreadsheet, Camera, PieChart, Building2, ShieldCheck, Cpu, RefreshCw, TrendingUp, CreditCard, Key, Globe, FileCheck, Landmark } from 'lucide-react';
 import { useEntity } from '@/context/EntityContext';
 import { useState } from 'react';
 
@@ -111,6 +111,30 @@ export default function Sidebar() {
         <Link href="/solvency" className={getLinkClass('/solvency')}>
           <ShieldCheck size={20} />
           <span>ZK Solvency</span>
+        </Link>
+        <Link href="/equity" className={getLinkClass('/equity')}>
+          <TrendingUp size={20} />
+          <span>Equity & 409A</span>
+        </Link>
+        <Link href="/treasury" className={getLinkClass('/treasury')}>
+          <Landmark size={20} />
+          <span>Treasury & Runway</span>
+        </Link>
+        <Link href="/ap-spend" className={getLinkClass('/ap-spend')}>
+          <CreditCard size={20} />
+          <span>AP & Spend Controls</span>
+        </Link>
+        <Link href="/safe-multisig" className={getLinkClass('/safe-multisig')}>
+          <Key size={20} />
+          <span>Safe Multi-Sig</span>
+        </Link>
+        <Link href="/global-tax" className={getLinkClass('/global-tax')}>
+          <Globe size={20} />
+          <span>Global Tax & FBAR</span>
+        </Link>
+        <Link href="/auditor-portal" className={getLinkClass('/auditor-portal')}>
+          <FileCheck size={20} />
+          <span>Auditor & SOC Vault</span>
         </Link>
       </nav>
       <div className="p-4 border-t border-gray-800 text-sm text-gray-500">
