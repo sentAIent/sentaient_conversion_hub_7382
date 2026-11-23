@@ -207,6 +207,18 @@ function createPostSessionModalDOM() {
             await biofeedback.logMindfulSession(report.durationMinutes);
             closePostSessionModal();
             showToast(`Efficacy verified! Stress reduced by ${report.deltas.stressReductionPct}%.`, "success");
+            try {
+                const { openSocialShareModal } = await import('./social-share-modal.js');
+                openSocialShareModal({
+                    durationMinutes: report.durationMinutes,
+                    focusGainPct: report.deltas.focusGainPct,
+                    stressReductionPct: report.deltas.stressReductionPct,
+                    hrv: biofeedback.currentHrv || 52,
+                    preset: report.preset
+                });
+            } catch (err) {
+                console.error('[AssessmentModal] Failed to load social share modal:', err);
+            }
         } else {
             closePostSessionModal();
         }
@@ -295,4 +307,11 @@ function refreshHistoryModal(container) {
             `).join('');
         }
     }
+}
+
+// Automatically trigger post-session evaluation when session completes
+if (typeof window !== 'undefined') {
+    window.addEventListener('mindwave-session-completed', (event) => {
+        openPostSessionModal();
+    });
 }

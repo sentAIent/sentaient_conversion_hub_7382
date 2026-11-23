@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Your Weekly Neuro-Digest — {{weeklyMinutes}} Minutes in Flow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; background-color: #090514; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #e2e8f0; }
+    .wrapper { width: 100%; max-width: 600px; margin: 0 auto; background-color: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; }
+    .header { padding: 40px 32px 20px; text-align: center; }
+    .badge { display: inline-block; padding: 6px 14px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.4); border-radius: 999px; color: #38bdf8; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
+    h1 { margin: 0 0 8px; font-size: 28px; font-weight: 800; color: #ffffff; }
+    .content { padding: 0 32px 32px; }
+    .streak-banner { background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(168,85,247,0.15)); border: 1px solid rgba(0,255,204,0.3); border-radius: 14px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; margin: 20px 0; }
+    .metric-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px; }
+    .btn { display: block; width: fit-content; margin: 24px auto 0; padding: 14px 28px; background: #00ffcc; color: #040914; font-weight: 800; font-size: 15px; text-decoration: none; border-radius: 12px; text-align: center; }
+    .footer { padding: 24px 32px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center; font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div style="padding: 24px 12px;">
+    <div class="wrapper">
+      <div class="header">
+        <div class="badge">📊 Weekly Efficacy Report</div>
+        <h1>Your Neuro-Digest</h1>
+        <p style="color: #94a3b8; font-size: 15px; margin: 0;">Here's your weekly cognitive summary for {{startDate}} – {{endDate}}.</p>
+      </div>
+      <div class="content">
+        <div class="streak-banner">
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: #00ffcc; text-transform: uppercase;">Active Streak</div>
+            <div style="font-size: 28px; font-weight: 900; color: #ffffff;">{{streakDays}} Days in Flow 🔥</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Total Time</div>
+            <div style="font-size: 28px; font-weight: 900; color: #38bdf8;">{{weeklyMinutes}}m</div>
+          </div>
+        </div>
+
+        <div style="margin: 20px 0;">
+          <div class="metric-row">
+            <span style="color: #94a3b8;">Average Stress Reduction:</span>
+            <span style="font-weight: 700; color: #00ffcc;">-{{avgStressReduction}}%</span>
+          </div>
+          <div class="metric-row">
+            <span style="color: #94a3b8;">Average Focus Surge:</span>
+            <span style="font-weight: 700; color: #38bdf8;">+{{avgFocusGain}}%</span>
+          </div>
+          <div class="metric-row">
+            <span style="color: #94a3b8;">Total Sessions Completed:</span>
+            <span style="font-weight: 700; color: #ffffff;">{{totalSessions}}</span>
+          </div>
+          <div class="metric-row" style="border-bottom: none;">
+            <span style="color: #94a3b8;">Top Frequency Preset:</span>
+            <span style="font-weight: 700; color: #c084fc;">{{favoritePreset}}</span>
+          </div>
+        </div>
+
+        <p style="font-size: 14px; line-height: 1.6; color: #94a3b8;">
+          You're currently in the <strong>Top 5%</strong> of MindWave deep work focusers worldwide. Keep this momentum into next week.
+        </p>
+
+        <a href="{{appUrl}}" class="btn">Start Monday Flow Session &rarr;</a>
+      </div>
+      <div class="footer">
+        SentAIent Inc. • MindWave Neuro-Telemetry<br>
+        <a href="{{unsubscribeUrl}}" style="color: #64748b; text-decoration: underline;">Unsubscribe</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

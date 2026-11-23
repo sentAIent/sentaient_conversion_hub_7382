@@ -16,7 +16,7 @@ if (typeof globalThis.document === 'undefined') {
         getElementById: () => null,
         querySelector: () => null,
         querySelectorAll: () => [],
-        createElement: () => ({ appendChild: () => {}, style: {}, classList: { add: () => {}, remove: () => {} } }),
+        createElement: () => ({ appendChild: () => {}, remove: () => {}, style: {}, classList: { add: () => {}, remove: () => {} } }),
         body: { appendChild: () => {}, insertAdjacentHTML: () => {} }
     };
 }

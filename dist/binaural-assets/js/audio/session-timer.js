@@ -164,6 +164,19 @@ export function stopSession() {
         timerInterval = null;
     }
 
+    const elapsed = sessionStartTime ? (Date.now() - sessionStartTime) : 0;
+    if (elapsed >= 180000 && typeof window !== 'undefined') {
+        const sessionMins = Math.max(1, Math.round(elapsed / 60000));
+        window.dispatchEvent(new CustomEvent('mindwave-session-completed', {
+            detail: {
+                durationMinutes: sessionMins,
+                preset: state.activePresetType || 'alpha',
+                baseFrequency: state.baseFrequency,
+                beatFrequency: state.beatFrequency
+            }
+        }));
+    }
+
     state.sessionActive = false;
     state.sessionPaused = false;
     sessionStartTime = null;
@@ -263,6 +276,18 @@ function tick() {
 
                 if (onCompleteCallback) {
                     onCompleteCallback();
+                }
+
+                if (typeof window !== 'undefined') {
+                    const sessionMins = Math.max(1, Math.round(sessionDuration / 60000));
+                    window.dispatchEvent(new CustomEvent('mindwave-session-completed', {
+                        detail: {
+                            durationMinutes: sessionMins,
+                            preset: state.activePresetType || 'alpha',
+                            baseFrequency: state.baseFrequency,
+                            beatFrequency: state.beatFrequency
+                        }
+                    }));
                 }
 
                 console.log(`[Session] Complete!`);

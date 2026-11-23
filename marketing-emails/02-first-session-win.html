@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Proof of Flow — You Reduced Stress by {{stressReduction}}%</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; background-color: #090514; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #e2e8f0; }
+    .wrapper { width: 100%; max-width: 600px; margin: 0 auto; background-color: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; }
+    .header { padding: 40px 32px 20px; text-align: center; background: radial-gradient(circle at top, rgba(121,40,202,0.2), transparent 70%); }
+    .badge { display: inline-block; padding: 6px 14px; background: rgba(121,40,202,0.2); border: 1px solid rgba(121,40,202,0.4); border-radius: 999px; color: #c084fc; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
+    h1 { margin: 0 0 12px; font-size: 30px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; }
+    .kpi-container { display: flex; justify-content: space-around; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px 16px; margin: 24px 0; text-align: center; }
+    .kpi-val { font-size: 36px; font-weight: 900; line-height: 1; }
+    .kpi-lbl { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+    .content { padding: 0 32px 32px; }
+    .btn { display: block; width: fit-content; margin: 24px auto 0; padding: 14px 28px; background: linear-gradient(135deg, #a855f7, #ec4899); color: #ffffff; font-weight: 800; font-size: 15px; text-decoration: none; border-radius: 12px; text-align: center; box-shadow: 0 8px 24px rgba(168,85,247,0.3); }
+    .btn-secondary { display: block; width: fit-content; margin: 12px auto 0; padding: 10px 20px; color: #00ffcc; font-weight: 700; font-size: 13px; text-decoration: none; text-align: center; }
+    .footer { padding: 24px 32px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center; font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div style="padding: 24px 12px;">
+    <div class="wrapper">
+      <div class="header">
+        <div class="badge">⚡ Verified Session Efficacy</div>
+        <h1>Your Brain in the Zone</h1>
+        <p style="color: #94a3b8; font-size: 15px; margin: 0;">Way to go, {{userName}}! Your latest {{durationMinutes}}-minute calibration just yielded significant cognitive shifts.</p>
+      </div>
+      <div class="content">
+        <div class="kpi-container">
+          <div>
+            <div class="kpi-val" style="color: #00ffcc;">+{{focusGain}}%</div>
+            <div class="kpi-lbl">Focus Boost</div>
+          </div>
+          <div style="border-left: 1px solid rgba(255,255,255,0.1);"></div>
+          <div>
+            <div class="kpi-val" style="color: #38bdf8;">-{{stressReduction}}%</div>
+            <div class="kpi-lbl">Stress Reduction</div>
+          </div>
+          <div style="border-left: 1px solid rgba(255,255,255,0.1);"></div>
+          <div>
+            <div class="kpi-val" style="color: #c084fc;">{{hrv}} ms</div>
+            <div class="kpi-lbl">Vagal Tone (HRV)</div>
+          </div>
+        </div>
+
+        <p style="font-size: 15px; line-height: 1.6; color: #94a3b8;">
+          Your nervous system showed elevated parasympathetic activation during your <strong>{{preset}}</strong> session. Consistent daily entrainment reinforces neural pathways that make entering deep work twice as fast.
+        </p>
+
+        <a href="{{socialShareUrl}}" class="btn">Share Your Session Proof &rarr;</a>
+        <a href="{{icebreakerUrl}}" class="btn-secondary">🧊 Check In on Icebreaker Social Swarms</a>
+      </div>
+      <div class="footer">
+        SentAIent Inc. • Clinical MindWave Architecture<br>
+        <a href="{{unsubscribeUrl}}" style="color: #64748b; text-decoration: underline;">Unsubscribe</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

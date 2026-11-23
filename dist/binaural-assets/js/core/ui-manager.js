@@ -17,6 +17,9 @@ import { biometrics } from '../services/biometrics.js';
 import { openBiometricHUD } from '../ui/biometric-hud.js';
 import { openAssessmentHistoryModal, openPreSessionModal, openPostSessionModal } from '../ui/assessment-modal.js';
 import { openEnterpriseModal } from '../ui/enterprise-modal.js';
+import { openSocialShareModal } from '../ui/social-share-modal.js';
+import { openEmailPreviewModal } from '../ui/email-preview-modal.js';
+import { spatialGyro } from '../audio/spatial-gyro.js';
 import { leantime } from '../services/leantime.js';
 import { calculateFrequencyFromGoal } from '../services/ai-intent-service.js';
 import { applyAIPreset } from '../ui/controls_v3.js';
@@ -408,6 +411,9 @@ function setupCymaticListeners() {
 
 export function initGlobalExports() {
     window.showFeedbackSurvey = showFeedbackSurvey;
+    window.openSocialShareModal = openSocialShareModal;
+    window.openEmailPreviewModal = openEmailPreviewModal;
+    window.spatialGyro = spatialGyro;
 
     window.startOnboarding = async (force = false, intent = null) => {
         const { initTutorial: start } = await lazy.onboarding();

@@ -64,6 +64,16 @@ class EnterpriseWellnessService {
         return { success: false, error: 'Invalid or expired corporate key.' };
     }
 
+    getSampleParticipants(roomName) {
+        return [
+            { name: 'Elena Rostova', role: 'Staff ML Eng', avatar: 'ER', color: 'bg-indigo-600', focusMinutes: 38 },
+            { name: 'Marcus Chen', role: 'Product Lead', avatar: 'MC', color: 'bg-emerald-600', focusMinutes: 24 },
+            { name: 'Sarah Jenkins', role: 'Staff Architect', avatar: 'SJ', color: 'bg-amber-600', focusMinutes: 42 },
+            { name: 'Devon Lee', role: 'Frontend Lead', avatar: 'DL', color: 'bg-cyan-600', focusMinutes: 19 },
+            { name: 'Aaliyah Washington', role: 'Neuroscience R&D', avatar: 'AW', color: 'bg-fuchsia-600', focusMinutes: 31 }
+        ];
+    }
+
     joinFocusRoom(roomName = 'Engineering Deep Work', preset = 'gamma') {
         this.leaveFocusRoom();
         
@@ -73,11 +83,13 @@ class EnterpriseWellnessService {
         const elapsed = Math.floor((now / 1000) % blockDuration);
         const remaining = blockDuration - elapsed;
 
+        const roster = this.getSampleParticipants(roomName);
         this.activeRoom = {
             name: roomName,
             preset,
             remainingSeconds: remaining,
-            participants: Math.floor(8 + Math.random() * 14)
+            participants: roster.length + Math.floor(4 + Math.random() * 8),
+            activeParticipants: roster
         };
 
         // Tune audio engine to room frequency

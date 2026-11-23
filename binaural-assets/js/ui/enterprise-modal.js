@@ -131,6 +131,19 @@ function renderActiveTab(container) {
                                 ${Math.floor(room.remainingSeconds / 60).toString().padStart(2, '0')}:${(room.remainingSeconds % 60).toString().padStart(2, '0')}
                             </div>
                         </div>
+                        <div class="mt-3 pt-3 border-t border-white/10">
+                            <div class="text-[10px] font-bold text-white/50 uppercase tracking-wider mb-1.5">Teammates in Session</div>
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                ${(room.activeParticipants || []).map(p => `
+                                    <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[11px] text-white/80" title="${p.name} (${p.role}) - ${p.focusMinutes}m today">
+                                        <span class="w-4 h-4 rounded-full ${p.color || 'bg-blue-600'} text-[9px] font-black flex items-center justify-center text-white">${p.avatar}</span>
+                                        <span class="font-medium">${p.name.split(' ')[0]}</span>
+                                        <span class="text-white/40 text-[9px]">${p.focusMinutes}m</span>
+                                    </div>
+                                `).join('')}
+                                <span class="text-[10px] text-white/40 font-mono">+${Math.max(0, room.participants - (room.activeParticipants ? room.activeParticipants.length : 0))} more</span>
+                            </div>
+                        </div>
                         <div class="mt-4 flex gap-2">
                             <button id="leaveFocusRoomBtn" class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-bold text-white transition-all">
                                 Leave Room

@@ -521,6 +521,7 @@ export function setupUI() {
     els.visualRecordBtn = document.getElementById('visualRecordBtn');
     els.saveMixBtn = document.getElementById('saveMixBtn');
     els.spatialOrbitToggleBtn = document.getElementById('spatialOrbitToggleBtn');
+    els.spatialGyroToggleBtn = document.getElementById('spatialGyroToggleBtn');
     els.historyBtn = document.getElementById('historyBtn');
     els.journeyBtn = document.getElementById('journeyBtn');
     els.libraryPanel = document.getElementById('libraryPanel');
@@ -1016,6 +1017,23 @@ export function setupUI() {
                 els.spatialOrbitToggleBtn.textContent = 'ORBIT OFF';
                 els.spatialOrbitToggleBtn.classList.remove('bg-cyan-500/20', 'border-cyan-400', 'text-cyan-300');
                 els.spatialOrbitToggleBtn.classList.add('bg-white/5', 'text-[var(--text-muted)]');
+            }
+        });
+    }
+
+    if (els.spatialGyroToggleBtn) {
+        els.spatialGyroToggleBtn.addEventListener('click', async () => {
+            if (window.spatialGyro) {
+                const res = await window.spatialGyro.toggle();
+                if (res.active) {
+                    els.spatialGyroToggleBtn.textContent = 'GYRO ON';
+                    els.spatialGyroToggleBtn.classList.remove('bg-white/5', 'text-[var(--text-muted)]');
+                    els.spatialGyroToggleBtn.classList.add('bg-indigo-500/20', 'border-indigo-400', 'text-indigo-300');
+                } else {
+                    els.spatialGyroToggleBtn.textContent = 'GYRO OFF';
+                    els.spatialGyroToggleBtn.classList.remove('bg-indigo-500/20', 'border-indigo-400', 'text-indigo-300');
+                    els.spatialGyroToggleBtn.classList.add('bg-white/5', 'text-[var(--text-muted)]');
+                }
             }
         });
     }

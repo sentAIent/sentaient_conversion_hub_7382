@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Welcome to MindWave — The Science of Neural Entrainment</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; background-color: #090514; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #e2e8f0; }
+    .wrapper { width: 100%; max-width: 600px; margin: 0 auto; background-color: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; }
+    .header { padding: 40px 32px 24px; text-align: center; background: radial-gradient(circle at top, rgba(0,255,204,0.15), transparent 70%); }
+    .badge { display: inline-block; padding: 6px 14px; background: rgba(0,255,204,0.15); border: 1px solid rgba(0,255,204,0.4); border-radius: 999px; color: #00ffcc; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
+    h1 { margin: 0 0 12px; font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; }
+    p { margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #94a3b8; }
+    .content { padding: 0 32px 32px; }
+    .band-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+    .band-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; }
+    .band-title { font-size: 14px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+    .band-desc { font-size: 12px; color: #94a3b8; line-height: 1.4; margin: 0; }
+    .btn { display: block; width: fit-content; margin: 28px auto 0; padding: 14px 28px; background: linear-gradient(135deg, #00ffcc, #0284c7); color: #040914; font-weight: 800; font-size: 15px; text-decoration: none; border-radius: 12px; text-align: center; box-shadow: 0 8px 24px rgba(0,255,204,0.25); }
+    .footer { padding: 24px 32px; border-t: 1px solid rgba(255,255,255,0.08); text-align: center; font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div style="padding: 24px 12px;">
+    <div class="wrapper">
+      <div class="header">
+        <div class="badge">🧠 The Neural Protocol</div>
+        <h1>Your Brain on MindWave</h1>
+        <p>Welcome, {{userName}}! You've unlocked state-of-the-art bio-adaptive acoustic technology engineered to steer mental states on demand.</p>
+      </div>
+      <div class="content">
+        <p>When two slightly differing frequencies are delivered separately into each ear via headphones, the superior olivary complex in your brainstem synchronizes your brainwaves to the mathematical difference between them. This process is known as <strong>frequency-following response (FFR)</strong>.</p>
+        
+        <div class="band-grid">
+          <div class="band-card">
+            <div class="band-title" style="color: #38bdf8;">Gamma (40 Hz)</div>
+            <p class="band-desc">Peak cognitive performance, memory consolidation, and hyper-focus.</p>
+          </div>
+          <div class="band-card">
+            <div class="band-title" style="color: #00ffcc;">Alpha (10 Hz)</div>
+            <p class="band-desc">Effortless flow state, creative problem solving, and anxiety reduction.</p>
+          </div>
+          <div class="band-card">
+            <div class="band-title" style="color: #c084fc;">Theta (6 Hz)</div>
+            <p class="band-desc">Deep meditation, subconscious reprogramming, and intuition.</p>
+          </div>
+          <div class="band-card">
+            <div class="band-title" style="color: #f472b6;">Delta (2 Hz)</div>
+            <p class="band-desc">Slow-wave restorative sleep and cellular regeneration.</p>
+          </div>
+        </div>
+
+        <p><strong>Pro-Tip for Maximum Efficacy:</strong> Always listen with stereo headphones. Calibrate your baseline before your session to track your verified stress reduction.</p>
+
+        <a href="{{appUrl}}" class="btn">Launch Your First Session &rarr;</a>
+      </div>
+      <div class="footer">
+        SentAIent Inc. • Integrated with Icebreaker Social Network<br>
+        <a href="{{unsubscribeUrl}}" style="color: #64748b; text-decoration: underline;">Manage preferences</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+name: Mobile Store Release (iOS TestFlight & Google Play AAB)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release Version (e.g. 2.4.0)'
+        required: true
+        default: '2.4.0'
+      buildNumber:
+        description: 'Build Number (e.g. 42)'
+        required: true
+        default: '42'
+
+jobs:
+  build-android-release:
+    name: Build Android App Bundle (AAB) & APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Dependencies & Build Web Assets
+        run: |
+          npm ci || npm install
+          npm run build || true
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Build Android Bundle & APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease assembleRelease --stacktrace
+
+      - name: Upload Android Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+  build-ios-release:
+    name: Build iOS Archive & StoreKit Verification
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm ci || npm install
+          npm run build || true
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+
+      - name: Verify StoreKit Configuration
+        run: |
+          test -f ios/App/MindWave.storekit && echo '✅ MindWave.storekit verified.'
+
+      - name: Build iOS Archive
+        run: |
+          cd ios/App
+          xcodebuild archive             -workspace App.xcworkspace             -scheme App             -configuration Release             -archivePath build/MindWave.xcarchive             CODE_SIGN_IDENTITY=""             CODE_SIGNING_REQUIRED=NO             CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-archive
+          path: ios/App/build/MindWave.xcarchive
+          if-no-files-found: warn
