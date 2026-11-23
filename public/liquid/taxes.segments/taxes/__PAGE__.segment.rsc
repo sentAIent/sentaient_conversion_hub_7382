@@ -1,9 +1,9 @@
 1:"$Sreact.fragment"
 2:I[86583,[],"ClientPageRoot"]
-3:I[78017,["8448","static/chunks/app/taxes/page-b4e91a13ac630016.js"],"default"]
+3:I[10719,["8448","static/chunks/app/taxes/page-c5bffe6a29239104.js"],"default"]
 6:I[50079,[],"OutletBoundary"]
 7:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],null,["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"eeoI2rFMlMRaaHdPcRKtY"}
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],null,["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"SZXSn5aRndNoFT2j6vU47"}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null

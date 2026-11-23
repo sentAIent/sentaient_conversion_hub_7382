@@ -57,6 +57,12 @@ function syncDist() {
           copyDirRecursive(srcPath, destPath);
         } else if (item.name.endsWith('.html')) {
           fs.copyFileSync(srcPath, destPath);
+          const routeName = item.name.replace('.html', '');
+          if (routeName !== 'index' && !routeName.startsWith('_')) {
+            const routeFolder = path.join(target, routeName);
+            fs.mkdirSync(routeFolder, { recursive: true });
+            fs.copyFileSync(srcPath, path.join(routeFolder, 'index.html'));
+          }
         }
       }
 

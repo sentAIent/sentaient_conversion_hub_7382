@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 import { Toaster } from "react-hot-toast";
 import { EntityProvider } from "@/context/EntityContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import AiCfoCoPilot from "@/components/AiCfoCoPilot";
 
 export default function RootLayout({
   children,
@@ -36,6 +37,7 @@ export default function RootLayout({
               {children}
             </ErrorBoundary>
             <Toaster position="top-right" />
+            <AiCfoCoPilot />
           </main>
         </EntityProvider>
       </body>

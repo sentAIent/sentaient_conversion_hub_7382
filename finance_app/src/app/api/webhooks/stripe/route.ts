@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { ImmutableLedger } from "@/lib/immutableLedger";
+
+export const dynamic = 'force-dynamic';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_mock", {
@@ -57,6 +60,20 @@ export async function POST(req: Request) {
           // Grant 'premium' role
           await supabaseAdmin.from("profiles").update({ is_premium: true }).eq("id", userId);
           console.log(`User ${userId} successfully upgraded to Premium.`);
+
+          // Record in Immutable Ledger
+          const ledger = new ImmutableLedger();
+          const amountTotal = (checkout.amount_total || 29900) / 100;
+          ledger.recordEntry({
+            id: `stripe_pay_${checkout.id || Date.now()}`,
+            reference: `STRIPE-${checkout.id || 'CHK'}`,
+            description: `Stripe Subscription Revenue ($${amountTotal})`,
+            entityId: 'ent-main',
+            postings: [
+              { accountId: '101', accountName: 'Cash (Operating)', accountType: 'ASSET', debit: amountTotal, credit: 0 },
+              { accountId: '401', accountName: 'SaaS Subscription Revenue', accountType: 'REVENUE', debit: 0, credit: amountTotal }
+            ]
+          });
         }
         break;
       }

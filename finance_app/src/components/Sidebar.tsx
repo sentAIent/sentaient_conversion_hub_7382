@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Receipt, Bitcoin, Calculator, ChevronDown, FileText, Target, Layers, FileSpreadsheet, Camera, PieChart, Building2, ShieldCheck, Cpu, RefreshCw, TrendingUp, CreditCard, Key, Globe, FileCheck, Landmark } from 'lucide-react';
+import { LayoutDashboard, Receipt, Bitcoin, Calculator, ChevronDown, FileText, Target, Layers, FileSpreadsheet, Camera, PieChart, Building2, ShieldCheck, Cpu, RefreshCw, TrendingUp, CreditCard, Key, Globe, FileCheck, Landmark, FolderLock } from 'lucide-react';
 import { useEntity } from '@/context/EntityContext';
 import { useState } from 'react';
 
@@ -135,6 +135,10 @@ export default function Sidebar() {
         <Link href="/auditor-portal" className={getLinkClass('/auditor-portal')}>
           <FileCheck size={20} />
           <span>Auditor & SOC Vault</span>
+        </Link>
+        <Link href="/vdr" className={getLinkClass('/vdr')}>
+          <FolderLock size={20} />
+          <span>VDR & Investors</span>
         </Link>
       </nav>
       <div className="p-4 border-t border-gray-800 text-sm text-gray-500">
