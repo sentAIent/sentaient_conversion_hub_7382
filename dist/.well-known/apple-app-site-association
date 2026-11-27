@@ -3,16 +3,19 @@
     "apps": [],
     "details": [
       {
-        "appID": "YOUR_APPLE_TEAM_ID.com.sentaient.interstellar",
+        "appID": "TEAMID.com.sentaient.mindwave",
         "paths": [
-          "NOT /interstellar*",
-          "NOT /mindwave*",
-          "NOT /legaleagle*",
-          "NOT /icebreaker*",
-          "*",
-          "/*"
+          "/mindwave/*",
+          "/session/*",
+          "/invite/*",
+          "/icebreaker/*"
         ]
       }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAMID.com.sentaient.mindwave"
     ]
   }
 }

@@ -1,0 +1,33 @@
+# MindWave — Clinical Neuro-Acoustic Workstation & Psychoacoustic Engine
+
+> MindWave is an evidence-informed, browser and native mobile (iOS & Android) neuro-acoustic workstation designed for precision auditory brainwave entrainment, real-time biometric biofeedback (EEG / PPG / HR), and generative ambient soundscapes.
+
+## Overview & Scientific Foundation
+
+MindWave synthesizes binaural beats, isochronic pulses, and monaural acoustic stimuli across five key neurological frequency bands:
+- **Delta (0.5 – 4 Hz)**: Deep non-REM restorative sleep, neuroplastic recovery, and subconscious integration.
+- **Theta (4 – 8 Hz)**: Hypnagogic transition, deep meditative access, creative problem-solving, and REM memory consolidation.
+- **Alpha (8 – 13 Hz)**: Alert relaxation, mindfulness, stress reduction, and optimal cognitive flow states.
+- **Beta (13 – 30 Hz)**: Active analytical processing, task concentration, executive function, and alertness.
+- **Gamma (30 – 100 Hz)**: Cross-cortical binding, high-level perception, 40 Hz sensory processing, and peak mental acuity.
+
+### Peer-Reviewed Clinical Citations
+- Oster, G. (1973). Auditory beats in the brain. *Scientific American*, 229(4), 94-102. https://doi.org/10.1038/scientificamerican1073-94
+- Chaieb, L., et al. (2015). Auditory beat stimulation and its effects on cognition and psychological states. *Frontiers in Psychiatry*, 6, 70. https://doi.org/10.3389/fpsyt.2015.00070
+- Lane, J. D., et al. (1998). Binaural auditory beats affect vigilance performance and mood. *Physiology & Behavior*, 63(2), 249-252.
+- Tononi, G., & Koch, C. (2014). Consciousness: here, there and but not everywhere. *Philosophical Transactions of the Royal Society B*, 370(1668).
+
+## Key Capabilities & Architecture
+
+- **Precision Audio Engine**: Web Audio API with sub-millisecond crystal clocking, continuous phase-lock loop (PLL), anti-click crossfading, pink/brownian noise generators, and harmonic chord synthesis.
+- **Biometric Integration**: Web Bluetooth API interface for Muse 2 / Muse S EEG headsets (TP9, AF7, AF8, TP10 electrode telemetry) and Apple HealthKit / Google Health Connect heart-rate variability (HRV) sync.
+- **Tiered AI Neurologist Router**: Dual-tier LLM architecture with local fast semantic cache (cosine similarity threshold 0.90), circuit breaker recovery, and medical disclaimer guardrails.
+- **Offline-First Storage**: ACID transaction-safe IndexedDB persistence (`mw_offline_data`) with graceful `localStorage` fallback.
+- **Enterprise & HIPAA/GDPR Compliance**: End-to-end data export (JSON/CSV), zero third-party telemetry leakage, in-app two-step cryptographic account deletion, and Row-Level Security (RLS) enforcement on Supabase PostgreSQL.
+
+## URLs & Resources
+- **Web App**: https://mindwave.sentaient.com
+- **Account Deletion Portal**: https://mindwave.sentaient.com/account-deletion.html
+- **Apple App Site Association**: https://mindwave.sentaient.com/.well-known/apple-app-site-association
+- **Android Asset Links**: https://mindwave.sentaient.com/.well-known/assetlinks.json
+- **Source Code**: https://github.com/sentAIent/sentaient_conversion_hub_7382

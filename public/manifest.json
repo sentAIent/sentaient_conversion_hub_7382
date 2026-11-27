@@ -1,39 +1,51 @@
 {
-  "name": "Sentaient AI Companion",
-  "short_name": "Sentaient",
-  "description": "Your proactive AI companion and autonomous coding agent.",
-  "start_url": "/",
+  "name": "MindWave: Binaural Beats Studio",
+  "short_name": "MindWave",
+  "description": "Premium generative soundscapes and visualizers.",
+  "start_url": "/mindwave.html",
   "display": "standalone",
-  "background_color": "#10141e",
-  "theme_color": "#00f3ff",
+  "background_color": "#050510",
+  "theme_color": "#8b5cf6",
   "icons": [
     {
-      "src": "/pwa-192x192.png",
+      "src": "/binaural-assets/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/pwa-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "/pwa-512x512.png",
+      "src": "/binaural-assets/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "prefer_related_applications": true,
-  "related_applications": [
+  "orientation": "portrait",
+  "categories": [
+    "health",
+    "lifestyle",
+    "productivity"
+  ],
+  "screenshots": [],
+  "shortcuts": [
     {
-      "platform": "play",
-      "url": "https://play.google.com/store/apps/details?id=com.sentaient.app",
-      "id": "com.sentaient.app"
+      "name": "Deep Focus",
+      "url": "/mindwave.html?preset=focus",
+      "icons": [
+        {
+          "src": "/binaural-assets/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
-      "platform": "itunes",
-      "url": "https://apps.apple.com/app/id123456789"
+      "name": "Zen Meditation",
+      "url": "/mindwave.html?preset=zen",
+      "icons": [
+        {
+          "src": "/binaural-assets/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

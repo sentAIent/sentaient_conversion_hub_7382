@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.sentaient.mindwave",
+        "paths": [
+          "/mindwave/*",
+          "/session/*",
+          "/invite/*",
+          "/icebreaker/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAMID.com.sentaient.mindwave"
+    ]
+  }
+}
