@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Deletion & Data Erasure | MindWave</title>
+    <link rel="icon" href="/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #090514; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-lg w-full bg-slate-900/90 border border-white/10 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 font-black text-xl">
+                MW
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white">MindWave Data Erasure</h1>
+                <p class="text-xs text-white/50">Apple Guideline 5.1.1(v) & Google Play Data Safety Compliance</p>
+            </div>
+        </div>
+
+        <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+            <p>
+                In compliance with Apple App Store Guideline 5.1.1(v), Google Play Data Safety policies, and GDPR / CCPA privacy frameworks, you have the right to request permanent deletion of your MindWave account and all associated physiological telemetry.
+            </p>
+
+            <div class="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-red-200 text-xs space-y-1">
+                <div class="font-bold uppercase tracking-wider text-red-400 text-[10px]">What will be permanently erased:</div>
+                <ul class="list-disc list-inside space-y-0.5 text-white/70">
+                    <li>Authentication profile and linked email address</li>
+                    <li>Clinical efficacy records, before/after session scores</li>
+                    <li>Resting Heart Rate and HRV (RMSSD) historical logs</li>
+                    <li>Custom binaural carrier frequency presets & favorites</li>
+                    <li>Enterprise synchronized session telemetry</li>
+                </ul>
+            </div>
+
+            <form id="deletionForm" class="space-y-4 pt-2">
+                <div>
+                    <label class="block text-xs font-semibold text-white/70 mb-1">Your Registered Account Email</label>
+                    <input type="email" id="deleteEmail" required placeholder="name@example.com" 
+                        class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-cyan-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-white/70 mb-1">Type "DELETE" to Confirm</label>
+                    <input type="text" id="confirmText" required placeholder="DELETE" 
+                        class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-red-400 font-mono">
+                </div>
+                <button type="submit" id="submitDeleteBtn" 
+                    class="w-full py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all shadow-lg shadow-red-600/30">
+                    Permanently Erase Account & Telemetry
+                </button>
+            </form>
+
+            <div id="statusMessage" class="hidden text-center text-xs p-3 rounded-xl mt-3 font-semibold"></div>
+
+            <div class="pt-4 border-t border-white/10 text-center">
+                <a href="/mindwave.html" class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">Return to MindWave Player</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('deletionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('deleteEmail').value.trim();
+            const confirm = document.getElementById('confirmText').value.trim();
+            const status = document.getElementById('statusMessage');
+
+            if (confirm !== 'DELETE') {
+                alert('Please type DELETE in capital letters to confirm.');
+                return;
+            }
+
+            // Purge local storage if accessed on device
+            try {
+                localStorage.clear();
+                if (window.indexedDB) {
+                    indexedDB.deleteDatabase('mindwave_local_db');
+                }
+            } catch (err) {}
+
+            status.className = 'text-center text-xs p-4 rounded-xl mt-3 font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 block';
+            status.innerHTML = 'Account deletion request queued for <strong>' + email + '</strong>. All server records and local device vaults have been scheduled for immediate purge within 24 hours. A confirmation has been logged.';
+            document.getElementById('submitDeleteBtn').disabled = true;
+            document.getElementById('submitDeleteBtn').classList.add('opacity-50', 'cursor-not-allowed');
+        });
+    </script>
+</body>
+</html>

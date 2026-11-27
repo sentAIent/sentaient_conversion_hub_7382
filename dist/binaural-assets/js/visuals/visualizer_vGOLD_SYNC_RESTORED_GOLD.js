@@ -1,6 +1,6 @@
 import { state, els, THEMES } from '/binaural-assets/js/state.js';
 import * as THREE from '/binaural-assets/js/vendor/three.module.js';
-import { CymaticsCore } from './CymaticsCore.js';
+import { CymaticsCore } from './CymaticsCore_v4.js';
 
 let viz3D = null;
 
@@ -2578,7 +2578,7 @@ static CYMATIC_PATTERNS = [
             else if (mode === 'cyber') label.textContent = "CYBER";
             else if (mode === 'matrix') label.textContent = "MATRIX";
             else if (mode === 'snowflake') label.textContent = "SNOWFALL";
-            else if (mode === 'multi') label.textContent = "MULTI-SENSORY";
+            else if (mode === 'multi') label.textContent = "";
             else label.textContent = "";
         }
     }

@@ -4,4 +4,16 @@ Disallow: /dashboard
 Disallow: /admin
 Disallow: /profile
 
-Sitemap: https://sentaient.com/sitemap.xml
+# AI Search Crawlers (GEO / Perplexity / ChatGPT / Claude)
+User-agent: GPTBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://mindwave.sentaient.com/sitemap.xml

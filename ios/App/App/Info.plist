@@ -67,5 +67,7 @@
 	<string>MindWave logs your mindful meditation and focus sessions directly into Apple Health.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>MindWave connects to Bluetooth heart rate monitors to adapt binaural beats to your real-time physiology.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

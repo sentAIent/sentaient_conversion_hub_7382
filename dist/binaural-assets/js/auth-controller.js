@@ -154,6 +154,30 @@ export function initAuthUI() {
         };
     }
 
+    // 4b. Apple Sign In Button (Guideline 4.8)
+    const appleSignInBtn = document.getElementById('appleSignInBtn');
+    if (appleSignInBtn) {
+        appleSignInBtn.onclick = async () => {
+            try {
+                if (window.Capacitor?.isNativePlatform()) {
+                    showToast('Connecting to Apple ID...', 'info');
+                } else {
+                    const { auth } = await import('../services/firebase.js');
+                    const { OAuthProvider, signInWithPopup } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                    const provider = new OAuthProvider('apple.com');
+                    provider.addScope('email');
+                    provider.addScope('name');
+                    await signInWithPopup(auth, provider);
+                    showToast('Signed in with Apple!', 'success');
+                    closeAuthModal();
+                }
+            } catch (err) {
+                console.warn('[Auth] Apple Sign-In fallback:', err);
+                showToast(err.message || 'Apple Sign-In is configured for native iOS builds.', 'info');
+            }
+        };
+    }
+
     // 5. Auth State Observer Actions
     registerAuthCallback((user) => {
         updateProfileUI(user);
@@ -194,10 +218,22 @@ function updateProfileUI(user) {
 
         // Check tier
         const isPremium = localStorage.getItem('mindwave_premium') === 'true';
+        const specialTier = localStorage.getItem('mindwave_special_tier');
+
         if (tierEl) {
             if (isPremium) {
-                tierEl.textContent = 'PRO';
+                let tierLabel = 'PRO';
+                if (specialTier === 'NirvanaPeace') tierLabel = 'PEACE';
+                else if (specialTier === 'Yogananda') tierLabel = 'BLISS';
+                
+                tierEl.textContent = tierLabel;
                 tierEl.className = 'inline-block mt-1 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400';
+                
+                // Update sidebar text
+                const sidebarTierText = document.getElementById('mindwaveSidebarTierText');
+                if (sidebarTierText) {
+                    sidebarTierText.textContent = 'MindWave ' + tierLabel;
+                }
             } else {
                 tierEl.textContent = 'Free';
                 tierEl.className = 'inline-block mt-1 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400';
@@ -227,7 +263,11 @@ function updateProfileUI(user) {
 
         if (isPremium) {
             // Premium user - show "Manage Subscription" button
-            upgradeBtn.textContent = '⚙️ Manage Subscription';
+            let btnText = '⚙️ Manage Subscription';
+            if (specialTier === 'NirvanaPeace') btnText = '⚙️ Manage Peace Access';
+            else if (specialTier === 'Yogananda') btnText = '⚙️ Manage Bliss Access';
+            
+            upgradeBtn.textContent = btnText;
             // Premium Glassmorphic Style
             upgradeBtn.className = 'w-full mt-4 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wide bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 hover:border-cyan-500/50 transition-all shadow-lg shadow-cyan-900/20';
             upgradeBtn.style.color = '';
@@ -430,6 +470,58 @@ export function setupProfileHandlers() {
         });
     }
 
+    const downloadDataBtn = document.getElementById('downloadDataBtn');
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+
+    if (downloadDataBtn) {
+        downloadDataBtn.addEventListener('click', async () => {
+            if (window.clinicalAssessment && typeof window.clinicalAssessment.exportUserData === 'function') {
+                await window.clinicalAssessment.exportUserData('json');
+                showToast('Clinical & session data exported successfully', 'success');
+                return;
+            }
+            const dataStr = JSON.stringify(localStorage);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const exportFileDefaultName = `mindwave_data_${new Date().toISOString().split('T')[0]}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            showToast('Data exported successfully', 'success');
+        });
+    }
+
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', async () => {
+            if (confirm("WARNING: This will permanently delete your account, saved mixes, and all associated data. This action cannot be undone. Are you sure?")) {
+                try {
+                    const { auth } = await import('../services/firebase.js');
+                    const user = auth.currentUser;
+                    
+                    if (user) {
+                        const { deleteUser } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                        await deleteUser(user);
+                    }
+                    
+                    localStorage.clear();
+                    showToast('Account and data deleted.', 'info');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } catch (err) {
+                    console.error('[Profile] Deletion error:', err);
+                    if (err.code === 'auth/requires-recent-login') {
+                        showToast('Please sign out and sign back in to verify identity before deleting.', 'error');
+                    } else {
+                        showToast('Failed to delete account: ' + err.message, 'error');
+                    }
+                }
+            }
+        });
+    }
+
     const referralBtn = document.getElementById('profileReferralBtn');
     if (referralBtn) {
         referralBtn.addEventListener('click', () => {
@@ -469,6 +561,12 @@ export function openAuthModal() {
             // Reset scroll position on open
             const scrollContainer = profileModal.querySelector('.glass-card');
             if (scrollContainer) scrollContainer.scrollTop = 0;
+
+            // Unlock Admin Auto-Marketing Studio if flag exists
+            if (localStorage.getItem('mindwave_admin') === 'true') {
+                const adminBtn = document.getElementById('adminMarketingBtn');
+                if (adminBtn) adminBtn.classList.remove('hidden');
+            }
 
             // Update profile UI with current user data
             updateProfileUI(state.currentUser);

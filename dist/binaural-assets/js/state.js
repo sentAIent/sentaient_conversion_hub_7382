@@ -72,7 +72,7 @@ export const PRESET_COMBOS = [
         description: 'Peaceful night sounds',
         icon: '🌙',
         preset: 'delta',
-        soundscapes: ['wind'],
+        soundscapes: ['mountain_wind'],
         visuals: ['galaxy', 'interstellar', 'particles'],
         cymaticClass: 3,
         cymaticVariation: 1,
@@ -111,7 +111,7 @@ export const PRESET_COMBOS = [
         description: 'Intense productivity',
         icon: '⛈️',
         preset: 'gamma',
-        soundscapes: ['rain', 'wind'],
+        soundscapes: ['rain', 'mountain_wind'],
         visuals: ['matrix', 'cyber', 'interstellar'],
         cymaticClass: 17,
         cymaticVariation: 0,
@@ -397,9 +397,6 @@ export const state = {
     uiLocked: false,
     idleTimeout: null,
 
-    // NEW (Lotus State Options)
-    lotusState: 'full',
-
     // NEW (Per-Visual RGB Memory)
     visualColors: {
         sphere: '#60a9ff', particles: '#60a9ff', cube: '#60a9ff', dragon: '#60a9ff',
@@ -408,7 +405,7 @@ export const state = {
     }
 };
 
-export const VISUALIZER_VERSION = 'V141_MENU_SCROLL_FIX';
+export const VISUALIZER_VERSION = 'V142_SNOW_PERFECTION';
 
 // Global Elements Container
 export const els = {
@@ -420,7 +417,7 @@ export const els = {
     recordBtn: null, videoToggleBtn: null,
 
     // Visuals
-    sphereBtn: null, cubeBtn: null, dragonBtn: null, galaxyBtn: null, themeBtn: null,
+    sphereBtn: null, cubeBtn: null, dragonBtn: null, galaxyBtn: null,
     galleryBtn: null,
     visualSpeedSlider: null,
     speedValue: null,

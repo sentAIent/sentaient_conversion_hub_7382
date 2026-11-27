@@ -140,6 +140,40 @@ class ClinicalAssessmentService {
             efficacyScore
         };
     }
+
+    /**
+     * Export all user historical data for GDPR / HIPAA portability compliance
+     */
+    exportUserData(format = 'json') {
+        const history = this.getHistory();
+        const aggregates = this.getAggregateStats();
+        const exportDate = new Date().toISOString();
+
+        if (format === 'csv') {
+            const headers = ['SessionID', 'Date', 'Preset', 'DurationMins', 'PreStress', 'PostStress', 'StressReductionPct', 'PreFocus', 'PostFocus', 'FocusGainPct'];
+            const rows = history.map(s => [
+                s.id || '',
+                s.timestamp || '',
+                s.sessionType || '',
+                s.durationMinutes || 0,
+                s.pre?.stress || '',
+                s.post?.stress || '',
+                s.deltas?.stressReductionPct || 0,
+                s.pre?.focus || '',
+                s.post?.focus || '',
+                s.deltas?.focusGainPct || 0
+            ]);
+            return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        }
+
+        return JSON.stringify({
+            application: 'MindWave Cognitive Entrainment',
+            exportDate,
+            compliance: 'GDPR / CCPA / HIPAA Wellness Portability',
+            summary: aggregates,
+            sessions: history
+        }, null, 2);
+    }
 }
 
 export const clinicalAssessment = new ClinicalAssessmentService();

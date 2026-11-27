@@ -321,7 +321,13 @@ export async function initJourney() {
 
 // Cloud Sync logic
 async function syncWithCloud() {
-    if (!db || !state.currentUser) return;
+    if (!state.currentUser) return;
+    
+    // Proactively skip cloud sync if device is offline
+    if (!navigator.onLine) {
+        console.log('[Journey] Device is offline. Operating strictly from local cache.');
+        return;
+    }
 
     try {
         const uid = state.currentUser.uid;
@@ -355,8 +361,12 @@ async function syncWithCloud() {
             console.log('[Journey] No cloud state, uploading local progress...');
             await saveToCloud();
         }
-    } catch (e) {
-        console.warn('[Journey] Cloud sync failed:', e);
+    } catch (err) {
+        if (err.message && err.message.includes('offline')) {
+            console.log('[Journey] Offline mode. Skipped cloud sync.');
+        } else {
+            console.warn('[Journey] Cloud sync failed:', err);
+        }
     }
 }
 
@@ -730,7 +740,8 @@ window.startLessonAction = async (lessonId) => {
     if (lesson.action.preset) {
         console.log('[Journey] Attempting to apply preset:', lesson.action.preset);
         // Initialize lesson action but don't close modal yet
-        if (window.applyMixState) { // Check if applyMixState is available
+        const applyPresetFn = window.applyPreset || window.applyMixState;
+        if (applyPresetFn) {
             try {
                 // Track feature usage
                 if (window.trackFeatureUse) {
@@ -741,7 +752,7 @@ window.startLessonAction = async (lessonId) => {
                 }
 
                 // Apply preset and duration
-                window.applyMixState(lesson.action.preset);
+                applyPresetFn(lesson.action.preset);
                 console.log('[Journey] Preset applied successfully');
             } catch (e) {
                 console.error('[Journey] Failed to apply preset:', e);
@@ -776,17 +787,25 @@ window.startLessonAction = async (lessonId) => {
 
     try {
         // Import required modules
-        const [sessionTimer, { startAudio, fadeIn, fadeOut, stopAudio }, { toggleVisual }, { syncAllButtons }] = await Promise.all([
+        const [sessionTimer, { startAudio, fadeIn, fadeOut, stopAudio }, { resumeVisuals, toggleVisual }, { syncAllButtons }] = await Promise.all([
             import('../audio/session-timer.js'),
             import('../audio/engine.js'),
             import('../visuals/visualizer_lazy.js'),
             import('../ui/controls_v3.js')
         ]);
 
+        // Stop conflicting external audio
+        if (typeof window !== 'undefined') {
+            try { if (window.stopClassical) window.stopClassical(); } catch (e) { }
+            try { if (window.stopStory) window.stopStory(); } catch (e) { }
+            try { if (window.stopCustomAudio) window.stopCustomAudio(); } catch (e) { }
+            try { if (window.stopAllLoops) window.stopAllLoops(); } catch (e) { }
+        }
+
         // Start audio playback and visuals
         await startAudio();
         fadeIn(1.5);
-        resumeVisuals();
+        if (typeof resumeVisuals === 'function') { resumeVisuals(); } else if (window.resumeVisuals) { window.resumeVisuals(); }
         syncAllButtons();
 
         // Set session duration in the dropdown (so timer UI shows)

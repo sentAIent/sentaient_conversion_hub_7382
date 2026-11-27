@@ -1508,7 +1508,7 @@ export class Visualizer3D {
             else if (mode === 'zengarden') label.textContent = "ZEN GARDEN";
             else if (mode === 'ocean') label.textContent = "WAVES";
             else if (mode === 'matrix') label.textContent = "THE MATRIX";
-            else if (mode === 'multi') label.textContent = "MULTI-SENSORY";
+            else if (mode === 'multi') label.textContent = "";
             else label.textContent = "";
         }
     }

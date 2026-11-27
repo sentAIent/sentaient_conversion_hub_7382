@@ -221,8 +221,10 @@ export async function playCustomAudio(trackId) {
     if (audioLibraryState.audioElement) {
         stopCustomAudio();
     }
-    // Also stop Classical Music if playing
+    // Also stop conflicting audio from other modules
     if (window.stopClassical) window.stopClassical();
+    if (window.stopStory) window.stopStory();
+    if (window.stopAllLoops) window.stopAllLoops();
 
     audioLibraryState.currentTrack = track;
 
@@ -260,8 +262,10 @@ export async function playCustomAudio(trackId) {
     audioLibraryState.audioElement = new Audio(src);
     audioLibraryState.audioElement.volume = audioLibraryState.volume;
     audioLibraryState.audioElement.loop = true;
-    // Essential for Cloud CORS if needed (usually fine with public download URLs, but good practice)
     audioLibraryState.audioElement.crossOrigin = "anonymous";
+    if (window.connectCustomAudio) {
+        window.connectCustomAudio(audioLibraryState.audioElement);
+    }
 
     audioLibraryState.audioElement.addEventListener('ended', () => {
         // Loop is true, so this rarely fires unless loop=false
@@ -304,6 +308,9 @@ export function stopCustomAudio() {
     if (audioLibraryState.audioElement) {
         audioLibraryState.audioElement.pause();
         audioLibraryState.audioElement.currentTime = 0;
+        if (audioLibraryState.audioElement.src && audioLibraryState.audioElement.src.startsWith('blob:')) {
+            try { URL.revokeObjectURL(audioLibraryState.audioElement.src); } catch (e) {}
+        }
         audioLibraryState.audioElement = null;
     }
     audioLibraryState.isPlaying = false;
@@ -327,6 +334,15 @@ export function getAudioLibraryState() {
         currentTrack: audioLibraryState.currentTrack,
         trackCount: audioLibraryState.tracks.length
     };
+}
+
+export function isCustomAudioPlaying() {
+    return !!(audioLibraryState.isPlaying || (audioLibraryState.audioElement && !audioLibraryState.audioElement.paused));
+}
+
+if (typeof window !== 'undefined') {
+    window.isCustomAudioPlaying = isCustomAudioPlaying;
+    window.stopCustomAudio = stopCustomAudio;
 }
 
 // Format file size

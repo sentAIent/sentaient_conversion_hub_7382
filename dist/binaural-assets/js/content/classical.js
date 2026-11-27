@@ -427,6 +427,11 @@ export async function initClassical() {
 
     // Volume Control
     if (volSlider) {
+        const initVol = parseFloat(volSlider.value);
+        if (!isNaN(initVol)) {
+            classicalState.volume = initVol;
+            if (volValue) volValue.textContent = Math.round(initVol * 100) + '%';
+        }
         volSlider.addEventListener('input', (e) => {
             const v = parseFloat(e.target.value);
             classicalState.volume = v;
@@ -524,7 +529,9 @@ export async function playClassical(id) {
 
     // Stop conflicts
     stopClassical(); // Stop self
+    if (window.stopStory) window.stopStory(); // Stop active stories
     if (window.stopCustomAudio) window.stopCustomAudio(); // Stop other custom audio
+    if (window.stopAllLoops) window.stopAllLoops(); // Stop DJ loops
 
     // Phase 4: Offline Audio Intercept
     let srcUrl = piece.url;
@@ -544,8 +551,8 @@ export async function playClassical(id) {
     classicalState.audio.volume = classicalState.volume;
     classicalState.audio.loop = true;
 
-    // Connect ephemeral tracks to the Master WebAudio Chain
-    if (piece.isEphemeral && window.connectCustomAudio) {
+    // Connect to the Master WebAudio Chain
+    if (window.connectCustomAudio) {
         window.connectCustomAudio(classicalState.audio);
     }
 
@@ -610,6 +617,9 @@ export function stopClassical() {
     if (classicalState.audio) {
         classicalState.audio.pause();
         classicalState.audio.removeEventListener('timeupdate', updateTimeDisplay);
+        if (classicalState.audio.src && classicalState.audio.src.startsWith('blob:')) {
+            try { URL.revokeObjectURL(classicalState.audio.src); } catch (e) {}
+        }
         classicalState.audio = null;
     }
     classicalState.isPlaying = false;
@@ -678,7 +688,12 @@ function updateUI() {
 
 // External Observability
 export function isClassicalPlaying() {
-    return classicalState.isPlaying;
+    return !!(classicalState.isPlaying || (classicalState.audio && !classicalState.audio.paused));
+}
+
+if (typeof window !== 'undefined') {
+    window.isClassicalPlaying = isClassicalPlaying;
+    window.stopClassical = stopClassical;
 }
 
 export function onClassicalStateChange(callback) {

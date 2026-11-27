@@ -127,9 +127,11 @@ export async function startAudio() {
         state.masterCompressor = state.audioCtx.createDynamicsCompressor();
         state.analyserLeft = state.audioCtx.createAnalyser();
         state.analyserRight = state.audioCtx.createAnalyser();
+        state.masterAnalyser = state.audioCtx.createAnalyser();
+        
         state.analyserLeft.fftSize = 2048;
         state.analyserRight.fftSize = 2048;
-
+        state.masterAnalyser.fftSize = 2048;
 
         // Connections
         state.oscLeft.connect(state.panLeft);
@@ -154,12 +156,13 @@ export async function startAudio() {
         state.limiter.release.value = 0.1;
 
         state.masterCompressor.connect(state.limiter);
-        state.limiter.connect(state.audioCtx.destination);
+        state.limiter.connect(state.masterAnalyser);
+        state.masterAnalyser.connect(state.audioCtx.destination);
 
         // Recording Route
         state.videoCaptureGain = state.audioCtx.createGain();
         state.videoCaptureGain.gain.value = 1;
-        state.limiter.connect(state.videoCaptureGain);
+        state.masterAnalyser.connect(state.videoCaptureGain);
         // We do NOT create or connect `destStreamNode` here. It is lazily hooked in recorder.js!
 
         // Compressor Settings
@@ -587,7 +590,11 @@ export const SWEEP_PRESETS = {
         startFreq: 4,    // Theta
         endFreq: 20,     // Beta
         duration: 300,   // 5 minutes
-        icon: '🌅'
+        icon: '🌅',
+        visuals: ['sphere', 'flow', 'particles'],
+        cymaticClass: 10,
+        cymaticVariation: 2,
+        color: '#fbbf24'
     },
     windDown: {
         name: 'Wind Down',
@@ -595,7 +602,11 @@ export const SWEEP_PRESETS = {
         startFreq: 20,   // Beta
         endFreq: 8,      // Alpha
         duration: 600,   // 10 minutes
-        icon: '🌙'
+        icon: '🌙',
+        visuals: ['galaxy', 'ocean', 'zengarden'],
+        cymaticClass: 3,
+        cymaticVariation: 1,
+        color: '#1e3a5f'
     },
     deepSleep: {
         name: 'Deep Sleep Journey',
@@ -603,7 +614,11 @@ export const SWEEP_PRESETS = {
         startFreq: 10,   // Alpha
         endFreq: 2,      // Delta
         duration: 1200,  // 20 minutes
-        icon: '💤'
+        icon: '💤',
+        visuals: ['ocean', 'particles', 'flow'],
+        cymaticClass: 5,
+        cymaticVariation: 4,
+        color: '#0891b2'
     },
     focusBuilder: {
         name: 'Focus Builder',
@@ -611,23 +626,23 @@ export const SWEEP_PRESETS = {
         startFreq: 8,    // Alpha
         endFreq: 18,     // Beta
         duration: 300,   // 5 minutes
-        icon: '🎯'
+        icon: '🎯',
+        visuals: ['dragon', 'matrix', 'lava'],
+        cymaticClass: 1,
+        cymaticVariation: 0,
+        color: '#b45309'
     },
     meditation: {
         name: 'Meditation Descent',
-        description: 'Descend into deep meditative state',
-        startFreq: 12,   // Alpha
-        endFreq: 5,      // Theta
-        duration: 600,   // 10 minutes
-        icon: '🧘'
-    },
-    creativity: {
-        name: 'Creative Flow',
-        description: 'Unlock creative theta state',
-        startFreq: 14,   // Low Beta
-        endFreq: 6,      // Theta
-        duration: 480,   // 8 minutes
-        icon: '🎨'
+        description: 'Journey to the depths of consciousness',
+        startFreq: 12,   // Beta/Alpha
+        endFreq: 4,      // Theta
+        duration: 900,   // 15 minutes
+        icon: '🧘',
+        visuals: ['zengarden', 'mandala', 'particles'],
+        cymaticClass: 22,
+        cymaticVariation: 10,
+        color: '#a855f7'
     }
 };
 

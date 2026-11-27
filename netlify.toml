@@ -1,4 +1,5 @@
 [build]
+  ignore = "exit 0"
   command = "echo \"Deploying prebuilt dist...\""
   publish = "dist"
 

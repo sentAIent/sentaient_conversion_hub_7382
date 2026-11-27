@@ -8,8 +8,6 @@ export class AmbientSynth {
         this.reverb = null;
         this.lfo = null;
         this.isPlaying = false;
-        this.lfo = null;
-        this.isPlaying = false;
         
         // Base frequencies (Default: 432Hz)
         this.setMood('default');
@@ -154,15 +152,16 @@ export class AmbientSynth {
         
         setTimeout(() => {
             this.nodes.forEach(node => {
-                node.osc.stop();
-                node.osc.disconnect();
-                node.filter.disconnect();
-                node.gain.disconnect();
-                node.lfoGain.disconnect();
+                try { node.osc.stop(); } catch (e) {}
+                try {
+                    node.osc.disconnect();
+                    node.filter.disconnect();
+                    node.gain.disconnect();
+                    node.lfoGain.disconnect();
+                } catch (e) {}
             });
             if (this.lfo) {
-                this.lfo.stop();
-                this.lfo.disconnect();
+                try { this.lfo.stop(); this.lfo.disconnect(); } catch (e) {}
             }
             this.nodes = [];
             this.isPlaying = false;

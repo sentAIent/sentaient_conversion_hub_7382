@@ -237,8 +237,7 @@ const getFragmentShader = (classId) => {
             
             // Unrotated vignette
             vec2 up = (vUv - 0.5) * 2.0;
-            up.x *= uAspect;
-            col *= smoothstep(1.2, 0.1, length(up)); 
+            col *= smoothstep(1.5, 0.1, length(up)); 
             
             gl_FragColor = vec4(col, 1.0);
         }
@@ -340,7 +339,6 @@ const getFragmentShader = (classId) => {
             
             // Vignette
             vec2 up = (vUv - 0.5) * 2.0;
-            up.x *= uAspect;
             col *= smoothstep(1.5, 0.2, length(up));
             
             gl_FragColor = vec4(col, 1.0);

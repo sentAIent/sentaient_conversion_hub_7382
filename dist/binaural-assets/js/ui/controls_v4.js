@@ -1070,25 +1070,40 @@ export function setupUI() {
     };
 
     if (els.leftToggle) els.leftToggle.addEventListener('click', () => {
-        els.leftPanel.classList.remove('-translate-x-full');
+        const isOpen = els.leftPanel && !els.leftPanel.classList.contains('-translate-x-full');
+        if (isOpen) {
+            els.leftPanel.classList.add('-translate-x-full');
+            els.leftToggle.classList.remove('toggle-active');
+        } else if (els.leftPanel) {
+            els.leftPanel.classList.remove('-translate-x-full');
+            els.leftToggle.classList.add('toggle-active');
+        }
         updateVisualizerScale();
         window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
     });
     if (els.closeLeftBtn) els.closeLeftBtn.addEventListener('click', () => {
-        els.leftPanel.classList.add('-translate-x-full');
+        if (els.leftPanel) els.leftPanel.classList.add('-translate-x-full');
+        if (els.leftToggle) els.leftToggle.classList.remove('toggle-active');
         updateVisualizerScale();
         window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
     });
 
     if (els.rightToggle) els.rightToggle.addEventListener('click', () => {
-        els.rightPanel.classList.remove('translate-x-full');
+        const isOpen = els.rightPanel && !els.rightPanel.classList.contains('translate-x-full');
+        if (isOpen) {
+            els.rightPanel.classList.add('translate-x-full');
+            els.rightToggle.classList.remove('toggle-active');
+        } else if (els.rightPanel) {
+            els.rightPanel.classList.remove('translate-x-full');
+            els.rightToggle.classList.add('toggle-active');
+            enforceLightThemeStyles();
+        }
         updateVisualizerScale();
         window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
-        // Enforce light theme styles when panel opens
-        enforceLightThemeStyles();
     });
     if (els.closeRightBtn) els.closeRightBtn.addEventListener('click', () => {
-        els.rightPanel.classList.add('translate-x-full');
+        if (els.rightPanel) els.rightPanel.classList.add('translate-x-full');
+        if (els.rightToggle) els.rightToggle.classList.remove('toggle-active');
         updateVisualizerScale();
         window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
     });
@@ -1096,9 +1111,11 @@ export function setupUI() {
     // Enforce light theme styles on initial load (after a delay to ensure DOM is ready)
     setTimeout(enforceLightThemeStyles, 100);
 
-    // Auto-open mixer on first load for desktop? Maybe not, keep immersive.
-
-    // Auto-open mixer on first load for desktop? Maybe not, keep immersive.
+    // All menus expanded by default on load
+    if (els.leftPanel) { els.leftPanel.classList.remove('-translate-x-full'); els.leftPanel.classList.add('translate-x-0'); els.leftToggle?.classList.add('toggle-active'); }
+    if (els.rightPanel) { els.rightPanel.classList.remove('translate-x-full'); els.rightPanel.classList.add('translate-x-0'); els.rightToggle?.classList.add('toggle-active'); }
+    updateVisualizerScale();
+    window.dispatchEvent(new CustomEvent('mindwave:layout-change'));
 
     // Tap Zone Removed (per user request)
 
@@ -2064,8 +2081,8 @@ async function handlePlayClick() {
     if (state.isStopping) {
         console.log('[Controls] Fast Resume triggered!');
         cancelFadeOut();
+        fadeIn(1.0);
         state.isStopping = false;
-        // Ensure UI reflects playing immediately
         syncAllButtons();
         return;
     }
@@ -4173,18 +4190,8 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         }
     }
 
-    // 1. Auto-Play FIRST (Critical for UX) - Only if triggered by user gesture
-    // We try to start audio immediately on the click event
-    // Skip auto-start if called during page load (autoStart = false)
-    if (autoStart && !state.isPlaying) {
-        console.log("[Controls] Auto-starting audio...");
-        try {
-            await startAudio();
-        } catch (e) {
-            console.error("[Controls] Auto-start failed:", e);
-            alert("Audio Auto-Start Error: " + e.message);
-        }
-    }
+
+
 
     // 1. Update UI Buttons & Sync Presence
     if (els.presetButtons) {
@@ -4257,6 +4264,14 @@ export async function applyPreset(type, btnElement, autoStart = true, skipPaywal
         updateFrequencies();
     } catch (e) {
         console.warn("[Controls] updateFrequencies warning (audio might trigger this later):", e);
+    }
+
+    if (autoStart && !state.isPlaying) {
+        try {
+            await startAudio();
+        } catch (e) {
+            console.error("[Controls] Auto-start failed:", e);
+        }
     }
 
     // 4. Update Visualizer

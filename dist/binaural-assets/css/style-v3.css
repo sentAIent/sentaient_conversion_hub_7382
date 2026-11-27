@@ -666,12 +666,40 @@ body[data-theme="sentaient"] .glass-pill:not(.active) {
 }
 
 /* HEADER ICONS - Force Accent Color (Global) */
+#topControlBar button:not(.toggle-active):not(.locked),
+#topControlBar button:not(.toggle-active):not(.locked) svg,
+#snapshotBtn,
+#lockUIBtn:not(.toggle-active):not(.locked),
+#coachBtn,
+#bioBtn,
+#aiCoachBtn,
+#leantimeBtn,
+#vibeBtn,
+#solarBtn,
 #tutorialBtn,
+#installBtn,
 #feedbackBtn,
 #profileBtn,
 #themeBtn {
     color: var(--accent) !important;
+    stroke: currentColor !important;
     opacity: 1;
+}
+
+#topControlBar button:hover {
+    color: var(--accent) !important;
+}
+
+#topControlBar button.toggle-active,
+#topControlBar button.locked {
+    background-color: var(--accent) !important;
+    color: var(--bg-main, #000) !important;
+}
+
+#topControlBar button.toggle-active svg,
+#topControlBar button.locked svg {
+    stroke: currentColor !important;
+    color: var(--bg-main, #000) !important;
 }
 
 /* VISIBILITY FIXES (User Feedback) */

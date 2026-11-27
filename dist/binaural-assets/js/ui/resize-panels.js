@@ -3,9 +3,9 @@
  * Allows left and right sidebars to be resized by dragging
  */
 
-const MIN_PANEL_WIDTH = 200;
+const MIN_PANEL_WIDTH = 320;
 const MAX_PANEL_WIDTH = 500;
-const DEFAULT_LEFT_WIDTH = 256;  // w-64 = 16rem = 256px
+const DEFAULT_LEFT_WIDTH = 320;  // Standard default desktop width 320px
 const DEFAULT_RIGHT_WIDTH = 320; // w-80 = 20rem = 320px
 
 let isResizing = false;
@@ -389,17 +389,18 @@ export function updateBottomBarWidth() {
  * Set panel width and scale content
  */
 function setPanelWidth(panel, width) {
-    panel.style.width = `${width}px`;
+    const clampedWidth = Math.max(MIN_PANEL_WIDTH, Math.min(MAX_PANEL_WIDTH, width));
+    panel.style.width = `${clampedWidth}px`;
 
     // Calculate scale factor (1.0 at default, smaller when narrower, larger when wider)
     const defaultWidth = panel.id === 'leftPanel' ? DEFAULT_LEFT_WIDTH : DEFAULT_RIGHT_WIDTH;
-    const scale = Math.max(0.7, Math.min(2.0, width / defaultWidth));
+    const scale = Math.max(0.7, Math.min(2.0, clampedWidth / defaultWidth));
 
     // Apply CSS variable for responsive scaling
     panel.style.setProperty('--panel-scale', scale);
 
     // Scale text and icons
-    scaleContent(panel, scale);
+    scaleContent(panel, scale, clampedWidth);
 
     // Update atmosphere grid columns if this is the right panel
     if (panel.id === 'rightPanel') {
@@ -413,33 +414,31 @@ function setPanelWidth(panel, width) {
 /**
  * Scale panel content based on width
  */
-function scaleContent(panel, scale) {
+function scaleContent(panel, scale, width) {
+    const actualWidth = width || panel.offsetWidth || 320;
     // Scale text sizes
-    const baseSize = 10; // base font size in px
-    const headingSize = scale < 0.85 ? 9 : 10;
-    const labelSize = scale < 0.85 ? 8 : 9;
+    const headingSize = actualWidth <= 290 ? 9 : 10;
+    const labelSize = actualWidth <= 290 ? 8 : 9;
 
     // Apply scaled styles via CSS custom properties
     panel.style.setProperty('--heading-size', `${headingSize}px`);
     panel.style.setProperty('--label-size', `${labelSize}px`);
-    panel.style.setProperty('--icon-scale', scale < 0.85 ? '0.85' : '1');
+    panel.style.setProperty('--icon-scale', actualWidth <= 290 ? '0.85' : '1');
 
-    // For significantly smaller panels, reduce padding
-    if (scale < 0.8) {
-        panel.classList.add('panel-compact');
-    } else {
-        panel.classList.remove('panel-compact');
+    panel.classList.remove('panel-ultra-narrow', 'panel-narrow', 'panel-compact');
+    if (actualWidth <= 290) {
+        panel.classList.add('panel-ultra-narrow', 'panel-narrow', 'panel-compact');
+    } else if (actualWidth <= 340) {
+        panel.classList.add('panel-narrow', 'panel-compact');
     }
 
     // Column layout based on width increase
     // Default: 2 columns, 20%+ wider: 3 columns, 50%+ wider: 4 columns
     panel.classList.remove('panel-cols-3', 'panel-cols-4');
 
-    if (scale >= 1.5) {
-        // 50% or more wider than default -> 4 columns
+    if (actualWidth >= 560) {
         panel.classList.add('panel-cols-4');
-    } else if (scale >= 1.2) {
-        // 20% or more wider than default -> 3 columns
+    } else if (actualWidth >= 430) {
         panel.classList.add('panel-cols-3');
     }
     // Default (scale < 1.2) stays at 2 columns (no class needed)
@@ -464,11 +463,15 @@ function restorePanelWidths() {
     const rightWidth = localStorage.getItem('mindwave_panel_rightPanel_width');
 
     if (leftWidth && leftPanel) {
-        setPanelWidth(leftPanel, parseInt(leftWidth, 10));
+        setPanelWidth(leftPanel, Math.max(MIN_PANEL_WIDTH, parseInt(leftWidth, 10)));
+    } else if (leftPanel) {
+        setPanelWidth(leftPanel, Math.max(MIN_PANEL_WIDTH, leftPanel.offsetWidth || DEFAULT_LEFT_WIDTH));
     }
 
     if (rightWidth && rightPanel) {
-        setPanelWidth(rightPanel, parseInt(rightWidth, 10));
+        setPanelWidth(rightPanel, Math.max(MIN_PANEL_WIDTH, parseInt(rightWidth, 10)));
+    } else if (rightPanel) {
+        setPanelWidth(rightPanel, Math.max(MIN_PANEL_WIDTH, rightPanel.offsetWidth || DEFAULT_RIGHT_WIDTH));
     }
 }
 
@@ -486,8 +489,8 @@ export function updateAtmosphereColumns() {
     const viewportWidth = window.innerWidth;
     const widthPercentage = (panelWidth / viewportWidth) * 100;
 
-    // Switch to 2 columns when panel > 50% viewport width
-    if (widthPercentage > 50) {
+    // Switch to 2 columns when panel >= 380px or > 50% viewport width
+    if (panelWidth >= 380 || widthPercentage > 50) {
         soundscapeContainer.classList.remove('grid-cols-1');
         soundscapeContainer.classList.add('grid-cols-2');
     } else {

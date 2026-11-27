@@ -20,6 +20,11 @@ import { openEnterpriseModal } from '../ui/enterprise-modal.js';
 import { openSocialShareModal } from '../ui/social-share-modal.js';
 import { openEmailPreviewModal } from '../ui/email-preview-modal.js';
 import { spatialGyro } from '../audio/spatial-gyro.js';
+import { openAccountDeletionModal } from '../ui/account-deletion-modal.js';
+import { openAIConsentModal, openAIReportModal } from '../ui/ai-consent-modal.js';
+import { trustHubModal } from '../ui/trust-hub-modal.js';
+import { errorBoundary } from '../utils/error-boundary.js';
+import { i18n } from '../services/i18n.js';
 import { leantime } from '../services/leantime.js';
 import { calculateFrequencyFromGoal } from '../services/ai-intent-service.js';
 import { applyAIPreset } from '../ui/controls_v3.js';
@@ -410,10 +415,16 @@ function setupCymaticListeners() {
 }
 
 export function initGlobalExports() {
+    errorBoundary.init();
     window.showFeedbackSurvey = showFeedbackSurvey;
     window.openSocialShareModal = openSocialShareModal;
     window.openEmailPreviewModal = openEmailPreviewModal;
     window.spatialGyro = spatialGyro;
+    window.openAccountDeletionModal = openAccountDeletionModal;
+    window.openAIConsentModal = openAIConsentModal;
+    window.openAIReportModal = openAIReportModal;
+    window.openTrustHubModal = () => trustHubModal.open();
+    window.i18n = i18n;
 
     window.startOnboarding = async (force = false, intent = null) => {
         const { initTutorial: start } = await lazy.onboarding();

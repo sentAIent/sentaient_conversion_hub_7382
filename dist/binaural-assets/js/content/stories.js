@@ -281,6 +281,12 @@ export async function playStory(storyId, intentOnly = false) {
     if (storyState.isPlaying) {
         stopStory();
     }
+    // Stop conflicting external audio sources
+    if (typeof window !== 'undefined') {
+        try { if (window.stopClassical) window.stopClassical(); } catch (e) { }
+        try { if (window.stopCustomAudio) window.stopCustomAudio(); } catch (e) { }
+        try { if (window.stopAllLoops) window.stopAllLoops(); } catch (e) { }
+    }
 
     // Set sliders immediately after stopStory to ensure correct Hz is displayed
     if (story.recommendedFreq) {
@@ -369,6 +375,9 @@ export async function playStory(storyId, intentOnly = false) {
         storyState.audioElement = new Audio(audioUrl);
         storyState.audioElement.volume = storyState.volume;
         storyState.audioElement.loop = false;
+        if (window.connectCustomAudio) {
+            window.connectCustomAudio(storyState.audioElement);
+        }
 
         // NEW: Graceful error handling for missing/broken audio assets
         storyState.audioElement.addEventListener('error', (e) => {
@@ -433,6 +442,9 @@ export function stopStory() {
     if (storyState.audioElement) {
         storyState.audioElement.pause();
         storyState.audioElement.currentTime = 0;
+        if (storyState.audioElement.src && storyState.audioElement.src.startsWith('blob:')) {
+            try { URL.revokeObjectURL(storyState.audioElement.src); } catch (e) {}
+        }
         storyState.audioElement = null;
     }
 
@@ -464,7 +476,12 @@ export function getStoryVolume() {
 
 // Check if story is playing
 export function isStoryPlaying() {
-    return storyState.isPlaying;
+    return !!(storyState.isPlaying || (storyState.audioElement && !storyState.audioElement.paused));
+}
+
+if (typeof window !== 'undefined') {
+    window.isStoryPlaying = isStoryPlaying;
+    window.stopStory = stopStory;
 }
 
 // Get current story

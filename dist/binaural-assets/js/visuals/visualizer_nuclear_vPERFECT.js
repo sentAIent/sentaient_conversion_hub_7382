@@ -225,7 +225,7 @@ export class Visualizer3D {
             else if (mode === 'box') label.textContent = "CUBE";
             else if (mode === 'dragon') label.textContent = "DRAGON";
             else if (mode === 'galaxy') label.textContent = "GALAXY";
-            else if (mode === 'multi') label.textContent = "MULTI-SENSORY";
+            else if (mode === 'multi') label.textContent = "";
             else label.textContent = "";
         }
     }

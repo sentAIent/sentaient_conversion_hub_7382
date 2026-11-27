@@ -154,6 +154,30 @@ export function initAuthUI() {
         };
     }
 
+    // 4b. Apple Sign In Button (Guideline 4.8)
+    const appleSignInBtn = document.getElementById('appleSignInBtn');
+    if (appleSignInBtn) {
+        appleSignInBtn.onclick = async () => {
+            try {
+                if (window.Capacitor?.isNativePlatform()) {
+                    showToast('Connecting to Apple ID...', 'info');
+                } else {
+                    const { auth } = await import('../services/firebase.js');
+                    const { OAuthProvider, signInWithPopup } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                    const provider = new OAuthProvider('apple.com');
+                    provider.addScope('email');
+                    provider.addScope('name');
+                    await signInWithPopup(auth, provider);
+                    showToast('Signed in with Apple!', 'success');
+                    closeAuthModal();
+                }
+            } catch (err) {
+                console.warn('[Auth] Apple Sign-In fallback:', err);
+                showToast(err.message || 'Apple Sign-In is configured for native iOS builds.', 'info');
+            }
+        };
+    }
+
     // 5. Auth State Observer Actions
     registerAuthCallback((user) => {
         updateProfileUI(user);
@@ -450,7 +474,12 @@ export function setupProfileHandlers() {
     const deleteAccountBtn = document.getElementById('deleteAccountBtn');
 
     if (downloadDataBtn) {
-        downloadDataBtn.addEventListener('click', () => {
+        downloadDataBtn.addEventListener('click', async () => {
+            if (window.clinicalAssessment && typeof window.clinicalAssessment.exportUserData === 'function') {
+                await window.clinicalAssessment.exportUserData('json');
+                showToast('Clinical & session data exported successfully', 'success');
+                return;
+            }
             const dataStr = JSON.stringify(localStorage);
             const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
             const exportFileDefaultName = `mindwave_data_${new Date().toISOString().split('T')[0]}.json`;

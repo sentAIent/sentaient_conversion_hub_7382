@@ -1,0 +1,134 @@
+[build]
+  ignore = "exit 0"
+  command = "echo \"Deploying prebuilt dist...\""
+  publish = "dist"
+
+[build.environment]
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+  NETLIFY_USE_NPM_CI = "false"
+  NODE_VERSION = "22"
+  NPM_FLAGS = "--legacy-peer-deps --ignore-scripts"
+
+[[redirects]]
+  from = "/icebreaker"
+  to = "https://sentaient-icebreaker-857.netlify.app/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/icebreaker/*"
+  to = "https://sentaient-icebreaker-857.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/icebusiness"
+  to = "https://sentaient-icebusiness-hub.netlify.app/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/icebusiness/*"
+  to = "https://sentaient-icebusiness-hub.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/iceadmin"
+  to = "https://sentaient-iceadmin-hub.netlify.app/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/iceadmin/*"
+  to = "https://sentaient-iceadmin-hub.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/lightspeed/*"
+  to = "/lightspeed/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/contango/*"
+  to = "/contango/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/legaleagle/*"
+  to = "/legaleagle/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/sphinx"
+  to = "/sphinx/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/sphinx/*"
+  to = "/sphinx/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/maya"
+  to = "/maya/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/maya/"
+  to = "/maya/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/maya/*"
+  to = "/maya/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/avatars/*"
+  to = "/maya/avatars/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/sphinx*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com https://www.google.com https://www.gstatic.com https://apis.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src * 'self' blob: data: http://localhost:3117 ws://localhost:3117 http://127.0.0.1:3117 ws://127.0.0.1:3117 http://localhost:3007 http://localhost:8000 http://localhost:3335 ws://localhost:3335 http://localhost:8065 ws://localhost:8065 https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://*.firebaseio.com https://*.googleapis.com https://api.stripe.com https://cdn.jsdelivr.net https://api.open-meteo.com https://*.open-meteo.com https://api.rainviewer.com https://*.rainviewer.com https://*.openstreetmap.org https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.arcgisonline.com https://server.arcgisonline.com https://*.server.arcgisonline.com https://*.basemaps.cartocdn.com https://demotiles.maplibre.org https://*.mapbox.com https://*.komoot.io https://*.project-osrm.org; media-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src * 'self' data: https: blob: https://firebasestorage.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://js.stripe.com https://www.google.com; worker-src 'self' blob:;"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-XSS-Protection = "1; mode=block"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com https://www.google.com https://www.gstatic.com https://apis.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; connect-src * 'self' blob: data: http://localhost:3117 ws://localhost:3117 http://127.0.0.1:3117 ws://127.0.0.1:3117 http://localhost:3007 http://localhost:8000 http://localhost:3335 ws://localhost:3335 http://localhost:8065 ws://localhost:8065 https://*.supabase.co wss://*.supabase.co https://*.posthog.com https://*.firebaseio.com https://*.googleapis.com https://api.stripe.com https://cdn.jsdelivr.net https://api.open-meteo.com https://*.open-meteo.com https://api.rainviewer.com https://*.rainviewer.com https://*.openstreetmap.org https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.arcgisonline.com https://server.arcgisonline.com https://*.server.arcgisonline.com https://*.basemaps.cartocdn.com https://demotiles.maplibre.org https://*.mapbox.com https://*.komoot.io https://*.project-osrm.org; media-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src * 'self' data: https: blob: https://firebasestorage.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://js.stripe.com https://www.google.com; worker-src 'self' blob:; report-uri /.netlify/functions/csp-report;"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-XSS-Protection = "1; mode=block"
+    Permissions-Policy = "geolocation=(), microphone=(self), camera=(self), payment=(), usb=()"
+
+# Item 41: Caching & SWR Headers
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["livekit-server-sdk", "crawlee"]

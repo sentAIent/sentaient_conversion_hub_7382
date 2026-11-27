@@ -1,0 +1,115 @@
+// MindWave Relational Data Model (Prisma Schema - 2026 SOTA)
+// Mirrors PostgreSQL / Supabase Schema with Strict RLS, Foreign Keys & Compound Indexes
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum WaveCategory {
+  DELTA
+  THETA
+  ALPHA
+  BETA
+  GAMMA
+}
+
+model UserProfile {
+  id               String               @id @default(uuid())
+  email            String               @unique
+  fullName         String?
+  tier             UserTier             @default(FREE)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  sessions         SessionRecord[]
+  clinicalAssessments ClinicalAssessment[]
+  presets          UserPreset[]
+  enterpriseOrgId  String?
+  enterpriseOrg    EnterpriseOrg?       @relation(fields: [enterpriseOrgId], references: [id])
+  moderationReports ModerationReport[]
+
+  @@index([email])
+  @@index([tier])
+}
+
+model SessionRecord {
+  id               String       @id @default(uuid())
+  userId           String
+  user             UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category         WaveCategory
+  carrierFrequency Float
+  beatFrequency    Float
+  durationSeconds  Int
+  hrvBefore        Float?
+  hrvAfter         Float?
+  coherenceScore   Float?
+  completedAt      DateTime     @default(now())
+
+  @@index([userId, completedAt])
+  @@index([category])
+}
+
+model ClinicalAssessment {
+  id                 String       @id @default(uuid())
+  userId             String
+  user               UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionType        WaveCategory
+  durationMinutes    Int
+  preStressScore     Int
+  postStressScore    Int
+  stressReductionPct Float
+  preFocusScore      Int
+  postFocusScore     Int
+  focusGainPct       Float
+  overallEfficacy    Float
+  assessedAt         DateTime     @default(now())
+
+  @@index([userId, assessedAt])
+}
+
+model UserPreset {
+  id               String       @id @default(uuid())
+  userId           String
+  user             UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  category         WaveCategory
+  carrierFrequency Float
+  beatFrequency    Float
+  ambientTrack     String?
+  cymaticPattern   String?
+  createdAt        DateTime     @default(now())
+
+  @@index([userId])
+}
+
+model EnterpriseOrg {
+  id          String        @id @default(uuid())
+  name        String
+  licenseKey  String        @unique
+  seatCount   Int           @default(50)
+  createdAt   DateTime      @default(now())
+  members     UserProfile[]
+}
+
+model ModerationReport {
+  id          String      @id @default(uuid())
+  reporterId  String
+  reporter    UserProfile @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  content     String
+  reason      String
+  status      String      @default("PENDING")
+  reportedAt  DateTime    @default(now())
+
+  @@index([status])
+}

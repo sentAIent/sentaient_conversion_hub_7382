@@ -20,11 +20,22 @@ export async function initPWAInstall() {
         let hasAccess = false;
 
         try {
-            if (user) {
-                hasAccess = await hasPurchasedApp();
+            // Skip cloud purchase check if device is offline; fall back to local storage
+            if (!navigator.onLine) {
+                console.log('[PWA] Device is offline. Using local access cache.');
+                const localPremium = localStorage.getItem('mindwave_premium') === 'true';
+                if (localPremium) hasAccess = true;
+            } else {
+                if (user) {
+                    hasAccess = await hasPurchasedApp();
+                }
             }
-        } catch (e) {
-            console.warn('[PWA] Error checking app purchase access:', e);
+        } catch (err) {
+            if (err.message && err.message.includes('offline')) {
+                console.log('[PWA] Offline mode. Skipped app purchase access check.');
+            } else {
+                console.error('[PWA] Error checking app purchase access:', err);
+            }
         }
 
         // --- 1. RUNTIME STANDALONE LOCK ---
@@ -58,7 +69,25 @@ export async function initPWAInstall() {
     // Skip if already installed or declined
     if (localStorage.getItem(INSTALL_COMPLETED_KEY)) return;
 
-    // Check if declined recently (within 7 days)
+    // 3. Setup Dock Icon Install Button
+    const dockInstallBtn = document.getElementById('installBtn');
+    if (dockInstallBtn) {
+        dockInstallBtn.classList.remove('hidden');
+        dockInstallBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`[PWA] Dock Install prompt outcome: ${outcome}`);
+                deferredPrompt = null;
+                if (outcome === 'accepted') {
+                    localStorage.setItem(INSTALL_COMPLETED_KEY, 'true');
+                    dockInstallBtn.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    // 4. Optionally show floating banner if they haven't seen it recently
     const declinedAt = localStorage.getItem(INSTALL_DECLINED_KEY);
     if (declinedAt) {
         const daysSinceDismiss = (Date.now() - parseInt(declinedAt)) / (1000 * 60 * 60 * 24);
@@ -83,12 +112,6 @@ export async function initPWAInstall() {
 }
 
 function showInstallBanner() {
-    // LOCK: Only show install banner to lifetime members
-    if (!state.isLifetime) {
-        console.log('[PWA] skipping install banner - not a lifetime member');
-        return;
-    }
-
     if (!deferredPrompt || installBannerShown) return;
     installBannerShown = true;
 
@@ -157,33 +180,20 @@ function showInstallBanner() {
 
     // Event listeners
     document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
-        // STRICT PAYWALL CHECK: Source Code / App Download ($350)
-        // We also check here just in case, but the prompt shouldn't even exist otherwise
-        try {
-            const hasAccess = await hasPurchasedApp();
-            if (!hasAccess) {
-                if (confirm("The Downloadable App is exclusive to Eternity Members ($488.88 Zen Gear). \n\nClick OK to upgrade and unlock.")) {
-                    if (window.showPricingModal) window.showPricingModal();
-                }
-                return;
-            }
-        } catch (e) {
-            console.warn('[PWA] Error checking purchase on install button:', e);
-        }
-
         if (!deferredPrompt) return;
-
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-
+        
         if (outcome === 'accepted') {
             console.log('[PWA] User accepted install');
+            localStorage.setItem(INSTALL_COMPLETED_KEY, 'true');
         } else {
             console.log('[PWA] User dismissed install');
+            localStorage.setItem(INSTALL_DECLINED_KEY, Date.now().toString());
         }
-
+        
         deferredPrompt = null;
-        hideInstallBanner();
+        banner.remove();
     });
 
     document.getElementById('pwaCloseBtn').addEventListener('click', () => {

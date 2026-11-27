@@ -107,6 +107,7 @@
     "format:check": "prettier --check \"src/**/*.{js,jsx,css,md}\"",
     "format:fix": "prettier --write \"src/**/*.{js,jsx,css,md}\"",
     "lint": "eslint \"src/**/*.{js,jsx}\" --max-warnings 0",
+    "test": "node --test tests/*.spec.js",
     "prepare": "node -e \"if (!process.env.CI && !process.env.NETLIFY) { try { require('child_process').execSync('husky install'); } catch (e) {} }\""
   },
   "eslintConfig": {
